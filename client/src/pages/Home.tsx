@@ -1,23 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calculator } from "@/components/Calculator";
 import { HistorySidebar } from "@/components/HistorySidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { History as HistoryIcon, Calculator as CalculatorIcon } from "lucide-react";
-import { motion } from "framer-motion";
+import { History as HistoryIcon, Calculator as CalculatorIcon, Download } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 export default function Home() {
   const [currentExpression, setCurrentExpression] = useState("");
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    });
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+    }
+  };
 
   const handleHistorySelect = (expression: string) => {
     setCurrentExpression(expression);
-    setMobileHistoryOpen(false); // Close mobile sheet if open
+    setMobileHistoryOpen(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 lg:p-8 gap-8 max-w-7xl mx-auto">
       
+      {/* Install App Button */}
+      <AnimatePresence>
+        {installPrompt && !isInstalled && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 left-4 z-50"
+          >
+            <Button
+              onClick={handleInstall}
+              variant="default"
+              className="gap-2 rounded-full shadow-lg shadow-primary/30"
+              data-testid="button-install-app"
+            >
+              <Download className="w-4 h-4" />
+              Install App
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile History Toggle */}
       <div className="lg:hidden absolute top-4 right-4 z-50">
         <Sheet open={mobileHistoryOpen} onOpenChange={setMobileHistoryOpen}>
