@@ -83,6 +83,16 @@ The `server/storage.ts` file defines an `IStorage` interface and a `DatabaseStor
 - **shadcn/ui** components (Radix UI + Tailwind CSS)
 - **connect-pg-simple** — PostgreSQL session store (available but not actively used for this app)
 
+### PWA (Progressive Web App)
+
+The app is configured as a PWA, making it installable on Android (and iOS) devices via the browser's "Add to Home Screen" feature.
+
+- **`client/public/manifest.json`** — Web app manifest with app name, icons, display mode, and theme color
+- **`client/public/sw.js`** — Service worker with network-first caching strategy for navigation, cache-first for static assets, and graceful offline fallback for API calls
+- **`client/public/icon-192.png`** and **`client/public/icon-512.png`** — App icons for home screen and splash screen
+- **`client/src/main.tsx`** — Registers the service worker on page load
+- **`client/index.html`** — Includes PWA meta tags (theme-color, apple-mobile-web-app-capable, manifest link, apple-touch-icon, Open Graph tags)
+
 ### Replit-Specific Plugins
 - `@replit/vite-plugin-runtime-error-modal` — Runtime error overlay in development
 - `@replit/vite-plugin-cartographer` — Dev tooling (conditionally loaded)
