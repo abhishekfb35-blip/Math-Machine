@@ -39,8 +39,10 @@ The project follows a **monorepo layout** with three top-level source directorie
 
 ### UI Components
 
+- **AnnouncementBar** — Scrolling marquee promo bar at top with "Buy 2 Get 1 Free", "Free shipping", "Personalised embroidery"
 - **Header** — Minimal top bar with brand name, Shop nav link, theme toggle, cart icon with badge
 - **BottomNav** — Mobile bottom navigation (Home, Shop, Cart tabs) — hidden on desktop
+- **Footer** — Full footer with brand story, shop links, contact info (inverted bg-foreground/text-background)
 - **ProductCardNew** — Product card with image, name, price, "Buy 2 Get 1 Free" badge, and "+" quick-add button
 - **QuickAddSheet** — Bottom sheet for personalization name input and quantity when quick-adding to cart
 - **WhatsAppButton** — Floating WhatsApp contact button, positioned above bottom nav on mobile
@@ -119,6 +121,15 @@ The app includes PWA support with manifest.json, service worker, and app icons.
 
 ## Recent Changes
 
+- **Feb 2026**: snaan.in-inspired premium design improvements
+  - Scrolling announcement/promo bar above header
+  - "The Turtle Little Promise" brand section (Premium Fabric, Hand Embroidered, Made with Love)
+  - Customer testimonials section with reviews and star ratings
+  - Stats bar (58+ Products, 5 Collections, All India Free Delivery)
+  - Full footer with brand story, shop links, contact info
+  - Editorial descriptions on category banners in Shop page
+  - Promo CTA section highlighting "Buy 2 Get 1 Free" offer
+  - Banner images throughout Home, Shop, and Category pages
 - **Feb 2026**: UI redesign to app-style shopping experience
   - Bottom navigation bar on mobile (Home, Shop, Cart)
   - New unified Shop page with audience filter chips (All, Kids, Adults, Couples)

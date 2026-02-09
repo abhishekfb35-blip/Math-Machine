@@ -20,12 +20,12 @@ function getAudience(slug: string): AudienceFilter {
   return "adults";
 }
 
-const categoryBanners: Record<string, { image: string; label: string }> = {
-  "girls-towels": { image: kidsBanner, label: "Girls Towels" },
-  "boys-towels": { image: kidsBanner, label: "Boys Towels" },
-  "couple-towels": { image: couplesBanner, label: "Couple Towel Sets" },
-  "boys-blankets": { image: blanketsBanner, label: "Boys Blankets" },
-  "girls-blankets": { image: blanketsBanner, label: "Girls Blankets" },
+const categoryBanners: Record<string, { image: string; label: string; description: string }> = {
+  "girls-towels": { image: kidsBanner, label: "Girls Towels", description: "Disney princesses, fairies & beloved characters" },
+  "boys-towels": { image: kidsBanner, label: "Boys Towels", description: "Superheroes, sports & cartoon favourites" },
+  "couple-towels": { image: couplesBanner, label: "Couple Towel Sets", description: "Elegant matching sets for weddings & anniversaries" },
+  "boys-blankets": { image: blanketsBanner, label: "Boys Blankets", description: "Soft personalised AC blankets for boys" },
+  "girls-blankets": { image: blanketsBanner, label: "Girls Blankets", description: "Cozy personalised AC blankets for girls" },
 };
 
 const filters: { label: string; value: AudienceFilter }[] = [
@@ -142,7 +142,7 @@ export default function ShopPage() {
                       <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
                         {category.name}
                       </h2>
-                      <p className="text-xs text-white/70">{catProducts.length} products</p>
+                      <p className="text-xs text-white/70">{banner.description}</p>
                     </div>
                   </div>
                 )}

@@ -4,8 +4,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
+import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
@@ -37,10 +39,12 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <div className="min-h-screen flex flex-col">
+            <AnnouncementBar />
             <Header />
             <main className="flex-1">
               <Router />
             </main>
+            <Footer />
           </div>
           <BottomNav />
           <WhatsAppButton />

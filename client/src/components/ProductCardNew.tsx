@@ -17,11 +17,11 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
       data-testid={`card-product-${product.id}`}
     >
       <Link href={`/product/${product.slug}`}>
-        <div className="aspect-square overflow-hidden rounded-t-md cursor-pointer relative">
+        <div className="aspect-square overflow-hidden rounded-t-md cursor-pointer relative bg-muted">
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
             loading="lazy"
             data-testid={`img-product-${product.id}`}
           />
@@ -33,17 +33,17 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
           </Badge>
         </div>
       </Link>
-      <div className="p-3 space-y-1">
+      <div className="p-3 space-y-1.5">
         <Link href={`/product/${product.slug}`}>
           <h3
-            className="text-sm font-medium leading-tight line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+            className="text-xs md:text-sm font-medium leading-tight line-clamp-2 cursor-pointer hover:text-primary transition-colors"
             data-testid={`text-product-name-${product.id}`}
           >
             {product.name}
           </h3>
         </Link>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-bold text-primary" data-testid={`text-product-price-${product.id}`}>
+          <p className="text-sm font-bold" data-testid={`text-product-price-${product.id}`}>
             ₹{product.price.toLocaleString("en-IN")}
           </p>
           <Button
