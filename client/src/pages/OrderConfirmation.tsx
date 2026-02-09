@@ -40,7 +40,7 @@ export default function OrderConfirmation() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-8">
       <div className="text-center space-y-4 mb-8">
         <CheckCircle className="w-16 h-16 text-primary mx-auto" />
         <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-order-confirmed">Order Confirmed!</h1>

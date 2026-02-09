@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import Home from "@/pages/Home";
+import ShopPage from "@/pages/ShopPage";
 import CategoryPage from "@/pages/CategoryPage";
 import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
@@ -18,6 +20,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/shop" component={ShopPage} />
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/product/:slug" component={ProductPage} />
       <Route path="/cart" component={CartPage} />
@@ -38,13 +41,8 @@ function App() {
             <main className="flex-1">
               <Router />
             </main>
-            <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-              <div className="max-w-7xl mx-auto px-4">
-                <p data-testid="text-footer">Turtle Little - Personalised Luxury Towels & Blankets</p>
-                <p className="mt-1">Call or WhatsApp: 99900 79722 | 98183 00540</p>
-              </div>
-            </footer>
           </div>
+          <BottomNav />
           <WhatsAppButton />
           <Toaster />
         </TooltipProvider>

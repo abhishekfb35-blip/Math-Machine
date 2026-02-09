@@ -92,14 +92,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8">
       <Link href="/cart">
-        <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back-to-cart">
+        <Button variant="ghost" size="sm" className="mb-3" data-testid="button-back-to-cart">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Cart
         </Button>
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6" data-testid="text-checkout-title">Checkout</h1>
+      <h1 className="text-xl font-bold mb-4" data-testid="text-checkout-title">Checkout</h1>
 
       <div className="grid md:grid-cols-5 gap-8">
         <div className="md:col-span-3">

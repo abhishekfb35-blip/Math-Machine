@@ -29,12 +29,21 @@ The project follows a **monorepo layout** with three top-level source directorie
 
 ### Frontend Pages
 
-- **Home** (`/`) — Hero banner, category highlights, featured products grid, promotional cards
-- **Category** (`/category/:slug`) — Product grid filtered by category, offer banner
-- **Product Detail** (`/product/:slug`) — Product image, description, price, personalisation name input, add-to-cart
+- **Home** (`/`) — Hero banner, audience cards (For Kids / For Couples), featured product sections, promo cards
+- **Shop** (`/shop`) — Unified browsing with filter chips (All, Kids, Adults, Couples), full product catalog grouped by category
+- **Category** (`/category/:slug`) — Product grid filtered by category, offer badge
+- **Product Detail** (`/product/:slug`) — Product image, description, price, personalisation input, add-to-cart, related products
 - **Cart** (`/cart`) — Cart items with quantity controls, discount display, order summary
 - **Checkout** (`/checkout`) — Address form with validation, order summary sidebar
 - **Order Confirmation** (`/order/:id`) — Order details, shipping info, item list with free items marked
+
+### UI Components
+
+- **Header** — Minimal top bar with brand name, Shop nav link, theme toggle, cart icon with badge
+- **BottomNav** — Mobile bottom navigation (Home, Shop, Cart tabs) — hidden on desktop
+- **ProductCardNew** — Product card with image, name, price, "Buy 2 Get 1 Free" badge, and "+" quick-add button
+- **QuickAddSheet** — Bottom sheet for personalization name input and quantity when quick-adding to cart
+- **WhatsAppButton** — Floating WhatsApp contact button, positioned above bottom nav on mobile
 
 ### Backend
 
@@ -110,6 +119,14 @@ The app includes PWA support with manifest.json, service worker, and app icons.
 
 ## Recent Changes
 
+- **Feb 2026**: UI redesign to app-style shopping experience
+  - Bottom navigation bar on mobile (Home, Shop, Cart)
+  - New unified Shop page with audience filter chips (All, Kids, Adults, Couples)
+  - Quick-add feature: "+" button on product cards opens bottom sheet for personalization
+  - Redesigned Home page with audience cards (For Kids, For Couples)
+  - Related products section on product detail pages
+  - Simplified header with minimal navigation
+  - Fixed discount calculation to mark cheapest items as free
 - **Feb 2026**: Complete rebuild from calculator app to Turtle Little e-commerce store
   - New database schema with 6 tables
   - 58 products seeded from turtlelittle.com
