@@ -1,11 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
+import kidsBanner from "@/assets/images/kids-banner.png";
+import couplesBanner from "@/assets/images/couples-banner.png";
+import blanketsBanner from "@/assets/images/blankets-banner.png";
 import type { Category, Product } from "@shared/schema";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
@@ -15,6 +19,14 @@ function getAudience(slug: string): AudienceFilter {
   if (slug.includes("girls") || slug.includes("boys")) return "kids";
   return "adults";
 }
+
+const categoryBanners: Record<string, { image: string; label: string }> = {
+  "girls-towels": { image: kidsBanner, label: "Girls Towels" },
+  "boys-towels": { image: kidsBanner, label: "Boys Towels" },
+  "couple-towels": { image: couplesBanner, label: "Couple Towel Sets" },
+  "boys-blankets": { image: blanketsBanner, label: "Boys Blankets" },
+  "girls-blankets": { image: blanketsBanner, label: "Girls Blankets" },
+};
 
 const filters: { label: string; value: AudienceFilter }[] = [
   { label: "All", value: "all" },
@@ -40,8 +52,20 @@ function ProductGridSkeleton() {
 }
 
 export default function ShopPage() {
-  const [activeFilter, setActiveFilter] = useState<AudienceFilter>("all");
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const initialFilter = (params.get("filter") as AudienceFilter) || "all";
+
+  const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    const p = new URLSearchParams(searchString);
+    const f = p.get("filter") as AudienceFilter;
+    if (f && filters.some(fl => fl.value === f)) {
+      setActiveFilter(f);
+    }
+  }, [searchString]);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -102,27 +126,48 @@ export default function ShopPage() {
             <p className="text-muted-foreground">No products found for this filter.</p>
           </div>
         ) : (
-          groupedByCategory.map(({ category, products: catProducts }) => (
-            <section key={category.id} className="space-y-3">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h2 className="text-lg font-bold" data-testid={`text-shop-section-${category.slug}`}>
-                  {category.name}
-                </h2>
-                <span className="text-xs text-muted-foreground" data-testid={`text-count-${category.slug}`}>
-                  {catProducts.length} products
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {catProducts.map((product) => (
-                  <ProductCardNew
-                    key={product.id}
-                    product={product}
-                    onQuickAdd={setQuickAddProduct}
-                  />
-                ))}
-              </div>
-            </section>
-          ))
+          groupedByCategory.map(({ category, products: catProducts }) => {
+            const banner = categoryBanners[category.slug];
+            return (
+              <section key={category.id} className="space-y-3">
+                {banner && (
+                  <div className="relative rounded-md overflow-hidden" data-testid={`banner-${category.slug}`}>
+                    <img
+                      src={banner.image}
+                      alt={category.name}
+                      className="w-full h-28 md:h-40 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-4 space-y-0.5">
+                      <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
+                        {category.name}
+                      </h2>
+                      <p className="text-xs text-white/70">{catProducts.length} products</p>
+                    </div>
+                  </div>
+                )}
+                {!banner && (
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <h2 className="text-lg font-bold" data-testid={`text-shop-section-${category.slug}`}>
+                      {category.name}
+                    </h2>
+                    <span className="text-xs text-muted-foreground" data-testid={`text-count-${category.slug}`}>
+                      {catProducts.length} products
+                    </span>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {catProducts.map((product) => (
+                    <ProductCardNew
+                      key={product.id}
+                      product={product}
+                      onQuickAdd={setQuickAddProduct}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })
         )}
       </div>
 
