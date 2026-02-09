@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import "dotenv/config";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -13,6 +14,7 @@ declare module "http" {
   }
 }
 
+app.use(cookieParser());
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -94,7 +96,7 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "127.0.0.1",
+      host: "0.0.0.0",
       reusePort: true,
     },
     () => {

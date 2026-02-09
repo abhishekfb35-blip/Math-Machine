@@ -1,6 +1,6 @@
 # Overview
 
-This is a **calculator web application** with persistent history storage. Users can perform mathematical calculations on the frontend, and each calculation's expression and result are saved to a PostgreSQL database via a REST API. The app features a modern dark-themed UI with a calculator component and a history sidebar that allows users to review, reuse, and clear past calculations.
+This is the **Turtle Little** e-commerce web application — an online store selling personalised luxury embroidered towels and blankets. Customers can browse products by category, personalise items with a name to be embroidered, add to cart with automatic "Buy 2 Get 1 Free" discount, and place orders with shipping details.
 
 ## User Preferences
 
@@ -22,78 +22,106 @@ The project follows a **monorepo layout** with three top-level source directorie
 - **Bundler**: Vite (config in `vite.config.ts`, client root at `client/`)
 - **Routing**: Wouter (lightweight client-side router)
 - **State/Data Fetching**: TanStack React Query for server state management
-- **UI Components**: shadcn/ui (new-york style) built on Radix UI primitives with Tailwind CSS
-- **Styling**: Tailwind CSS with CSS variables for theming, dark mode by default, custom fonts (Outfit, DM Mono)
-- **Math Evaluation**: `mathjs` library handles expression parsing/evaluation on the client side — the server only stores results
-- **Animations**: Framer Motion for UI transitions
+- **UI Components**: shadcn/ui built on Radix UI primitives with Tailwind CSS
+- **Styling**: Tailwind CSS with CSS variables for theming, light mode default with dark mode support
+- **Fonts**: Outfit (headings/body), DM Mono (monospace)
 - **Path Aliases**: `@/` maps to `client/src/`, `@shared/` maps to `shared/`
+
+### Frontend Pages
+
+- **Home** (`/`) — Hero banner, category highlights, featured products grid, promotional cards
+- **Category** (`/category/:slug`) — Product grid filtered by category, offer banner
+- **Product Detail** (`/product/:slug`) — Product image, description, price, personalisation name input, add-to-cart
+- **Cart** (`/cart`) — Cart items with quantity controls, discount display, order summary
+- **Checkout** (`/checkout`) — Address form with validation, order summary sidebar
+- **Order Confirmation** (`/order/:id`) — Order details, shipping info, item list with free items marked
 
 ### Backend
 
-- **Framework**: Express 5 on Node.js, wrapped in a standard HTTP server
+- **Framework**: Express 5 on Node.js with cookie-parser middleware
 - **Language**: TypeScript, executed via `tsx`
-- **API Pattern**: Simple REST API with three endpoints all under `/api/history`:
-  - `GET /api/history` — list all history items (newest first)
-  - `POST /api/history` — create a new history entry (expression + result)
-  - `DELETE /api/history` — clear all history
-- **Validation**: Zod schemas for request validation, shared between client and server via `shared/routes.ts`
-- **Development**: Vite dev server runs as middleware in development mode with HMR
-- **Production**: Client is built to `dist/public/`, server is bundled with esbuild to `dist/index.cjs`
+- **Cart Sessions**: Cookie-based (`cart_session` cookie, 30-day expiry)
+
+### API Endpoints
+
+- `GET /api/categories` — List all categories
+- `GET /api/categories/:slug` — Get single category
+- `GET /api/products` — List all active products
+- `GET /api/products/category/:categoryId` — Products by category
+- `GET /api/products/:slug` — Get single product
+- `GET /api/cart` — Get current cart with items, pricing, and discount
+- `POST /api/cart/items` — Add item to cart (productId, quantity, personalizationName)
+- `PATCH /api/cart/items/:id` — Update cart item quantity
+- `DELETE /api/cart/items/:id` — Remove item from cart
+- `POST /api/checkout` — Place order with customer/shipping details
+- `GET /api/orders/:id` — Get order with items
 
 ### Shared Layer (`shared/`)
 
-- **`schema.ts`** — Drizzle ORM table definitions and Zod insert schemas. Single table: `history` with columns `id`, `expression`, `result`, `createdAt`
-- **`routes.ts`** — API route contract definitions (paths, methods, input/output schemas). Acts as a type-safe contract between frontend and backend
+- **`schema.ts`** — Drizzle ORM table definitions: categories, products, carts, cart_items, orders, order_items
+- **`routes.ts`** — Zod validation schemas for cart and checkout inputs
 
 ### Database
 
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Database**: PostgreSQL, connected via `DATABASE_URL` environment variable
-- **Connection**: `pg` Pool in `server/db.ts`
-- **Schema Management**: `drizzle-kit push` for schema migrations (run via `npm run db:push`)
-- **Schema**: Single `history` table:
-  - `id` — serial primary key
-  - `expression` — text (the math expression)
-  - `result` — text (the computed result)
-  - `created_at` — timestamp with default now
+- **Tables**:
+  - `categories` — id, name, slug, description, image_url, sort_order
+  - `products` — id, name, slug, description, price (integer in INR), image_url, category_id, active, sort_order
+  - `carts` — id, session_id, created_at
+  - `cart_items` — id, cart_id, product_id, quantity, personalization_name
+  - `orders` — id, customer details, shipping address, subtotal, discount, total, status, payment fields, created_at
+  - `order_items` — id, order_id, product snapshot, personalization_name, is_free
 
-### Storage Pattern
+### Product Categories
 
-The `server/storage.ts` file defines an `IStorage` interface and a `DatabaseStorage` class implementation. This pattern allows swapping storage backends if needed, though currently only the database implementation exists.
+1. Girls Towels (₹999 each) — ~20 products
+2. Boys Towels (₹999 each) — ~20 products
+3. Couple Towels (₹2,499 per set) — 6 products
+4. Boys Blankets (₹1,599 each) — 6 products
+5. Girls Blankets (₹1,599 each) — 6 products
+
+### Discount Logic
+
+"Buy 2 Get 1 Free" offer: When cart has 3+ items, the cheapest floor(N/2) items are free. Sort by price descending, mark the bottom half as free.
+- 3 items → 1 free (pay for 2)
+- 5 items → 2 free (pay for 3)
+- 7 items → 3 free (pay for 4)
+Minimum 3 items required to activate discount.
 
 ### Build System
 
 - **Dev**: `npm run dev` runs the Express server with Vite middleware for HMR
-- **Build**: `npm run build` runs a custom build script (`script/build.ts`) that builds the Vite client and bundles the server with esbuild
-- **Production**: `npm start` serves the pre-built client as static files from `dist/public/`
+- **Build**: `npm run build` runs a custom build script
+- **Production**: `npm start` serves the pre-built client as static files
 
-## External Dependencies
+### PWA
 
-### Required Services
-- **PostgreSQL Database** — Required. Connection string must be provided via `DATABASE_URL` environment variable. Used for storing calculation history.
+The app includes PWA support with manifest.json, service worker, and app icons.
 
-### Key NPM Packages
-- **drizzle-orm** + **drizzle-kit** — ORM and migration tooling for PostgreSQL
-- **express** (v5) — HTTP server framework
-- **mathjs** — Client-side math expression evaluation
-- **@tanstack/react-query** — Server state management on the frontend
-- **zod** + **drizzle-zod** — Schema validation shared across client/server
-- **framer-motion** — Animation library
-- **wouter** — Lightweight client-side routing
-- **shadcn/ui** components (Radix UI + Tailwind CSS)
-- **connect-pg-simple** — PostgreSQL session store (available but not actively used for this app)
+### Key Features
 
-### PWA (Progressive Web App)
+- Product personalisation (name embroidery input)
+- Automatic discount calculation at cart level
+- Floating WhatsApp contact button (99900 79722)
+- Dark/light theme toggle
+- Mobile responsive design
+- Cookie-based cart persistence
 
-The app is configured as a PWA, making it installable on Android (and iOS) devices via the browser's "Add to Home Screen" feature.
+## Recent Changes
 
-- **`client/public/manifest.json`** — Web app manifest with app name, icons, display mode, and theme color
-- **`client/public/sw.js`** — Service worker with network-first caching strategy for navigation, cache-first for static assets, and graceful offline fallback for API calls
-- **`client/public/icon-192.png`** and **`client/public/icon-512.png`** — App icons for home screen and splash screen
-- **`client/src/main.tsx`** — Registers the service worker on page load
-- **`client/index.html`** — Includes PWA meta tags (theme-color, apple-mobile-web-app-capable, manifest link, apple-touch-icon, Open Graph tags)
+- **Feb 2026**: Complete rebuild from calculator app to Turtle Little e-commerce store
+  - New database schema with 6 tables
+  - 58 products seeded from turtlelittle.com
+  - Full shopping cart with discount logic
+  - Checkout flow with order placement
+  - WhatsApp integration
+  - Teal/green branding with light/dark mode
 
-### Replit-Specific Plugins
-- `@replit/vite-plugin-runtime-error-modal` — Runtime error overlay in development
-- `@replit/vite-plugin-cartographer` — Dev tooling (conditionally loaded)
-- `@replit/vite-plugin-dev-banner` — Dev environment banner (conditionally loaded)
+## Future Work
+
+- Razorpay payment integration
+- Admin panel for product management
+- Customer accounts and order history
+- Product search
+- Image migration to CDN

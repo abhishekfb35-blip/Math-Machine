@@ -1,81 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Vibrant, Modern Dark Theme */
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'DM Mono', monospace;
 
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+  --background: 30 25% 97%;
+  --foreground: 20 15% 15%;
 
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
+  --card: 30 20% 99%;
+  --card-foreground: 20 15% 15%;
 
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 30 20% 99%;
+  --popover-foreground: 20 15% 15%;
 
-  --primary: 263 70% 50%; /* Deep Purple */
-  --primary-foreground: 210 40% 98%;
+  --primary: 157 45% 38%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 30 15% 92%;
+  --secondary-foreground: 20 15% 20%;
 
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
+  --muted: 30 10% 92%;
+  --muted-foreground: 20 5% 45%;
 
-  --accent: 263 70% 50%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 157 45% 38%;
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 50%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 263 70% 50%;
+  --border: 30 15% 88%;
+  --input: 30 15% 88%;
+  --ring: 157 45% 38%;
 
-  --radius: 1rem;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 20 15% 8%;
+  --foreground: 30 15% 95%;
+
+  --card: 20 15% 11%;
+  --card-foreground: 30 15% 95%;
+
+  --popover: 20 15% 11%;
+  --popover-foreground: 30 15% 95%;
+
+  --primary: 157 50% 45%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 20 10% 18%;
+  --secondary-foreground: 30 15% 90%;
+
+  --muted: 20 10% 18%;
+  --muted-foreground: 30 5% 55%;
+
+  --accent: 157 50% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 62.8% 40%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 20 10% 20%;
+  --input: 20 10% 20%;
+  --ring: 157 50% 45%;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(263, 70%, 20%, 0.3) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(320, 70%, 20%, 0.3) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(200, 70%, 20%, 0.3) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(240, 70%, 20%, 0.3) 0px, transparent 50%);
-    background-attachment: fixed;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;
   }
 }
 
-/* Custom calculator button styles */
-.calc-btn {
-  @apply relative overflow-hidden transition-all duration-200 active:scale-95 hover:brightness-110 active:brightness-125 select-none;
-}
-
-.calc-btn::after {
-  content: '';
-  @apply absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-200;
-}
-
-.calc-btn:hover::after {
-  @apply opacity-100;
-}
-
-/* Glassmorphism utilities */
-.glass {
-  @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl;
-}
-
-.glass-panel {
-  @apply bg-secondary/30 backdrop-blur-md border border-white/5;
+@layer utilities {
+  .hover-elevate {
+    @apply transition-all duration-200;
+  }
+  .hover-elevate:hover {
+    @apply brightness-95;
+  }
+  .dark .hover-elevate:hover {
+    @apply brightness-110;
+  }
+  .active-elevate-2 {
+    @apply transition-all duration-100;
+  }
+  .active-elevate-2:active {
+    @apply brightness-90;
+  }
+  .dark .active-elevate-2:active {
+    @apply brightness-125;
+  }
 }

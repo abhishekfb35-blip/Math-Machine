@@ -1,11 +1,11 @@
 {
-  "name": "Math Machine Calculator",
-  "short_name": "Math Machine",
-  "description": "Advanced mathematics made beautiful - a modern calculator with history",
+  "name": "Turtle Little - Personalised Luxury Towels & Blankets",
+  "short_name": "Turtle Little",
+  "description": "Premium embroidered towels and blankets personalised with your name. Buy 2 Get 1 Free!",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#7c3aed",
+  "background_color": "#f7f3ef",
+  "theme_color": "#2b8a6e",
   "orientation": "portrait",
   "icons": [
     {

@@ -1,48 +1,27 @@
 import { z } from 'zod';
-import { insertHistorySchema, history } from './schema';
 
-export const errorSchemas = {
-  internal: z.object({
-    message: z.string(),
-  }),
-};
+export const addToCartSchema = z.object({
+  productId: z.number(),
+  quantity: z.number().min(1).default(1),
+  personalizationName: z.string().optional(),
+});
 
-export const api = {
-  history: {
-    list: {
-      method: 'GET' as const,
-      path: '/api/history' as const,
-      responses: {
-        200: z.array(z.custom<typeof history.$inferSelect>()),
-      },
-    },
-    create: {
-      method: 'POST' as const,
-      path: '/api/history' as const,
-      input: insertHistorySchema,
-      responses: {
-        201: z.custom<typeof history.$inferSelect>(),
-        500: errorSchemas.internal,
-      },
-    },
-    clear: {
-      method: 'DELETE' as const,
-      path: '/api/history' as const,
-      responses: {
-        204: z.void(),
-      },
-    },
-  },
-};
+export const updateCartItemSchema = z.object({
+  quantity: z.number().min(0),
+  personalizationName: z.string().optional(),
+});
 
-export function buildUrl(path: string, params?: Record<string, string | number>): string {
-  let url = path;
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (url.includes(`:${key}`)) {
-        url = url.replace(`:${key}`, String(value));
-      }
-    });
-  }
-  return url;
-}
+export const checkoutSchema = z.object({
+  customerName: z.string().min(1),
+  customerEmail: z.string().email(),
+  customerPhone: z.string().min(10),
+  shippingAddress: z.string().min(1),
+  shippingCity: z.string().min(1),
+  shippingState: z.string().min(1),
+  shippingPincode: z.string().min(6).max(6),
+  notes: z.string().optional(),
+});
+
+export type AddToCartInput = z.infer<typeof addToCartSchema>;
+export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
