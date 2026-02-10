@@ -13,6 +13,9 @@ import heroBanner from "@/assets/images/hero-banner.png";
 import kidsBanner from "@/assets/images/kids-banner.png";
 import couplesBanner from "@/assets/images/couples-banner.png";
 import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
+import blanketsBanner from "@/assets/images/blankets-banner.png";
+import towelsBanner from "@assets/1King_Queen_Crowns_1770763286428.jpg";
+import bathrobesBanner from "@assets/48Mr&MrsRight_names_2_1770763286432.jpg";
 import type { Category, Product } from "@shared/schema";
 
 function ProductGridSkeleton({ count = 4 }: { count?: number }) {
@@ -202,6 +205,59 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center mb-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">Products</p>
+          <h2 className="text-xl md:text-2xl font-bold" data-testid="text-product-type-heading">Shop by Product</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Link href="/shop">
+            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-towels">
+              <img
+                src={towelsBanner}
+                alt="Personalised towels"
+                className="w-full aspect-[3/4] object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
+                <h3 className="font-bold text-white text-sm md:text-lg">Towels</h3>
+                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Personalised embroidered towels</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/shop">
+            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-bathrobes">
+              <img
+                src={bathrobesBanner}
+                alt="Personalised bathrobes"
+                className="w-full aspect-[3/4] object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
+                <h3 className="font-bold text-white text-sm md:text-lg">Bathrobes</h3>
+                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Luxury personalised bathrobes</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/shop">
+            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-blankets">
+              <img
+                src={blanketsBanner}
+                alt="Personalised blankets"
+                className="w-full aspect-[3/4] object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
+                <h3 className="font-bold text-white text-sm md:text-lg">Blankets</h3>
+                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Cosy personalised blankets</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      <Separator className="max-w-7xl mx-auto" />
 
       {isLoading ? (
         <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">
