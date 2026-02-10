@@ -13,9 +13,9 @@ import heroBanner from "@/assets/images/hero-banner.png";
 import kidsBanner from "@/assets/images/kids-banner.png";
 import couplesBanner from "@/assets/images/couples-banner.png";
 import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
-import blanketsBanner from "@/assets/images/blankets-banner.png";
-import towelsBanner from "@assets/1King_Queen_Crowns_1770763286428.jpg";
-import bathrobesBanner from "@assets/48Mr&MrsRight_names_2_1770763286432.jpg";
+import towelsBanner from "@/assets/images/towels-collection.png";
+import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
+import blanketsBanner from "@/assets/images/blankets-collection.png";
 import type { Category, Product } from "@shared/schema";
 
 function ProductGridSkeleton({ count = 4 }: { count?: number }) {
