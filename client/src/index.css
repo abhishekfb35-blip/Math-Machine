@@ -88,6 +88,9 @@
   a:hover, [role="button"]:hover {
     opacity: 0.8;
   }
+  a:active, [role="button"]:active, button:active, [type="button"]:active, [type="submit"]:active {
+    opacity: 0.6;
+  }
 }
 
 @layer utilities {
