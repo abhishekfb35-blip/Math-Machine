@@ -80,6 +80,16 @@
   }
 }
 
+@layer base {
+  a, [role="button"], [type="button"], [type="submit"], summary {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  a:hover, [role="button"]:hover {
+    opacity: 0.8;
+  }
+}
+
 @layer utilities {
   .hover-elevate {
     @apply transition-all duration-200;
