@@ -12,7 +12,7 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import heroBanner from "@/assets/images/hero-banner.png";
 import kidsBanner from "@/assets/images/kids-banner.png";
 import couplesBanner from "@/assets/images/couples-banner.png";
-import blanketsBanner from "@/assets/images/blankets-banner.png";
+import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
 import type { Category, Product } from "@shared/schema";
 
 function ProductGridSkeleton({ count = 4 }: { count?: number }) {
@@ -175,8 +175,8 @@ export default function Home() {
           <Link href="/shop?filter=adults">
             <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-adults">
               <img
-                src={blanketsBanner}
-                alt="Adults blankets collection"
+                src={adultsBanner}
+                alt="Adults towels collection"
                 className="w-full aspect-[4/3] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
