@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/ThemeProvider";
 import { useQuery } from "@tanstack/react-query";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { defaultHeader, type HeaderConfig } from "@/lib/siteConfigDefaults";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
+  const config = useSiteConfig<HeaderConfig>("header", defaultHeader);
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -19,7 +22,7 @@ export default function Header() {
         <div className="flex items-center justify-between gap-4 h-14">
           <Link href="/" data-testid="link-home">
             <span className="text-lg font-bold text-primary cursor-pointer" data-testid="text-brand-name">
-              Turtle Little
+              {config.brandName}
             </span>
           </Link>
 

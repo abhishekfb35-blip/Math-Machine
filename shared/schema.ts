@@ -67,6 +67,12 @@ export const orderItems = pgTable("order_items", {
   isFree: boolean("is_free").default(false),
 });
 
+export const siteConfig = pgTable("site_config", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
@@ -86,3 +92,7 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
+export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
+export type SiteConfig = typeof siteConfig.$inferSelect;
+export type InsertSiteConfig = z.infer<typeof insertSiteConfigSchema>;

@@ -1,11 +1,12 @@
 import {
-  categories, products, carts, cartItems, orders, orderItems,
+  categories, products, carts, cartItems, orders, orderItems, siteConfig,
   type Category, type InsertCategory,
   type Product, type InsertProduct,
   type Cart, type InsertCart,
   type CartItem, type InsertCartItem,
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
+  type SiteConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -33,6 +34,10 @@ export interface IStorage {
   getOrderById(id: number): Promise<Order | undefined>;
   getOrderItems(orderId: number): Promise<OrderItem[]>;
   updateOrderPayment(orderId: number, paymentId: string, paymentStatus: string): Promise<Order | undefined>;
+
+  getSiteConfig(key: string): Promise<SiteConfig | undefined>;
+  getAllSiteConfigs(): Promise<SiteConfig[]>;
+  upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -133,6 +138,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return updated;
+  }
+  async getSiteConfig(key: string): Promise<SiteConfig | undefined> {
+    const [config] = await db.select().from(siteConfig).where(eq(siteConfig.key, key));
+    return config;
+  }
+
+  async getAllSiteConfigs(): Promise<SiteConfig[]> {
+    return await db.select().from(siteConfig);
+  }
+
+  async upsertSiteConfig(key: string, value: string): Promise<SiteConfig> {
+    const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, key));
+    if (existing) {
+      const [updated] = await db.update(siteConfig).set({ value }).where(eq(siteConfig.key, key)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(siteConfig).values({ key, value }).returning();
+    return created;
   }
 }
 

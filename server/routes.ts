@@ -248,6 +248,37 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/site-config", async (_req, res) => {
+    const configs = await storage.getAllSiteConfigs();
+    const result: Record<string, any> = {};
+    for (const c of configs) {
+      try { result[c.key] = JSON.parse(c.value); } catch { result[c.key] = c.value; }
+    }
+    res.json(result);
+  });
+
+  app.get("/api/site-config/:key", async (req, res) => {
+    const config = await storage.getSiteConfig(req.params.key);
+    if (!config) return res.status(404).json({ message: "Config not found" });
+    try {
+      res.json({ key: config.key, value: JSON.parse(config.value) });
+    } catch {
+      res.json({ key: config.key, value: config.value });
+    }
+  });
+
+  app.post("/api/site-config/:key", async (req, res) => {
+    try {
+      const key = req.params.key;
+      const value = JSON.stringify(req.body.value);
+      const config = await storage.upsertSiteConfig(key, value);
+      res.json({ key: config.key, value: JSON.parse(config.value) });
+    } catch (err) {
+      console.error("Site config save error:", err);
+      res.status(500).json({ message: "Failed to save config" });
+    }
+  });
+
   app.get("/api/orders/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const order = await storage.getOrderById(id);

@@ -17,6 +17,7 @@ import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmation from "@/pages/OrderConfirmation";
+import AdminBuilder from "@/pages/AdminBuilder";
 import NotFound from "@/pages/not-found";
 
 function ScrollToTop() {
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/order/:id" component={OrderConfirmation} />
+      <Route path="/admin/builder" component={AdminBuilder} />
       <Route component={NotFound} />
     </Switch>
   );

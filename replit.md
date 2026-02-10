@@ -36,6 +36,7 @@ The project follows a **monorepo layout** with three top-level source directorie
 - **Cart** (`/cart`) — Cart items with quantity controls, discount display, order summary
 - **Checkout** (`/checkout`) — Address form with validation, order summary sidebar
 - **Order Confirmation** (`/order/:id`) — Order details, shipping info, item list with free items marked
+- **Admin Builder** (`/admin/builder`) — CMS-style page builder for configuring all homepage content, header, footer, and announcements
 
 ### UI Components
 
@@ -66,10 +67,13 @@ The project follows a **monorepo layout** with three top-level source directorie
 - `DELETE /api/cart/items/:id` — Remove item from cart
 - `POST /api/checkout` — Place order with customer/shipping details
 - `GET /api/orders/:id` — Get order with items
+- `GET /api/site-config` — Get all site configuration (returns key-value JSON)
+- `GET /api/site-config/:key` — Get single config by key
+- `POST /api/site-config/:key` — Upsert config (body: { value: any })
 
 ### Shared Layer (`shared/`)
 
-- **`schema.ts`** — Drizzle ORM table definitions: categories, products, carts, cart_items, orders, order_items
+- **`schema.ts`** — Drizzle ORM table definitions: categories, products, carts, cart_items, orders, order_items, site_config
 - **`routes.ts`** — Zod validation schemas for cart and checkout inputs
 
 ### Database
@@ -83,6 +87,7 @@ The project follows a **monorepo layout** with three top-level source directorie
   - `cart_items` — id, cart_id, product_id, quantity, personalization_name
   - `orders` — id, customer details, shipping address, subtotal, discount, total, status, payment fields, created_at
   - `order_items` — id, order_id, product snapshot, personalization_name, is_free
+  - `site_config` — id, key (unique), value (JSON string)
 
 ### Product Categories
 

@@ -1,21 +1,23 @@
 import { Link } from "wouter";
 import { MessageCircle, Mail, Phone, MapPin } from "lucide-react";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { defaultFooter, type FooterConfig } from "@/lib/siteConfigDefaults";
 
 export default function Footer() {
+  const config = useSiteConfig<FooterConfig>("footer", defaultFooter);
+
   return (
     <footer className="bg-foreground text-background pb-20 md:pb-0" data-testid="section-footer">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2 space-y-3">
-            <h3 className="text-lg font-bold" data-testid="text-footer-brand">Turtle Little</h3>
+            <h3 className="text-lg font-bold" data-testid="text-footer-brand">{config.brandName}</h3>
             <p className="text-sm opacity-70 max-w-sm leading-relaxed">
-              Premium personalised towels and blankets, embroidered with love.
-              Each product is crafted with the finest fabrics and meticulous attention to detail,
-              making every piece a thoughtful gift.
+              {config.brandStory}
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="https://wa.me/919990079722"
+                href={config.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm opacity-70 transition-opacity"
@@ -25,7 +27,7 @@ export default function Footer() {
                 WhatsApp
               </a>
               <a
-                href="mailto:hello@turtlelittle.com"
+                href={`mailto:${config.email}`}
                 className="inline-flex items-center gap-1.5 text-sm opacity-70 transition-opacity"
                 data-testid="link-footer-email"
               >
@@ -38,18 +40,11 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold uppercase tracking-wider opacity-50">Shop</h4>
             <nav className="flex flex-col gap-2">
-              <Link href="/shop?filter=kids" className="text-sm opacity-70" data-testid="link-footer-kids">
-                Kids Collection
-              </Link>
-              <Link href="/shop?filter=couples" className="text-sm opacity-70" data-testid="link-footer-couples">
-                Couple Sets
-              </Link>
-              <Link href="/shop" className="text-sm opacity-70" data-testid="link-footer-all">
-                All Products
-              </Link>
-              <Link href="/cart" className="text-sm opacity-70" data-testid="link-footer-cart">
-                My Cart
-              </Link>
+              {config.shopLinks.map((link, i) => (
+                <Link key={i} href={link.href} className="text-sm opacity-70" data-testid={`link-footer-shop-${i}`}>
+                  {link.label}
+                </Link>
+              ))}
             </nav>
           </div>
 
@@ -57,24 +52,24 @@ export default function Footer() {
             <h4 className="text-sm font-semibold uppercase tracking-wider opacity-50">Contact</h4>
             <div className="flex flex-col gap-2">
               <a
-                href="tel:+919990079722"
+                href={`tel:${config.phone.replace(/\s/g, "")}`}
                 className="inline-flex items-center gap-2 text-sm opacity-70 transition-opacity"
                 data-testid="link-footer-phone"
               >
                 <Phone className="w-3.5 h-3.5 shrink-0" />
-                +91 99900 79722
+                {config.phone}
               </a>
               <a
-                href="mailto:hello@turtlelittle.com"
+                href={`mailto:${config.email}`}
                 className="inline-flex items-center gap-2 text-sm opacity-70 transition-opacity"
                 data-testid="link-footer-email-contact"
               >
                 <Mail className="w-3.5 h-3.5 shrink-0" />
-                hello@turtlelittle.com
+                {config.email}
               </a>
               <span className="inline-flex items-start gap-2 text-sm opacity-70">
                 <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                New Delhi, India
+                {config.address}
               </span>
             </div>
           </div>
@@ -82,7 +77,7 @@ export default function Footer() {
 
         <div className="border-t border-background/10 mt-8 pt-6 text-center">
           <p className="text-xs opacity-50" data-testid="text-footer-copyright">
-            &copy; {new Date().getFullYear()} Turtle Little. All rights reserved.
+            &copy; {new Date().getFullYear()} {config.brandName}. All rights reserved.
           </p>
         </div>
       </div>
