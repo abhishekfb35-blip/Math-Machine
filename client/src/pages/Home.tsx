@@ -211,46 +211,55 @@ export default function Home() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">Products</p>
           <h2 className="text-xl md:text-2xl font-bold" data-testid="text-product-type-heading">Shop by Product</h2>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/shop">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-towels">
-              <img
-                src={towelsBanner}
-                alt="Personalised towels"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-sm md:text-lg">Towels</h3>
-                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Personalised embroidered towels</p>
+            <div className="group" data-testid="card-product-towels">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={towelsBanner}
+                  alt="Personalised towels"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-product-towels">Towels</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Wrap yourself in luxury. Our 550 GSM zero-twist cotton towels are soft, absorbent and beautifully embroidered with your name or initials. Available for kids and adults in a range of fun and elegant designs.
+                </p>
               </div>
             </div>
           </Link>
           <Link href="/shop">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-bathrobes">
-              <img
-                src={bathrobesBanner}
-                alt="Personalised bathrobes"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-sm md:text-lg">Bathrobes</h3>
-                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Luxury personalised bathrobes</p>
+            <div className="group" data-testid="card-product-bathrobes">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={bathrobesBanner}
+                  alt="Personalised bathrobes"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-product-bathrobes">Bathrobes</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Step out of the shower in style. Our plush terry cotton bathrobes are personalised with custom embroidery, making every day feel like a spa day. Perfect as a gift or a treat for yourself.
+                </p>
               </div>
             </div>
           </Link>
           <Link href="/shop">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-product-blankets">
-              <img
-                src={blanketsBanner}
-                alt="Personalised blankets"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-sm md:text-lg">Blankets</h3>
-                <p className="text-[10px] md:text-xs text-white/75 hidden md:block">Cosy personalised blankets</p>
+            <div className="group" data-testid="card-product-blankets">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={blanketsBanner}
+                  alt="Personalised blankets"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-product-blankets">Blankets</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Snuggle up with a blanket made just for you. Our ultra-soft AC blankets come with beautiful embroidered names and fun designs — loved by kids and perfect for gifting on birthdays and special occasions.
+                </p>
               </div>
             </div>
           </Link>
