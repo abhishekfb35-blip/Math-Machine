@@ -160,46 +160,55 @@ export default function Home() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">Collections</p>
           <h2 className="text-xl md:text-2xl font-bold" data-testid="text-audience-heading">Shop by Collection</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/shop?filter=kids">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-kids">
-              <img
-                src={kidsBanner}
-                alt="Kids towels collection"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-base md:text-lg">For Kids</h3>
-                <p className="text-xs text-white/75">Towels & Blankets</p>
+            <div className="group" data-testid="card-shop-kids">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={kidsBanner}
+                  alt="Kids towels collection"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-collection-kids">For Kids</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.
+                </p>
               </div>
             </div>
           </Link>
           <Link href="/shop?filter=adults">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-adults">
-              <img
-                src={adultsBanner}
-                alt="Adults towels collection"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-base md:text-lg">For Adults</h3>
-                <p className="text-xs text-white/75">Blankets & more</p>
+            <div className="group" data-testid="card-shop-adults">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={adultsBanner}
+                  alt="Adults towels collection"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-collection-adults">For Adults</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.
+                </p>
               </div>
             </div>
           </Link>
-          <Link href="/shop?filter=couples" className="col-span-2 md:col-span-1">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-couples">
-              <img
-                src={couplesBanner}
-                alt="Couple towel sets"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-base md:text-lg">For Couples</h3>
-                <p className="text-xs text-white/75">Matching towel sets</p>
+          <Link href="/shop?filter=couples">
+            <div className="group" data-testid="card-shop-couples">
+              <div className="relative rounded-md overflow-hidden">
+                <img
+                  src={couplesBanner}
+                  alt="Couple towel sets"
+                  className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                />
+              </div>
+              <div className="mt-3 space-y-1 px-1">
+                <h3 className="font-bold text-base" data-testid="text-collection-couples">For Couples</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.
+                </p>
               </div>
             </div>
           </Link>
