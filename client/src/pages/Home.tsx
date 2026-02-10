@@ -172,8 +172,22 @@ export default function Home() {
               </div>
             </div>
           </Link>
-          <Link href="/shop?filter=couples">
+          <Link href="/shop?filter=adults">
             <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-adults">
+              <img
+                src={blanketsBanner}
+                alt="Adults blankets collection"
+                className="w-full aspect-[4/3] object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
+              <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
+                <h3 className="font-bold text-white text-base md:text-lg">For Adults</h3>
+                <p className="text-xs text-white/75">Blankets & more</p>
+              </div>
+            </div>
+          </Link>
+          <Link href="/shop?filter=couples" className="col-span-2 md:col-span-1">
+            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-couples">
               <img
                 src={couplesBanner}
                 alt="Couple towel sets"
@@ -183,20 +197,6 @@ export default function Home() {
               <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
                 <h3 className="font-bold text-white text-base md:text-lg">For Couples</h3>
                 <p className="text-xs text-white/75">Matching towel sets</p>
-              </div>
-            </div>
-          </Link>
-          <Link href="/shop?filter=kids" className="col-span-2 md:col-span-1">
-            <div className="relative rounded-md overflow-hidden cursor-pointer group" data-testid="card-shop-blankets">
-              <img
-                src={blanketsBanner}
-                alt="Kids blankets collection"
-                className="w-full aspect-[4/3] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 space-y-0.5">
-                <h3 className="font-bold text-white text-base md:text-lg">Cozy Blankets</h3>
-                <p className="text-xs text-white/75">Personalised AC blankets</p>
               </div>
             </div>
           </Link>
