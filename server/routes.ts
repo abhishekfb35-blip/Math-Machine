@@ -4,6 +4,35 @@ import { storage } from "./storage";
 import { addToCartSchema, updateCartItemSchema, checkoutSchema } from "@shared/routes";
 import { z } from "zod";
 import crypto from "crypto";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
+      cb(null, name);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+});
 
 function getSessionId(req: Request, res: Response): string {
   let sessionId = req.cookies?.cart_session;
@@ -51,6 +80,17 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  const express = await import("express");
+  app.use("/uploads", express.default.static(uploadsDir));
+
+  app.post("/api/upload", upload.single("image"), (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
 
   app.get("/api/categories", async (_req, res) => {
     const cats = await storage.getCategories();

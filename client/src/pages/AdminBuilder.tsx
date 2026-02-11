@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, History,
+  RotateCcw, ChevronUp, ChevronDown, History, Upload, Loader2,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -68,11 +68,50 @@ function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
 }
 
 function ImageField({ label, value, onChange, testId, fallbackImage }: { label: string; value: string; onChange: (url: string) => void; testId: string; fallbackImage?: string }) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const displaySrc = value || fallbackImage;
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      onChange(data.url);
+    } catch (err) {
+      const toast = document.createElement("div");
+      toast.textContent = "Image upload failed. Please try again.";
+      toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-4 py-2 rounded-md text-sm z-50";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <div className="relative rounded-md overflow-hidden border bg-muted/30">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        data-testid={`${testId}-file`}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleUpload(file);
+          e.target.value = "";
+        }}
+      />
+      <div
+        className="relative rounded-md overflow-hidden border bg-muted/30 cursor-pointer group"
+        onClick={() => fileInputRef.current?.click()}
+        data-testid={`${testId}-upload-area`}
+      >
         {displaySrc ? (
           <img
             src={displaySrc}
@@ -84,11 +123,21 @@ function ImageField({ label, value, onChange, testId, fallbackImage }: { label: 
         ) : (
           <div className="flex items-center justify-center h-32 bg-muted/20" data-testid={`${testId}-empty`}>
             <div className="text-center text-muted-foreground">
-              <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-30" />
-              <p className="text-xs opacity-60">No image available</p>
+              <Upload className="w-8 h-8 mx-auto mb-1 opacity-30" />
+              <p className="text-xs opacity-60">Click to upload image</p>
             </div>
           </div>
         )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+          {uploading ? (
+            <Loader2 className="w-6 h-6 text-white animate-spin" />
+          ) : (
+            <div className="text-center text-white">
+              <Upload className="w-6 h-6 mx-auto mb-1" />
+              <p className="text-xs font-medium">Click to upload</p>
+            </div>
+          )}
+        </div>
         {!value && displaySrc && (
           <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm px-3 py-1.5">
             <p className="text-xs text-muted-foreground">Current default image</p>
@@ -98,7 +147,7 @@ function ImageField({ label, value, onChange, testId, fallbackImage }: { label: 
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Paste image URL to override default"
+        placeholder="Or paste image URL"
         data-testid={testId}
       />
     </div>
