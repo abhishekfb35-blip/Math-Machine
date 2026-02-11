@@ -21,9 +21,11 @@ import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
   defaultPromo, defaultTestimonials, defaultStats, defaultFeaturedSections,
+  defaultHomepageCollections,
   type HeroConfig, type PromiseConfig, type CollectionsConfig,
   type ProductTypesConfig, type PromoConfig, type TestimonialsConfig,
   type StatsConfig, type FeaturedSectionsConfig,
+  type HomepageCollectionsConfig, type HomepageCollectionSection,
 } from "@/lib/siteConfigDefaults";
 
 const defaultCollectionImages = [kidsBanner, adultsBanner, couplesBanner];
@@ -51,12 +53,34 @@ export default function Home() {
 
   const hero = useSiteConfig<HeroConfig>("hero", defaultHero);
   const promise = useSiteConfig<PromiseConfig>("promise", defaultPromise);
-  const collections = useSiteConfig<CollectionsConfig>("collections", defaultCollections);
-  const productTypes = useSiteConfig<ProductTypesConfig>("productTypes", defaultProductTypes);
   const promo = useSiteConfig<PromoConfig>("promo", defaultPromo);
   const testimonials = useSiteConfig<TestimonialsConfig>("testimonials", defaultTestimonials);
   const stats = useSiteConfig<StatsConfig>("stats", defaultStats);
   const featured = useSiteConfig<FeaturedSectionsConfig>("featuredSections", defaultFeaturedSections);
+
+  const { data: allSiteConfig } = useQuery<Record<string, any>>({
+    queryKey: ["/api/site-config"],
+  });
+
+  const homepageCollections: HomepageCollectionSection[] = (() => {
+    if (allSiteConfig?.["homepageCollections"]?.sections) {
+      return allSiteConfig["homepageCollections"].sections;
+    }
+    const sections: HomepageCollectionSection[] = [];
+    const savedCollections = allSiteConfig?.["collections"];
+    if (savedCollections) {
+      sections.push({ id: "collections", label: savedCollections.label || "Collections", heading: savedCollections.heading || "Shop by Collection", cards: savedCollections.cards || [] });
+    } else {
+      sections.push(defaultHomepageCollections.sections[0]);
+    }
+    const savedProductTypes = allSiteConfig?.["productTypes"];
+    if (savedProductTypes) {
+      sections.push({ id: "productTypes", label: savedProductTypes.label || "Products", heading: savedProductTypes.heading || "Shop by Product", cards: savedProductTypes.cards || [] });
+    } else {
+      sections.push(defaultHomepageCollections.sections[1]);
+    }
+    return sections;
+  })();
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -156,61 +180,35 @@ export default function Home() {
 
       <Separator className="max-w-7xl mx-auto" />
 
-      <section className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center mb-6">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">{collections.label}</p>
-          <h2 className="text-xl md:text-2xl font-bold" data-testid="text-audience-heading">{collections.heading}</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {collections.cards.map((card, i) => (
-            <Link key={i} href={card.link}>
-              <div className="group" data-testid={`card-collection-${i}`}>
-                <div className="relative rounded-md overflow-hidden">
-                  <img
-                    src={card.imageUrl || defaultCollectionImages[i] || kidsBanner}
-                    alt={card.title}
-                    className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
-                  />
+      {homepageCollections.map((section, si) => (
+        <section key={section.id || si} className="max-w-7xl mx-auto px-4 py-8" data-testid={`section-collection-${si}`}>
+          <div className="text-center mb-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">{section.label}</p>
+            <h2 className="text-xl md:text-2xl font-bold" data-testid={`text-collection-heading-${si}`}>{section.heading}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {section.cards.map((card, ci) => (
+              <Link key={ci} href={card.link}>
+                <div className="group" data-testid={`card-collection-${si}-${ci}`}>
+                  <div className="relative rounded-md overflow-hidden">
+                    <img
+                      src={card.imageUrl || (si === 0 ? defaultCollectionImages[ci] : si === 1 ? defaultProductTypeImages[ci] : undefined) || kidsBanner}
+                      alt={card.title}
+                      className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                    />
+                  </div>
+                  <div className="mt-3 space-y-1 px-1">
+                    <h3 className="font-bold text-base" data-testid={`text-collection-title-${si}-${ci}`}>{card.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="mt-3 space-y-1 px-1">
-                  <h3 className="font-bold text-base" data-testid={`text-collection-title-${i}`}>{card.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center mb-6">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">{productTypes.label}</p>
-          <h2 className="text-xl md:text-2xl font-bold" data-testid="text-product-type-heading">{productTypes.heading}</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {productTypes.cards.map((card, i) => (
-            <Link key={i} href={card.link}>
-              <div className="group" data-testid={`card-product-type-${i}`}>
-                <div className="relative rounded-md overflow-hidden">
-                  <img
-                    src={card.imageUrl || defaultProductTypeImages[i] || towelsBanner}
-                    alt={card.title}
-                    className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
-                  />
-                </div>
-                <div className="mt-3 space-y-1 px-1">
-                  <h3 className="font-bold text-base" data-testid={`text-product-type-title-${i}`}>{card.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
 
       <Separator className="max-w-7xl mx-auto" />
 

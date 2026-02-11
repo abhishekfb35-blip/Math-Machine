@@ -36,7 +36,7 @@ The project follows a **monorepo layout** with three top-level source directorie
 - **Cart** (`/cart`) — Cart items with quantity controls, discount display, order summary
 - **Checkout** (`/checkout`) — Address form with validation, order summary sidebar
 - **Order Confirmation** (`/order/:id`) — Order details, shipping info, item list with free items marked
-- **Admin Builder** (`/admin/builder`) — CMS-style page builder for configuring all homepage content, header, footer, and announcements
+- **Admin Builder** (`/admin/builder`) — CMS-style page builder for configuring all homepage content, header, footer, announcements, and dynamic homepage collections
 
 ### UI Components
 
@@ -126,6 +126,13 @@ The app includes PWA support with manifest.json, service worker, and app icons.
 
 ## Recent Changes
 
+- **Feb 2026**: Dynamic homepage collections system
+  - Homepage card grid sections (e.g. "Shop by Collection", "Shop by Product") are now fully dynamic
+  - Sections can be added, deleted, and reordered in admin builder
+  - Cards within each section can be added and deleted
+  - Last 3 deleted sections stored in history and can be restored
+  - Unified config key "homepageCollections" with backward-compatible migration from old "collections"/"productTypes" keys
+  - Image preview in admin builder shows actual default/fallback images
 - **Feb 2026**: snaan.in-inspired premium design improvements
   - Scrolling announcement/promo bar above header
   - "The Turtle Little Promise" brand section (Premium Fabric, Hand Embroidered, Made with Love)

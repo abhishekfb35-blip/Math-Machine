@@ -17,16 +17,18 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
+  RotateCcw, ChevronUp, ChevronDown, History,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
-  defaultStats, defaultFooter, defaultFeaturedSections,
+  defaultStats, defaultFooter, defaultFeaturedSections, defaultHomepageCollections,
   type AnnouncementConfig, type HeroConfig, type HeaderConfig,
   type PromiseConfig, type CollectionsConfig, type ProductTypesConfig,
   type PromoConfig, type TestimonialsConfig, type StatsConfig,
   type FooterConfig, type FeaturedSectionsConfig,
+  type HomepageCollectionsConfig, type HomepageCollectionSection,
 } from "@/lib/siteConfigDefaults";
 
 import heroBanner from "@/assets/images/hero-banner.png";
@@ -265,136 +267,176 @@ function PromiseSection({ data }: { data: PromiseConfig }) {
   );
 }
 
-function CollectionsSection({ data }: { data: CollectionsConfig }) {
+function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }) {
   const [config, setConfig] = useState(data);
-  const save = useSaveConfig("collections");
+  const save = useSaveConfig("homepageCollections");
   useEffect(() => { setConfig(data); }, [data]);
 
-  const updateCard = (index: number, field: string, value: string) => {
-    const cards = [...config.cards];
-    cards[index] = { ...cards[index], [field]: value };
-    setConfig({ ...config, cards });
+  const generateId = () => `section_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  const updateSection = (sectionIndex: number, field: string, value: string) => {
+    const sections = [...config.sections];
+    sections[sectionIndex] = { ...sections[sectionIndex], [field]: value };
+    setConfig({ ...config, sections });
   };
 
-  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop", imageUrl: "" }] });
-  const removeCard = (index: number) => setConfig({ ...config, cards: config.cards.filter((_, i) => i !== index) });
+  const updateCard = (sectionIndex: number, cardIndex: number, field: string, value: string) => {
+    const sections = [...config.sections];
+    const cards = [...sections[sectionIndex].cards];
+    cards[cardIndex] = { ...cards[cardIndex], [field]: value };
+    sections[sectionIndex] = { ...sections[sectionIndex], cards };
+    setConfig({ ...config, sections });
+  };
+
+  const addCard = (sectionIndex: number) => {
+    const sections = [...config.sections];
+    sections[sectionIndex] = {
+      ...sections[sectionIndex],
+      cards: [...sections[sectionIndex].cards, { title: "", description: "", link: "/shop", imageUrl: "" }],
+    };
+    setConfig({ ...config, sections });
+  };
+
+  const removeCard = (sectionIndex: number, cardIndex: number) => {
+    const sections = [...config.sections];
+    sections[sectionIndex] = {
+      ...sections[sectionIndex],
+      cards: sections[sectionIndex].cards.filter((_, i) => i !== cardIndex),
+    };
+    setConfig({ ...config, sections });
+  };
+
+  const addSection = () => {
+    setConfig({
+      ...config,
+      sections: [
+        ...config.sections,
+        { id: generateId(), label: "", heading: "New Collection", cards: [] },
+      ],
+    });
+  };
+
+  const removeSection = (index: number) => {
+    const removed = config.sections[index];
+    const deletedHistory = [removed, ...config.deletedHistory].slice(0, 3);
+    setConfig({
+      ...config,
+      sections: config.sections.filter((_, i) => i !== index),
+      deletedHistory,
+    });
+  };
+
+  const restoreSection = (historyIndex: number) => {
+    const restored = config.deletedHistory[historyIndex];
+    setConfig({
+      ...config,
+      sections: [...config.sections, { ...restored, id: generateId() }],
+      deletedHistory: config.deletedHistory.filter((_, i) => i !== historyIndex),
+    });
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    const sections = [...config.sections];
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= sections.length) return;
+    [sections[index], sections[swapIndex]] = [sections[swapIndex], sections[index]];
+    setConfig({ ...config, sections });
+  };
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Section Label</Label>
-          <Input value={config.label} onChange={(e) => setConfig({ ...config, label: e.target.value })} data-testid="input-collections-label" />
-        </div>
-        <div className="space-y-2">
-          <Label>Heading</Label>
-          <Input value={config.heading} onChange={(e) => setConfig({ ...config, heading: e.target.value })} data-testid="input-collections-heading" />
-        </div>
-      </div>
-      <Separator />
-      {config.cards.map((card, i) => (
-        <Card key={i} className="p-4 space-y-3">
+      {config.sections.map((section, si) => (
+        <Card key={section.id} className="p-4 space-y-4" data-testid={`card-section-${si}`}>
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <p className="text-sm font-medium">Card {i + 1}</p>
-            <Button size="icon" variant="ghost" onClick={() => removeCard(i)} data-testid={`button-remove-collection-${i}`}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <h3 className="font-semibold text-sm">{section.heading || `Section ${si + 1}`}</h3>
+            <div className="flex items-center gap-1">
+              <Button size="icon" variant="ghost" onClick={() => moveSection(si, "up")} disabled={si === 0} data-testid={`button-move-section-up-${si}`}>
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => moveSection(si, "down")} disabled={si === config.sections.length - 1} data-testid={`button-move-section-down-${si}`}>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => removeSection(si)} data-testid={`button-remove-section-${si}`}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <ImageField
-            label="Card Image"
-            value={card.imageUrl}
-            onChange={(url) => updateCard(i, "imageUrl", url)}
-            testId={`input-collection-image-${i}`}
-            fallbackImage={defaultCollectionImages[i]}
-          />
-          <div className="space-y-2">
-            <Label>Title</Label>
-            <Input value={card.title} onChange={(e) => updateCard(i, "title", e.target.value)} data-testid={`input-collection-title-${i}`} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Section Label</Label>
+              <Input value={section.label} onChange={(e) => updateSection(si, "label", e.target.value)} data-testid={`input-section-label-${si}`} />
+            </div>
+            <div className="space-y-2">
+              <Label>Section Heading</Label>
+              <Input value={section.heading} onChange={(e) => updateSection(si, "heading", e.target.value)} data-testid={`input-section-heading-${si}`} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea value={card.description} onChange={(e) => updateCard(i, "description", e.target.value)} data-testid={`input-collection-desc-${i}`} />
-          </div>
-          <div className="space-y-2">
-            <Label>Link</Label>
-            <Input value={card.link} onChange={(e) => updateCard(i, "link", e.target.value)} data-testid={`input-collection-link-${i}`} />
-          </div>
+          <Separator />
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cards ({section.cards.length})</p>
+          {section.cards.map((card, ci) => (
+            <Card key={ci} className="p-3 space-y-3 bg-muted/30 border-dashed">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-sm text-muted-foreground">Card {ci + 1}</p>
+                <Button size="icon" variant="ghost" onClick={() => removeCard(si, ci)} data-testid={`button-remove-card-${si}-${ci}`}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <ImageField
+                label="Card Image"
+                value={card.imageUrl}
+                onChange={(url) => updateCard(si, ci, "imageUrl", url)}
+                testId={`input-card-image-${si}-${ci}`}
+                fallbackImage={si === 0 ? defaultCollectionImages[ci] : si === 1 ? defaultProductTypeImages[ci] : undefined}
+              />
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input value={card.title} onChange={(e) => updateCard(si, ci, "title", e.target.value)} data-testid={`input-card-title-${si}-${ci}`} />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea value={card.description} onChange={(e) => updateCard(si, ci, "description", e.target.value)} data-testid={`input-card-desc-${si}-${ci}`} />
+              </div>
+              <div className="space-y-2">
+                <Label>Link</Label>
+                <Input value={card.link} onChange={(e) => updateCard(si, ci, "link", e.target.value)} data-testid={`input-card-link-${si}-${ci}`} />
+              </div>
+            </Card>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => addCard(si)} data-testid={`button-add-card-${si}`}>
+            <Plus className="w-4 h-4 mr-2" /> Add Card
+          </Button>
         </Card>
       ))}
-      <Button variant="outline" onClick={addCard} data-testid="button-add-collection">
-        <Plus className="w-4 h-4 mr-2" /> Add Collection Card
+
+      <Button variant="outline" onClick={addSection} data-testid="button-add-section">
+        <Plus className="w-4 h-4 mr-2" /> Add New Collection Section
       </Button>
-      <div>
-        <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-collections">
-          <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Collections"}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
-function ProductTypesSection({ data }: { data: ProductTypesConfig }) {
-  const [config, setConfig] = useState(data);
-  const save = useSaveConfig("productTypes");
-  useEffect(() => { setConfig(data); }, [data]);
-
-  const updateCard = (index: number, field: string, value: string) => {
-    const cards = [...config.cards];
-    cards[index] = { ...cards[index], [field]: value };
-    setConfig({ ...config, cards });
-  };
-
-  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop", imageUrl: "" }] });
-  const removeCard = (index: number) => setConfig({ ...config, cards: config.cards.filter((_, i) => i !== index) });
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Section Label</Label>
-          <Input value={config.label} onChange={(e) => setConfig({ ...config, label: e.target.value })} data-testid="input-product-types-label" />
+      {config.deletedHistory.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">Recently Deleted ({config.deletedHistory.length})</p>
+          </div>
+          {config.deletedHistory.map((section, hi) => (
+            <Card key={hi} className="p-3 bg-muted/20 border-dashed" data-testid={`card-deleted-section-${hi}`}>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <p className="text-sm font-medium">{section.heading}</p>
+                  <p className="text-xs text-muted-foreground">{section.cards.length} card{section.cards.length !== 1 ? "s" : ""}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => restoreSection(hi)} data-testid={`button-restore-section-${hi}`}>
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Restore
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
-        <div className="space-y-2">
-          <Label>Heading</Label>
-          <Input value={config.heading} onChange={(e) => setConfig({ ...config, heading: e.target.value })} data-testid="input-product-types-heading" />
-        </div>
-      </div>
-      <Separator />
-      {config.cards.map((card, i) => (
-        <Card key={i} className="p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <p className="text-sm font-medium">Card {i + 1}</p>
-            <Button size="icon" variant="ghost" onClick={() => removeCard(i)} data-testid={`button-remove-product-type-${i}`}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-          <ImageField
-            label="Card Image"
-            value={card.imageUrl}
-            onChange={(url) => updateCard(i, "imageUrl", url)}
-            testId={`input-product-type-image-${i}`}
-            fallbackImage={defaultProductTypeImages[i]}
-          />
-          <div className="space-y-2">
-            <Label>Title</Label>
-            <Input value={card.title} onChange={(e) => updateCard(i, "title", e.target.value)} data-testid={`input-product-type-title-${i}`} />
-          </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea value={card.description} onChange={(e) => updateCard(i, "description", e.target.value)} data-testid={`input-product-type-desc-${i}`} />
-          </div>
-          <div className="space-y-2">
-            <Label>Link</Label>
-            <Input value={card.link} onChange={(e) => updateCard(i, "link", e.target.value)} data-testid={`input-product-type-link-${i}`} />
-          </div>
-        </Card>
-      ))}
-      <Button variant="outline" onClick={addCard} data-testid="button-add-product-type">
-        <Plus className="w-4 h-4 mr-2" /> Add Product Type
-      </Button>
+      )}
+
       <div>
-        <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-product-types">
-          <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Product Types"}
+        <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-homepage-collections">
+          <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save All Collections"}
         </Button>
       </div>
     </div>
@@ -673,6 +715,26 @@ export default function AdminBuilder() {
     return defaultVal;
   };
 
+  const getHomepageCollections = (): HomepageCollectionsConfig => {
+    if (allConfig && allConfig["homepageCollections"]) {
+      return { ...defaultHomepageCollections, ...allConfig["homepageCollections"] } as HomepageCollectionsConfig;
+    }
+    const sections: HomepageCollectionSection[] = [];
+    const savedCollections = allConfig?.["collections"];
+    const savedProductTypes = allConfig?.["productTypes"];
+    if (savedCollections) {
+      sections.push({ id: "collections", label: savedCollections.label || "Collections", heading: savedCollections.heading || "Shop by Collection", cards: savedCollections.cards || [] });
+    } else {
+      sections.push(defaultHomepageCollections.sections[0]);
+    }
+    if (savedProductTypes) {
+      sections.push({ id: "productTypes", label: savedProductTypes.label || "Products", heading: savedProductTypes.heading || "Shop by Product", cards: savedProductTypes.cards || [] });
+    } else {
+      sections.push(defaultHomepageCollections.sections[1]);
+    }
+    return { sections, deletedHistory: [] };
+  };
+
   return (
     <div className="pb-20 md:pb-0">
       <div className="bg-muted/50 border-b">
@@ -734,21 +796,12 @@ export default function AdminBuilder() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="collections" className="border rounded-md px-4">
+            <AccordionItem value="homepageCollections" className="border rounded-md px-4">
               <AccordionTrigger data-testid="accordion-collections">
-                <SectionHeader icon={Grid3X3} title="Shop by Collection" />
+                <SectionHeader icon={Grid3X3} title="Homepage Collections" />
               </AccordionTrigger>
               <AccordionContent>
-                <CollectionsSection data={getConfig("collections", defaultCollections)} />
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="productTypes" className="border rounded-md px-4">
-              <AccordionTrigger data-testid="accordion-product-types">
-                <SectionHeader icon={Package} title="Shop by Product" />
-              </AccordionTrigger>
-              <AccordionContent>
-                <ProductTypesSection data={getConfig("productTypes", defaultProductTypes)} />
+                <DynamicCollectionsSection data={getHomepageCollections()} />
               </AccordionContent>
             </AccordionItem>
 
