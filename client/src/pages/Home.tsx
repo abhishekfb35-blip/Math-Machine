@@ -107,9 +107,15 @@ export default function Home() {
     return cat && cat.slug.includes("blanket");
   }) || [];
 
+  const bathrobeProducts = products?.filter((p) => {
+    const cat = categories?.find((c) => c.id === p.categoryId);
+    return cat && cat.slug.includes("bathrobe");
+  }) || [];
+
   const featuredKids = kidsProducts.slice(0, 4);
   const featuredAdults = adultProducts.slice(0, 4);
   const featuredBlankets = blanketProducts.slice(0, 4);
+  const featuredBathrobes = bathrobeProducts.slice(0, 4);
 
   return (
     <div className="pb-20 md:pb-0">
@@ -293,6 +299,27 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {featuredBlankets.map((product) => (
+                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {featuredBathrobes.length > 0 && (
+            <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-xl font-bold" data-testid="text-bathrobes-section">{featured.bathrobes?.title || "Luxury Bathrobes"}</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">{featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}</p>
+                </div>
+                <Link href={featured.bathrobes?.link || "/category/bathrobes"}>
+                  <Button variant="ghost" size="sm" data-testid="link-view-all-bathrobes">
+                    See All <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {featuredBathrobes.map((product) => (
                   <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
                 ))}
               </div>

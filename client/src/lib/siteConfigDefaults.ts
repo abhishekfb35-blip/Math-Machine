@@ -112,6 +112,7 @@ export interface FeaturedSectionsConfig {
   kids: { title: string; subtitle: string; link: string };
   couples: { title: string; subtitle: string; link: string };
   blankets: { title: string; subtitle: string; link: string };
+  bathrobes: { title: string; subtitle: string; link: string };
 }
 
 export const defaultAnnouncement: AnnouncementConfig = {
@@ -239,4 +240,5 @@ export const defaultFeaturedSections: FeaturedSectionsConfig = {
   kids: { title: "Popular for Kids", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
   couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/shop?filter=couples" },
   blankets: { title: "Cozy Blankets", subtitle: "Soft personalised AC blankets for kids", link: "/shop?filter=kids" },
+  bathrobes: { title: "Luxury Bathrobes", subtitle: "Premium personalised cotton bathrobes", link: "/category/bathrobes" },
 };

@@ -722,31 +722,34 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const save = useSaveConfig("featuredSections");
   useEffect(() => { setConfig(data); }, [data]);
 
-  const updateSection = (section: "kids" | "couples" | "blankets", field: string, value: string) => {
+  const updateSection = (section: "kids" | "couples" | "blankets" | "bathrobes", field: string, value: string) => {
     setConfig({ ...config, [section]: { ...config[section], [field]: value } });
   };
 
   return (
     <div className="space-y-4">
-      {(["kids", "couples", "blankets"] as const).map((section) => (
-        <Card key={section} className="p-4 space-y-3">
-          <p className="text-sm font-medium capitalize">{section} Section</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input value={config[section].title} onChange={(e) => updateSection(section, "title", e.target.value)} data-testid={`input-featured-${section}-title`} />
+      {(["kids", "couples", "blankets", "bathrobes"] as const).map((section) => {
+        const sectionData = config[section] || { title: "", subtitle: "", link: "" };
+        return (
+          <Card key={section} className="p-4 space-y-3">
+            <p className="text-sm font-medium capitalize">{section} Section</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input value={sectionData.title} onChange={(e) => updateSection(section, "title", e.target.value)} data-testid={`input-featured-${section}-title`} />
+              </div>
+              <div className="space-y-2">
+                <Label>Subtitle</Label>
+                <Input value={sectionData.subtitle} onChange={(e) => updateSection(section, "subtitle", e.target.value)} data-testid={`input-featured-${section}-subtitle`} />
+              </div>
+              <div className="space-y-2">
+                <Label>Link</Label>
+                <Input value={sectionData.link} onChange={(e) => updateSection(section, "link", e.target.value)} data-testid={`input-featured-${section}-link`} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input value={config[section].subtitle} onChange={(e) => updateSection(section, "subtitle", e.target.value)} data-testid={`input-featured-${section}-subtitle`} />
-            </div>
-            <div className="space-y-2">
-              <Label>Link</Label>
-              <Input value={config[section].link} onChange={(e) => updateSection(section, "link", e.target.value)} data-testid={`input-featured-${section}-link`} />
-            </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
       <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-featured">
         <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Featured Sections"}
       </Button>
