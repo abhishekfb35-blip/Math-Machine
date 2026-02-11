@@ -29,6 +29,17 @@ import {
   type FooterConfig, type FeaturedSectionsConfig,
 } from "@/lib/siteConfigDefaults";
 
+import heroBanner from "@/assets/images/hero-banner.png";
+import kidsBanner from "@/assets/images/kids-banner.png";
+import couplesBanner from "@/assets/images/couples-banner.png";
+import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
+import towelsBanner from "@/assets/images/towels-collection.png";
+import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
+import blanketsBanner from "@/assets/images/blankets-collection.png";
+
+const defaultCollectionImages = [kidsBanner, adultsBanner, couplesBanner];
+const defaultProductTypeImages = [towelsBanner, bathrobesBanner, blanketsBanner];
+
 function useSaveConfig(key: string) {
   const { toast } = useToast();
   return useMutation({
@@ -54,32 +65,38 @@ function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
   );
 }
 
-function ImageField({ label, value, onChange, testId }: { label: string; value: string; onChange: (url: string) => void; testId: string }) {
+function ImageField({ label, value, onChange, testId, fallbackImage }: { label: string; value: string; onChange: (url: string) => void; testId: string; fallbackImage?: string }) {
+  const displaySrc = value || fallbackImage;
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      {value ? (
-        <div className="relative rounded-md overflow-hidden border bg-muted/30">
+      <div className="relative rounded-md overflow-hidden border bg-muted/30">
+        {displaySrc ? (
           <img
-            src={value}
+            src={displaySrc}
             alt={label}
             className="w-full max-h-40 object-cover"
             data-testid={`${testId}-preview`}
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-24 rounded-md border border-dashed bg-muted/20" data-testid={`${testId}-empty`}>
-          <div className="text-center text-muted-foreground">
-            <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-40" />
-            <p className="text-xs">No image set — using default</p>
+        ) : (
+          <div className="flex items-center justify-center h-32 bg-muted/20" data-testid={`${testId}-empty`}>
+            <div className="text-center text-muted-foreground">
+              <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-30" />
+              <p className="text-xs opacity-60">No image available</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        {!value && displaySrc && (
+          <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm px-3 py-1.5">
+            <p className="text-xs text-muted-foreground">Current default image</p>
+          </div>
+        )}
+      </div>
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Paste image URL (leave empty for default)"
+        placeholder="Paste image URL to override default"
         data-testid={testId}
       />
     </div>
@@ -161,6 +178,7 @@ function HeroSection({ data }: { data: HeroConfig }) {
         value={config.imageUrl}
         onChange={(url) => setConfig({ ...config, imageUrl: url })}
         testId="input-hero-image"
+        fallbackImage={heroBanner}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -287,6 +305,7 @@ function CollectionsSection({ data }: { data: CollectionsConfig }) {
             value={card.imageUrl}
             onChange={(url) => updateCard(i, "imageUrl", url)}
             testId={`input-collection-image-${i}`}
+            fallbackImage={defaultCollectionImages[i]}
           />
           <div className="space-y-2">
             <Label>Title</Label>
@@ -354,6 +373,7 @@ function ProductTypesSection({ data }: { data: ProductTypesConfig }) {
             value={card.imageUrl}
             onChange={(url) => updateCard(i, "imageUrl", url)}
             testId={`input-product-type-image-${i}`}
+            fallbackImage={defaultProductTypeImages[i]}
           />
           <div className="space-y-2">
             <Label>Title</Label>
