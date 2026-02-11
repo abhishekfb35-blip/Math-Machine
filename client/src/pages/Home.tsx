@@ -26,8 +26,8 @@ import {
   type StatsConfig, type FeaturedSectionsConfig,
 } from "@/lib/siteConfigDefaults";
 
-const collectionImages = [kidsBanner, adultsBanner, couplesBanner];
-const productTypeImages = [towelsBanner, bathrobesBanner, blanketsBanner];
+const defaultCollectionImages = [kidsBanner, adultsBanner, couplesBanner];
+const defaultProductTypeImages = [towelsBanner, bathrobesBanner, blanketsBanner];
 const promiseIcons = [Shield, Scissors, Heart];
 
 function ProductGridSkeleton({ count = 4 }: { count?: number }) {
@@ -92,7 +92,7 @@ export default function Home() {
       <section className="relative overflow-hidden" data-testid="section-hero">
         <div className="absolute inset-0">
           <img
-            src={heroBanner}
+            src={hero.imageUrl || heroBanner}
             alt="Luxury embroidered towels and blankets"
             className="w-full h-full object-cover"
           />
@@ -167,7 +167,7 @@ export default function Home() {
               <div className="group" data-testid={`card-collection-${i}`}>
                 <div className="relative rounded-md overflow-hidden">
                   <img
-                    src={collectionImages[i] || kidsBanner}
+                    src={card.imageUrl || defaultCollectionImages[i] || kidsBanner}
                     alt={card.title}
                     className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
                   />
@@ -195,7 +195,7 @@ export default function Home() {
               <div className="group" data-testid={`card-product-type-${i}`}>
                 <div className="relative rounded-md overflow-hidden">
                   <img
-                    src={productTypeImages[i] || towelsBanner}
+                    src={card.imageUrl || defaultProductTypeImages[i] || towelsBanner}
                     alt={card.title}
                     className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
                   />

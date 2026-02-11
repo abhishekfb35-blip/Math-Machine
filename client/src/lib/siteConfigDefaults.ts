@@ -10,6 +10,7 @@ export interface HeroConfig {
   primaryButtonLink: string;
   secondaryButtonText: string;
   secondaryButtonLink: string;
+  imageUrl: string;
 }
 
 export interface HeaderConfig {
@@ -27,6 +28,7 @@ export interface CollectionCard {
   title: string;
   description: string;
   link: string;
+  imageUrl: string;
 }
 
 export interface CollectionsConfig {
@@ -39,6 +41,7 @@ export interface ProductTypeCard {
   title: string;
   description: string;
   link: string;
+  imageUrl: string;
 }
 
 export interface ProductTypesConfig {
@@ -108,6 +111,7 @@ export const defaultHero: HeroConfig = {
   primaryButtonLink: "/shop",
   secondaryButtonText: "Couple Sets",
   secondaryButtonLink: "/shop?filter=couples",
+  imageUrl: "",
 };
 
 export const defaultHeader: HeaderConfig = {
@@ -129,9 +133,9 @@ export const defaultCollections: CollectionsConfig = {
   label: "Collections",
   heading: "Shop by Collection",
   cards: [
-    { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/shop?filter=kids" },
-    { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/shop?filter=adults" },
-    { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/shop?filter=couples" },
+    { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/shop?filter=kids", imageUrl: "" },
+    { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/shop?filter=adults", imageUrl: "" },
+    { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/shop?filter=couples", imageUrl: "" },
   ],
 };
 
@@ -139,9 +143,9 @@ export const defaultProductTypes: ProductTypesConfig = {
   label: "Products",
   heading: "Shop by Product",
   cards: [
-    { title: "Towels", description: "Wrap yourself in luxury. Our 550 GSM zero-twist cotton towels are soft, absorbent and beautifully embroidered with your name or initials. Available for kids and adults in a range of fun and elegant designs.", link: "/shop" },
-    { title: "Bathrobes", description: "Step out of the shower in style. Our plush terry cotton bathrobes are personalised with custom embroidery, making every day feel like a spa day. Perfect as a gift or a treat for yourself.", link: "/shop" },
-    { title: "Blankets", description: "Snuggle up with a blanket made just for you. Our ultra-soft AC blankets come with beautiful embroidered names and fun designs — loved by kids and perfect for gifting on birthdays and special occasions.", link: "/shop" },
+    { title: "Towels", description: "Wrap yourself in luxury. Our 550 GSM zero-twist cotton towels are soft, absorbent and beautifully embroidered with your name or initials. Available for kids and adults in a range of fun and elegant designs.", link: "/shop", imageUrl: "" },
+    { title: "Bathrobes", description: "Step out of the shower in style. Our plush terry cotton bathrobes are personalised with custom embroidery, making every day feel like a spa day. Perfect as a gift or a treat for yourself.", link: "/shop", imageUrl: "" },
+    { title: "Blankets", description: "Snuggle up with a blanket made just for you. Our ultra-soft AC blankets come with beautiful embroidered names and fun designs — loved by kids and perfect for gifting on birthdays and special occasions.", link: "/shop", imageUrl: "" },
   ],
 };
 

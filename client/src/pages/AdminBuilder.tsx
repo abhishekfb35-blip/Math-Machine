@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
-  Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings,
+  Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -50,6 +50,38 @@ function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
     <div className="flex items-center gap-2">
       <Icon className="w-4 h-4 text-muted-foreground" />
       <span className="font-medium">{title}</span>
+    </div>
+  );
+}
+
+function ImageField({ label, value, onChange, testId }: { label: string; value: string; onChange: (url: string) => void; testId: string }) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {value ? (
+        <div className="relative rounded-md overflow-hidden border bg-muted/30">
+          <img
+            src={value}
+            alt={label}
+            className="w-full max-h-40 object-cover"
+            data-testid={`${testId}-preview`}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-24 rounded-md border border-dashed bg-muted/20" data-testid={`${testId}-empty`}>
+          <div className="text-center text-muted-foreground">
+            <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-40" />
+            <p className="text-xs">No image set — using default</p>
+          </div>
+        </div>
+      )}
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste image URL (leave empty for default)"
+        data-testid={testId}
+      />
     </div>
   );
 }
@@ -124,6 +156,12 @@ function HeroSection({ data }: { data: HeroConfig }) {
 
   return (
     <div className="space-y-4">
+      <ImageField
+        label="Hero Background Image"
+        value={config.imageUrl}
+        onChange={(url) => setConfig({ ...config, imageUrl: url })}
+        testId="input-hero-image"
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Title</Label>
@@ -220,7 +258,7 @@ function CollectionsSection({ data }: { data: CollectionsConfig }) {
     setConfig({ ...config, cards });
   };
 
-  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop" }] });
+  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop", imageUrl: "" }] });
   const removeCard = (index: number) => setConfig({ ...config, cards: config.cards.filter((_, i) => i !== index) });
 
   return (
@@ -244,6 +282,12 @@ function CollectionsSection({ data }: { data: CollectionsConfig }) {
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
+          <ImageField
+            label="Card Image"
+            value={card.imageUrl}
+            onChange={(url) => updateCard(i, "imageUrl", url)}
+            testId={`input-collection-image-${i}`}
+          />
           <div className="space-y-2">
             <Label>Title</Label>
             <Input value={card.title} onChange={(e) => updateCard(i, "title", e.target.value)} data-testid={`input-collection-title-${i}`} />
@@ -281,7 +325,7 @@ function ProductTypesSection({ data }: { data: ProductTypesConfig }) {
     setConfig({ ...config, cards });
   };
 
-  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop" }] });
+  const addCard = () => setConfig({ ...config, cards: [...config.cards, { title: "", description: "", link: "/shop", imageUrl: "" }] });
   const removeCard = (index: number) => setConfig({ ...config, cards: config.cards.filter((_, i) => i !== index) });
 
   return (
@@ -305,6 +349,12 @@ function ProductTypesSection({ data }: { data: ProductTypesConfig }) {
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
+          <ImageField
+            label="Card Image"
+            value={card.imageUrl}
+            onChange={(url) => updateCard(i, "imageUrl", url)}
+            testId={`input-product-type-image-${i}`}
+          />
           <div className="space-y-2">
             <Label>Title</Label>
             <Input value={card.title} onChange={(e) => updateCard(i, "title", e.target.value)} data-testid={`input-product-type-title-${i}`} />
