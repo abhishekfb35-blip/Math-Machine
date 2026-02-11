@@ -158,6 +158,20 @@ The app includes PWA support with manifest.json, service worker, and app icons.
   - WhatsApp integration
   - Teal/green branding with light/dark mode
 
+### Image Optimization
+
+Product images are served in 3 sizes for optimal performance:
+- **Small** (150px wide, ~11KB) — Cart thumbnails, quick-add sheet, checkout items
+- **Medium** (400px wide, ~78KB) — Product grid cards on Shop/Category/Home pages
+- **Large** (original 567px wide, ~175KB) — Product detail page
+
+Image files stored at:
+- `client/public/images/products/small/` — 680KB total
+- `client/public/images/products/medium/` — 3.8MB total
+- `client/public/images/products/large/` — 18MB total (originals)
+
+Frontend utility: `client/src/lib/imageUtils.ts` — `getProductImageUrl(imageUrl, "small" | "medium" | "large")` rewrites `/images/products/filename.jpg` to `/images/products/{size}/filename.jpg`. Uploaded images (`/uploads/...`) pass through unchanged.
+
 ## Future Work
 
 - Razorpay payment integration

@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product } from "@shared/schema";
 
 interface ProductCardNewProps {
@@ -19,7 +20,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
       <Link href={`/product/${product.slug}`}>
         <div className="aspect-square overflow-hidden rounded-t-md cursor-pointer relative bg-muted">
           <img
-            src={product.imageUrl}
+            src={getProductImageUrl(product.imageUrl, "medium")}
             alt={product.name}
             className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
             loading="lazy"

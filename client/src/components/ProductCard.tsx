@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product } from "@shared/schema";
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -8,7 +9,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <Card className="group cursor-pointer hover-elevate overflow-visible" data-testid={`card-product-${product.id}`}>
         <div className="aspect-square overflow-hidden rounded-t-md">
           <img
-            src={product.imageUrl}
+            src={getProductImageUrl(product.imageUrl, "medium")}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"

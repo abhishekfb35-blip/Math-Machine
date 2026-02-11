@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category } from "@shared/schema";
 
 export default function ProductPage() {
@@ -114,7 +115,7 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
             <img
-              src={product.imageUrl}
+              src={getProductImageUrl(product.imageUrl, "large")}
               alt={product.name}
               className="w-full h-full object-cover"
               data-testid="img-product-detail"

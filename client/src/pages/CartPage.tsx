@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, CartItem } from "@shared/schema";
 
 interface CartItemWithProduct extends CartItem {
@@ -33,7 +34,7 @@ function CartItemRow({ item, onRemove, onUpdateQty }: {
       <Link href={`/product/${item.product.slug}`}>
         <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0 cursor-pointer">
           <img
-            src={item.product.imageUrl}
+            src={getProductImageUrl(item.product.imageUrl, "small")}
             alt={item.product.name}
             className="w-full h-full object-cover"
             data-testid={`img-cart-item-${item.id}`}

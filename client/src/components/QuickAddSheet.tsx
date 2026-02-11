@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product } from "@shared/schema";
 
 interface QuickAddSheetProps {
@@ -60,7 +61,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           <div className="flex gap-3">
             <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
               <img
-                src={product.imageUrl}
+                src={getProductImageUrl(product.imageUrl, "small")}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 data-testid="img-quickadd-product"
