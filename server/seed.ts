@@ -2,14 +2,12 @@ import { db } from "./db";
 import { categories, products, siteConfig } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 
-const IMG_BASE = "https://turtlelittle.com/pub/media/catalog/product/cache";
-const CACHE_1 = "191566591ee6a44e22c4d8237e6985b6";
-const CACHE_2 = "0b1107d053a289736cde32f4e715ebb1";
+const IMG_BASE = "https://turtlelittle.com/pub/media/catalog/product";
 
-function imgUrl(filename: string, cache = CACHE_1): string {
+function imgUrl(filename: string): string {
   const first = filename[0].toLowerCase();
   const second = filename[1].toLowerCase();
-  return `${IMG_BASE}/${cache}/${first}/${second}/${filename}`;
+  return `${IMG_BASE}/${first}/${second}/${filename}`;
 }
 
 export async function seedDatabase() {
@@ -25,7 +23,7 @@ export async function seedDatabase() {
         { name: "Couple Towels", slug: "couple-towels", description: "Personalised luxury couple towel sets with elegant embroidered designs, perfect for weddings and anniversaries", imageUrl: imgUrl("ladyhrt_set_white.jpg"), sortOrder: 3 },
         { name: "Boys Blankets", slug: "boys-blankets", description: "Personalised luxury kids AC blankets for boys featuring superhero and cartoon character embroidery", imageUrl: imgUrl("superman_c.jpg"), sortOrder: 4 },
         { name: "Girls Blankets", slug: "girls-blankets", description: "Personalised luxury kids AC blankets for girls featuring princess and fairy tale character embroidery", imageUrl: imgUrl("snowhite_bird.jpg"), sortOrder: 5 },
-        { name: "Bathrobes", slug: "bathrobes", description: "Luxury personalised embroidered bathrobes in 100% high-grade cotton. Super soft, absorbent, and perfect for gifting.", imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg", CACHE_2), sortOrder: 6 },
+        { name: "Bathrobes", slug: "bathrobes", description: "Luxury personalised embroidered bathrobes in 100% high-grade cotton. Super soft, absorbent, and perfect for gifting.", imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), sortOrder: 6 },
       ]).returning();
 
       const catMap: Record<string, number> = {};
@@ -104,18 +102,28 @@ export async function seedDatabase() {
         { name: "Minnie Mouse Luxury Personalised Kids AC Blanket", slug: "minnie-mouse-blanket", price: 1599, imageUrl: imgUrl("mingirl.jpg"), categoryId: girlsBlanketId, description: "Minnie Mouse embroidered luxury personalised kids AC blanket.", sortOrder: 5 },
         { name: "Unicorn Luxury Personalised Kids AC Blanket", slug: "unicorn-blanket", price: 1599, imageUrl: imgUrl("poncloud_white_bg_copy.jpg"), categoryId: girlsBlanketId, description: "Unicorn embroidered luxury personalised kids AC blanket.", sortOrder: 6 },
 
-        { name: "Queen Bee Personalised Bathrobe", slug: "queen-bee-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg", CACHE_2), categoryId: bathrobesId, description: "Luxurious personalised bathrobe with intricate Queen Bee embroidery. 100% high-grade cotton, super soft and absorbent. Perfect gift for her.", sortOrder: 1 },
-        { name: "Golden Laurel Initials Personalised Bathrobe", slug: "golden-laurel-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg", CACHE_2), categoryId: bathrobesId, description: "Elegant personalised bathrobe with golden laurel wreath and initials embroidery. 100% high-grade cotton, super soft and absorbent.", sortOrder: 2 },
-        { name: "Mr Right Mrs Always Right Couple Bathrobe Set", slug: "mr-right-mrs-always-right-bathrobe-set", price: 4759, imageUrl: imgUrl("mrmrsrightrobes.jpg", CACHE_2), categoryId: bathrobesId, description: "Personalised couple bathrobe set with Mr Right & Mrs Always Right embroidery. Set of 2 bathrobes, 100% cotton, super absorbent. Ideal anniversary or wedding gift.", sortOrder: 3 },
-        { name: "Mr Right Mrs Always Right Couple Bathrobe Set (Gold)", slug: "mr-right-mrs-always-right-bathrobe-gold", price: 4759, imageUrl: imgUrl("mrr_mrsar.jpg", CACHE_2), categoryId: bathrobesId, description: "Premium personalised couple bathrobe set with elegant gold Mr Right & Mrs Always Right embroidery. Set of 2, 100% high-grade cotton.", sortOrder: 4 },
-        { name: "Heart Personalised Bathrobe", slug: "heart-personalised-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg", CACHE_2), categoryId: bathrobesId, description: "Beautiful personalised bathrobe with embroidered heart design. 100% high-grade cotton, super soft and absorbent. A thoughtful gift for loved ones.", sortOrder: 5 },
-        { name: "Golden Crown Personalised Bathrobe", slug: "golden-crown-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg", CACHE_2), categoryId: bathrobesId, description: "Regal personalised bathrobe with golden crown embroidery. 100% high-grade cotton, super soft and absorbent. Feel like royalty every day.", sortOrder: 6 },
+        { name: "Queen Bee Personalised Bathrobe", slug: "queen-bee-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), categoryId: bathrobesId, description: "Luxurious personalised bathrobe with intricate Queen Bee embroidery. 100% high-grade cotton, super soft and absorbent. Perfect gift for her.", sortOrder: 1 },
+        { name: "Golden Laurel Initials Personalised Bathrobe", slug: "golden-laurel-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg"), categoryId: bathrobesId, description: "Elegant personalised bathrobe with golden laurel wreath and initials embroidery. 100% high-grade cotton, super soft and absorbent.", sortOrder: 2 },
+        { name: "Mr Right Mrs Always Right Couple Bathrobe Set", slug: "mr-right-mrs-always-right-bathrobe-set", price: 4759, imageUrl: imgUrl("mrmrsrightrobes.jpg"), categoryId: bathrobesId, description: "Personalised couple bathrobe set with Mr Right & Mrs Always Right embroidery. Set of 2 bathrobes, 100% cotton, super absorbent. Ideal anniversary or wedding gift.", sortOrder: 3 },
+        { name: "Mr Right Mrs Always Right Couple Bathrobe Set (Gold)", slug: "mr-right-mrs-always-right-bathrobe-gold", price: 4759, imageUrl: imgUrl("mrr_mrsar.jpg"), categoryId: bathrobesId, description: "Premium personalised couple bathrobe set with elegant gold Mr Right & Mrs Always Right embroidery. Set of 2, 100% high-grade cotton.", sortOrder: 4 },
+        { name: "Heart Personalised Bathrobe", slug: "heart-personalised-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), categoryId: bathrobesId, description: "Beautiful personalised bathrobe with embroidered heart design. 100% high-grade cotton, super soft and absorbent. A thoughtful gift for loved ones.", sortOrder: 5 },
+        { name: "Golden Crown Personalised Bathrobe", slug: "golden-crown-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg"), categoryId: bathrobesId, description: "Regal personalised bathrobe with golden crown embroidery. 100% high-grade cotton, super soft and absorbent. Feel like royalty every day.", sortOrder: 6 },
       ];
 
       await db.insert(products).values(allProducts).onConflictDoNothing();
       console.log(`Seeded ${insertedCategories.length} categories and ${allProducts.length} products.`);
     } else {
       console.log("Database already seeded, skipping category/product seed.");
+
+      const [sample] = await db.select({ imageUrl: products.imageUrl }).from(products).limit(1);
+      if (sample && sample.imageUrl && sample.imageUrl.includes("/cache/")) {
+        console.log("Upgrading image URLs to full resolution...");
+        await db.execute(sql`UPDATE products SET image_url = REPLACE(image_url, '/cache/191566591ee6a44e22c4d8237e6985b6', '') WHERE image_url LIKE '%/cache/191566591ee6a44e22c4d8237e6985b6%'`);
+        await db.execute(sql`UPDATE products SET image_url = REPLACE(image_url, '/cache/0b1107d053a289736cde32f4e715ebb1', '') WHERE image_url LIKE '%/cache/0b1107d053a289736cde32f4e715ebb1%'`);
+        await db.execute(sql`UPDATE categories SET image_url = REPLACE(image_url, '/cache/191566591ee6a44e22c4d8237e6985b6', '') WHERE image_url LIKE '%/cache/191566591ee6a44e22c4d8237e6985b6%'`);
+        await db.execute(sql`UPDATE categories SET image_url = REPLACE(image_url, '/cache/0b1107d053a289736cde32f4e715ebb1', '') WHERE image_url LIKE '%/cache/0b1107d053a289736cde32f4e715ebb1%'`);
+        console.log("Image URLs upgraded to full resolution.");
+      }
     }
 
     const homepageConfig = await db.select().from(siteConfig).where(eq(siteConfig.key, "homepageCollections"));
