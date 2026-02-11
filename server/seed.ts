@@ -2,12 +2,8 @@ import { db } from "./db";
 import { categories, products, siteConfig } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 
-const IMG_BASE = "https://turtlelittle.com/pub/media/catalog/product";
-
 function imgUrl(filename: string): string {
-  const first = filename[0].toLowerCase();
-  const second = filename[1].toLowerCase();
-  return `${IMG_BASE}/${first}/${second}/${filename}`;
+  return `/images/products/${filename}`;
 }
 
 export async function seedDatabase() {
@@ -116,13 +112,11 @@ export async function seedDatabase() {
       console.log("Database already seeded, skipping category/product seed.");
 
       const [sample] = await db.select({ imageUrl: products.imageUrl }).from(products).limit(1);
-      if (sample && sample.imageUrl && sample.imageUrl.includes("/cache/")) {
-        console.log("Upgrading image URLs to full resolution...");
-        await db.execute(sql`UPDATE products SET image_url = REPLACE(image_url, '/cache/191566591ee6a44e22c4d8237e6985b6', '') WHERE image_url LIKE '%/cache/191566591ee6a44e22c4d8237e6985b6%'`);
-        await db.execute(sql`UPDATE products SET image_url = REPLACE(image_url, '/cache/0b1107d053a289736cde32f4e715ebb1', '') WHERE image_url LIKE '%/cache/0b1107d053a289736cde32f4e715ebb1%'`);
-        await db.execute(sql`UPDATE categories SET image_url = REPLACE(image_url, '/cache/191566591ee6a44e22c4d8237e6985b6', '') WHERE image_url LIKE '%/cache/191566591ee6a44e22c4d8237e6985b6%'`);
-        await db.execute(sql`UPDATE categories SET image_url = REPLACE(image_url, '/cache/0b1107d053a289736cde32f4e715ebb1', '') WHERE image_url LIKE '%/cache/0b1107d053a289736cde32f4e715ebb1%'`);
-        console.log("Image URLs upgraded to full resolution.");
+      if (sample && sample.imageUrl && sample.imageUrl.includes("turtlelittle.com")) {
+        console.log("Migrating image URLs to local paths...");
+        await db.execute(sql`UPDATE products SET image_url = '/images/products/' || substring(image_url from '[^/]+$') WHERE image_url LIKE 'https://turtlelittle.com%'`);
+        await db.execute(sql`UPDATE categories SET image_url = '/images/products/' || substring(image_url from '[^/]+$') WHERE image_url LIKE 'https://turtlelittle.com%'`);
+        console.log("Image URLs migrated to local paths.");
       }
     }
 
