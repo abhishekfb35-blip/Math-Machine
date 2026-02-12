@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TurtleLittle - Database ER Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; }
+  h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 22px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 13px; }
+  .canvas { position: relative; width: 1200px; margin: 0 auto; height: 1020px; }
+
+  .table-box {
+    position: absolute;
+    background: #fff;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 6px;
+    min-width: 200px;
+    font-size: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .table-box .header {
+    background: #1a5c6b;
+    color: white;
+    padding: 7px 12px;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 4px 4px 0 0;
+    letter-spacing: 0.5px;
+  }
+  .table-box .cols { padding: 6px 0; }
+  .table-box .col {
+    padding: 3px 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .table-box .col:last-child { border-bottom: none; }
+  .col-name { color: #333; font-weight: 500; }
+  .col-type { color: #888; font-size: 11px; }
+  .badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .pk { background: #fef3c7; color: #92400e; }
+  .fk { background: #dbeafe; color: #1e40af; }
+  .uq { background: #ede9fe; color: #5b21b6; }
+  .new-col { background: #ecfdf5; }
+  .new-table .header { background: #047857; }
+  .divider { height: 1px; background: #e5e7eb; margin: 2px 12px; }
+
+  svg.lines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .rel-line { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+  .rel-label {
+    font-size: 10px;
+    fill: #64748b;
+    font-weight: 600;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #555;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend .dot { width: 12px; height: 12px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<h1>TurtleLittle E-Commerce — Entity Relationship Diagram</h1>
+<p class="subtitle">Green tables = new tables &nbsp;|&nbsp; Green rows = new columns on existing tables</p>
+
+<div class="canvas">
+
+<svg class="lines">
+  <!-- categories -> products -->
+  <line x1="200" y1="140" x2="370" y2="140" class="rel-line"/>
+  <text x="270" y="133" class="rel-label">1 : N</text>
+  <polygon points="365,136 365,144 375,140" fill="#94a3b8"/>
+
+  <!-- products -> product_images -->
+  <line x1="610" y1="100" x2="750" y2="100" class="rel-line"/>
+  <text x="660" y="93" class="rel-label">1 : N</text>
+  <polygon points="745,96 745,104 755,100" fill="#94a3b8"/>
+
+  <!-- products -> product_reviews -->
+  <line x1="610" y1="180" x2="750" y2="300" class="rel-line"/>
+  <text x="700" y="225" class="rel-label">1 : N</text>
+  <polygon points="745,296 748,305 755,298" fill="#94a3b8"/>
+
+  <!-- products -> product_customization -->
+  <line x1="490" y1="430" x2="490" y2="490" class="rel-line"/>
+  <text x="500" y="465" class="rel-label">1 : 1</text>
+  <polygon points="486,485 494,485 490,495" fill="#94a3b8"/>
+
+  <!-- products -> cart_items -->
+  <line x1="370" y1="350" x2="200" y2="440" class="rel-line"/>
+  <text x="260" y="385" class="rel-label">1 : N</text>
+  <polygon points="196,435 202,443 207,434" fill="#94a3b8"/>
+
+  <!-- carts -> cart_items -->
+  <line x1="80" y1="380" x2="120" y2="440" class="rel-line"/>
+  <text x="70" y="415" class="rel-label">1 : N</text>
+  <polygon points="116,435 122,443 127,434" fill="#94a3b8"/>
+
+  <!-- orders -> order_items -->
+  <line x1="160" y1="790" x2="400" y2="790" class="rel-line"/>
+  <text x="265" y="783" class="rel-label">1 : N</text>
+  <polygon points="395,786 395,794 405,790" fill="#94a3b8"/>
+</svg>
+
+<!-- CATEGORIES -->
+<div class="table-box" style="left:0; top:50; width:195px;">
+  <div class="header">categories</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="table-box" style="left:370; top:30; width:235px;">
+  <div class="header">products</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">price</span><span class="col-type">integer</span></div>
+    <div class="col new-col"><span class="col-name">mrp</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>category_id</span><span class="col-type">integer</span></div>
+    <div class="col new-col"><span class="col-name"><span class="badge uq">UQ</span>amazon_asin</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">color</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">material</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">gsm</span><span class="col-type">integer?</span></div>
+    <div class="col new-col"><span class="col-name">dimensions</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">weight_grams</span><span class="col-type">integer?</span></div>
+    <div class="col new-col"><span class="col-name">items_in_set</span><span class="col-type">integer</span></div>
+    <div class="col new-col"><span class="col-name">special_features</span><span class="col-type">json?</span></div>
+    <div class="col new-col"><span class="col-name">bullet_points</span><span class="col-type">json?</span></div>
+    <div class="col new-col"><span class="col-name">product_type</span><span class="col-type">text</span></div>
+    <div class="col new-col"><span class="col-name">audience</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">active</span><span class="col-type">boolean</span></div>
+    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+  </div>
+</div>
+
+<!-- PRODUCT_IMAGES -->
+<div class="table-box new-table" style="left:755; top:40; width:210px;">
+  <div class="header">product_images (new)</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">is_primary</span><span class="col-type">boolean</span></div>
+  </div>
+</div>
+
+<!-- PRODUCT_REVIEWS -->
+<div class="table-box new-table" style="left:755; top:245; width:220px;">
+  <div class="header">product_reviews (new)</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">reviewer_name</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">rating</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">title</span><span class="col-type">text?</span></div>
+    <div class="col"><span class="col-name">body</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">review_date</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">verified_purchase</span><span class="col-type">boolean</span></div>
+  </div>
+</div>
+
+<!-- PRODUCT_CUSTOMIZATION -->
+<div class="table-box new-table" style="left:340; top:495; width:260px;">
+  <div class="header">product_customization (new)</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span><span class="badge uq">UQ</span>product_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">nameless_image_url</span><span class="col-type">text?</span></div>
+    <div class="col"><span class="col-name">design_type</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">design_bottom_y</span><span class="col-type">real?</span></div>
+    <div class="col"><span class="col-name">name_rect</span><span class="col-type">json?</span></div>
+    <div class="col"><span class="col-name">thread_colors</span><span class="col-type">json</span></div>
+  </div>
+</div>
+
+<!-- CARTS -->
+<div class="table-box" style="left:0; top:290; width:170px;">
+  <div class="header">carts</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name">session_id</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+  </div>
+</div>
+
+<!-- CART_ITEMS -->
+<div class="table-box" style="left:50; top:440; width:220px;">
+  <div class="header">cart_items</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>cart_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div class="table-box" style="left:0; top:660; width:200px;">
+  <div class="header">orders</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name">customer_name</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">email</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">phone</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">address</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">city</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">state</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">pincode</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">subtotal</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">discount</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">total</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">status</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">payment_method</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">payment_status</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+  </div>
+</div>
+
+<!-- ORDER_ITEMS -->
+<div class="table-box" style="left:410; top:710; width:230px;">
+  <div class="header">order_items</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge fk">FK</span>order_id</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">product_name</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">product_price</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
+    <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
+    <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
+    <div class="col"><span class="col-name">is_free</span><span class="col-type">boolean</span></div>
+  </div>
+</div>
+
+<!-- SITE_CONFIG -->
+<div class="table-box" style="left:755; top:530; width:200px;">
+  <div class="header">site_config</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name"><span class="badge uq">UQ</span>key</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">value</span><span class="col-type">text (JSON)</span></div>
+  </div>
+</div>
+
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:#1a5c6b;"></span> Existing table</span>
+  <span><span class="dot" style="background:#047857;"></span> New table</span>
+  <span><span class="dot" style="background:#ecfdf5; border:1px solid #a7f3d0;"></span> New column on existing table</span>
+  <span><span class="badge pk" style="font-size:11px;">PK</span> Primary Key</span>
+  <span><span class="badge fk" style="font-size:11px;">FK</span> Foreign Key</span>
+  <span><span class="badge uq" style="font-size:11px;">UQ</span> Unique</span>
+</div>
+
+</body>
+</html>
