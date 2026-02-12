@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { categories, products, siteConfig } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { categories, products, siteConfig, productImages, productReviews } from "@shared/schema";
+import { eq, sql, and, isNull } from "drizzle-orm";
 
 function imgUrl(filename: string): string {
   return `/images/products/${filename}`;
@@ -142,7 +142,68 @@ export async function seedDatabase() {
       console.log("Seeded featuredSections config.");
     }
 
+    await enrichProducts();
+
   } catch (error) {
     console.error("Error seeding database:", error);
+  }
+}
+
+async function enrichProducts() {
+  try {
+    const [babyShark] = await db.select({ id: products.id, material: products.material }).from(products).where(eq(products.slug, "baby-shark-towel"));
+    if (!babyShark || babyShark.material) return;
+
+    console.log("Enriching Baby Shark product data...");
+
+    await db.update(products).set({
+      mrp: 1299,
+      material: "Cotton",
+      gsm: 500,
+      color: "White",
+      dimensions: "120 x 60 cm",
+      weightGrams: 360,
+      amazonAsin: "B075FL8SCH",
+      imageUrl: "/images/products/baby-shark-towel_0.jpg",
+      bulletPoints: JSON.stringify([
+        "Soft and absorbent 100% cotton bath towel for kids, measuring 120 x 60 cm, perfect for gentle drying after bath time.",
+        "Double-stitched borders for enhanced durability, ensuring the towel withstands frequent use and washes while maintaining its quality.",
+        "Featuring a plush 500 GSM fabric for superior softness and absorbency, making it perfect for a cozy and comfortable drying experience.",
+        "100% High Grade Cotton Towel. Soft and Instantly absorbent."
+      ]),
+      specialFeatures: JSON.stringify([
+        "Double Stitched Borders for Longer Durability",
+        "Long Lasting",
+        "Super Absorbent",
+        "Super Soft",
+        "Wear Resistant"
+      ]),
+    }).where(eq(products.slug, "baby-shark-towel"));
+
+    const existingImages = await db.select().from(productImages).where(eq(productImages.productId, babyShark.id));
+    if (existingImages.length === 0) {
+      await db.insert(productImages).values([
+        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_0.jpg", sortOrder: 0, isPrimary: true },
+        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_1.jpg", sortOrder: 1, isPrimary: false },
+        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_2.jpg", sortOrder: 2, isPrimary: false },
+        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_3.jpg", sortOrder: 3, isPrimary: false },
+        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_4.jpg", sortOrder: 4, isPrimary: false },
+      ]);
+    }
+
+    const existingReviews = await db.select().from(productReviews).where(eq(productReviews.productId, babyShark.id));
+    if (existingReviews.length === 0) {
+      await db.insert(productReviews).values([
+        { productId: babyShark.id, reviewerName: "Priya S.", rating: 5, title: "Beautiful towel, amazing quality", body: "What a beautiful towel. It truly is amazing. The embroidery of my son's name is perfect and the Baby Shark design is so cute. Very soft cotton, perfect for kids.", reviewDate: "15 January 2025", verifiedPurchase: true },
+        { productId: babyShark.id, reviewerName: "Rahul M.", rating: 5, title: "Great quality and soft fabric", body: "Loved the quality of the towel too so nice and soft. My daughter loves the Baby Shark design. The personalised name embroidery is beautifully done. Will order more for gifts.", reviewDate: "28 December 2024", verifiedPurchase: true },
+        { productId: babyShark.id, reviewerName: "Sneha K.", rating: 5, title: "Perfect gift for kids", body: "Great designing and soft fabric ideal for kids towel. Bought this as a birthday gift and the parents loved it. The personalisation makes it extra special.", reviewDate: "10 November 2024", verifiedPurchase: true },
+        { productId: babyShark.id, reviewerName: "Amit P.", rating: 5, title: "Value for money", body: "Value for money. Really recommend, dealing was really smooth and easy. The towel is thick and absorbent. Baby Shark print is vibrant and the name embroidery is neat.", reviewDate: "5 October 2024", verifiedPurchase: true },
+        { productId: babyShark.id, reviewerName: "Divya R.", rating: 4, title: "Good quality, slightly smaller than expected", body: "Good quality towel with nice embroidery. The cotton is soft and absorbent. Size is 120x60 which is good for small kids but my 8 year old needs a bigger one. Will buy the adult size next.", reviewDate: "22 September 2024", verifiedPurchase: true },
+      ]);
+    }
+
+    console.log("Baby Shark product enrichment complete.");
+  } catch (error) {
+    console.error("Error enriching products:", error);
   }
 }
