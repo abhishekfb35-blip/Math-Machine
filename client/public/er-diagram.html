@@ -6,19 +6,19 @@
 <title>TurtleLittle - Database ER Diagram</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; }
+  body { background: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 32px; min-width: 1400px; }
   h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 22px; }
-  .subtitle { text-align: center; color: #666; margin-bottom: 24px; font-size: 13px; }
-  .canvas { position: relative; width: 1200px; margin: 0 auto; height: 1020px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 32px; font-size: 13px; }
+  .canvas { position: relative; width: 1340px; margin: 0 auto; height: 1380px; }
 
   .table-box {
     position: absolute;
     background: #fff;
     border: 1.5px solid #d0d5dd;
     border-radius: 6px;
-    min-width: 200px;
     font-size: 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    z-index: 2;
   }
   .table-box .header {
     background: #1a5c6b;
@@ -29,7 +29,7 @@
     border-radius: 4px 4px 0 0;
     letter-spacing: 0.5px;
   }
-  .table-box .cols { padding: 6px 0; }
+  .table-box .cols { padding: 4px 0; }
   .table-box .col {
     padding: 3px 12px;
     display: flex;
@@ -38,15 +38,15 @@
     border-bottom: 1px solid #f0f0f0;
   }
   .table-box .col:last-child { border-bottom: none; }
-  .col-name { color: #333; font-weight: 500; }
-  .col-type { color: #888; font-size: 11px; }
+  .col-name { color: #333; font-weight: 500; white-space: nowrap; }
+  .col-type { color: #888; font-size: 11px; white-space: nowrap; }
   .badge {
     display: inline-block;
     font-size: 9px;
     font-weight: 700;
     padding: 1px 4px;
     border-radius: 3px;
-    margin-right: 4px;
+    margin-right: 3px;
     vertical-align: middle;
   }
   .pk { background: #fef3c7; color: #92400e; }
@@ -54,27 +54,32 @@
   .uq { background: #ede9fe; color: #5b21b6; }
   .new-col { background: #ecfdf5; }
   .new-table .header { background: #047857; }
-  .divider { height: 1px; background: #e5e7eb; margin: 2px 12px; }
 
   svg.lines {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
+    z-index: 1;
   }
   .rel-line { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
   .rel-label {
     font-size: 10px;
     fill: #64748b;
     font-weight: 600;
+    background: white;
+  }
+  .rel-label-bg {
+    fill: #f8f9fa;
   }
   .legend {
     display: flex;
-    gap: 20px;
+    gap: 24px;
     justify-content: center;
-    margin-top: 12px;
+    margin-top: 16px;
     font-size: 12px;
     color: #555;
+    flex-wrap: wrap;
   }
   .legend span { display: flex; align-items: center; gap: 5px; }
   .legend .dot { width: 12px; height: 12px; border-radius: 2px; }
@@ -83,49 +88,58 @@
 <body>
 
 <h1>TurtleLittle E-Commerce — Entity Relationship Diagram</h1>
-<p class="subtitle">Green tables = new tables &nbsp;|&nbsp; Green rows = new columns on existing tables</p>
+<p class="subtitle">Green tables = new tables &nbsp;|&nbsp; Green-highlighted rows = new columns on existing tables</p>
 
 <div class="canvas">
 
 <svg class="lines">
-  <!-- categories -> products -->
-  <line x1="200" y1="140" x2="370" y2="140" class="rel-line"/>
-  <text x="270" y="133" class="rel-label">1 : N</text>
-  <polygon points="365,136 365,144 375,140" fill="#94a3b8"/>
+  <!-- categories (right edge ~215) -> products (left edge 420) -->
+  <path d="M 215 140 L 420 140" class="rel-line"/>
+  <rect x="295" y="125" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="298" y="137" class="rel-label">1 : N</text>
+  <polygon points="415,136 415,144 423,140" fill="#94a3b8"/>
 
-  <!-- products -> product_images -->
-  <line x1="610" y1="100" x2="750" y2="100" class="rel-line"/>
-  <text x="660" y="93" class="rel-label">1 : N</text>
-  <polygon points="745,96 745,104 755,100" fill="#94a3b8"/>
+  <!-- products (right edge ~680) -> product_images (left edge 780) -->
+  <path d="M 680 100 L 780 100" class="rel-line"/>
+  <rect x="706" y="87" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="709" y="99" class="rel-label">1 : N</text>
+  <polygon points="775,96 775,104 783,100" fill="#94a3b8"/>
 
-  <!-- products -> product_reviews -->
-  <line x1="610" y1="180" x2="750" y2="300" class="rel-line"/>
-  <text x="700" y="225" class="rel-label">1 : N</text>
-  <polygon points="745,296 748,305 755,298" fill="#94a3b8"/>
+  <!-- products (right edge ~680) -> product_reviews (left edge 780) -->
+  <path d="M 680 200 L 730 200 L 730 370 L 780 370" class="rel-line"/>
+  <rect x="735" y="275" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="738" y="287" class="rel-label">1 : N</text>
+  <polygon points="775,366 775,374 783,370" fill="#94a3b8"/>
 
-  <!-- products -> product_customization -->
-  <line x1="490" y1="430" x2="490" y2="490" class="rel-line"/>
-  <text x="500" y="465" class="rel-label">1 : 1</text>
-  <polygon points="486,485 494,485 490,495" fill="#94a3b8"/>
+  <!-- products (bottom ~560) -> product_customization (top 620) -->
+  <path d="M 550 560 L 550 620" class="rel-line"/>
+  <rect x="557" y="580" width="32" height="16" rx="3" class="rel-label-bg"/>
+  <text x="560" y="592" class="rel-label">1 : 1</text>
+  <polygon points="546,615 554,615 550,623" fill="#94a3b8"/>
 
-  <!-- products -> cart_items -->
-  <line x1="370" y1="350" x2="200" y2="440" class="rel-line"/>
-  <text x="260" y="385" class="rel-label">1 : N</text>
-  <polygon points="196,435 202,443 207,434" fill="#94a3b8"/>
+  <!-- products (left edge 420) -> cart_items via path -->
+  <path d="M 420 400 L 340 400 L 340 710 L 290 710" class="rel-line"/>
+  <rect x="345" y="545" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="348" y="557" class="rel-label">1 : N</text>
+  <polygon points="295,706 295,714 287,710" fill="#94a3b8"/>
 
-  <!-- carts -> cart_items -->
-  <line x1="80" y1="380" x2="120" y2="440" class="rel-line"/>
-  <text x="70" y="415" class="rel-label">1 : N</text>
-  <polygon points="116,435 122,443 127,434" fill="#94a3b8"/>
+  <!-- carts (bottom ~820) -> cart_items (top ~660) -->
+  <path d="M 130 660 L 130 710 L 150 710" class="rel-line"/>
+  <rect x="98" y="676" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="101" y="688" class="rel-label">1 : N</text>
+  <polygon points="145,706 145,714 153,710" fill="#94a3b8"/>
 
-  <!-- orders -> order_items -->
-  <line x1="160" y1="790" x2="400" y2="790" class="rel-line"/>
-  <text x="265" y="783" class="rel-label">1 : N</text>
-  <polygon points="395,786 395,794 405,790" fill="#94a3b8"/>
+  <!-- orders (right edge ~230) -> order_items (left edge 420) -->
+  <path d="M 230 1100 L 420 1100" class="rel-line"/>
+  <rect x="302" y="1087" width="36" height="16" rx="3" class="rel-label-bg"/>
+  <text x="305" y="1099" class="rel-label">1 : N</text>
+  <polygon points="415,1096 415,1104 423,1100" fill="#94a3b8"/>
 </svg>
 
+<!-- ============ ROW 1: categories, products, product_images ============ -->
+
 <!-- CATEGORIES -->
-<div class="table-box" style="left:0; top:50; width:195px;">
+<div class="table-box" style="left: 0; top: 50; width: 210px;">
   <div class="header">categories</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -138,7 +152,7 @@
 </div>
 
 <!-- PRODUCTS -->
-<div class="table-box" style="left:370; top:30; width:235px;">
+<div class="table-box" style="left: 420; top: 30; width: 255px;">
   <div class="header">products</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -166,7 +180,7 @@
 </div>
 
 <!-- PRODUCT_IMAGES -->
-<div class="table-box new-table" style="left:755; top:40; width:210px;">
+<div class="table-box new-table" style="left: 780; top: 40; width: 230px;">
   <div class="header">product_images (new)</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -177,8 +191,10 @@
   </div>
 </div>
 
+<!-- ============ ROW 2: product_reviews ============ -->
+
 <!-- PRODUCT_REVIEWS -->
-<div class="table-box new-table" style="left:755; top:245; width:220px;">
+<div class="table-box new-table" style="left: 780; top: 280; width: 240px;">
   <div class="header">product_reviews (new)</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -192,8 +208,20 @@
   </div>
 </div>
 
+<!-- ============ ROW 3: carts, product_customization ============ -->
+
+<!-- CARTS -->
+<div class="table-box" style="left: 0; top: 570; width: 190px;">
+  <div class="header">carts</div>
+  <div class="cols">
+    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+    <div class="col"><span class="col-name">session_id</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+  </div>
+</div>
+
 <!-- PRODUCT_CUSTOMIZATION -->
-<div class="table-box new-table" style="left:340; top:495; width:260px;">
+<div class="table-box new-table" style="left: 420; top: 620; width: 275px;">
   <div class="header">product_customization (new)</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -206,18 +234,20 @@
   </div>
 </div>
 
-<!-- CARTS -->
-<div class="table-box" style="left:0; top:290; width:170px;">
-  <div class="header">carts</div>
+<!-- SITE_CONFIG -->
+<div class="table-box" style="left: 780; top: 620; width: 220px;">
+  <div class="header">site_config</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name">session_id</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+    <div class="col"><span class="col-name"><span class="badge uq">UQ</span>key</span><span class="col-type">text</span></div>
+    <div class="col"><span class="col-name">value</span><span class="col-type">text (JSON)</span></div>
   </div>
 </div>
 
+<!-- ============ ROW 4: cart_items ============ -->
+
 <!-- CART_ITEMS -->
-<div class="table-box" style="left:50; top:440; width:220px;">
+<div class="table-box" style="left: 150; top: 670; width: 240px;">
   <div class="header">cart_items</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -229,8 +259,10 @@
   </div>
 </div>
 
+<!-- ============ ROW 5: orders, order_items ============ -->
+
 <!-- ORDERS -->
-<div class="table-box" style="left:0; top:660; width:200px;">
+<div class="table-box" style="left: 0; top: 930; width: 225px;">
   <div class="header">orders</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -252,7 +284,7 @@
 </div>
 
 <!-- ORDER_ITEMS -->
-<div class="table-box" style="left:410; top:710; width:230px;">
+<div class="table-box" style="left: 420; top: 990; width: 250px;">
   <div class="header">order_items</div>
   <div class="cols">
     <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
@@ -263,16 +295,6 @@
     <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
     <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
     <div class="col"><span class="col-name">is_free</span><span class="col-type">boolean</span></div>
-  </div>
-</div>
-
-<!-- SITE_CONFIG -->
-<div class="table-box" style="left:755; top:530; width:200px;">
-  <div class="header">site_config</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge uq">UQ</span>key</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">value</span><span class="col-type">text (JSON)</span></div>
   </div>
 </div>
 
