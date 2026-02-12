@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Order, OrderItem } from "@shared/schema";
+import type { Order, OrderItem } from "@shared/types";
 
 interface OrderWithItems extends Order {
   items: OrderItem[];

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product } from "@shared/schema";
+import type { Product } from "@shared/types";
 
 interface QuickAddSheetProps {
   product: Product | null;

@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, Category } from "@shared/schema";
+import type { Product, Category } from "@shared/types";
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();

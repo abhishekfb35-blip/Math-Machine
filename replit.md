@@ -73,8 +73,18 @@ The project follows a **monorepo layout** with three top-level source directorie
 
 ### Shared Layer (`shared/`)
 
-- **`schema.ts`** — Drizzle ORM table definitions: categories, products, carts, cart_items, orders, order_items, site_config
+- **`types.ts`** — Pure TypeScript interfaces for all data models (Category, Product, Cart, CartItem, Order, OrderItem, SiteConfig) plus their Insert variants. **No database dependency.** All frontend and business logic imports types from here.
+- **`schema.ts`** — Drizzle ORM table definitions (database-specific). Re-exports types from `types.ts` for backward compatibility. Only imported by server-side database code (`server/storage.ts`, `server/db.ts`, `server/seed.ts`).
 - **`routes.ts`** — Zod validation schemas for cart and checkout inputs
+
+### Architecture: Database Insulation
+
+The codebase separates database-specific code from application logic:
+
+- **`shared/types.ts`** — Database-agnostic data structures. If the database technology changes, this file stays untouched.
+- **`shared/schema.ts`** — Drizzle/PostgreSQL table definitions. Only used by the storage layer on the server.
+- **`server/storage.ts`** — `IStorage` interface defines all data operations using pure types from `types.ts`. `DatabaseStorage` class implements it using Drizzle. To swap databases, only this file and `schema.ts` need to change.
+- **Frontend** — All client components import types from `@shared/types`, never from `@shared/schema`. Zero database dependency.
 
 ### Database
 

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product } from "@shared/schema";
+import type { Product } from "@shared/types";
 
 interface ProductCardNewProps {
   product: Product;

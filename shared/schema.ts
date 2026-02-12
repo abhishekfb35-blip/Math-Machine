@@ -1,6 +1,5 @@
 import { pgTable, text, serial, timestamp, integer, boolean, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -79,20 +78,14 @@ export const insertCartSchema = createInsertSchema(carts).omit({ id: true, creat
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
-
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Cart = typeof carts.$inferSelect;
-export type InsertCart = z.infer<typeof insertCartSchema>;
-export type CartItem = typeof cartItems.$inferSelect;
-export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
-export type Order = typeof orders.$inferSelect;
-export type InsertOrder = z.infer<typeof insertOrderSchema>;
-export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
-
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
-export type SiteConfig = typeof siteConfig.$inferSelect;
-export type InsertSiteConfig = z.infer<typeof insertSiteConfigSchema>;
+
+export type {
+  Category, InsertCategory,
+  Product, InsertProduct,
+  Cart, InsertCart,
+  CartItem, InsertCartItem,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
+  SiteConfig, InsertSiteConfig,
+} from "./types";

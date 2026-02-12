@@ -16,7 +16,7 @@ import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
 import towelsBanner from "@/assets/images/towels-collection.png";
 import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
 import blanketsBanner from "@/assets/images/blankets-collection.png";
-import type { Category, Product } from "@shared/schema";
+import type { Category, Product } from "@shared/types";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,

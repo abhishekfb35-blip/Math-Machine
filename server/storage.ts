@@ -1,15 +1,15 @@
-import {
-  categories, products, carts, cartItems, orders, orderItems, siteConfig,
-  type Category, type InsertCategory,
-  type Product, type InsertProduct,
-  type Cart, type InsertCart,
-  type CartItem, type InsertCartItem,
-  type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem,
-  type SiteConfig,
-} from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig } from "@shared/schema";
+import type {
+  Category, InsertCategory,
+  Product, InsertProduct,
+  Cart, InsertCart,
+  CartItem, InsertCartItem,
+  Order, InsertOrder,
+  OrderItem, InsertOrderItem,
+  SiteConfig,
+} from "@shared/types";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;

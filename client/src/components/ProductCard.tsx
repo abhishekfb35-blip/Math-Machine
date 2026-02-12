@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product } from "@shared/schema";
+import type { Product } from "@shared/types";
 
 export default function ProductCard({ product }: { product: Product }) {
   return (

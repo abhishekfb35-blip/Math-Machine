@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, CartItem } from "@shared/schema";
+import type { Product, CartItem } from "@shared/types";
 
 interface CartItemWithProduct extends CartItem {
   product: Product | null;

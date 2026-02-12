@@ -10,7 +10,7 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import kidsBanner from "@/assets/images/kids-banner.png";
 import couplesBanner from "@/assets/images/couples-banner.png";
 import blanketsBanner from "@/assets/images/blankets-banner.png";
-import type { Category, Product } from "@shared/schema";
+import type { Category, Product } from "@shared/types";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
 

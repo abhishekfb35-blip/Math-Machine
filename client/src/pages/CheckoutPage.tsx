@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import type { Product, CartItem } from "@shared/schema";
+import type { Product, CartItem } from "@shared/types";
 
 interface CartData {
   id: number;
