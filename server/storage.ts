@@ -1,4 +1,4 @@
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -7,6 +7,8 @@ import type {
   Order, InsertOrder,
   OrderItem, InsertOrderItem,
   SiteConfig,
+  ProductImage, InsertProductImage,
+  ProductReview, InsertProductReview,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -38,6 +40,14 @@ export interface IStorage {
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
   upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
+
+  getProductImages(productId: number): Promise<ProductImage[]>;
+  createProductImage(img: InsertProductImage): Promise<ProductImage>;
+  deleteProductImage(id: number): Promise<void>;
+
+  getProductReviews(productId: number): Promise<ProductReview[]>;
+  createProductReview(review: InsertProductReview): Promise<ProductReview>;
+  deleteProductReview(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -156,6 +166,36 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(siteConfig).values({ key, value }).returning();
     return created;
+  }
+
+  async getProductImages(productId: number): Promise<ProductImage[]> {
+    return await db.select().from(productImages)
+      .where(eq(productImages.productId, productId))
+      .orderBy(productImages.sortOrder);
+  }
+
+  async createProductImage(img: InsertProductImage): Promise<ProductImage> {
+    const [created] = await db.insert(productImages).values(img).returning();
+    return created;
+  }
+
+  async deleteProductImage(id: number): Promise<void> {
+    await db.delete(productImages).where(eq(productImages.id, id));
+  }
+
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    return await db.select().from(productReviews)
+      .where(eq(productReviews.productId, productId))
+      .orderBy(productReviews.rating);
+  }
+
+  async createProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const [created] = await db.insert(productReviews).values(review).returning();
+    return created;
+  }
+
+  async deleteProductReview(id: number): Promise<void> {
+    await db.delete(productReviews).where(eq(productReviews.id, id));
   }
 }
 

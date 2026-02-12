@@ -94,6 +94,20 @@ export async function registerRoutes(
     res.json(prod);
   });
 
+  app.get("/api/products/:id/images", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const images = await storage.getProductImages(id);
+    res.json(images);
+  });
+
+  app.get("/api/products/:id/reviews", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const reviews = await storage.getProductReviews(id);
+    res.json(reviews);
+  });
+
   app.get("/api/cart", async (req, res) => {
     const sessionId = getSessionId(req, res);
     const cartDetails = await cartService.getCartDetails(sessionId);

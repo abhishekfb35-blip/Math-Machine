@@ -21,8 +21,20 @@ export interface Product {
   slug: string;
   description: string | null;
   price: number;
+  mrp: number | null;
   imageUrl: string;
   categoryId: number;
+  amazonAsin: string | null;
+  color: string | null;
+  material: string | null;
+  gsm: number | null;
+  dimensions: string | null;
+  weightGrams: number | null;
+  itemsInSet: number | null;
+  specialFeatures: string | null;
+  bulletPoints: string | null;
+  productType: string | null;
+  audience: string | null;
   active: boolean | null;
   sortOrder: number | null;
 }
@@ -32,8 +44,20 @@ export interface InsertProduct {
   slug: string;
   description?: string | null;
   price: number;
+  mrp?: number | null;
   imageUrl: string;
   categoryId: number;
+  amazonAsin?: string | null;
+  color?: string | null;
+  material?: string | null;
+  gsm?: number | null;
+  dimensions?: string | null;
+  weightGrams?: number | null;
+  itemsInSet?: number | null;
+  specialFeatures?: string | null;
+  bulletPoints?: string | null;
+  productType?: string | null;
+  audience?: string | null;
   active?: boolean | null;
   sortOrder?: number | null;
 }
@@ -129,4 +153,40 @@ export interface SiteConfig {
 export interface InsertSiteConfig {
   key: string;
   value: string;
+}
+
+export interface ProductImage {
+  id: number;
+  productId: number;
+  imageUrl: string;
+  sortOrder: number | null;
+  isPrimary: boolean | null;
+}
+
+export interface InsertProductImage {
+  productId: number;
+  imageUrl: string;
+  sortOrder?: number | null;
+  isPrimary?: boolean | null;
+}
+
+export interface ProductReview {
+  id: number;
+  productId: number;
+  reviewerName: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  reviewDate: string | null;
+  verifiedPurchase: boolean | null;
+}
+
+export interface InsertProductReview {
+  productId: number;
+  reviewerName: string;
+  rating: number;
+  title?: string | null;
+  body: string;
+  reviewDate?: string | null;
+  verifiedPurchase?: boolean | null;
 }

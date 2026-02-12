@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, varchar, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const categories = pgTable("categories", {
@@ -16,8 +16,20 @@ export const products = pgTable("products", {
   slug: text("slug").notNull().unique(),
   description: text("description"),
   price: integer("price").notNull(),
+  mrp: integer("mrp"),
   imageUrl: text("image_url").notNull(),
   categoryId: integer("category_id").notNull(),
+  amazonAsin: text("amazon_asin"),
+  color: text("color"),
+  material: text("material"),
+  gsm: integer("gsm"),
+  dimensions: text("dimensions"),
+  weightGrams: integer("weight_grams"),
+  itemsInSet: integer("items_in_set").default(1),
+  specialFeatures: text("special_features"),
+  bulletPoints: text("bullet_points"),
+  productType: text("product_type").default("towel"),
+  audience: text("audience").default("kids"),
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
 });
@@ -72,6 +84,25 @@ export const siteConfig = pgTable("site_config", {
   value: text("value").notNull(),
 });
 
+export const productImages = pgTable("product_images", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  sortOrder: integer("sort_order").default(0),
+  isPrimary: boolean("is_primary").default(false),
+});
+
+export const productReviews = pgTable("product_reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  reviewerName: text("reviewer_name").notNull(),
+  rating: integer("rating").notNull(),
+  title: text("title"),
+  body: text("body").notNull(),
+  reviewDate: text("review_date"),
+  verifiedPurchase: boolean("verified_purchase").default(false),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
@@ -79,6 +110,8 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: tru
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
+export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true });
+export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true });
 
 export type {
   Category, InsertCategory,
@@ -88,4 +121,6 @@ export type {
   Order, InsertOrder,
   OrderItem, InsertOrderItem,
   SiteConfig, InsertSiteConfig,
+  ProductImage, InsertProductImage,
+  ProductReview, InsertProductReview,
 } from "./types";
