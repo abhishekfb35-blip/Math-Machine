@@ -96,6 +96,16 @@ Three swappable provider interfaces insulate the application from infrastructure
 
 Each provider follows the same pattern: an interface, a default implementation, and a factory function that reads an env var to select the active provider. Routes only interact with the interface — never the concrete implementation.
 
+### Service Layer (`server/services/`)
+
+Business logic is separated from HTTP route handling into service classes:
+
+- **`discountService.ts`** — Pure `calculateDiscount()` function implementing "Buy 2 Get 1 Free" logic. No dependencies on database, HTTP, or any framework.
+- **`cartService.ts`** — `CartService` class handles cart operations: enriching items with product data, calculating pricing, adding/updating/removing items. Depends only on `IStorage` interface.
+- **`orderService.ts`** — `OrderService` class orchestrates the full checkout flow: payment processing, order creation, free item marking, cart clearing, and notifications. Depends on `IStorage`, `IPaymentProvider`, and `INotificationService` interfaces.
+
+Routes (`server/routes.ts`) are now thin HTTP handlers: they parse input, call a service method, and return the response. All business logic lives in the service layer.
+
 ### Database
 
 - **ORM**: Drizzle ORM with PostgreSQL dialect

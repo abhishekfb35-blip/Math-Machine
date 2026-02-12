@@ -9,6 +9,11 @@ import path from "path";
 import { fileStorage, LocalFileStorage } from "./providers/fileStorage";
 import { paymentProvider } from "./providers/payment";
 import { notificationService } from "./providers/notification";
+import { CartService, NotFoundError } from "./services/cartService";
+import { OrderService, EmptyCartError } from "./services/orderService";
+
+const cartService = new CartService(storage);
+const orderService = new OrderService(storage, paymentProvider, notificationService);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -35,35 +40,6 @@ function getSessionId(req: Request, res: Response): string {
     });
   }
   return sessionId;
-}
-
-function calculateDiscount(items: { price: number; quantity: number }[]): { subtotal: number; discount: number; total: number; freeIndices: number[] } {
-  const expanded: { price: number; originalIndex: number }[] = [];
-  items.forEach((item, idx) => {
-    for (let i = 0; i < item.quantity; i++) {
-      expanded.push({ price: item.price, originalIndex: idx });
-    }
-  });
-
-  const subtotal = expanded.reduce((sum, item) => sum + item.price, 0);
-  const count = expanded.length;
-
-  if (count < 3) {
-    return { subtotal, discount: 0, total: subtotal, freeIndices: [] };
-  }
-
-  expanded.sort((a, b) => b.price - a.price);
-
-  const numFree = Math.floor(count / 2);
-  let discount = 0;
-  const freeIndices: number[] = [];
-
-  for (let i = count - 1; i >= count - numFree; i--) {
-    discount += expanded[i].price;
-    freeIndices.push(i);
-  }
-
-  return { subtotal, discount, total: subtotal - discount, freeIndices };
 }
 
 export async function registerRoutes(
@@ -120,60 +96,24 @@ export async function registerRoutes(
 
   app.get("/api/cart", async (req, res) => {
     const sessionId = getSessionId(req, res);
-    const cart = await storage.getOrCreateCart(sessionId);
-    const items = await storage.getCartItems(cart.id);
-
-    const itemsWithProducts = await Promise.all(
-      items.map(async (item) => {
-        const product = await storage.getProductById(item.productId);
-        return { ...item, product };
-      })
-    );
-
-    const priceItems = itemsWithProducts
-      .filter(i => i.product)
-      .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-
-    const pricing = calculateDiscount(priceItems);
-
-    res.json({
-      id: cart.id,
-      items: itemsWithProducts,
-      itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
-      ...pricing,
-    });
+    const cartDetails = await cartService.getCartDetails(sessionId);
+    res.json(cartDetails);
   });
 
   app.post("/api/cart/items", async (req, res) => {
     try {
       const input = addToCartSchema.parse(req.body);
       const sessionId = getSessionId(req, res);
-      const cart = await storage.getOrCreateCart(sessionId);
-
-      const product = await storage.getProductById(input.productId);
-      if (!product) return res.status(404).json({ message: "Product not found" });
-
-      const existingItems = await storage.getCartItems(cart.id);
-      const existing = existingItems.find(
-        i => i.productId === input.productId && i.personalizationName === (input.personalizationName || null)
+      const { item, isNew } = await cartService.addItem(
+        sessionId, input.productId, input.quantity, input.personalizationName || null
       );
-
-      if (existing) {
-        const updated = await storage.updateCartItem(existing.id, existing.quantity + input.quantity);
-        return res.json(updated);
-      }
-
-      const item = await storage.addCartItem({
-        cartId: cart.id,
-        productId: input.productId,
-        quantity: input.quantity,
-        personalizationName: input.personalizationName || null,
-      });
-
-      res.status(201).json(item);
+      res.status(isNew ? 201 : 200).json(item);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      }
+      if (err instanceof NotFoundError) {
+        return res.status(404).json({ message: err.message });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -183,18 +123,15 @@ export async function registerRoutes(
     try {
       const input = updateCartItemSchema.parse(req.body);
       const id = parseInt(req.params.id);
-
-      if (input.quantity === 0) {
-        await storage.removeCartItem(id);
-        return res.status(204).send();
-      }
-
-      const updated = await storage.updateCartItem(id, input.quantity, input.personalizationName);
-      if (!updated) return res.status(404).json({ message: "Item not found" });
-      res.json(updated);
+      const result = await cartService.updateItem(id, input.quantity, input.personalizationName);
+      if ("deleted" in result) return res.status(204).send();
+      res.json(result);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input" });
+      }
+      if (err instanceof NotFoundError) {
+        return res.status(404).json({ message: err.message });
       }
       res.status(500).json({ message: "Internal server error" });
     }
@@ -202,7 +139,7 @@ export async function registerRoutes(
 
   app.delete("/api/cart/items/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    await storage.removeCartItem(id);
+    await cartService.removeItem(id);
     res.status(204).send();
   });
 
@@ -210,93 +147,14 @@ export async function registerRoutes(
     try {
       const input = checkoutSchema.parse(req.body);
       const sessionId = getSessionId(req, res);
-      const cart = await storage.getOrCreateCart(sessionId);
-      const items = await storage.getCartItems(cart.id);
-
-      if (items.length === 0) {
-        return res.status(400).json({ message: "Cart is empty" });
-      }
-
-      const itemsWithProducts = await Promise.all(
-        items.map(async (item) => {
-          const product = await storage.getProductById(item.productId);
-          return { ...item, product };
-        })
-      );
-
-      const priceItems = itemsWithProducts
-        .filter(i => i.product)
-        .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-
-      const pricing = calculateDiscount(priceItems);
-
-      const payment = await paymentProvider.createPaymentOrder({
-        orderId: 0,
-        amount: pricing.total,
-        currency: "INR",
-        customerName: input.customerName,
-        customerEmail: input.customerEmail,
-        customerPhone: input.customerPhone,
-      });
-
-      const order = await storage.createOrder({
-        customerName: input.customerName,
-        customerEmail: input.customerEmail,
-        customerPhone: input.customerPhone,
-        shippingAddress: input.shippingAddress,
-        shippingCity: input.shippingCity,
-        shippingState: input.shippingState,
-        shippingPincode: input.shippingPincode,
-        subtotal: pricing.subtotal,
-        discount: pricing.discount,
-        total: pricing.total,
-        status: payment.status === "cod" ? "confirmed" : "pending",
-        paymentStatus: payment.status,
-        notes: input.notes || null,
-        paymentId: payment.paymentId,
-      });
-
-      const expanded: { product: typeof itemsWithProducts[0]['product']; personalizationName: string | null }[] = [];
-      itemsWithProducts.forEach(item => {
-        for (let i = 0; i < item.quantity; i++) {
-          expanded.push({ product: item.product, personalizationName: item.personalizationName });
-        }
-      });
-      expanded.sort((a, b) => (b.product?.price || 0) - (a.product?.price || 0));
-
-      const totalCount = expanded.length;
-      const numFree = totalCount >= 3 ? Math.floor(totalCount / 2) : 0;
-
-      for (let i = 0; i < expanded.length; i++) {
-        const item = expanded[i];
-        if (!item.product) continue;
-        const isFree = i >= totalCount - numFree;
-        await storage.createOrderItem({
-          orderId: order.id,
-          productId: item.product.id,
-          productName: item.product.name,
-          productPrice: item.product.price,
-          quantity: 1,
-          personalizationName: item.personalizationName,
-          isFree,
-        });
-      }
-
-      await storage.clearCart(cart.id);
-
-      notificationService.sendOrderConfirmation({
-        orderId: order.id,
-        customerName: input.customerName,
-        customerEmail: input.customerEmail,
-        customerPhone: input.customerPhone,
-        total: pricing.total,
-        itemCount: totalCount,
-      }).catch(err => console.error("Notification error:", err));
-
-      res.status(201).json({ orderId: order.id, ...pricing });
+      const result = await orderService.checkout(sessionId, input);
+      res.status(201).json(result);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      }
+      if (err instanceof EmptyCartError) {
+        return res.status(400).json({ message: err.message });
       }
       console.error("Checkout error:", err);
       res.status(500).json({ message: "Internal server error" });
@@ -336,10 +194,9 @@ export async function registerRoutes(
 
   app.get("/api/orders/:id", async (req, res) => {
     const id = parseInt(req.params.id);
-    const order = await storage.getOrderById(id);
+    const order = await orderService.getOrder(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
-    const items = await storage.getOrderItems(id);
-    res.json({ ...order, items });
+    res.json(order);
   });
 
   return httpServer;
