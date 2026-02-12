@@ -6,19 +6,89 @@
 <title>TurtleLittle - Database ER Diagram</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 32px; min-width: 1400px; }
+  body { background: #f8f9fa; font-family: 'Segoe UI', system-ui, sans-serif; padding: 32px; overflow: auto; }
   h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 22px; }
   .subtitle { text-align: center; color: #666; margin-bottom: 32px; font-size: 13px; }
-  .canvas { position: relative; width: 1340px; margin: 0 auto; height: 1380px; }
+
+  .diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .row {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+  .row-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+  .connector {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .arrow-line {
+    width: 50px;
+    height: 2px;
+    background: #94a3b8;
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border: 5px solid transparent;
+    border-left: 7px solid #94a3b8;
+  }
+  .arrow-label {
+    background: #f8f9fa;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  .arrow-down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .arrow-down .arrow-line {
+    width: 2px;
+    height: 40px;
+    background: #94a3b8;
+  }
+  .arrow-down .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: auto;
+    bottom: -1px;
+    border: 5px solid transparent;
+    border-top: 7px solid #94a3b8;
+    border-left: 5px solid transparent;
+  }
 
   .table-box {
-    position: absolute;
     background: #fff;
     border: 1.5px solid #d0d5dd;
     border-radius: 6px;
     font-size: 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    z-index: 2;
+    flex-shrink: 0;
   }
   .table-box .header {
     background: #1a5c6b;
@@ -34,7 +104,7 @@
     padding: 3px 12px;
     display: flex;
     justify-content: space-between;
-    gap: 16px;
+    gap: 20px;
     border-bottom: 1px solid #f0f0f0;
   }
   .table-box .col:last-child { border-bottom: none; }
@@ -55,248 +125,264 @@
   .new-col { background: #ecfdf5; }
   .new-table .header { background: #047857; }
 
-  svg.lines {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 1;
-  }
-  .rel-line { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
-  .rel-label {
-    font-size: 10px;
-    fill: #64748b;
-    font-weight: 600;
-    background: white;
-  }
-  .rel-label-bg {
-    fill: #f8f9fa;
-  }
   .legend {
     display: flex;
     gap: 24px;
     justify-content: center;
-    margin-top: 16px;
+    margin-top: 32px;
     font-size: 12px;
     color: #555;
     flex-wrap: wrap;
   }
   .legend span { display: flex; align-items: center; gap: 5px; }
   .legend .dot { width: 12px; height: 12px; border-radius: 2px; }
+
+  .section-divider {
+    border-top: 1px dashed #d0d5dd;
+    padding-top: 12px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 16px;
+  }
 </style>
 </head>
 <body>
 
 <h1>TurtleLittle E-Commerce — Entity Relationship Diagram</h1>
-<p class="subtitle">Green tables = new tables &nbsp;|&nbsp; Green-highlighted rows = new columns on existing tables</p>
+<p class="subtitle">Green headers = new tables &nbsp;&bull;&nbsp; Green-highlighted rows = new columns on existing tables &nbsp;&bull;&nbsp; Arrows show foreign key relationships</p>
 
-<div class="canvas">
+<div class="diagram">
 
-<svg class="lines">
-  <!-- categories (right edge ~215) -> products (left edge 420) -->
-  <path d="M 215 140 L 420 140" class="rel-line"/>
-  <rect x="295" y="125" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="298" y="137" class="rel-label">1 : N</text>
-  <polygon points="415,136 415,144 423,140" fill="#94a3b8"/>
+  <!-- ===== PRODUCT DOMAIN ===== -->
+  <div>
+    <div class="section-title">Product Domain</div>
+    <div class="row">
 
-  <!-- products (right edge ~680) -> product_images (left edge 780) -->
-  <path d="M 680 100 L 780 100" class="rel-line"/>
-  <rect x="706" y="87" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="709" y="99" class="rel-label">1 : N</text>
-  <polygon points="775,96 775,104 783,100" fill="#94a3b8"/>
+      <!-- CATEGORIES -->
+      <div class="table-box" style="width: 210px;">
+        <div class="header">categories</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+        </div>
+      </div>
 
-  <!-- products (right edge ~680) -> product_reviews (left edge 780) -->
-  <path d="M 680 200 L 730 200 L 730 370 L 780 370" class="rel-line"/>
-  <rect x="735" y="275" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="738" y="287" class="rel-label">1 : N</text>
-  <polygon points="775,366 775,374 783,370" fill="#94a3b8"/>
+      <!-- Arrow: categories -> products -->
+      <div class="connector">
+        <div class="arrow-label">1 : N</div>
+        <div class="arrow-line"></div>
+      </div>
 
-  <!-- products (bottom ~560) -> product_customization (top 620) -->
-  <path d="M 550 560 L 550 620" class="rel-line"/>
-  <rect x="557" y="580" width="32" height="16" rx="3" class="rel-label-bg"/>
-  <text x="560" y="592" class="rel-label">1 : 1</text>
-  <polygon points="546,615 554,615 550,623" fill="#94a3b8"/>
+      <!-- PRODUCTS -->
+      <div class="table-box" style="width: 260px;">
+        <div class="header">products</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">price</span><span class="col-type">integer</span></div>
+          <div class="col new-col"><span class="col-name">mrp</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>category_id</span><span class="col-type">integer</span></div>
+          <div class="col new-col"><span class="col-name"><span class="badge uq">UQ</span>amazon_asin</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">color</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">material</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">gsm</span><span class="col-type">integer?</span></div>
+          <div class="col new-col"><span class="col-name">dimensions</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">weight_grams</span><span class="col-type">integer?</span></div>
+          <div class="col new-col"><span class="col-name">items_in_set</span><span class="col-type">integer</span></div>
+          <div class="col new-col"><span class="col-name">special_features</span><span class="col-type">json?</span></div>
+          <div class="col new-col"><span class="col-name">bullet_points</span><span class="col-type">json?</span></div>
+          <div class="col new-col"><span class="col-name">product_type</span><span class="col-type">text</span></div>
+          <div class="col new-col"><span class="col-name">audience</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">active</span><span class="col-type">boolean</span></div>
+          <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+        </div>
+      </div>
 
-  <!-- products (left edge 420) -> cart_items via path -->
-  <path d="M 420 400 L 340 400 L 340 710 L 290 710" class="rel-line"/>
-  <rect x="345" y="545" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="348" y="557" class="rel-label">1 : N</text>
-  <polygon points="295,706 295,714 287,710" fill="#94a3b8"/>
+      <!-- Arrow: products -> product_images -->
+      <div class="connector">
+        <div class="arrow-label">1 : N</div>
+        <div class="arrow-line"></div>
+      </div>
 
-  <!-- carts (bottom ~820) -> cart_items (top ~660) -->
-  <path d="M 130 660 L 130 710 L 150 710" class="rel-line"/>
-  <rect x="98" y="676" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="101" y="688" class="rel-label">1 : N</text>
-  <polygon points="145,706 145,714 153,710" fill="#94a3b8"/>
+      <!-- PRODUCT_IMAGES -->
+      <div class="table-box new-table" style="width: 230px;">
+        <div class="header">product_images (new)</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">is_primary</span><span class="col-type">boolean</span></div>
+        </div>
+      </div>
 
-  <!-- orders (right edge ~230) -> order_items (left edge 420) -->
-  <path d="M 230 1100 L 420 1100" class="rel-line"/>
-  <rect x="302" y="1087" width="36" height="16" rx="3" class="rel-label-bg"/>
-  <text x="305" y="1099" class="rel-label">1 : N</text>
-  <polygon points="415,1096 415,1104 423,1100" fill="#94a3b8"/>
-</svg>
-
-<!-- ============ ROW 1: categories, products, product_images ============ -->
-
-<!-- CATEGORIES -->
-<div class="table-box" style="left: 0; top: 50; width: 210px;">
-  <div class="header">categories</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+    </div>
   </div>
-</div>
 
-<!-- PRODUCTS -->
-<div class="table-box" style="left: 420; top: 30; width: 255px;">
-  <div class="header">products</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name">name</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">slug</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">description</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">price</span><span class="col-type">integer</span></div>
-    <div class="col new-col"><span class="col-name">mrp</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>category_id</span><span class="col-type">integer</span></div>
-    <div class="col new-col"><span class="col-name"><span class="badge uq">UQ</span>amazon_asin</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">color</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">material</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">gsm</span><span class="col-type">integer?</span></div>
-    <div class="col new-col"><span class="col-name">dimensions</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">weight_grams</span><span class="col-type">integer?</span></div>
-    <div class="col new-col"><span class="col-name">items_in_set</span><span class="col-type">integer</span></div>
-    <div class="col new-col"><span class="col-name">special_features</span><span class="col-type">json?</span></div>
-    <div class="col new-col"><span class="col-name">bullet_points</span><span class="col-type">json?</span></div>
-    <div class="col new-col"><span class="col-name">product_type</span><span class="col-type">text</span></div>
-    <div class="col new-col"><span class="col-name">audience</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">active</span><span class="col-type">boolean</span></div>
-    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
+  <!-- ===== PRODUCT EXTENSIONS ===== -->
+  <div>
+    <div class="section-title">Product Extensions (linked to products via product_id FK)</div>
+    <div class="row">
+
+      <!-- PRODUCT_REVIEWS -->
+      <div class="table-box new-table" style="width: 250px;">
+        <div class="header">product_reviews (new)</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">reviewer_name</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">rating</span><span class="col-type">integer (1-5)</span></div>
+          <div class="col"><span class="col-name">title</span><span class="col-type">text?</span></div>
+          <div class="col"><span class="col-name">body</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">review_date</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">verified_purchase</span><span class="col-type">boolean</span></div>
+        </div>
+      </div>
+
+      <!-- PRODUCT_CUSTOMIZATION -->
+      <div class="table-box new-table" style="width: 280px;">
+        <div class="header">product_customization (new)</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span><span class="badge uq">UQ</span>product_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">nameless_image_url</span><span class="col-type">text?</span></div>
+          <div class="col"><span class="col-name">design_type</span><span class="col-type">text ("tall"/"short")</span></div>
+          <div class="col"><span class="col-name">design_bottom_y</span><span class="col-type">real? (% from top)</span></div>
+          <div class="col"><span class="col-name">name_rect</span><span class="col-type">json? (override)</span></div>
+          <div class="col"><span class="col-name">thread_colors</span><span class="col-type">json (ordered array)</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="text-align:center; margin-top:12px;">
+      <span style="font-size:11px; color:#64748b;">
+        product_reviews: <strong>1 : N</strong> (many reviews per product) &nbsp;&bull;&nbsp;
+        product_customization: <strong>1 : 1</strong> (one config per product, product_id is unique)
+      </span>
+    </div>
   </div>
-</div>
 
-<!-- PRODUCT_IMAGES -->
-<div class="table-box new-table" style="left: 780; top: 40; width: 230px;">
-  <div class="header">product_images (new)</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">image_url</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">sort_order</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">is_primary</span><span class="col-type">boolean</span></div>
+  <!-- ===== CART DOMAIN ===== -->
+  <div class="section-divider">
+    <div class="section-title">Shopping Cart Domain</div>
+    <div class="row">
+
+      <!-- CARTS -->
+      <div class="table-box" style="width: 210px;">
+        <div class="header">carts</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name">session_id</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+        </div>
+      </div>
+
+      <!-- Arrow: carts -> cart_items -->
+      <div class="connector">
+        <div class="arrow-label">1 : N</div>
+        <div class="arrow-line"></div>
+      </div>
+
+      <!-- CART_ITEMS -->
+      <div class="table-box" style="width: 260px;">
+        <div class="header">cart_items</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>cart_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div style="text-align:center; margin-top:12px;">
+      <span style="font-size:11px; color:#64748b;">
+        cart_items.product_id also references <strong>products.id</strong> (1 : N)
+      </span>
+    </div>
   </div>
-</div>
 
-<!-- ============ ROW 2: product_reviews ============ -->
+  <!-- ===== ORDER DOMAIN ===== -->
+  <div class="section-divider">
+    <div class="section-title">Order Domain</div>
+    <div class="row">
 
-<!-- PRODUCT_REVIEWS -->
-<div class="table-box new-table" style="left: 780; top: 280; width: 240px;">
-  <div class="header">product_reviews (new)</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">reviewer_name</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">rating</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">title</span><span class="col-type">text?</span></div>
-    <div class="col"><span class="col-name">body</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">review_date</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">verified_purchase</span><span class="col-type">boolean</span></div>
+      <!-- ORDERS -->
+      <div class="table-box" style="width: 230px;">
+        <div class="header">orders</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name">customer_name</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">email</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">phone</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">address</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">city</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">state</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">pincode</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">subtotal</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">discount</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">total</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">status</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">payment_method</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">payment_status</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+        </div>
+      </div>
+
+      <!-- Arrow: orders -> order_items -->
+      <div class="connector">
+        <div class="arrow-label">1 : N</div>
+        <div class="arrow-line"></div>
+      </div>
+
+      <!-- ORDER_ITEMS -->
+      <div class="table-box" style="width: 260px;">
+        <div class="header">order_items</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge fk">FK</span>order_id</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">product_name</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">product_price</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
+          <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
+          <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
+          <div class="col"><span class="col-name">is_free</span><span class="col-type">boolean</span></div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<!-- ============ ROW 3: carts, product_customization ============ -->
+  <!-- ===== CONFIGURATION ===== -->
+  <div class="section-divider">
+    <div class="section-title">Configuration (standalone, no foreign keys)</div>
+    <div class="row">
 
-<!-- CARTS -->
-<div class="table-box" style="left: 0; top: 570; width: 190px;">
-  <div class="header">carts</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name">session_id</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
+      <!-- SITE_CONFIG -->
+      <div class="table-box" style="width: 230px;">
+        <div class="header">site_config</div>
+        <div class="cols">
+          <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
+          <div class="col"><span class="col-name"><span class="badge uq">UQ</span>key</span><span class="col-type">text</span></div>
+          <div class="col"><span class="col-name">value</span><span class="col-type">text (JSON)</span></div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
-
-<!-- PRODUCT_CUSTOMIZATION -->
-<div class="table-box new-table" style="left: 420; top: 620; width: 275px;">
-  <div class="header">product_customization (new)</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span><span class="badge uq">UQ</span>product_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">nameless_image_url</span><span class="col-type">text?</span></div>
-    <div class="col"><span class="col-name">design_type</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">design_bottom_y</span><span class="col-type">real?</span></div>
-    <div class="col"><span class="col-name">name_rect</span><span class="col-type">json?</span></div>
-    <div class="col"><span class="col-name">thread_colors</span><span class="col-type">json</span></div>
-  </div>
-</div>
-
-<!-- SITE_CONFIG -->
-<div class="table-box" style="left: 780; top: 620; width: 220px;">
-  <div class="header">site_config</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge uq">UQ</span>key</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">value</span><span class="col-type">text (JSON)</span></div>
-  </div>
-</div>
-
-<!-- ============ ROW 4: cart_items ============ -->
-
-<!-- CART_ITEMS -->
-<div class="table-box" style="left: 150; top: 670; width: 240px;">
-  <div class="header">cart_items</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>cart_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>product_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
-  </div>
-</div>
-
-<!-- ============ ROW 5: orders, order_items ============ -->
-
-<!-- ORDERS -->
-<div class="table-box" style="left: 0; top: 930; width: 225px;">
-  <div class="header">orders</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name">customer_name</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">email</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">phone</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">address</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">city</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">state</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">pincode</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">subtotal</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">discount</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">total</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">status</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">payment_method</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">payment_status</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">created_at</span><span class="col-type">timestamp</span></div>
-  </div>
-</div>
-
-<!-- ORDER_ITEMS -->
-<div class="table-box" style="left: 420; top: 990; width: 250px;">
-  <div class="header">order_items</div>
-  <div class="cols">
-    <div class="col"><span class="col-name"><span class="badge pk">PK</span>id</span><span class="col-type">serial</span></div>
-    <div class="col"><span class="col-name"><span class="badge fk">FK</span>order_id</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">product_name</span><span class="col-type">text</span></div>
-    <div class="col"><span class="col-name">product_price</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">quantity</span><span class="col-type">integer</span></div>
-    <div class="col"><span class="col-name">personalization_name</span><span class="col-type">text?</span></div>
-    <div class="col new-col"><span class="col-name">thread_color</span><span class="col-type">text?</span></div>
-    <div class="col"><span class="col-name">is_free</span><span class="col-type">boolean</span></div>
-  </div>
-</div>
 
 </div>
 
