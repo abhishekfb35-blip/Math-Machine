@@ -6,22 +6,12 @@ import { z } from "zod";
 import crypto from "crypto";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
-
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+import { fileStorage, LocalFileStorage } from "./providers/fileStorage";
+import { paymentProvider } from "./providers/payment";
+import { notificationService } from "./providers/notification";
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadsDir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-      cb(null, name);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
@@ -81,15 +71,22 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  const express = await import("express");
-  app.use("/uploads", express.default.static(uploadsDir));
+  if (fileStorage instanceof LocalFileStorage) {
+    const express = await import("express");
+    app.use("/uploads", express.default.static(fileStorage.getUploadsDir()));
+  }
 
-  app.post("/api/upload", upload.single("image"), (req: Request, res: Response) => {
+  app.post("/api/upload", upload.single("image"), async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+    try {
+      const result = await fileStorage.upload(req.file.buffer, req.file.originalname, req.file.mimetype);
+      res.json({ url: result.url });
+    } catch (err) {
+      console.error("Upload error:", err);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
   });
 
   app.get("/api/categories", async (_req, res) => {
@@ -233,6 +230,15 @@ export async function registerRoutes(
 
       const pricing = calculateDiscount(priceItems);
 
+      const payment = await paymentProvider.createPaymentOrder({
+        orderId: 0,
+        amount: pricing.total,
+        currency: "INR",
+        customerName: input.customerName,
+        customerEmail: input.customerEmail,
+        customerPhone: input.customerPhone,
+      });
+
       const order = await storage.createOrder({
         customerName: input.customerName,
         customerEmail: input.customerEmail,
@@ -244,10 +250,10 @@ export async function registerRoutes(
         subtotal: pricing.subtotal,
         discount: pricing.discount,
         total: pricing.total,
-        status: "confirmed",
-        paymentStatus: "cod",
+        status: payment.status === "cod" ? "confirmed" : "pending",
+        paymentStatus: payment.status,
         notes: input.notes || null,
-        paymentId: null,
+        paymentId: payment.paymentId,
       });
 
       const expanded: { product: typeof itemsWithProducts[0]['product']; personalizationName: string | null }[] = [];
@@ -277,6 +283,15 @@ export async function registerRoutes(
       }
 
       await storage.clearCart(cart.id);
+
+      notificationService.sendOrderConfirmation({
+        orderId: order.id,
+        customerName: input.customerName,
+        customerEmail: input.customerEmail,
+        customerPhone: input.customerPhone,
+        total: pricing.total,
+        itemCount: totalCount,
+      }).catch(err => console.error("Notification error:", err));
 
       res.status(201).json({ orderId: order.id, ...pricing });
     } catch (err) {

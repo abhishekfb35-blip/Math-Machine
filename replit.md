@@ -86,6 +86,16 @@ The codebase separates database-specific code from application logic:
 - **`server/storage.ts`** — `IStorage` interface defines all data operations using pure types from `types.ts`. `DatabaseStorage` class implements it using Drizzle. To swap databases, only this file and `schema.ts` need to change.
 - **Frontend** — All client components import types from `@shared/types`, never from `@shared/schema`. Zero database dependency.
 
+### Provider Abstraction Layer (`server/providers/`)
+
+Three swappable provider interfaces insulate the application from infrastructure changes:
+
+- **Payment (`IPaymentProvider`)** — Abstracts payment processing. Current: `CodPaymentProvider` (Cash on Delivery). To add Razorpay/Stripe, implement a new class and update the factory in `payment.ts`. Controlled by `PAYMENT_PROVIDER` env var.
+- **File Storage (`IFileStorage`)** — Abstracts file uploads. Current: `LocalFileStorage` (disk-based). To switch to S3/Cloudflare R2, implement a new class and update the factory in `fileStorage.ts`. Controlled by `FILE_STORAGE_PROVIDER` env var.
+- **Notifications (`INotificationService`)** — Abstracts order notifications. Current: `ConsoleNotificationService` (logs to console). To add email/SMS/WhatsApp API, implement a new class and update the factory in `notification.ts`. Controlled by `NOTIFICATION_PROVIDER` env var.
+
+Each provider follows the same pattern: an interface, a default implementation, and a factory function that reads an env var to select the active provider. Routes only interact with the interface — never the concrete implementation.
+
 ### Database
 
 - **ORM**: Drizzle ORM with PostgreSQL dialect
