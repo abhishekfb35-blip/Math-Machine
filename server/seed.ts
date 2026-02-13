@@ -1,213 +1,190 @@
 import { db } from "./db";
-import { categories, products, siteConfig, productImages, productReviews } from "@shared/schema";
-import { eq, sql, and, isNull } from "drizzle-orm";
+import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
+import { sql } from "drizzle-orm";
+import * as fs from "fs";
+import * as path from "path";
 
-function imgUrl(filename: string): string {
-  return `/images/products/${filename}`;
+interface SeedData {
+  categories: any[];
+  products: any[];
+  productImages: any[];
+  productReviews: any[];
+  tags: any[];
+  productTags: any[];
+  siteConfig: any[];
+}
+
+function loadSeedData(): SeedData {
+  const seedPath = path.join(import.meta.dirname, "seed-data.json");
+  const raw = fs.readFileSync(seedPath, "utf-8");
+  return JSON.parse(raw);
 }
 
 export async function seedDatabase() {
   try {
-    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(categories);
+    const [{ catCount }] = await db.select({ catCount: sql<number>`count(*)` }).from(categories);
+    const [{ prodCount }] = await db.select({ prodCount: sql<number>`count(*)` }).from(products);
 
-    if (Number(count) === 0) {
-      console.log("Seeding database with categories and products...");
+    if (Number(catCount) > 0 && Number(prodCount) > 0) {
+      console.log("Database already seeded, skipping.");
+      return;
+    }
 
-      const insertedCategories = await db.insert(categories).values([
-        { name: "Girls Towels", slug: "girls-towels", description: "Personalised luxury embroidered towels for girls featuring beloved Disney princesses, cartoon characters, and more", imageUrl: imgUrl("elsa_1.jpg"), sortOrder: 1 },
-        { name: "Boys Towels", slug: "boys-towels", description: "Personalised luxury embroidered towels for boys featuring superheroes, sports themes, and popular cartoon characters", imageUrl: imgUrl("bat_1.jpg"), sortOrder: 2 },
-        { name: "Couple Towels", slug: "couple-towels", description: "Personalised luxury couple towel sets with elegant embroidered designs, perfect for weddings and anniversaries", imageUrl: imgUrl("ladyhrt_set_white.jpg"), sortOrder: 3 },
-        { name: "Boys Blankets", slug: "boys-blankets", description: "Personalised luxury kids AC blankets for boys featuring superhero and cartoon character embroidery", imageUrl: imgUrl("superman_c.jpg"), sortOrder: 4 },
-        { name: "Girls Blankets", slug: "girls-blankets", description: "Personalised luxury kids AC blankets for girls featuring princess and fairy tale character embroidery", imageUrl: imgUrl("snowhite_bird.jpg"), sortOrder: 5 },
-        { name: "Bathrobes", slug: "bathrobes", description: "Luxury personalised embroidered bathrobes in 100% high-grade cotton. Super soft, absorbent, and perfect for gifting.", imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), sortOrder: 6 },
-      ]).returning();
+    if (Number(catCount) > 0 && Number(prodCount) === 0) {
+      console.log("Partial seed detected (categories exist but no products). Clearing for fresh seed...");
+      await db.delete(productReviews);
+      await db.delete(productImages);
+      await db.delete(productTags);
+      await db.delete(tags);
+      await db.delete(siteConfig);
+      await db.delete(categories);
+    }
 
-      const catMap: Record<string, number> = {};
-      for (const cat of insertedCategories) {
-        catMap[cat.slug] = cat.id;
+    console.log("Empty database detected. Seeding from seed-data.json...");
+    const data = loadSeedData();
+
+    const insertedCats = await db.insert(categories).values(
+      data.categories.map((c: any) => ({
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        imageUrl: c.imageUrl || c.image_url,
+        sortOrder: c.sortOrder ?? c.sort_order ?? 0,
+      }))
+    ).returning();
+    console.log(`  Seeded ${insertedCats.length} categories`);
+
+    const catSlugToId: Record<string, number> = {};
+    for (const cat of insertedCats) {
+      catSlugToId[cat.slug] = cat.id;
+    }
+
+    const BATCH_SIZE = 50;
+    const skippedProducts = data.products.filter((p: any) => !catSlugToId[p.categorySlug || p.category_slug]);
+    if (skippedProducts.length > 0) {
+      console.warn(`  Warning: ${skippedProducts.length} products have unknown category slugs, skipping them.`);
+    }
+
+    const prodEntries = data.products.filter((p: any) => catSlugToId[p.categorySlug || p.category_slug]).map((p: any) => ({
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      price: p.price,
+      mrp: p.mrp,
+      imageUrl: p.imageUrl || p.image_url,
+      categoryId: catSlugToId[p.categorySlug || p.category_slug],
+      amazonAsin: p.amazonAsin || p.amazon_asin,
+      color: p.color,
+      material: p.material,
+      gsm: p.gsm,
+      dimensions: p.dimensions,
+      weightGrams: p.weightGrams || p.weight_grams,
+      itemsInSet: p.itemsInSet || p.items_in_set,
+      specialFeatures: p.specialFeatures || p.special_features,
+      bulletPoints: p.bulletPoints || p.bullet_points,
+      searchKeywords: p.searchKeywords || p.search_keywords,
+      productType: p.productType || p.product_type || "towel",
+      audience: p.audience || "kids",
+      active: p.active !== false,
+      sortOrder: p.sortOrder ?? p.sort_order ?? 0,
+    }));
+
+    const allInsertedProducts: any[] = [];
+    for (let i = 0; i < prodEntries.length; i += BATCH_SIZE) {
+      const batch = prodEntries.slice(i, i + BATCH_SIZE);
+      const inserted = await db.insert(products).values(batch).returning();
+      allInsertedProducts.push(...inserted);
+    }
+    console.log(`  Seeded ${allInsertedProducts.length} products`);
+
+    const prodSlugToId: Record<string, number> = {};
+    for (const prod of allInsertedProducts) {
+      prodSlugToId[prod.slug] = prod.id;
+    }
+
+    if (data.productImages.length > 0) {
+      const imgEntries = data.productImages
+        .filter((img: any) => prodSlugToId[img.productSlug || img.product_slug])
+        .map((img: any) => ({
+          productId: prodSlugToId[img.productSlug || img.product_slug],
+          imageUrl: img.imageUrl || img.image_url,
+          sortOrder: img.sortOrder ?? img.sort_order ?? 0,
+          isPrimary: img.isPrimary ?? img.is_primary ?? false,
+        }));
+
+      for (let i = 0; i < imgEntries.length; i += BATCH_SIZE) {
+        const batch = imgEntries.slice(i, i + BATCH_SIZE);
+        await db.insert(productImages).values(batch);
+      }
+      console.log(`  Seeded ${imgEntries.length} product images`);
+    }
+
+    if (data.productReviews.length > 0) {
+      const revEntries = data.productReviews
+        .filter((r: any) => prodSlugToId[r.productSlug || r.product_slug])
+        .map((r: any) => ({
+          productId: prodSlugToId[r.productSlug || r.product_slug],
+          reviewerName: r.reviewerName || r.reviewer_name,
+          rating: r.rating,
+          title: r.title,
+          body: r.body,
+          reviewDate: r.reviewDate || r.review_date,
+          verifiedPurchase: r.verifiedPurchase ?? r.verified_purchase ?? false,
+        }));
+
+      for (let i = 0; i < revEntries.length; i += BATCH_SIZE) {
+        const batch = revEntries.slice(i, i + BATCH_SIZE);
+        await db.insert(productReviews).values(batch);
+      }
+      console.log(`  Seeded ${revEntries.length} product reviews`);
+    }
+
+    if (data.tags.length > 0) {
+      const insertedTags = await db.insert(tags).values(
+        data.tags.map((t: any) => ({
+          name: t.name,
+          description: t.description,
+        }))
+      ).returning();
+      console.log(`  Seeded ${insertedTags.length} tags`);
+
+      const tagNameToId: Record<string, number> = {};
+      for (const tag of insertedTags) {
+        tagNameToId[tag.name] = tag.id;
       }
 
-      const girlsTowelsId = catMap["girls-towels"];
-      const boysTowelsId = catMap["boys-towels"];
-      const coupleTowelsId = catMap["couple-towels"];
-      const boysBlanketId = catMap["boys-blankets"];
-      const girlsBlanketId = catMap["girls-blankets"];
-      const bathrobesId = catMap["bathrobes"];
+      if (data.productTags.length > 0) {
+        const ptEntries = data.productTags
+          .filter((pt: any) => {
+            const pSlug = pt.productSlug || pt.product_slug;
+            const tName = pt.tagName || pt.tag_name;
+            return prodSlugToId[pSlug] && tagNameToId[tName];
+          })
+          .map((pt: any) => ({
+            productId: prodSlugToId[pt.productSlug || pt.product_slug],
+            tagId: tagNameToId[pt.tagName || pt.tag_name],
+          }));
 
-      const allProducts = [
-        { name: "Princess Belle of Beauty and the Beast, Personalised Embroidered Luxury Towel", slug: "princess-belle-beauty-beast-towel", price: 999, imageUrl: imgUrl("barbie_2.jpg"), categoryId: girlsTowelsId, description: "Princess Belle embroidered luxury towel with personalised name embroidery.", sortOrder: 1 },
-        { name: "Princess Anna of Frozen Personalised Luxury Towel", slug: "princess-anna-frozen-towel", price: 999, imageUrl: imgUrl("ana_1.jpg"), categoryId: girlsTowelsId, description: "Princess Anna of Frozen embroidered luxury towel with personalised name embroidery.", sortOrder: 2 },
-        { name: "Princess Elsa Personalised Luxury Towel", slug: "princess-elsa-towel", price: 999, imageUrl: imgUrl("elsa_1.jpg"), categoryId: girlsTowelsId, description: "Princess Elsa embroidered luxury towel with personalised name embroidery.", sortOrder: 3 },
-        { name: "My Little Pony, Pinkie Pie, Personalised Luxury Towel", slug: "my-little-pony-pinkie-pie-towel", price: 999, imageUrl: imgUrl("pinkpie.jpg"), categoryId: girlsTowelsId, description: "My Little Pony Pinkie Pie embroidered luxury towel with personalised name embroidery.", sortOrder: 4 },
-        { name: "Masha and the Bear, Personalised Luxury Towel", slug: "masha-and-bear-towel", price: 999, imageUrl: imgUrl("masha_1.jpg"), categoryId: girlsTowelsId, description: "Masha and the Bear embroidered luxury towel with personalised name embroidery.", sortOrder: 5 },
-        { name: "My Little Pony, Rainbow Dash, Personalised Luxury Towel", slug: "my-little-pony-rainbow-dash-towel", price: 999, imageUrl: imgUrl("ponrain_copy.jpg"), categoryId: girlsTowelsId, description: "My Little Pony Rainbow Dash embroidered luxury towel with personalised name embroidery.", sortOrder: 6 },
-        { name: "Princess Rapunzel Personalised Luxury Towel", slug: "princess-rapunzel-towel", price: 999, imageUrl: imgUrl("rapun_copy.jpg"), categoryId: girlsTowelsId, description: "Princess Rapunzel embroidered luxury towel with personalised name embroidery.", sortOrder: 7 },
-        { name: "Hello Kitty Personalised Luxury Towel", slug: "hello-kitty-towel", price: 999, imageUrl: imgUrl("kitflr_pink_1.jpg"), categoryId: girlsTowelsId, description: "Hello Kitty embroidered luxury towel with personalised name embroidery.", sortOrder: 8 },
-        { name: "TinkerBell Fairy Personalised Luxury Towel", slug: "tinkerbell-fairy-towel", price: 999, imageUrl: imgUrl("tinkerbell_white_-_copy_2.jpg"), categoryId: girlsTowelsId, description: "TinkerBell Fairy embroidered luxury towel with personalised name embroidery.", sortOrder: 9 },
-        { name: "Olaf, Princess Elsa's friend from Frozen, Personalised Luxury Towel", slug: "olaf-frozen-towel", price: 999, imageUrl: imgUrl("olaf_1.jpg"), categoryId: girlsTowelsId, description: "Olaf from Frozen embroidered luxury towel with personalised name embroidery.", sortOrder: 10 },
-        { name: "Peppa Fairy Personalised Luxury Towel", slug: "peppa-fairy-towel", price: 999, imageUrl: imgUrl("pepfairy.jpg"), categoryId: girlsTowelsId, description: "Peppa Fairy embroidered luxury towel with personalised name embroidery.", sortOrder: 11 },
-        { name: "Dori from Finding Nemo, Personalised Luxury Towel", slug: "dori-finding-nemo-towel", price: 999, imageUrl: imgUrl("doritur_yellow.jpg"), categoryId: girlsTowelsId, description: "Dori from Finding Nemo embroidered luxury towel with personalised name embroidery.", sortOrder: 12 },
-        { name: "Baby Elephant with Party Balloons, Personalised Luxury Towel", slug: "baby-elephant-balloons-towel", price: 999, imageUrl: imgUrl("elepbalun_yellow.jpg"), categoryId: girlsTowelsId, description: "Baby Elephant with Party Balloons embroidered luxury towel with personalised name embroidery.", sortOrder: 13 },
-        { name: "Princess Bell from Beauty and the Beast, Personalised Luxury Towel", slug: "princess-bell-beauty-beast-towel", price: 999, imageUrl: imgUrl("snowc_pink.jpg"), categoryId: girlsTowelsId, description: "Princess Bell embroidered luxury towel with personalised name embroidery.", sortOrder: 14 },
-        { name: "My Little Pony, Unicorn on Cloud, Personalised Luxury Towel", slug: "unicorn-cloud-towel", price: 999, imageUrl: imgUrl("poncloud_white_bg_copy.jpg"), categoryId: girlsTowelsId, description: "Unicorn on Cloud embroidered luxury towel with personalised name embroidery.", sortOrder: 15 },
-        { name: "Barbie Princess, Personalised Embroidered Luxury Towel", slug: "barbie-princess-towel", price: 999, imageUrl: imgUrl("barbie.jpg"), categoryId: girlsTowelsId, description: "Barbie Princess embroidered luxury towel with personalised name embroidery.", sortOrder: 16 },
-        { name: "Princess Moana with Pig Friend Personalised Luxury Towel", slug: "princess-moana-towel", price: 999, imageUrl: imgUrl("moanpig.jpg"), categoryId: girlsTowelsId, description: "Princess Moana embroidered luxury towel with personalised name embroidery.", sortOrder: 17 },
-        { name: "Girl Minion Personalised Luxury Towel", slug: "girl-minion-towel", price: 999, imageUrl: imgUrl("mingirl.jpg"), categoryId: girlsTowelsId, description: "Girl Minion embroidered luxury towel with personalised name embroidery.", sortOrder: 18 },
-        { name: "Dora the Explorer Personalised Luxury Towel", slug: "dora-explorer-towel", price: 999, imageUrl: imgUrl("dora.jpg"), categoryId: girlsTowelsId, description: "Dora the Explorer embroidered luxury towel with personalised name embroidery.", sortOrder: 19 },
-        { name: "Animals Personalised Luxury Kids Towel", slug: "animals-kids-towel", price: 999, imageUrl: imgUrl("animals.jpg"), categoryId: girlsTowelsId, description: "Animals embroidered luxury towel with personalised name embroidery.", sortOrder: 20 },
-
-        { name: "Dinosaur Personalised Luxury Towel", slug: "dinosaur-towel-tiger", price: 999, imageUrl: imgUrl("dinotig_copy.jpg"), categoryId: boysTowelsId, description: "Dinosaur embroidered luxury towel with personalised name embroidery.", sortOrder: 1 },
-        { name: "Basketball Personalised Luxury Towel", slug: "basketball-towel", price: 999, imageUrl: imgUrl("basket_1.jpg"), categoryId: boysTowelsId, description: "Basketball embroidered luxury towel with personalised name embroidery.", sortOrder: 2 },
-        { name: "Cricket (Bat, Ball and Wickets), Personalised Luxury Towel", slug: "cricket-bat-ball-towel", price: 999, imageUrl: imgUrl("bat_1.jpg"), categoryId: boysTowelsId, description: "Cricket embroidered luxury towel with personalised name embroidery.", sortOrder: 3 },
-        { name: "Shiva on his Bike, Personalised Luxury Towel", slug: "shiva-bike-towel", price: 999, imageUrl: imgUrl("shiva_white.jpg"), categoryId: boysTowelsId, description: "Shiva on his Bike embroidered luxury towel with personalised name embroidery.", sortOrder: 4 },
-        { name: "Paw Patrol Personalised Luxury Towel", slug: "paw-patrol-towel", price: 999, imageUrl: imgUrl("paw.jpg"), categoryId: boysTowelsId, description: "Paw Patrol embroidered luxury towel with personalised name embroidery.", sortOrder: 5 },
-        { name: "Speedo Personalised Luxury Towel", slug: "speedo-towel", price: 999, imageUrl: imgUrl("speedo_blue.jpg"), categoryId: boysTowelsId, description: "Speedo embroidered luxury towel with personalised name embroidery.", sortOrder: 6 },
-        { name: "Dinosaur Blue Personalised Luxury Towel", slug: "dinosaur-blue-towel", price: 999, imageUrl: imgUrl("dinoblue.jpg"), categoryId: boysTowelsId, description: "Dinosaur Blue embroidered luxury towel with personalised name embroidery.", sortOrder: 7 },
-        { name: "Goku from Dragon Ball Personalised Luxury Towel", slug: "goku-dragon-ball-towel", price: 999, imageUrl: imgUrl("goku_2.jpg"), categoryId: boysTowelsId, description: "Goku from Dragon Ball embroidered luxury towel with personalised name embroidery.", sortOrder: 8 },
-        { name: "Batman from Justice League Personalised Luxury Towel", slug: "batman-justice-league-towel", price: 999, imageUrl: imgUrl("batman_blue.jpg"), categoryId: boysTowelsId, description: "Batman embroidered luxury towel with personalised name embroidery.", sortOrder: 9 },
-        { name: "Baby Shark Personalised Luxury Towel", slug: "baby-shark-towel", price: 999, imageUrl: imgUrl("sharkbb.jpg"), categoryId: boysTowelsId, description: "Baby Shark embroidered luxury towel with personalised name embroidery.", sortOrder: 10 },
-        { name: "Little Singham Personalised Luxury Towel", slug: "little-singham-towel", price: 999, imageUrl: imgUrl("singham_1.jpg"), categoryId: boysTowelsId, description: "Little Singham embroidered luxury towel with personalised name embroidery.", sortOrder: 11 },
-        { name: "George, Peppa's Brother, Personalised Luxury Towel", slug: "george-peppa-brother-towel", price: 999, imageUrl: imgUrl("pepboy_croc.jpg"), categoryId: boysTowelsId, description: "George from Peppa Pig embroidered luxury towel with personalised name embroidery.", sortOrder: 12 },
-        { name: "Spiderman Personalised Luxury Towel", slug: "spiderman-towel", price: 999, imageUrl: imgUrl("spider_bath_hand_color_name_1_1.jpg"), categoryId: boysTowelsId, description: "Spiderman embroidered luxury towel with personalised name embroidery.", sortOrder: 13 },
-        { name: "Superman Personalised Towel", slug: "superman-towel", price: 999, imageUrl: imgUrl("58superman_set_blue_2.jpg"), categoryId: boysTowelsId, description: "Superman embroidered luxury towel with personalised name embroidery.", sortOrder: 14 },
-        { name: "Avengers Captain America Personalised Towel", slug: "captain-america-towel", price: 999, imageUrl: imgUrl("4capamer_1_1.jpg"), categoryId: boysTowelsId, description: "Captain America embroidered luxury towel with personalised name embroidery.", sortOrder: 15 },
-        { name: "Ben10 Personalised Towel", slug: "ben10-towel", price: 999, imageUrl: imgUrl("5ben10.jpg"), categoryId: boysTowelsId, description: "Ben10 embroidered luxury towel with personalised name embroidery.", sortOrder: 16 },
-        { name: "Iron Man Personalised Towel", slug: "iron-man-towel", price: 999, imageUrl: imgUrl("3iron_t_c.jpg"), categoryId: boysTowelsId, description: "Iron Man embroidered luxury towel with personalised name embroidery.", sortOrder: 17 },
-        { name: "Bahubali Personalised Towel", slug: "bahubali-towel", price: 999, imageUrl: imgUrl("35bahubali.jpg"), categoryId: boysTowelsId, description: "Bahubali embroidered luxury towel with personalised name embroidery.", sortOrder: 18 },
-        { name: "Cute lil Baby Car Personalised Luxury Towel", slug: "baby-car-towel", price: 999, imageUrl: imgUrl("carbb_blue.jpg"), categoryId: boysTowelsId, description: "Baby Car embroidered luxury towel with personalised name embroidery.", sortOrder: 19 },
-        { name: "Hulk from Avengers Personalised Luxury Towel", slug: "hulk-avengers-towel", price: 999, imageUrl: imgUrl("hulk_c.jpg"), categoryId: boysTowelsId, description: "Hulk embroidered luxury towel with personalised name embroidery.", sortOrder: 20 },
-
-        { name: "Floral Heart with Ladybird with Initials, Personalised Couple Set", slug: "floral-heart-ladybird-couple", price: 2499, imageUrl: imgUrl("ladyhrt_set_white.jpg"), categoryId: coupleTowelsId, description: "Floral Heart with Ladybird personalised couple towel set with elegant embroidered initials.", sortOrder: 1 },
-        { name: "Floral Emblem with Name Initial Couple Set", slug: "floral-emblem-couple", price: 2499, imageUrl: imgUrl("6pink_blue_emblem_couple.jpg"), categoryId: coupleTowelsId, description: "Floral Emblem personalised couple towel set with embroidered name initials.", sortOrder: 2 },
-        { name: "King and Queen Crown Couple Set", slug: "king-queen-crown-couple", price: 2499, imageUrl: imgUrl("1king_queen_crowns.jpg"), categoryId: coupleTowelsId, description: "King and Queen Crown personalised couple towel set with royal embroidered designs.", sortOrder: 3 },
-        { name: "Mr & Mrs Mush and Lips Couple Set", slug: "mr-mrs-mush-lips-couple", price: 2499, imageUrl: imgUrl("2his_her_couple_towel.jpg"), categoryId: coupleTowelsId, description: "Mr & Mrs Mush and Lips personalised couple towel set with fun embroidered designs.", sortOrder: 4 },
-        { name: "Golden Laurel with Name Initial Couple Set", slug: "golden-laurel-couple", price: 2499, imageUrl: imgUrl("4laurel_set_s_1.jpg"), categoryId: coupleTowelsId, description: "Golden Laurel personalised couple towel set with elegant embroidered initials.", sortOrder: 5 },
-        { name: "Flowers with a Bee Couple Set", slug: "flowers-bee-couple", price: 2499, imageUrl: imgUrl("9adult_bale_pair_c.jpg"), categoryId: coupleTowelsId, description: "Flowers with a Bee personalised couple towel set with charming embroidered designs.", sortOrder: 6 },
-
-        { name: "Superman Luxury Personalised Kids AC Blanket", slug: "superman-blanket", price: 1599, imageUrl: imgUrl("superman_c.jpg"), categoryId: boysBlanketId, description: "Superman embroidered luxury personalised kids AC blanket.", sortOrder: 1 },
-        { name: "Teenage Wolverine of X-Men Luxury Personalised Kids AC Blanket", slug: "wolverine-blanket", price: 1599, imageUrl: imgUrl("wolverine_blkt.jpg"), categoryId: boysBlanketId, description: "Wolverine embroidered luxury personalised kids AC blanket.", sortOrder: 2 },
-        { name: "Spiderman Luxury Personalised Kids AC Blanket", slug: "spiderman-blanket", price: 1599, imageUrl: imgUrl("spiderman_1.jpg"), categoryId: boysBlanketId, description: "Spiderman embroidered luxury personalised kids AC blanket.", sortOrder: 3 },
-        { name: "Doraemon Luxury Personalised Kids AC Blanket", slug: "doraemon-blanket", price: 1599, imageUrl: imgUrl("doraemon_blue.jpg"), categoryId: boysBlanketId, description: "Doraemon embroidered luxury personalised kids AC blanket.", sortOrder: 4 },
-        { name: "Mickey & Pluto Luxury Personalised Kids AC Blanket", slug: "mickey-pluto-blanket", price: 1599, imageUrl: imgUrl("mick_pluto_final_1.jpg"), categoryId: boysBlanketId, description: "Mickey & Pluto embroidered luxury personalised kids AC blanket.", sortOrder: 5 },
-        { name: "Hulk from Avengers Luxury Personalised Kids AC Blanket", slug: "hulk-blanket", price: 1599, imageUrl: imgUrl("hulk_c.jpg"), categoryId: boysBlanketId, description: "Hulk embroidered luxury personalised kids AC blanket.", sortOrder: 6 },
-
-        { name: "Snowhite with Bird Luxury Personalised Kids AC Blanket", slug: "snowhite-blanket", price: 1599, imageUrl: imgUrl("snowhite_bird.jpg"), categoryId: girlsBlanketId, description: "Snowhite with Bird embroidered luxury personalised kids AC blanket.", sortOrder: 1 },
-        { name: "Princess Elsa Luxury Personalised Kids AC Blanket", slug: "elsa-blanket", price: 1599, imageUrl: imgUrl("elsa_blkt.jpg"), categoryId: girlsBlanketId, description: "Princess Elsa embroidered luxury personalised kids AC blanket.", sortOrder: 2 },
-        { name: "Peppa Pig Luxury Personalised Kids AC Blanket", slug: "peppa-pig-blanket", price: 1599, imageUrl: imgUrl("pepfairy.jpg"), categoryId: girlsBlanketId, description: "Peppa Pig embroidered luxury personalised kids AC blanket.", sortOrder: 3 },
-        { name: "Hello Kitty Luxury Personalised Kids AC Blanket", slug: "hello-kitty-blanket", price: 1599, imageUrl: imgUrl("kitflr_pink_1.jpg"), categoryId: girlsBlanketId, description: "Hello Kitty embroidered luxury personalised kids AC blanket.", sortOrder: 4 },
-        { name: "Minnie Mouse Luxury Personalised Kids AC Blanket", slug: "minnie-mouse-blanket", price: 1599, imageUrl: imgUrl("mingirl.jpg"), categoryId: girlsBlanketId, description: "Minnie Mouse embroidered luxury personalised kids AC blanket.", sortOrder: 5 },
-        { name: "Unicorn Luxury Personalised Kids AC Blanket", slug: "unicorn-blanket", price: 1599, imageUrl: imgUrl("poncloud_white_bg_copy.jpg"), categoryId: girlsBlanketId, description: "Unicorn embroidered luxury personalised kids AC blanket.", sortOrder: 6 },
-
-        { name: "Queen Bee Personalised Bathrobe", slug: "queen-bee-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), categoryId: bathrobesId, description: "Luxurious personalised bathrobe with intricate Queen Bee embroidery. 100% high-grade cotton, super soft and absorbent. Perfect gift for her.", sortOrder: 1 },
-        { name: "Golden Laurel Initials Personalised Bathrobe", slug: "golden-laurel-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg"), categoryId: bathrobesId, description: "Elegant personalised bathrobe with golden laurel wreath and initials embroidery. 100% high-grade cotton, super soft and absorbent.", sortOrder: 2 },
-        { name: "Mr Right Mrs Always Right Couple Bathrobe Set", slug: "mr-right-mrs-always-right-bathrobe-set", price: 4759, imageUrl: imgUrl("mrmrsrightrobes.jpg"), categoryId: bathrobesId, description: "Personalised couple bathrobe set with Mr Right & Mrs Always Right embroidery. Set of 2 bathrobes, 100% cotton, super absorbent. Ideal anniversary or wedding gift.", sortOrder: 3 },
-        { name: "Mr Right Mrs Always Right Couple Bathrobe Set (Gold)", slug: "mr-right-mrs-always-right-bathrobe-gold", price: 4759, imageUrl: imgUrl("mrr_mrsar.jpg"), categoryId: bathrobesId, description: "Premium personalised couple bathrobe set with elegant gold Mr Right & Mrs Always Right embroidery. Set of 2, 100% high-grade cotton.", sortOrder: 4 },
-        { name: "Heart Personalised Bathrobe", slug: "heart-personalised-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_1st_pic_less_txt.jpg"), categoryId: bathrobesId, description: "Beautiful personalised bathrobe with embroidered heart design. 100% high-grade cotton, super soft and absorbent. A thoughtful gift for loved ones.", sortOrder: 5 },
-        { name: "Golden Crown Personalised Bathrobe", slug: "golden-crown-bathrobe", price: 2599, imageUrl: imgUrl("nqbee_front_mannequin_1.jpg"), categoryId: bathrobesId, description: "Regal personalised bathrobe with golden crown embroidery. 100% high-grade cotton, super soft and absorbent. Feel like royalty every day.", sortOrder: 6 },
-      ];
-
-      await db.insert(products).values(allProducts).onConflictDoNothing();
-      console.log(`Seeded ${insertedCategories.length} categories and ${allProducts.length} products.`);
-    } else {
-      console.log("Database already seeded, skipping category/product seed.");
-
-      const [sample] = await db.select({ imageUrl: products.imageUrl }).from(products).limit(1);
-      if (sample && sample.imageUrl && sample.imageUrl.includes("turtlelittle.com")) {
-        console.log("Migrating image URLs to local paths...");
-        await db.execute(sql`UPDATE products SET image_url = '/images/products/' || substring(image_url from '[^/]+$') WHERE image_url LIKE 'https://turtlelittle.com%'`);
-        await db.execute(sql`UPDATE categories SET image_url = '/images/products/' || substring(image_url from '[^/]+$') WHERE image_url LIKE 'https://turtlelittle.com%'`);
-        console.log("Image URLs migrated to local paths.");
+        if (ptEntries.length > 0) {
+          await db.insert(productTags).values(ptEntries);
+          console.log(`  Seeded ${ptEntries.length} product tags`);
+        }
       }
     }
 
-    const homepageConfig = await db.select().from(siteConfig).where(eq(siteConfig.key, "homepageCollections"));
-    if (homepageConfig.length === 0) {
-      console.log("Seeding homepageCollections config...");
-      await db.insert(siteConfig).values({
-        key: "homepageCollections",
-        value: JSON.stringify({"sections":[{"id":"collections","label":"Collections","heading":"Shop by Collection","cards":[{"title":"For Kids","description":"Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more \u2014 all embroidered with your child's name. Towels and blankets they'll never want to let go of.","link":"/shop?filter=kids","imageUrl":""},{"title":"For Adults","description":"Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials \u2014 personalised towels and blankets that bring a touch of luxury to your home.","link":"/shop?filter=adults","imageUrl":""},{"title":"For Couples","description":"The perfect his & hers gift. Our couple towel sets come with matching embroidered designs \u2014 from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.","link":"/shop?filter=couples","imageUrl":""}]},{"id":"productTypes","label":"Products","heading":"Shop by Product","cards":[{"title":"Towels","description":"Wrap yourself in luxury. Our 550 GSM zero-twist cotton towels are soft, absorbent and beautifully embroidered with your name or initials. Available for kids and adults in a range of fun and elegant designs.","link":"/shop","imageUrl":""},{"title":"Bathrobes","description":"Step out of the shower in style. Our plush terry cotton bathrobes are personalised with custom embroidery, making every day feel like a spa day. Perfect as a gift or a treat for yourself.","link":"/shop","imageUrl":""},{"title":"Blankets","description":"Snuggle up with a blanket made just for you. Our ultra-soft AC blankets come with beautiful embroidered names and fun designs \u2014 loved by kids and perfect for gifting on birthdays and special occasions.","link":"/shop","imageUrl":""}]}]}),
-      }).onConflictDoNothing();
-      console.log("Seeded homepageCollections config.");
+    if (data.siteConfig.length > 0) {
+      await db.insert(siteConfig).values(
+        data.siteConfig.map((sc: any) => ({
+          key: sc.key,
+          value: sc.value,
+        }))
+      ).onConflictDoNothing();
+      console.log(`  Seeded ${data.siteConfig.length} site config entries`);
     }
 
-    const featuredConfig = await db.select().from(siteConfig).where(eq(siteConfig.key, "featuredSections"));
-    if (featuredConfig.length === 0 || (featuredConfig[0] && !featuredConfig[0].value.includes("bathrobes"))) {
-      console.log("Seeding featuredSections config...");
-      const featuredValue = JSON.stringify({"kids":{"title":"Popular for Kids","subtitle":"Disney princesses, superheroes & more","link":"/shop?filter=kids"},"couples":{"title":"Couple Sets","subtitle":"Elegant matching towel sets for two","link":"/shop?filter=couples"},"blankets":{"title":"Cozy Blankets","subtitle":"Soft personalised AC blankets for kids","link":"/shop?filter=kids"},"bathrobes":{"title":"Luxury Bathrobes","subtitle":"Premium personalised cotton bathrobes","link":"/category/bathrobes"}});
-      if (featuredConfig.length === 0) {
-        await db.insert(siteConfig).values({ key: "featuredSections", value: featuredValue }).onConflictDoNothing();
-      } else {
-        await db.update(siteConfig).set({ value: featuredValue }).where(eq(siteConfig.key, "featuredSections"));
-      }
-      console.log("Seeded featuredSections config.");
-    }
-
-    await enrichProducts();
+    console.log("Database seeding complete!");
 
   } catch (error) {
     console.error("Error seeding database:", error);
-  }
-}
-
-async function enrichProducts() {
-  try {
-    const [migrationDone] = await db.select().from(siteConfig).where(eq(siteConfig.key, "migration_enrich_v1"));
-    if (migrationDone) return;
-
-    const [babyShark] = await db.select({ id: products.id, material: products.material }).from(products).where(eq(products.slug, "baby-shark-towel"));
-    if (!babyShark) return;
-
-    console.log("Enriching Baby Shark product data...");
-
-    await db.update(products).set({
-      mrp: 1299,
-      material: "Cotton",
-      gsm: 500,
-      color: "White",
-      dimensions: "120 x 60 cm",
-      weightGrams: 360,
-      amazonAsin: "B075FL8SCH",
-      imageUrl: "/images/products/baby-shark-towel_0.jpg",
-      bulletPoints: JSON.stringify([
-        "Soft and absorbent 100% cotton bath towel for kids, measuring 120 x 60 cm, perfect for gentle drying after bath time.",
-        "Double-stitched borders for enhanced durability, ensuring the towel withstands frequent use and washes while maintaining its quality.",
-        "Featuring a plush 500 GSM fabric for superior softness and absorbency, making it perfect for a cozy and comfortable drying experience.",
-        "100% High Grade Cotton Towel. Soft and Instantly absorbent."
-      ]),
-      specialFeatures: JSON.stringify([
-        "Double Stitched Borders for Longer Durability",
-        "Long Lasting",
-        "Super Absorbent",
-        "Super Soft",
-        "Wear Resistant"
-      ]),
-    }).where(eq(products.slug, "baby-shark-towel"));
-
-    const existingImages = await db.select().from(productImages).where(eq(productImages.productId, babyShark.id));
-    if (existingImages.length === 0) {
-      await db.insert(productImages).values([
-        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_0.jpg", sortOrder: 0, isPrimary: true },
-        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_1.jpg", sortOrder: 1, isPrimary: false },
-        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_2.jpg", sortOrder: 2, isPrimary: false },
-        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_3.jpg", sortOrder: 3, isPrimary: false },
-        { productId: babyShark.id, imageUrl: "/images/products/baby-shark-towel_4.jpg", sortOrder: 4, isPrimary: false },
-      ]);
-    }
-
-    const existingReviews = await db.select().from(productReviews).where(eq(productReviews.productId, babyShark.id));
-    if (existingReviews.length === 0) {
-      await db.insert(productReviews).values([
-        { productId: babyShark.id, reviewerName: "Priya S.", rating: 5, title: "Beautiful towel, amazing quality", body: "What a beautiful towel. It truly is amazing. The embroidery of my son's name is perfect and the Baby Shark design is so cute. Very soft cotton, perfect for kids.", reviewDate: "15 January 2025", verifiedPurchase: true },
-        { productId: babyShark.id, reviewerName: "Rahul M.", rating: 5, title: "Great quality and soft fabric", body: "Loved the quality of the towel too so nice and soft. My daughter loves the Baby Shark design. The personalised name embroidery is beautifully done. Will order more for gifts.", reviewDate: "28 December 2024", verifiedPurchase: true },
-        { productId: babyShark.id, reviewerName: "Sneha K.", rating: 5, title: "Perfect gift for kids", body: "Great designing and soft fabric ideal for kids towel. Bought this as a birthday gift and the parents loved it. The personalisation makes it extra special.", reviewDate: "10 November 2024", verifiedPurchase: true },
-        { productId: babyShark.id, reviewerName: "Amit P.", rating: 5, title: "Value for money", body: "Value for money. Really recommend, dealing was really smooth and easy. The towel is thick and absorbent. Baby Shark print is vibrant and the name embroidery is neat.", reviewDate: "5 October 2024", verifiedPurchase: true },
-        { productId: babyShark.id, reviewerName: "Divya R.", rating: 4, title: "Good quality, slightly smaller than expected", body: "Good quality towel with nice embroidery. The cotton is soft and absorbent. Size is 120x60 which is good for small kids but my 8 year old needs a bigger one. Will buy the adult size next.", reviewDate: "22 September 2024", verifiedPurchase: true },
-      ]);
-    }
-
-    await db.insert(siteConfig).values({ key: "migration_enrich_v1", value: "done" }).onConflictDoNothing();
-    console.log("Baby Shark product enrichment complete.");
-  } catch (error) {
-    console.error("Error enriching products:", error);
   }
 }
