@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { addToCartSchema, updateCartItemSchema, checkoutSchema } from "@shared/routes";
+import { insertCategorySchema, insertProductSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
 import multer from "multer";
@@ -211,6 +212,135 @@ export async function registerRoutes(
     const order = await orderService.getOrder(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
+  });
+
+  // ── Admin CMS Routes ──
+
+  app.get("/api/admin/categories", async (_req, res) => {
+    const cats = await storage.getCategories();
+    res.json(cats);
+  });
+
+  app.post("/api/admin/categories", async (req, res) => {
+    try {
+      const data = insertCategorySchema.parse(req.body);
+      const cat = await storage.createCategory(data);
+      res.status(201).json(cat);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A category with that slug already exists" });
+      console.error("Create category error:", err);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/admin/categories/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const data = insertCategorySchema.partial().parse(req.body);
+      const updated = await storage.updateCategory(id, data);
+      if (!updated) return res.status(404).json({ message: "Category not found" });
+      res.json(updated);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A category with that slug already exists" });
+      console.error("Update category error:", err);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    await storage.deleteCategory(id);
+    res.status(204).send();
+  });
+
+  app.get("/api/admin/products", async (_req, res) => {
+    const prods = await storage.getAllProducts();
+    res.json(prods);
+  });
+
+  app.get("/api/admin/products/category/:categoryId", async (req, res) => {
+    const categoryId = parseInt(req.params.categoryId);
+    if (isNaN(categoryId)) return res.status(400).json({ message: "Invalid category ID" });
+    const prods = await storage.getAllProductsByCategory(categoryId);
+    res.json(prods);
+  });
+
+  app.post("/api/admin/products", async (req, res) => {
+    try {
+      const data = insertProductSchema.parse(req.body);
+      const prod = await storage.createProduct(data);
+      res.status(201).json(prod);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A product with that slug already exists" });
+      console.error("Create product error:", err);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.put("/api/admin/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const data = insertProductSchema.partial().parse(req.body);
+      const updated = await storage.updateProduct(id, data);
+      if (!updated) return res.status(404).json({ message: "Product not found" });
+      res.json(updated);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A product with that slug already exists" });
+      console.error("Update product error:", err);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/admin/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    await storage.deleteProduct(id);
+    res.status(204).send();
+  });
+
+  app.post("/api/admin/products/:id/images", async (req, res) => {
+    const productId = parseInt(req.params.id);
+    if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const img = await storage.createProductImage({ ...req.body, productId });
+      res.status(201).json(img);
+    } catch (err) {
+      console.error("Create product image error:", err);
+      res.status(500).json({ message: "Failed to add image" });
+    }
+  });
+
+  app.delete("/api/admin/products/:productId/images/:imageId", async (req, res) => {
+    const imageId = parseInt(req.params.imageId);
+    if (isNaN(imageId)) return res.status(400).json({ message: "Invalid image ID" });
+    await storage.deleteProductImage(imageId);
+    res.status(204).send();
+  });
+
+  app.post("/api/admin/products/:id/reviews", async (req, res) => {
+    const productId = parseInt(req.params.id);
+    if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const review = await storage.createProductReview({ ...req.body, productId });
+      res.status(201).json(review);
+    } catch (err) {
+      console.error("Create product review error:", err);
+      res.status(500).json({ message: "Failed to add review" });
+    }
+  });
+
+  app.delete("/api/admin/products/:productId/reviews/:reviewId", async (req, res) => {
+    const reviewId = parseInt(req.params.reviewId);
+    if (isNaN(reviewId)) return res.status(400).json({ message: "Invalid review ID" });
+    await storage.deleteProductReview(reviewId);
+    res.status(204).send();
   });
 
   return httpServer;

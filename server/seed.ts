@@ -151,8 +151,11 @@ export async function seedDatabase() {
 
 async function enrichProducts() {
   try {
+    const [migrationDone] = await db.select().from(siteConfig).where(eq(siteConfig.key, "migration_enrich_v1"));
+    if (migrationDone) return;
+
     const [babyShark] = await db.select({ id: products.id, material: products.material }).from(products).where(eq(products.slug, "baby-shark-towel"));
-    if (!babyShark || babyShark.material) return;
+    if (!babyShark) return;
 
     console.log("Enriching Baby Shark product data...");
 
@@ -202,6 +205,7 @@ async function enrichProducts() {
       ]);
     }
 
+    await db.insert(siteConfig).values({ key: "migration_enrich_v1", value: "done" }).onConflictDoNothing();
     console.log("Baby Shark product enrichment complete.");
   } catch (error) {
     console.error("Error enriching products:", error);

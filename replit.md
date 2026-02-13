@@ -32,11 +32,12 @@ The project follows a **monorepo layout** with three top-level source directorie
 - **Home** (`/`) — Hero banner, audience cards (For Kids / For Couples), featured product sections, promo cards
 - **Shop** (`/shop`) — Unified browsing with filter chips (All, Kids, Adults, Couples), full product catalog grouped by category
 - **Category** (`/category/:slug`) — Product grid filtered by category, offer badge
-- **Product Detail** (`/product/:slug`) — Product image, description, price, personalisation input, add-to-cart, related products
+- **Product Detail** (`/product/:slug`) — Image gallery, MRP/discount pricing, specifications grid, bullet points, feature badges, customer reviews, personalisation input, add-to-cart, related products
 - **Cart** (`/cart`) — Cart items with quantity controls, discount display, order summary
 - **Checkout** (`/checkout`) — Address form with validation, order summary sidebar
 - **Order Confirmation** (`/order/:id`) — Order details, shipping info, item list with free items marked
-- **Admin Builder** (`/admin/builder`) — CMS-style page builder for configuring all homepage content, header, footer, announcements, and dynamic homepage collections
+- **Admin Builder** (`/admin/builder`) — Page builder for homepage layout, announcements, and dynamic homepage collections
+- **Admin Catalog** (`/admin/catalog`) — CMS for managing categories and products: create, edit, delete categories; create, edit, delete products with full fields (price, MRP, specs, images, reviews, audience, product type, active status)
 
 ### UI Components
 
