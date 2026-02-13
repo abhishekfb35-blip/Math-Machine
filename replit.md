@@ -113,20 +113,30 @@ Routes (`server/routes.ts`) are now thin HTTP handlers: they parse input, call a
 - **Database**: PostgreSQL, connected via `DATABASE_URL` environment variable
 - **Tables**:
   - `categories` — id, name, slug, description, image_url, sort_order
-  - `products` — id, name, slug, description, price (integer in INR), image_url, category_id, active, sort_order
+  - `products` — id, name, slug, description, price (integer in INR), image_url, category_id, active, sort_order, search_keywords, and enrichment fields (mrp, material, gsm, dimensions, color, weight, bullet_points, special_features, audience, product_type)
+  - `tags` — id, name (unique), description
+  - `product_tags` — id, product_id, tag_id (many-to-many junction table)
+  - `product_images` — id, product_id, image_url, sort_order, is_primary
+  - `product_reviews` — id, product_id, reviewer_name, rating, title, body, review_date, verified_purchase
   - `carts` — id, session_id, created_at
   - `cart_items` — id, cart_id, product_id, quantity, personalization_name
   - `orders` — id, customer details, shipping address, subtotal, discount, total, status, payment fields, created_at
   - `order_items` — id, order_id, product snapshot, personalization_name, is_free
   - `site_config` — id, key (unique), value (JSON string)
 
-### Product Categories
+### Product Categories (flat structure with tags for cross-cutting concerns)
 
-1. Girls Towels (₹999 each) — ~20 products
-2. Boys Towels (₹999 each) — ~20 products
-3. Couple Towels (₹2,499 per set) — 6 products
-4. Boys Blankets (₹1,599 each) — 6 products
-5. Girls Blankets (₹1,599 each) — 6 products
+1. Kids Bath Towels — 47 products
+2. Adult Bath Towels — 8 products
+3. Couple Bathrobes
+4. Kids Blankets — 12 products
+5. Kids Bathrobes — 6 products
+6. Teen Bathrobes
+7. Adult Bathrobes
+
+### Tagging System
+
+Products use a many-to-many tag system for cross-cutting attributes like design themes (Princess, Superhero, Animals, Cars), gender appeal (Boys, Girls, Unisex), and other filterable properties. Tags are managed in the Admin CMS and assigned to products via checkboxes.
 
 ### Discount Logic
 

@@ -16,8 +16,9 @@ type AudienceFilter = "all" | "kids" | "adults" | "couples";
 
 function getAudience(slug: string): AudienceFilter {
   if (slug.includes("couple")) return "couples";
-  if (slug.includes("girls") || slug.includes("boys")) return "kids";
-  return "adults";
+  if (slug.includes("kids") || slug.includes("teen")) return "kids";
+  if (slug.includes("adult")) return "adults";
+  return "kids";
 }
 
 const categoryBanners: Record<string, { image: string; label: string; description: string }> = {
