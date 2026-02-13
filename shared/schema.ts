@@ -28,6 +28,7 @@ export const products = pgTable("products", {
   itemsInSet: integer("items_in_set").default(1),
   specialFeatures: text("special_features"),
   bulletPoints: text("bullet_points"),
+  searchKeywords: text("search_keywords"),
   productType: text("product_type").default("towel"),
   audience: text("audience").default("kids"),
   active: boolean("active").default(true),

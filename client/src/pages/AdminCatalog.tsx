@@ -720,6 +720,23 @@ export default function AdminCatalog() {
           </div>
 
           <div>
+            <Label htmlFor="prod-keywords">Search Keywords (one per line)</Label>
+            <Textarea
+              id="prod-keywords"
+              value={(() => {
+                try { return JSON.parse(editingProduct.searchKeywords || "[]").join("\n"); } catch { return editingProduct.searchKeywords || ""; }
+              })()}
+              onChange={(e) => {
+                const lines = e.target.value.split("\n").filter(l => l.trim());
+                setEditingProduct(prev => ({ ...prev!, searchKeywords: JSON.stringify(lines) }));
+              }}
+              rows={3}
+              placeholder="Enter search terms like: baby towel, kids gift, cotton towel"
+              data-testid="input-product-keywords"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="prod-asin">Amazon ASIN</Label>
             <Input
               id="prod-asin"

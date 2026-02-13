@@ -33,6 +33,7 @@ export interface Product {
   itemsInSet: number | null;
   specialFeatures: string | null;
   bulletPoints: string | null;
+  searchKeywords: string | null;
   productType: string | null;
   audience: string | null;
   active: boolean | null;
@@ -56,6 +57,7 @@ export interface InsertProduct {
   itemsInSet?: number | null;
   specialFeatures?: string | null;
   bulletPoints?: string | null;
+  searchKeywords?: string | null;
   productType?: string | null;
   audience?: string | null;
   active?: boolean | null;
