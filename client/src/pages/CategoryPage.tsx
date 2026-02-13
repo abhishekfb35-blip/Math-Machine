@@ -13,11 +13,13 @@ import blanketsBanner from "@/assets/images/blankets-banner.png";
 import type { Category, Product } from "@shared/types";
 
 const categoryBanners: Record<string, string> = {
-  "girls-towels": kidsBanner,
-  "boys-towels": kidsBanner,
-  "couple-towels": couplesBanner,
-  "boys-blankets": blanketsBanner,
-  "girls-blankets": blanketsBanner,
+  "kids-bath-towels": kidsBanner,
+  "adult-bath-towels": couplesBanner,
+  "couple-bathrobes": couplesBanner,
+  "kids-blankets": blanketsBanner,
+  "kids-bathrobes": kidsBanner,
+  "teen-bathrobes": kidsBanner,
+  "adult-bathrobes": couplesBanner,
 };
 
 export default function CategoryPage() {

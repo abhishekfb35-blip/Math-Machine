@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { addToCartSchema, updateCartItemSchema, checkoutSchema } from "@shared/routes";
-import { insertCategorySchema, insertProductSchema } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@shared/schema";
 import { z } from "zod";
 import crypto from "crypto";
 import multer from "multer";
@@ -341,6 +341,70 @@ export async function registerRoutes(
     if (isNaN(reviewId)) return res.status(400).json({ message: "Invalid review ID" });
     await storage.deleteProductReview(reviewId);
     res.status(204).send();
+  });
+
+  // ── Tag Routes ──
+
+  app.get("/api/admin/tags", async (_req, res) => {
+    const allTags = await storage.getTags();
+    res.json(allTags);
+  });
+
+  app.post("/api/admin/tags", async (req, res) => {
+    try {
+      const data = insertTagSchema.parse(req.body);
+      const tag = await storage.createTag(data);
+      res.status(201).json(tag);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A tag with that name already exists" });
+      console.error("Create tag error:", err);
+      res.status(500).json({ message: "Failed to create tag" });
+    }
+  });
+
+  app.put("/api/admin/tags/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const data = insertTagSchema.partial().parse(req.body);
+      const updated = await storage.updateTag(id, data);
+      if (!updated) return res.status(404).json({ message: "Tag not found" });
+      res.json(updated);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A tag with that name already exists" });
+      console.error("Update tag error:", err);
+      res.status(500).json({ message: "Failed to update tag" });
+    }
+  });
+
+  app.delete("/api/admin/tags/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    await storage.deleteTag(id);
+    res.status(204).send();
+  });
+
+  app.get("/api/admin/products/:id/tags", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const productTagsList = await storage.getProductTags(id);
+    res.json(productTagsList);
+  });
+
+  app.put("/api/admin/products/:id/tags", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const { tagIds } = z.object({ tagIds: z.array(z.number()) }).parse(req.body);
+      await storage.setProductTags(id, tagIds);
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Set product tags error:", err);
+      res.status(500).json({ message: "Failed to set product tags" });
+    }
   });
 
   return httpServer;

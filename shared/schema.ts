@@ -104,6 +104,18 @@ export const productReviews = pgTable("product_reviews", {
   verifiedPurchase: boolean("verified_purchase").default(false),
 });
 
+export const tags = pgTable("tags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+});
+
+export const productTags = pgTable("product_tags", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  tagId: integer("tag_id").notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
@@ -113,6 +125,8 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: t
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
 export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true });
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true });
+export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
+export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
 
 export type {
   Category, InsertCategory,
@@ -124,4 +138,6 @@ export type {
   SiteConfig, InsertSiteConfig,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
+  Tag, InsertTag,
+  ProductTag, InsertProductTag,
 } from "./types";

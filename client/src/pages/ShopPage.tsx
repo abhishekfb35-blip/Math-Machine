@@ -21,11 +21,13 @@ function getAudience(slug: string): AudienceFilter {
 }
 
 const categoryBanners: Record<string, { image: string; label: string; description: string }> = {
-  "girls-towels": { image: kidsBanner, label: "Girls Towels", description: "Disney princesses, fairies & beloved characters" },
-  "boys-towels": { image: kidsBanner, label: "Boys Towels", description: "Superheroes, sports & cartoon favourites" },
-  "couple-towels": { image: couplesBanner, label: "Couple Towel Sets", description: "Elegant matching sets for weddings & anniversaries" },
-  "boys-blankets": { image: blanketsBanner, label: "Boys Blankets", description: "Soft personalised AC blankets for boys" },
-  "girls-blankets": { image: blanketsBanner, label: "Girls Blankets", description: "Cozy personalised AC blankets for girls" },
+  "kids-bath-towels": { image: kidsBanner, label: "Kids Bath Towels", description: "Disney princesses, superheroes & beloved characters" },
+  "adult-bath-towels": { image: couplesBanner, label: "Adult Bath Towels", description: "Premium personalised towels for adults" },
+  "couple-bathrobes": { image: couplesBanner, label: "Couple Bathrobes", description: "Elegant matching bathrobes for couples" },
+  "kids-blankets": { image: blanketsBanner, label: "Kids Blankets", description: "Soft personalised AC blankets for kids" },
+  "kids-bathrobes": { image: kidsBanner, label: "Kids Bathrobes", description: "Cozy personalised bathrobes for little ones" },
+  "teen-bathrobes": { image: kidsBanner, label: "Teen Bathrobes", description: "Stylish personalised bathrobes for teens" },
+  "adult-bathrobes": { image: couplesBanner, label: "Adult Bathrobes", description: "Premium personalised bathrobes for adults" },
 };
 
 const filters: { label: string; value: AudienceFilter }[] = [

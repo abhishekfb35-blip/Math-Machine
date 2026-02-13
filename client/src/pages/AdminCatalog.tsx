@@ -1,9 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,14 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag } from "@shared/types";
 
-type View = "categories" | "products" | "edit-category" | "edit-product";
+type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
 export default function AdminCatalog() {
   const { toast } = useToast();
@@ -27,6 +28,8 @@ export default function AdminCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [isNew, setIsNew] = useState(false);
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
@@ -62,6 +65,24 @@ export default function AdminCatalog() {
     },
     enabled: !!editingProduct?.id && view === "edit-product",
   });
+
+  const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
+
+  const { data: productTagsList } = useQuery<Tag[]>({
+    queryKey: ["/api/admin/products", editingProduct?.id, "tags"],
+    queryFn: async () => {
+      if (!editingProduct?.id) return [];
+      const res = await fetch(`/api/admin/products/${editingProduct.id}/tags`);
+      return res.json();
+    },
+    enabled: !!editingProduct?.id && view === "edit-product",
+  });
+
+  useEffect(() => {
+    if (productTagsList) {
+      setSelectedTagIds(productTagsList.map(t => t.id));
+    }
+  }, [productTagsList]);
 
   const saveCategoryMutation = useMutation({
     mutationFn: async (data: Partial<Category>) => {
@@ -104,10 +125,16 @@ export default function AdminCatalog() {
     mutationFn: async (data: Partial<Product>) => {
       if (data.id) {
         const res = await apiRequest("PUT", `/api/admin/products/${data.id}`, data);
-        return res.json();
+        const product = await res.json();
+        await apiRequest("PUT", `/api/admin/products/${data.id}/tags`, { tagIds: selectedTagIds });
+        return product;
       } else {
         const res = await apiRequest("POST", "/api/admin/products", data);
-        return res.json();
+        const product = await res.json();
+        if (product.id && selectedTagIds.length > 0) {
+          await apiRequest("PUT", `/api/admin/products/${product.id}/tags`, { tagIds: selectedTagIds });
+        }
+        return product;
       }
     },
     onSuccess: () => {
@@ -119,6 +146,40 @@ export default function AdminCatalog() {
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const saveTagMutation = useMutation({
+    mutationFn: async (data: Partial<Tag>) => {
+      if (data.id) {
+        const res = await apiRequest("PUT", `/api/admin/tags/${data.id}`, data);
+        return res.json();
+      } else {
+        const res = await apiRequest("POST", "/api/admin/tags", data);
+        return res.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
+      toast({ title: isNew ? "Tag created" : "Tag updated" });
+      setView("tags");
+      setEditingTag(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/tags/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
+      toast({ title: "Tag deleted" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete tag", variant: "destructive" });
     },
   });
 
@@ -213,6 +274,14 @@ export default function AdminCatalog() {
             <Link href="/admin/builder">
               <Button variant="outline" size="sm" data-testid="link-builder">Page Builder</Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("tags")}
+              data-testid="button-tags"
+            >
+              <TagIcon className="w-4 h-4 mr-1" /> Tags
+            </Button>
             <Button
               size="sm"
               onClick={() => {
@@ -759,6 +828,32 @@ export default function AdminCatalog() {
             </Label>
           </div>
 
+          {allTags && allTags.length > 0 && (
+            <div>
+              <Label className="flex items-center gap-1 mb-2">
+                <TagIcon className="w-4 h-4" /> Tags
+              </Label>
+              <div className="space-y-2">
+                {allTags.map((tag) => (
+                  <div key={tag.id} className="flex items-center gap-2" data-testid={`tag-checkbox-${tag.id}`}>
+                    <Checkbox
+                      id={`tag-${tag.id}`}
+                      checked={selectedTagIds.includes(tag.id)}
+                      onCheckedChange={(checked) => {
+                        setSelectedTagIds(prev =>
+                          checked ? [...prev, tag.id] : prev.filter(id => id !== tag.id)
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`tag-${tag.id}`} className="text-sm font-normal cursor-pointer">
+                      {tag.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <Button
             className="w-full"
             onClick={() => saveProductMutation.mutate(editingProduct as any)}
@@ -865,6 +960,126 @@ export default function AdminCatalog() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Tags List View ──
+  if (view === "tags") {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setView("categories")} data-testid="button-back-from-tags">
+          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Categories
+        </Button>
+
+        <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+          <div>
+            <h1 className="text-xl font-bold" data-testid="text-tags-title">Tags</h1>
+            <p className="text-sm text-muted-foreground">Manage product tags</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              setIsNew(true);
+              setEditingTag({ name: "", description: "" });
+              setView("edit-tag");
+            }}
+            data-testid="button-add-tag"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Add Tag
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {allTags?.map((tag) => (
+            <Card key={tag.id} className="p-3" data-testid={`card-tag-${tag.id}`}>
+              <div className="flex items-center gap-3">
+                <TagIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm" data-testid={`text-tag-name-${tag.id}`}>{tag.name}</p>
+                  {tag.description && (
+                    <p className="text-xs text-muted-foreground truncate">{tag.description}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsNew(false);
+                      setEditingTag({ ...tag });
+                      setView("edit-tag");
+                    }}
+                    data-testid={`button-edit-tag-${tag.id}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm(`Delete tag "${tag.name}"?`)) {
+                        deleteTagMutation.mutate(tag.id);
+                      }
+                    }}
+                    data-testid={`button-delete-tag-${tag.id}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+          {(!allTags || allTags.length === 0) && (
+            <div className="text-center py-12 text-muted-foreground">
+              <TagIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No tags yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Edit Tag View ──
+  if (view === "edit-tag" && editingTag) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("tags"); setEditingTag(null); }} data-testid="button-back-tags">
+          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Tags
+        </Button>
+        <h1 className="text-xl font-bold mb-4" data-testid="text-edit-tag-title">
+          {isNew ? "New Tag" : "Edit Tag"}
+        </h1>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="tag-name">Name</Label>
+            <Input
+              id="tag-name"
+              value={editingTag.name || ""}
+              onChange={(e) => setEditingTag(prev => ({ ...prev!, name: e.target.value }))}
+              data-testid="input-tag-name"
+            />
+          </div>
+          <div>
+            <Label htmlFor="tag-desc">Description</Label>
+            <Textarea
+              id="tag-desc"
+              value={editingTag.description || ""}
+              onChange={(e) => setEditingTag(prev => ({ ...prev!, description: e.target.value }))}
+              data-testid="input-tag-description"
+            />
+          </div>
+          <Button
+            className="w-full"
+            onClick={() => saveTagMutation.mutate(editingTag)}
+            disabled={saveTagMutation.isPending || !editingTag.name}
+            data-testid="button-save-tag"
+          >
+            {saveTagMutation.isPending ? "Saving..." : isNew ? "Create Tag" : "Save Changes"}
+          </Button>
         </div>
       </div>
     );

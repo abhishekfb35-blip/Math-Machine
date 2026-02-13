@@ -192,3 +192,25 @@ export interface InsertProductReview {
   reviewDate?: string | null;
   verifiedPurchase?: boolean | null;
 }
+
+export interface Tag {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+export interface InsertTag {
+  name: string;
+  description?: string | null;
+}
+
+export interface ProductTag {
+  id: number;
+  productId: number;
+  tagId: number;
+}
+
+export interface InsertProductTag {
+  productId: number;
+  tagId: number;
+}

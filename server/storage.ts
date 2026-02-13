@@ -1,4 +1,4 @@
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -9,6 +9,8 @@ import type {
   SiteConfig,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
+  Tag, InsertTag,
+  ProductTag, InsertProductTag,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -55,6 +57,14 @@ export interface IStorage {
   getProductReviews(productId: number): Promise<ProductReview[]>;
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
   deleteProductReview(id: number): Promise<void>;
+
+  getTags(): Promise<Tag[]>;
+  createTag(tag: InsertTag): Promise<Tag>;
+  updateTag(id: number, data: Partial<InsertTag>): Promise<Tag | undefined>;
+  deleteTag(id: number): Promise<void>;
+
+  getProductTags(productId: number): Promise<Tag[]>;
+  setProductTags(productId: number, tagIds: number[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -131,6 +141,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<void> {
+    await db.delete(productTags).where(eq(productTags.productId, id));
     await db.delete(productImages).where(eq(productImages.productId, id));
     await db.delete(productReviews).where(eq(productReviews.productId, id));
     await db.delete(cartItems).where(eq(cartItems.productId, id));
@@ -243,6 +254,41 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProductReview(id: number): Promise<void> {
     await db.delete(productReviews).where(eq(productReviews.id, id));
+  }
+
+  async getTags(): Promise<Tag[]> {
+    return await db.select().from(tags).orderBy(tags.name);
+  }
+
+  async createTag(tag: InsertTag): Promise<Tag> {
+    const [created] = await db.insert(tags).values(tag).returning();
+    return created;
+  }
+
+  async updateTag(id: number, data: Partial<InsertTag>): Promise<Tag | undefined> {
+    const [updated] = await db.update(tags).set(data).where(eq(tags.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTag(id: number): Promise<void> {
+    await db.delete(productTags).where(eq(productTags.tagId, id));
+    await db.delete(tags).where(eq(tags.id, id));
+  }
+
+  async getProductTags(productId: number): Promise<Tag[]> {
+    const rows = await db
+      .select({ id: tags.id, name: tags.name, description: tags.description })
+      .from(productTags)
+      .innerJoin(tags, eq(productTags.tagId, tags.id))
+      .where(eq(productTags.productId, productId));
+    return rows;
+  }
+
+  async setProductTags(productId: number, tagIds: number[]): Promise<void> {
+    await db.delete(productTags).where(eq(productTags.productId, productId));
+    if (tagIds.length > 0) {
+      await db.insert(productTags).values(tagIds.map(tagId => ({ productId, tagId })));
+    }
   }
 }
 
