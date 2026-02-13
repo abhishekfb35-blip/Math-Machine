@@ -191,9 +191,17 @@ The app includes PWA support with manifest.json, service worker, and app icons.
   - Related products section on product detail pages
   - Simplified header with minimal navigation
   - Fixed discount calculation to mark cheapest items as free
+- **Feb 2026**: Bulk product import from Amazon Seller Central
+  - 454 products imported from Excel inventory export (was 73)
+  - All product data extracted: title, SKU, ASIN, description, bullet points, price, MRP, material, color, dimensions
+  - 1,235 additional product images downloaded from Amazon CDN
+  - All images auto-generated in 3 optimized sizes (small/medium/large)
+  - GSM set by category: 500 (kids towels), 600 (adult towels), 360 (bathrobes)
+  - Categories auto-mapped from product titles (towel, blanket, bathrobe + audience keywords)
+  - 204 customer reviews scraped from Amazon.in across 41 products (avg 4.7 stars)
+  - Import scripts in `scripts/` directory for re-running if needed
 - **Feb 2026**: Complete rebuild from calculator app to Turtle Little e-commerce store
   - New database schema with 6 tables
-  - 58 products seeded from turtlelittle.com
   - Full shopping cart with discount logic
   - Checkout flow with order placement
   - WhatsApp integration
@@ -207,9 +215,9 @@ Product images are served in 3 sizes for optimal performance:
 - **Large** (original 567px wide, ~175KB) — Product detail page
 
 Image files stored at:
-- `client/public/images/products/small/` — 680KB total
-- `client/public/images/products/medium/` — 3.8MB total
-- `client/public/images/products/large/` — 18MB total (originals)
+- `client/public/images/products/small/`
+- `client/public/images/products/medium/`
+- `client/public/images/products/large/`
 
 Frontend utility: `client/src/lib/imageUtils.ts` — `getProductImageUrl(imageUrl, "small" | "medium" | "large")` rewrites `/images/products/filename.jpg` to `/images/products/{size}/filename.jpg`. Uploaded images (`/uploads/...`) pass through unchanged.
 
