@@ -1,8 +1,7 @@
 import { db } from "./db";
-import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
+import { categories, products, siteConfig, productImages, productReviews, tags, productTags, cartItems, carts } from "@shared/schema";
 import { sql } from "drizzle-orm";
-import * as fs from "fs";
-import * as path from "path";
+import seedData from "./seed-data.json";
 
 interface SeedData {
   categories: any[];
@@ -14,17 +13,11 @@ interface SeedData {
   siteConfig: any[];
 }
 
-function loadSeedData(): SeedData {
-  const seedPath = path.join(import.meta.dirname, "seed-data.json");
-  const raw = fs.readFileSync(seedPath, "utf-8");
-  return JSON.parse(raw);
-}
-
 export async function seedDatabase() {
   try {
     const [{ catCount }] = await db.select({ catCount: sql<number>`count(*)` }).from(categories);
     const [{ prodCount }] = await db.select({ prodCount: sql<number>`count(*)` }).from(products);
-    const data = loadSeedData();
+    const data = seedData as SeedData;
 
     const expectedProducts = data.products.length;
     const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
@@ -36,6 +29,8 @@ export async function seedDatabase() {
 
     if (Number(catCount) > 0 || Number(prodCount) > 0) {
       console.log(`Outdated or partial seed detected (${prodCount} products, expected ${expectedProducts}). Clearing for fresh seed...`);
+      await db.delete(cartItems);
+      await db.delete(carts);
       await db.delete(productReviews);
       await db.delete(productImages);
       await db.delete(productTags);
