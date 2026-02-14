@@ -24,24 +24,28 @@ export async function seedDatabase() {
   try {
     const [{ catCount }] = await db.select({ catCount: sql<number>`count(*)` }).from(categories);
     const [{ prodCount }] = await db.select({ prodCount: sql<number>`count(*)` }).from(products);
+    const data = loadSeedData();
 
-    if (Number(catCount) > 0 && Number(prodCount) > 0) {
+    const expectedProducts = data.products.length;
+    const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
+
+    if (isFullySeeded) {
       console.log("Database already seeded, skipping.");
       return;
     }
 
-    if (Number(catCount) > 0 && Number(prodCount) === 0) {
-      console.log("Partial seed detected (categories exist but no products). Clearing for fresh seed...");
+    if (Number(catCount) > 0 || Number(prodCount) > 0) {
+      console.log(`Outdated or partial seed detected (${prodCount} products, expected ${expectedProducts}). Clearing for fresh seed...`);
       await db.delete(productReviews);
       await db.delete(productImages);
       await db.delete(productTags);
+      await db.delete(products);
       await db.delete(tags);
       await db.delete(siteConfig);
       await db.delete(categories);
     }
 
-    console.log("Empty database detected. Seeding from seed-data.json...");
-    const data = loadSeedData();
+    console.log("Seeding database from seed-data.json...");
 
     const insertedCats = await db.insert(categories).values(
       data.categories.map((c: any) => ({
