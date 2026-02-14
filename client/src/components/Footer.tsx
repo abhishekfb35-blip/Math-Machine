@@ -75,7 +75,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 mt-8 pt-6 text-center">
+        <div className="border-t border-background/10 mt-8 pt-6 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/catalog" className="text-xs opacity-30 hover:opacity-60 transition-opacity" data-testid="link-footer-admin-catalog">
+              Admin Catalog
+            </Link>
+            <Link href="/admin/builder" className="text-xs opacity-30 hover:opacity-60 transition-opacity" data-testid="link-footer-admin-builder">
+              Page Builder
+            </Link>
+          </div>
           <p className="text-xs opacity-50" data-testid="text-footer-copyright">
             &copy; {new Date().getFullYear()} {config.brandName}. All rights reserved.
           </p>
