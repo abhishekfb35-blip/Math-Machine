@@ -791,18 +791,25 @@ export default function AdminBuilder() {
     <div className="pb-20 md:pb-0">
       <div className="bg-muted/50 border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Link href="/">
-              <Button variant="ghost" size="icon" data-testid="button-back-home">
-                <ArrowLeft className="w-4 h-4" />
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button variant="ghost" size="icon" data-testid="button-back-home">
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold flex items-center gap-2" data-testid="text-builder-title">
+                  <Settings className="w-5 h-5" /> Site Builder
+                </h1>
+                <p className="text-sm text-muted-foreground">Configure your homepage content, header, and footer</p>
+              </div>
+            </div>
+            <Link href="/admin/catalog">
+              <Button variant="outline" size="sm" data-testid="link-catalog">
+                <Package className="w-4 h-4 mr-1" /> Product Catalog
               </Button>
             </Link>
-            <div>
-              <h1 className="text-xl font-bold flex items-center gap-2" data-testid="text-builder-title">
-                <Settings className="w-5 h-5" /> Site Builder
-              </h1>
-              <p className="text-sm text-muted-foreground">Configure your homepage content, header, and footer</p>
-            </div>
           </div>
         </div>
       </div>
