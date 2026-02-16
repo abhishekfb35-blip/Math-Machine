@@ -10,10 +10,11 @@ const activeSessions = new Map<string, { expiresAt: number }>();
 function getAdminCredentials() {
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
-  if (!username || !passwordHash) {
+  const plainPassword = process.env.ADMIN_PASSWORD;
+  if (!username || (!passwordHash && !plainPassword)) {
     return null;
   }
-  return { username, passwordHash };
+  return { username, passwordHash, plainPassword };
 }
 
 export async function handleAdminLogin(req: Request, res: Response) {
@@ -32,7 +33,13 @@ export async function handleAdminLogin(req: Request, res: Response) {
     return res.status(401).json({ message: "Invalid username or password" });
   }
 
-  const valid = await bcrypt.compare(password, creds.passwordHash);
+  let valid = false;
+  if (creds.passwordHash && creds.passwordHash.startsWith("$2b$")) {
+    valid = await bcrypt.compare(password, creds.passwordHash);
+  } else if (creds.plainPassword) {
+    valid = password === creds.plainPassword;
+  }
+
   if (!valid) {
     return res.status(401).json({ message: "Invalid username or password" });
   }
@@ -82,6 +89,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!creds) {
     return next();
   }
+
 
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {
