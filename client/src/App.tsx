@@ -19,6 +19,7 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import AdminBuilder from "@/pages/AdminBuilder";
 import AdminCatalog from "@/pages/AdminCatalog";
+import AdminGuard from "@/components/AdminGuard";
 import NotFound from "@/pages/not-found";
 
 function ScrollToTop() {
@@ -39,8 +40,9 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/order/:id" component={OrderConfirmation} />
-      <Route path="/admin/builder" component={AdminBuilder} />
-      <Route path="/admin/catalog" component={AdminCatalog} />
+      <Route path="/admin/login" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
+      <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
+      <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route component={NotFound} />
     </Switch>
   );

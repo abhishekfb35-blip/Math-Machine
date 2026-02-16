@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,8 +22,18 @@ import type { Category, Product, ProductImage, ProductReview, Tag } from "@share
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
+function useAdminLogout() {
+  const { toast } = useToast();
+  return async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+    toast({ title: "Logged out" });
+  };
+}
+
 export default function AdminCatalog() {
   const { toast } = useToast();
+  const handleLogout = useAdminLogout();
   const [view, setView] = useState<View>("categories");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -270,7 +280,7 @@ export default function AdminCatalog() {
             <h1 className="text-xl font-bold" data-testid="text-cms-title">Content Management</h1>
             <p className="text-sm text-muted-foreground">Manage categories and products</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link href="/admin/builder">
               <Button variant="outline" size="sm" data-testid="link-builder">Page Builder</Button>
             </Link>
@@ -281,6 +291,14 @@ export default function AdminCatalog() {
               data-testid="button-tags"
             >
               <TagIcon className="w-4 h-4 mr-1" /> Tags
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4 mr-1" /> Logout
             </Button>
             <Button
               size="sm"

@@ -12,6 +12,7 @@ import { paymentProvider } from "./providers/payment";
 import { notificationService } from "./providers/notification";
 import { CartService, NotFoundError } from "./services/cartService";
 import { OrderService, EmptyCartError } from "./services/orderService";
+import { handleAdminLogin, handleAdminLogout, handleAdminCheck, requireAdmin } from "./adminAuth";
 
 const cartService = new CartService(storage);
 const orderService = new OrderService(storage, paymentProvider, notificationService);
@@ -53,7 +54,7 @@ export async function registerRoutes(
     app.use("/uploads", express.default.static(fileStorage.getUploadsDir()));
   }
 
-  app.post("/api/upload", upload.single("image"), async (req: Request, res: Response) => {
+  app.post("/api/upload", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
@@ -195,7 +196,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/site-config/:key", async (req, res) => {
+  app.post("/api/site-config/:key", requireAdmin, async (req, res) => {
     try {
       const key = req.params.key;
       const value = JSON.stringify(req.body.value);
@@ -214,14 +215,20 @@ export async function registerRoutes(
     res.json(order);
   });
 
-  // ── Admin CMS Routes ──
+  // ── Admin Auth Routes ──
 
-  app.get("/api/admin/categories", async (_req, res) => {
+  app.post("/api/admin/login", handleAdminLogin);
+  app.post("/api/admin/logout", handleAdminLogout);
+  app.get("/api/admin/check", handleAdminCheck);
+
+  // ── Admin CMS Routes (protected) ──
+
+  app.get("/api/admin/categories", requireAdmin, async (_req, res) => {
     const cats = await storage.getCategories();
     res.json(cats);
   });
 
-  app.post("/api/admin/categories", async (req, res) => {
+  app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {
       const data = insertCategorySchema.parse(req.body);
       const cat = await storage.createCategory(data);
@@ -234,7 +241,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/categories/:id", async (req, res) => {
+  app.put("/api/admin/categories/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -250,26 +257,26 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/categories/:id", async (req, res) => {
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteCategory(id);
     res.status(204).send();
   });
 
-  app.get("/api/admin/products", async (_req, res) => {
+  app.get("/api/admin/products", requireAdmin, async (_req, res) => {
     const prods = await storage.getAllProducts();
     res.json(prods);
   });
 
-  app.get("/api/admin/products/category/:categoryId", async (req, res) => {
+  app.get("/api/admin/products/category/:categoryId", requireAdmin, async (req, res) => {
     const categoryId = parseInt(req.params.categoryId);
     if (isNaN(categoryId)) return res.status(400).json({ message: "Invalid category ID" });
     const prods = await storage.getAllProductsByCategory(categoryId);
     res.json(prods);
   });
 
-  app.post("/api/admin/products", async (req, res) => {
+  app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
       const data = insertProductSchema.parse(req.body);
       const prod = await storage.createProduct(data);
@@ -282,7 +289,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/products/:id", async (req, res) => {
+  app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -298,14 +305,14 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/products/:id", async (req, res) => {
+  app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteProduct(id);
     res.status(204).send();
   });
 
-  app.post("/api/admin/products/:id/images", async (req, res) => {
+  app.post("/api/admin/products/:id/images", requireAdmin, async (req, res) => {
     const productId = parseInt(req.params.id);
     if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -317,14 +324,14 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/products/:productId/images/:imageId", async (req, res) => {
+  app.delete("/api/admin/products/:productId/images/:imageId", requireAdmin, async (req, res) => {
     const imageId = parseInt(req.params.imageId);
     if (isNaN(imageId)) return res.status(400).json({ message: "Invalid image ID" });
     await storage.deleteProductImage(imageId);
     res.status(204).send();
   });
 
-  app.post("/api/admin/products/:id/reviews", async (req, res) => {
+  app.post("/api/admin/products/:id/reviews", requireAdmin, async (req, res) => {
     const productId = parseInt(req.params.id);
     if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -336,7 +343,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/products/:productId/reviews/:reviewId", async (req, res) => {
+  app.delete("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
     const reviewId = parseInt(req.params.reviewId);
     if (isNaN(reviewId)) return res.status(400).json({ message: "Invalid review ID" });
     await storage.deleteProductReview(reviewId);
@@ -345,12 +352,12 @@ export async function registerRoutes(
 
   // ── Tag Routes ──
 
-  app.get("/api/admin/tags", async (_req, res) => {
+  app.get("/api/admin/tags", requireAdmin, async (_req, res) => {
     const allTags = await storage.getTags();
     res.json(allTags);
   });
 
-  app.post("/api/admin/tags", async (req, res) => {
+  app.post("/api/admin/tags", requireAdmin, async (req, res) => {
     try {
       const data = insertTagSchema.parse(req.body);
       const tag = await storage.createTag(data);
@@ -363,7 +370,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/tags/:id", async (req, res) => {
+  app.put("/api/admin/tags/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -379,21 +386,21 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/tags/:id", async (req, res) => {
+  app.delete("/api/admin/tags/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteTag(id);
     res.status(204).send();
   });
 
-  app.get("/api/admin/products/:id/tags", async (req, res) => {
+  app.get("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
     const productTagsList = await storage.getProductTags(id);
     res.json(productTagsList);
   });
 
-  app.put("/api/admin/products/:id/tags", async (req, res) => {
+  app.put("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
     try {

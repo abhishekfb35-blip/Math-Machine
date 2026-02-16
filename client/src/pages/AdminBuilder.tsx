@@ -17,7 +17,7 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, History, Upload, Loader2,
+  RotateCcw, ChevronUp, ChevronDown, History, Upload, Loader2, LogOut,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -805,11 +805,24 @@ export default function AdminBuilder() {
                 <p className="text-sm text-muted-foreground">Configure your homepage content, header, and footer</p>
               </div>
             </div>
-            <Link href="/admin/catalog">
-              <Button variant="outline" size="sm" data-testid="link-catalog">
-                <Package className="w-4 h-4 mr-1" /> Product Catalog
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/admin/catalog">
+                <Button variant="outline" size="sm" data-testid="link-catalog">
+                  <Package className="w-4 h-4 mr-1" /> Product Catalog
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  await fetch("/api/admin/logout", { method: "POST" });
+                  queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+                }}
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </div>
