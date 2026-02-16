@@ -17,6 +17,7 @@ import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmation from "@/pages/OrderConfirmation";
+import CollectionPage from "@/pages/CollectionPage";
 import AdminBuilder from "@/pages/AdminBuilder";
 import AdminCatalog from "@/pages/AdminCatalog";
 import AdminGuard from "@/components/AdminGuard";
@@ -35,6 +36,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/shop" component={ShopPage} />
+      <Route path="/collection/:audience" component={CollectionPage} />
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/product/:slug" component={ProductPage} />
       <Route path="/cart" component={CartPage} />

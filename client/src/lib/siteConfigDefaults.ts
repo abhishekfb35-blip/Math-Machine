@@ -130,7 +130,7 @@ export const defaultHero: HeroConfig = {
   primaryButtonText: "Shop Now",
   primaryButtonLink: "/shop",
   secondaryButtonText: "Couple Sets",
-  secondaryButtonLink: "/shop?filter=couples",
+  secondaryButtonLink: "/collection/couples",
   imageUrl: "",
 };
 
@@ -153,9 +153,9 @@ export const defaultCollections: CollectionsConfig = {
   label: "Collections",
   heading: "Shop by Collection",
   cards: [
-    { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/shop?filter=kids", imageUrl: "" },
-    { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/shop?filter=adults", imageUrl: "" },
-    { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/shop?filter=couples", imageUrl: "" },
+    { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/collection/kids", imageUrl: "" },
+    { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/collection/adults", imageUrl: "" },
+    { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/collection/couples", imageUrl: "" },
   ],
 };
 
@@ -176,9 +176,9 @@ export const defaultHomepageCollections: HomepageCollectionsConfig = {
       label: "Collections",
       heading: "Shop by Collection",
       cards: [
-        { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/shop?filter=kids", imageUrl: "" },
-        { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/shop?filter=adults", imageUrl: "" },
-        { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/shop?filter=couples", imageUrl: "" },
+        { title: "For Kids", description: "Make bath time their favourite time. Our kids' collection features Disney princesses, superheroes, unicorns and more — all embroidered with your child's name. Towels and blankets they'll never want to let go of.", link: "/collection/kids", imageUrl: "" },
+        { title: "For Adults", description: "Elevate your everyday essentials. Our adults' range features elegant monograms, laurel crests and classic initials — personalised towels and blankets that bring a touch of luxury to your home.", link: "/collection/adults", imageUrl: "" },
+        { title: "For Couples", description: "The perfect his & hers gift. Our couple towel sets come with matching embroidered designs — from King & Queen crowns to Mr. Right & Mrs. Always Right. Ideal for weddings, anniversaries and housewarmings.", link: "/collection/couples", imageUrl: "" },
       ],
     },
     {
@@ -229,16 +229,16 @@ export const defaultFooter: FooterConfig = {
   phone: "+91 99900 79722",
   address: "New Delhi, India",
   shopLinks: [
-    { label: "Kids Collection", href: "/shop?filter=kids" },
-    { label: "Couple Sets", href: "/shop?filter=couples" },
+    { label: "Kids Collection", href: "/collection/kids" },
+    { label: "Couple Sets", href: "/collection/couples" },
     { label: "All Products", href: "/shop" },
     { label: "My Cart", href: "/cart" },
   ],
 };
 
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
-  kids: { title: "Popular for Kids", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
-  couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/shop?filter=couples" },
-  blankets: { title: "Cozy Blankets", subtitle: "Soft personalised AC blankets for kids", link: "/shop?filter=kids" },
+  kids: { title: "Popular for Kids", subtitle: "Disney princesses, superheroes & more", link: "/collection/kids" },
+  couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/collection/couples" },
+  blankets: { title: "Cozy Blankets", subtitle: "Soft personalised AC blankets for kids", link: "/collection/kids" },
   bathrobes: { title: "Luxury Bathrobes", subtitle: "Premium personalised cotton bathrobes", link: "/category/bathrobes" },
 };

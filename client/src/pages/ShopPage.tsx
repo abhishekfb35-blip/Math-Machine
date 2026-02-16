@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearch } from "wouter";
+import { useSearch, useLocation } from "wouter";
 import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,11 +31,11 @@ const categoryBanners: Record<string, { image: string; label: string; descriptio
   "adult-bathrobes": { image: couplesBanner, label: "Adult Bathrobes", description: "Premium personalised bathrobes for adults" },
 };
 
-const filters: { label: string; value: AudienceFilter }[] = [
+const filters: { label: string; value: AudienceFilter; collectionUrl?: string }[] = [
   { label: "All", value: "all" },
-  { label: "Kids", value: "kids" },
-  { label: "Adults", value: "adults" },
-  { label: "Couples", value: "couples" },
+  { label: "Kids", value: "kids", collectionUrl: "/collection/kids" },
+  { label: "Adults", value: "adults", collectionUrl: "/collection/adults" },
+  { label: "Couples", value: "couples", collectionUrl: "/collection/couples" },
 ];
 
 function ProductGridSkeleton() {
@@ -58,6 +58,7 @@ export default function ShopPage() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const initialFilter = (params.get("filter") as AudienceFilter) || "all";
+  const [, setLocation] = useLocation();
 
   const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
@@ -66,9 +67,14 @@ export default function ShopPage() {
     const p = new URLSearchParams(searchString);
     const f = p.get("filter") as AudienceFilter;
     if (f && filters.some(fl => fl.value === f)) {
+      const filter = filters.find(fl => fl.value === f);
+      if (filter?.collectionUrl) {
+        setLocation(filter.collectionUrl);
+        return;
+      }
       setActiveFilter(f);
     }
-  }, [searchString]);
+  }, [searchString, setLocation]);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -110,7 +116,13 @@ export default function ShopPage() {
                 key={f.value}
                 variant={activeFilter === f.value ? "default" : "outline"}
                 size="sm"
-                onClick={() => setActiveFilter(f.value)}
+                onClick={() => {
+                  if (f.collectionUrl) {
+                    setLocation(f.collectionUrl);
+                  } else {
+                    setActiveFilter(f.value);
+                  }
+                }}
                 className="shrink-0"
                 data-testid={`filter-${f.value}`}
               >
