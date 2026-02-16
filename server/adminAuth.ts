@@ -53,7 +53,8 @@ export async function handleAdminLogin(req: Request, res: Response) {
     httpOnly: true,
     maxAge: SESSION_MAX_AGE,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
+    path: "/",
   });
 
   return res.json({ success: true });

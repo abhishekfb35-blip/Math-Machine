@@ -24,6 +24,7 @@ export default function AdminLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -32,7 +33,8 @@ export default function AdminLogin() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/check"] });
       setLocation("/admin/catalog");
     } catch {
       toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
