@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import bathrobesImg from "@/assets/images/bathrobes-collection.png";
 import type { Category, Product } from "@shared/types";
 
 type Audience = "kids" | "adults" | "couples";
+type GenderFilter = "all" | "boys" | "girls" | "unisex";
 
 const audienceLabels: Record<Audience, string> = {
   kids: "For Kids",
@@ -45,6 +46,41 @@ function getAudienceFromSlug(slug: string): Audience | null {
   if (slug.includes("kids") || slug.includes("teen")) return "kids";
   if (slug.includes("adult")) return "adults";
   return null;
+}
+
+const genderFilters: { label: string; value: GenderFilter }[] = [
+  { label: "All", value: "all" },
+  { label: "Boys", value: "boys" },
+  { label: "Girls", value: "girls" },
+  { label: "Unisex", value: "unisex" },
+];
+
+const boysKeywords = [
+  "boy", "boys", "superhero", "spider", "batman", "avenger", "iron man", "captain america",
+  "car ", "cars", "racing", "truck", "dinosaur", "dino", "dragon", "monster", "pirate",
+  "football", "cricket", "soccer", "sports", "bike", "cycle", "rocket", "space",
+  "shark", "crocodile", "lion", "tiger", "robot", "ninja", "army", "soldier",
+  "king crown", "mr ", "mr.", "his", "men", "man", "gentleman",
+];
+
+const girlsKeywords = [
+  "girl", "girls", "princess", "fairy", "unicorn", "pony", "ballerina", "ballet",
+  "butterfly", "flower", "floral", "mermaid", "barbie", "doll", "kitty", "hello kitty",
+  "rainbow", "heart", "tiara", "crown queen", "queen crown",
+  "ladies", "women", "mrs", "her ", "she ", "lady",
+];
+
+function detectGender(product: Product): GenderFilter {
+  const name = product.name.toLowerCase();
+  const slug = product.slug.toLowerCase();
+  const text = `${name} ${slug}`;
+
+  const isBoys = boysKeywords.some((kw) => text.includes(kw));
+  const isGirls = girlsKeywords.some((kw) => text.includes(kw));
+
+  if (isBoys && !isGirls) return "boys";
+  if (isGirls && !isBoys) return "girls";
+  return "unisex";
 }
 
 const PRODUCTS_PER_ROW = 10;
@@ -185,6 +221,7 @@ export default function CollectionPage() {
   const rawAudience = params.audience || "kids";
   const audience: Audience = validAudiences.includes(rawAudience as Audience) ? (rawAudience as Audience) : "kids";
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
 
   const { data: categories, isLoading: catLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -204,8 +241,12 @@ export default function CollectionPage() {
   const audienceProducts = useMemo(() => {
     if (!products || !audienceCategories.length) return [];
     const catIds = new Set(audienceCategories.map((c) => c.id));
-    return products.filter((p) => catIds.has(p.categoryId));
-  }, [products, audienceCategories]);
+    let filtered = products.filter((p) => catIds.has(p.categoryId));
+    if (genderFilter !== "all") {
+      filtered = filtered.filter((p) => detectGender(p) === genderFilter);
+    }
+    return filtered;
+  }, [products, audienceCategories, genderFilter]);
 
   const productTypeSections = useMemo(() => {
     const typeMap = new Map<string, { categories: Category[]; products: Product[] }>();
@@ -269,6 +310,22 @@ export default function CollectionPage() {
           <p className="text-sm text-muted-foreground" data-testid="text-collection-desc">
             {audienceDescriptions[audience] || ""}
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
+          {genderFilters.map((f) => (
+            <Button
+              key={f.value}
+              variant={genderFilter === f.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setGenderFilter(f.value)}
+              className="shrink-0"
+              data-testid={`filter-gender-${f.value}`}
+            >
+              {f.label}
+            </Button>
+          ))}
         </div>
 
         {isLoading ? (
