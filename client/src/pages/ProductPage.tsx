@@ -162,7 +162,7 @@ export default function ProductPage() {
               <img
                 src={getProductImageUrl(currentImage?.imageUrl || product.imageUrl, "large")}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 data-testid="img-product-detail"
               />
               <Badge
