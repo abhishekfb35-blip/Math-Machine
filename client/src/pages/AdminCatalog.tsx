@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut, ArrowRightLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -277,6 +277,21 @@ export default function AdminCatalog() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete product", variant: "destructive" });
+    },
+  });
+
+  const moveProductMutation = useMutation({
+    mutationFn: async ({ productId, categoryId }: { productId: string; categoryId: string; categoryName: string }) => {
+      await apiRequest("PUT", `/api/admin/products/${productId}`, { categoryId });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", variables.categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: `Moved to ${variables.categoryName}` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move product", variant: "destructive" });
     },
   });
 
@@ -631,6 +646,25 @@ export default function AdminCatalog() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <Select
+                      value=""
+                      onValueChange={(newCatId) => {
+                        if (newCatId === prod.categoryId) return;
+                        const targetCat = categories?.find(c => c.id === newCatId);
+                        moveProductMutation.mutate({ productId: prod.id, categoryId: newCatId, categoryName: targetCat?.name || "" });
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-8 p-0 border-0 bg-transparent [&>svg]:hidden" data-testid={`button-move-product-${prod.id}`}>
+                        <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.filter(c => c.id !== prod.categoryId).map(cat => (
+                          <SelectItem key={cat.id} value={cat.id} data-testid={`option-move-${prod.id}-${cat.id}`}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       size="icon"
                       variant="ghost"
