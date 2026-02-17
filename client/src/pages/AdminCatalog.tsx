@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -646,25 +647,24 @@ export default function AdminCatalog() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Select
-                      value=""
-                      onValueChange={(newCatId) => {
-                        if (newCatId === prod.categoryId) return;
-                        const targetCat = categories?.find(c => c.id === newCatId);
-                        moveProductMutation.mutate({ productId: prod.id, categoryId: newCatId, categoryName: targetCat?.name || "" });
-                      }}
-                    >
-                      <SelectTrigger className="h-8 w-8 p-0 border-0 bg-transparent [&>svg]:hidden" data-testid={`button-move-product-${prod.id}`}>
-                        <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" data-testid={`button-move-product-${prod.id}`}>
+                          <ArrowRightLeft className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
                         {categories?.filter(c => c.id !== prod.categoryId).map(cat => (
-                          <SelectItem key={cat.id} value={cat.id} data-testid={`option-move-${prod.id}-${cat.id}`}>
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => moveProductMutation.mutate({ productId: prod.id, categoryId: cat.id, categoryName: cat.name })}
+                            data-testid={`option-move-${prod.id}-${cat.id}`}
+                          >
                             {cat.name}
-                          </SelectItem>
+                          </DropdownMenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button
                       size="icon"
                       variant="ghost"
