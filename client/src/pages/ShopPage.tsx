@@ -61,9 +61,10 @@ export default function ShopPage() {
   const initialFilter = (params.get("filter") as AudienceFilter) || "all";
   const [, setLocation] = useLocation();
 
+  const initialSearch = params.get("q") || "";
   const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
   useEffect(() => {
     const p = new URLSearchParams(searchString);
@@ -75,6 +76,11 @@ export default function ShopPage() {
         return;
       }
       setActiveFilter(f);
+    }
+    const q = p.get("q");
+    if (q) {
+      setSearchQuery(q);
+      setActiveFilter("all");
     }
   }, [searchString, setLocation]);
 
