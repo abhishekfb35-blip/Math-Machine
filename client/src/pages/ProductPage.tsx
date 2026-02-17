@@ -21,6 +21,8 @@ export default function ProductPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [personalizationName, setPersonalizationName] = useState("");
+  const [gentlemanName, setGentlemanName] = useState("");
+  const [ladyName, setLadyName] = useState("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
@@ -68,7 +70,11 @@ export default function ProductPage() {
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity: 1,
-        personalizationName: personalizationName.trim() || undefined,
+        personalizationName: product!.audience === "couples"
+          ? (gentlemanName.trim() || ladyName.trim()
+            ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
+            : undefined)
+          : (personalizationName.trim() || undefined),
       });
       return res.json();
     },
@@ -353,22 +359,51 @@ export default function ProductPage() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="personalization" className="text-sm font-medium">
-                Personalise with a Name
-              </Label>
-              <Input
-                id="personalization"
-                placeholder="Enter name to embroider"
-                value={personalizationName}
-                onChange={(e) => setPersonalizationName(e.target.value)}
-                maxLength={30}
-                data-testid="input-personalization-name"
-              />
-              <p className="text-xs text-muted-foreground">
-                This name will be embroidered on the product
-              </p>
-            </div>
+            {product.audience === "couples" ? (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  Personalise with Names
+                </Label>
+                <div className="space-y-2">
+                  <Input
+                    id="gentleman-name"
+                    placeholder="Name of Gentleman"
+                    value={gentlemanName}
+                    onChange={(e) => setGentlemanName(e.target.value)}
+                    maxLength={30}
+                    data-testid="input-gentleman-name"
+                  />
+                  <Input
+                    id="lady-name"
+                    placeholder="Name of Lady"
+                    value={ladyName}
+                    onChange={(e) => setLadyName(e.target.value)}
+                    maxLength={30}
+                    data-testid="input-lady-name"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Both names will be embroidered on the set
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="personalization" className="text-sm font-medium">
+                  Personalise with a Name
+                </Label>
+                <Input
+                  id="personalization"
+                  placeholder="Enter name to embroider"
+                  value={personalizationName}
+                  onChange={(e) => setPersonalizationName(e.target.value)}
+                  maxLength={30}
+                  data-testid="input-personalization-name"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This name will be embroidered on the product
+                </p>
+              </div>
+            )}
 
             <Button
               className="w-full"

@@ -19,14 +19,21 @@ interface QuickAddSheetProps {
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
   const [personalizationName, setPersonalizationName] = useState("");
+  const [gentlemanName, setGentlemanName] = useState("");
+  const [ladyName, setLadyName] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const isCoupleProduct = product?.audience === "couples";
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity,
-        personalizationName: personalizationName.trim() || undefined,
+        personalizationName: isCoupleProduct
+          ? (gentlemanName.trim() || ladyName.trim()
+            ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
+            : undefined)
+          : (personalizationName.trim() || undefined),
       });
       return res.json();
     },
@@ -37,6 +44,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         description: `${product!.name} has been added to your cart.`,
       });
       setPersonalizationName("");
+      setGentlemanName("");
+      setLadyName("");
       setQuantity(1);
       onOpenChange(false);
     },
@@ -82,19 +91,43 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <span>Buy 2 Get 1 Free - discount applied at checkout</span>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="qa-personalization" className="text-sm font-medium">
-              Personalise with a Name
-            </Label>
-            <Input
-              id="qa-personalization"
-              placeholder="Enter name to embroider (optional)"
-              value={personalizationName}
-              onChange={(e) => setPersonalizationName(e.target.value)}
-              maxLength={30}
-              data-testid="input-quickadd-name"
-            />
-          </div>
+          {isCoupleProduct ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Personalise with Names
+              </Label>
+              <Input
+                id="qa-gentleman-name"
+                placeholder="Name of Gentleman"
+                value={gentlemanName}
+                onChange={(e) => setGentlemanName(e.target.value)}
+                maxLength={30}
+                data-testid="input-quickadd-gentleman"
+              />
+              <Input
+                id="qa-lady-name"
+                placeholder="Name of Lady"
+                value={ladyName}
+                onChange={(e) => setLadyName(e.target.value)}
+                maxLength={30}
+                data-testid="input-quickadd-lady"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="qa-personalization" className="text-sm font-medium">
+                Personalise with a Name
+              </Label>
+              <Input
+                id="qa-personalization"
+                placeholder="Enter name to embroider (optional)"
+                value={personalizationName}
+                onChange={(e) => setPersonalizationName(e.target.value)}
+                maxLength={30}
+                data-testid="input-quickadd-name"
+              />
+            </div>
+          )}
 
           <div className="flex items-center justify-between gap-4">
             <Label className="text-sm font-medium">Quantity</Label>
