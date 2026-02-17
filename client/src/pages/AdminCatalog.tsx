@@ -267,6 +267,27 @@ export default function AdminCatalog() {
     }
   };
 
+  const handleMainImageUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setEditingProduct(prev => ({ ...prev!, imageUrl: data.url }));
+        toast({ title: "Main image updated — save to apply" });
+      }
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    }
+  };
+
+  const mapLegacyAudience = (val: string | null | undefined): string => {
+    if (!val) return "";
+    const map: Record<string, string> = { kids: "boy,girl", adults: "adult", couples: "couple" };
+    return map[val] || val;
+  };
+
   function generateSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
   }
@@ -646,18 +667,69 @@ export default function AdminCatalog() {
           </div>
 
           <div>
-            <Label htmlFor="prod-image">Main Image URL</Label>
-            <Input
-              id="prod-image"
-              value={editingProduct.imageUrl || ""}
-              onChange={(e) => setEditingProduct(prev => ({ ...prev!, imageUrl: e.target.value }))}
-              data-testid="input-product-image"
-            />
-            {editingProduct.imageUrl && (
-              <div className="mt-2 w-20 h-20 rounded-md overflow-hidden bg-muted">
-                <img src={getProductImageUrl(editingProduct.imageUrl, "small")} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
+            <Label className="flex items-center gap-1 mb-2">
+              <ImageIcon className="w-4 h-4" /> Product Images
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {editingProduct.imageUrl && (
+                <label className="relative w-20 h-20 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => { if (e.target.files?.[0]) handleMainImageUpload(e.target.files[0]); }}
+                  />
+                  <img src={getProductImageUrl(editingProduct.imageUrl, "small")} alt="Main" className="w-full h-full object-cover rounded-md" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
+                    <Upload className="w-4 h-4 text-white" />
+                  </div>
+                  <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">Main</Badge>
+                </label>
+              )}
+              {editingProduct.id && productImages?.filter(img => img.imageUrl !== editingProduct.imageUrl).map((img) => (
+                <label key={img.id} className="relative w-20 h-20 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      if (!e.target.files?.[0]) return;
+                      const formData = new FormData();
+                      formData.append("image", e.target.files[0]);
+                      try {
+                        const res = await fetch("/api/upload", { method: "POST", body: formData });
+                        const data = await res.json();
+                        if (data.url) {
+                          deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id });
+                          addImageMutation.mutate({ productId: editingProduct.id!, imageUrl: data.url });
+                        }
+                      } catch { toast({ title: "Upload failed", variant: "destructive" }); }
+                    }}
+                  />
+                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-cover rounded-md" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
+                    <Upload className="w-4 h-4 text-white" />
+                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id }); }}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-10"
+                    data-testid={`button-delete-image-${img.id}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </label>
+              ))}
+              <label className="w-20 h-20 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }}
+                />
+                <Upload className="w-5 h-5 text-muted-foreground/50" />
+                <span className="text-[10px] text-muted-foreground/50 mt-0.5">Add</span>
+              </label>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -728,20 +800,20 @@ export default function AdminCatalog() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="prod-audience">Audience</Label>
-              <Select
-                value={editingProduct.audience || "kids"}
-                onValueChange={(v) => setEditingProduct(prev => ({ ...prev!, audience: v }))}
-              >
-                <SelectTrigger data-testid="select-product-audience">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="kids">Kids</SelectItem>
-                  <SelectItem value="adults">Adults</SelectItem>
-                  <SelectItem value="couples">Couples</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="prod-quantity">Quantity in Stock</Label>
+              <Input
+                id="prod-quantity"
+                type="number"
+                min="0"
+                value={editingProduct.quantity ?? 1}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val) && val >= 0) {
+                    setEditingProduct(prev => ({ ...prev!, quantity: val }));
+                  }
+                }}
+                data-testid="input-product-quantity"
+              />
             </div>
             <div>
               <Label htmlFor="prod-type">Product Type</Label>
@@ -758,6 +830,42 @@ export default function AdminCatalog() {
                   <SelectItem value="bathrobe">Bathrobe</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label className="mb-2 block">Audience</Label>
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {[
+                { value: "infant", label: "Infant" },
+                { value: "boy", label: "Boy" },
+                { value: "girl", label: "Girl" },
+                { value: "teenager", label: "Teenager" },
+                { value: "adult", label: "Adult" },
+                { value: "couple", label: "Couple" },
+              ].map((opt) => {
+                const mapped = mapLegacyAudience(editingProduct.audience);
+                const audiences = mapped.split(",").map(s => s.trim()).filter(Boolean);
+                const checked = audiences.includes(opt.value);
+                return (
+                  <div key={opt.value} className="flex items-center gap-1.5" data-testid={`audience-checkbox-${opt.value}`}>
+                    <Checkbox
+                      id={`audience-${opt.value}`}
+                      checked={checked}
+                      onCheckedChange={(isChecked) => {
+                        const currentAudiences = mapLegacyAudience(editingProduct.audience).split(",").map(s => s.trim()).filter(Boolean);
+                        const updated = isChecked
+                          ? [...currentAudiences, opt.value]
+                          : currentAudiences.filter(a => a !== opt.value);
+                        setEditingProduct(prev => ({ ...prev!, audience: updated.join(",") }));
+                      }}
+                    />
+                    <Label htmlFor={`audience-${opt.value}`} className="text-sm font-normal cursor-pointer">
+                      {opt.label}
+                    </Label>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -881,45 +989,6 @@ export default function AdminCatalog() {
             {saveProductMutation.isPending ? "Saving..." : isNew ? "Create Product" : "Save Changes"}
           </Button>
 
-          {/* Images Section */}
-          {editingProduct.id && (
-            <div className="border-t pt-4 mt-4">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <h2 className="text-sm font-semibold flex items-center gap-1">
-                  <ImageIcon className="w-4 h-4" /> Product Images ({productImages?.length || 0})
-                </h2>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }}
-                    data-testid="input-upload-image"
-                  />
-                  <Button size="sm" variant="outline" asChild>
-                    <span><Upload className="w-3.5 h-3.5 mr-1" /> Upload</span>
-                  </Button>
-                </label>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {productImages?.map((img) => (
-                  <div key={img.id} className="relative w-20 h-20 rounded-md overflow-hidden bg-muted group">
-                    <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id })}
-                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible"
-                      data-testid={`button-delete-image-${img.id}`}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                    {img.isPrimary && (
-                      <Badge className="absolute bottom-0.5 left-0.5 text-[8px] px-1 py-0 no-default-hover-elevate no-default-active-elevate">Primary</Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Reviews Section */}
           {editingProduct.id && (
