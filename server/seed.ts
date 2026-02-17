@@ -23,7 +23,28 @@ export async function seedDatabase() {
     const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
 
     if (isFullySeeded) {
-      console.log("Database already seeded, skipping.");
+      // Check if reviews need syncing
+      const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
+      const expectedReviews = data.productReviews?.length || 0;
+      if (expectedReviews > 0 && Number(reviewCount) < expectedReviews) {
+        console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
+        await db.delete(productReviews);
+        const reviewValues = data.productReviews.map((r: any) => ({
+          productId: r.product_id,
+          reviewerName: r.reviewer_name,
+          rating: r.rating,
+          title: r.title || null,
+          body: r.body || null,
+          reviewDate: r.review_date || null,
+          verifiedPurchase: r.verified_purchase ?? true,
+        }));
+        for (let i = 0; i < reviewValues.length; i += 100) {
+          await db.insert(productReviews).values(reviewValues.slice(i, i + 100));
+        }
+        console.log(`Reviews synced: ${expectedReviews} reviews loaded.`);
+      } else {
+        console.log("Database already seeded, skipping.");
+      }
       return;
     }
 
