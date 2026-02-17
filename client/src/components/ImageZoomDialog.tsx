@@ -125,7 +125,7 @@ export default function ImageZoomDialog({
                     <img
                       src={getProductImageUrl(img.imageUrl, "small")}
                       alt={`${productName} view ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </button>
                 ))}
