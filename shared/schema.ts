@@ -11,8 +11,18 @@ export const categories = pgTable("categories", {
   sortOrder: integer("sort_order").default(0),
 });
 
+function generateSku(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "TL";
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export const products = pgTable("products", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
+  sku: text("sku").unique().$defaultFn(() => generateSku()),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),

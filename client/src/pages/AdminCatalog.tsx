@@ -618,6 +618,7 @@ export default function AdminCatalog() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
+                      {prod.sku && <span className="font-mono mr-2">{prod.sku}</span>}
                       ₹{prod.price.toLocaleString("en-IN")}
                       {prod.mrp && prod.mrp > prod.price && (
                         <span className="ml-1 line-through">₹{prod.mrp.toLocaleString("en-IN")}</span>

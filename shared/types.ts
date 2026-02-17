@@ -17,6 +17,7 @@ export interface InsertCategory {
 
 export interface Product {
   id: string;
+  sku: string | null;
   name: string;
   slug: string;
   description: string | null;
@@ -43,6 +44,7 @@ export interface Product {
 }
 
 export interface InsertProduct {
+  sku?: string | null;
   name: string;
   slug: string;
   description?: string | null;
