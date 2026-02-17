@@ -33,8 +33,13 @@ export async function seedDatabase() {
         for (const p of allProducts) { slugToId[p.slug] = p.id; }
         
         await db.delete(productReviews);
+        const skippedSlugs: string[] = [];
         const reviewValues = data.productReviews
-          .filter((r: any) => slugToId[r.product_slug || r.productSlug])
+          .filter((r: any) => {
+            const slug = r.product_slug || r.productSlug;
+            if (!slugToId[slug]) { skippedSlugs.push(slug); return false; }
+            return true;
+          })
           .map((r: any) => ({
             productId: slugToId[r.product_slug || r.productSlug],
             reviewerName: r.reviewer_name || r.reviewerName,
@@ -44,10 +49,29 @@ export async function seedDatabase() {
             reviewDate: r.review_date || r.reviewDate || null,
             verifiedPurchase: r.verified_purchase ?? r.verifiedPurchase ?? true,
           }));
+        if (skippedSlugs.length > 0) {
+          const unique = Array.from(new Set(skippedSlugs));
+          console.warn(`  WARNING: ${skippedSlugs.length} reviews skipped — product slugs not found: ${unique.join(', ')}`);
+        }
         for (let i = 0; i < reviewValues.length; i += 100) {
           await db.insert(productReviews).values(reviewValues.slice(i, i + 100));
         }
-        console.log(`Reviews synced: ${reviewValues.length} reviews loaded.`);
+
+        // Verification: confirm all reviews were inserted and linked to valid products
+        const [{ actualCount }] = await db.select({ actualCount: sql<number>`count(*)` }).from(productReviews);
+        const [{ orphanCount }] = await db.select({ orphanCount: sql<number>`count(*)` }).from(productReviews)
+          .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
+          .where(sql`${products.id} IS NULL`);
+        
+        const inserted = Number(actualCount);
+        const orphans = Number(orphanCount);
+        if (inserted !== reviewValues.length) {
+          console.error(`  VERIFICATION FAILED: Expected ${reviewValues.length} reviews, but found ${inserted} in DB.`);
+        } else if (orphans > 0) {
+          console.error(`  VERIFICATION FAILED: ${orphans} reviews are linked to non-existent products.`);
+        } else {
+          console.log(`  VERIFIED: ${inserted} reviews synced, all linked to valid products. 0 orphans.`);
+        }
       } else {
         console.log("Database already seeded, skipping.");
       }
@@ -146,8 +170,13 @@ export async function seedDatabase() {
     }
 
     if (data.productReviews.length > 0) {
+      const skippedRevSlugs: string[] = [];
       const revEntries = data.productReviews
-        .filter((r: any) => prodSlugToId[r.productSlug || r.product_slug])
+        .filter((r: any) => {
+          const slug = r.productSlug || r.product_slug;
+          if (!prodSlugToId[slug]) { skippedRevSlugs.push(slug); return false; }
+          return true;
+        })
         .map((r: any) => ({
           productId: prodSlugToId[r.productSlug || r.product_slug],
           reviewerName: r.reviewerName || r.reviewer_name,
@@ -157,12 +186,30 @@ export async function seedDatabase() {
           reviewDate: r.reviewDate || r.review_date,
           verifiedPurchase: r.verifiedPurchase ?? r.verified_purchase ?? false,
         }));
+      if (skippedRevSlugs.length > 0) {
+        const unique = Array.from(new Set(skippedRevSlugs));
+        console.warn(`  WARNING: ${skippedRevSlugs.length} reviews skipped — product slugs not found: ${unique.join(', ')}`);
+      }
 
       for (let i = 0; i < revEntries.length; i += BATCH_SIZE) {
         const batch = revEntries.slice(i, i + BATCH_SIZE);
         await db.insert(productReviews).values(batch);
       }
-      console.log(`  Seeded ${revEntries.length} product reviews`);
+      
+      // Verification
+      const [{ actualRevCount }] = await db.select({ actualRevCount: sql<number>`count(*)` }).from(productReviews);
+      const [{ orphanRevCount }] = await db.select({ orphanRevCount: sql<number>`count(*)` }).from(productReviews)
+        .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
+        .where(sql`${products.id} IS NULL`);
+      const revInserted = Number(actualRevCount);
+      const revOrphans = Number(orphanRevCount);
+      if (revInserted !== revEntries.length) {
+        console.error(`  REVIEW VERIFICATION FAILED: Expected ${revEntries.length}, found ${revInserted} in DB.`);
+      } else if (revOrphans > 0) {
+        console.error(`  REVIEW VERIFICATION FAILED: ${revOrphans} reviews linked to non-existent products.`);
+      } else {
+        console.log(`  VERIFIED: ${revInserted} reviews seeded, all linked to valid products. 0 orphans.`);
+      }
     }
 
     if (data.tags.length > 0) {
@@ -208,7 +255,28 @@ export async function seedDatabase() {
       console.log(`  Seeded ${data.siteConfig.length} site config entries`);
     }
 
-    console.log("Database seeding complete!");
+    // Final verification summary
+    const [{ finalCats }] = await db.select({ finalCats: sql<number>`count(*)` }).from(categories);
+    const [{ finalProds }] = await db.select({ finalProds: sql<number>`count(*)` }).from(products);
+    const [{ finalImgs }] = await db.select({ finalImgs: sql<number>`count(*)` }).from(productImages);
+    const [{ finalRevs }] = await db.select({ finalRevs: sql<number>`count(*)` }).from(productReviews);
+    const [{ finalTags }] = await db.select({ finalTags: sql<number>`count(*)` }).from(tags);
+    console.log(`\n  === SEED VERIFICATION SUMMARY ===`);
+    console.log(`  Categories: ${finalCats} (expected ${data.categories.length})`);
+    console.log(`  Products:   ${finalProds} (expected ${data.products.length})`);
+    console.log(`  Images:     ${finalImgs} (expected ${data.productImages.length})`);
+    console.log(`  Reviews:    ${finalRevs} (expected ${data.productReviews.length})`);
+    console.log(`  Tags:       ${finalTags} (expected ${data.tags.length})`);
+    
+    const mismatches = [];
+    if (Number(finalCats) !== data.categories.length) mismatches.push('categories');
+    if (Number(finalProds) < data.products.length) mismatches.push('products');
+    if (Number(finalRevs) < data.productReviews.length) mismatches.push('reviews');
+    if (mismatches.length > 0) {
+      console.error(`  SEED WARNING: Mismatches in: ${mismatches.join(', ')}`);
+    } else {
+      console.log(`  ALL CHECKS PASSED — database seeding complete!`);
+    }
 
   } catch (error) {
     console.error("Error seeding database:", error);
