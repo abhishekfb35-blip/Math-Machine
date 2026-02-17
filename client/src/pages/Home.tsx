@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
-import { ArrowRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield, Search } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import heroBanner from "@/assets/images/hero-banner.png";
@@ -51,8 +50,6 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
 
 export default function Home() {
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
-  const [heroSearch, setHeroSearch] = useState("");
-  const [, navigate] = useLocation();
 
   const hero = useSiteConfig<HeroConfig>("hero", defaultHero);
   const promise = useSiteConfig<PromiseConfig>("promise", defaultPromise);
@@ -155,30 +152,6 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-            <form
-              className="flex items-center gap-2 max-w-md mt-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (heroSearch.trim()) {
-                  navigate(`/shop?q=${encodeURIComponent(heroSearch.trim())}`);
-                }
-              }}
-              data-testid="form-hero-search"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-                <Input
-                  placeholder="Search towels, blankets, bathrobes..."
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
-                  className="pl-9 bg-white/15 border-white/25 text-white placeholder:text-white/50 backdrop-blur-sm"
-                  data-testid="input-hero-search"
-                />
-              </div>
-              <Button type="submit" size="default" variant="outline" className="backdrop-blur-sm bg-white/10 text-white border-white/30" data-testid="button-hero-search">
-                Search
-              </Button>
-            </form>
           </div>
         </div>
       </section>
