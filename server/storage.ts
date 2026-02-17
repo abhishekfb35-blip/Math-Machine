@@ -136,7 +136,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [updated] = await db.update(products).set(data).where(eq(products.id, id)).returning();
+    const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     return updated;
   }
 
@@ -202,7 +202,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateOrderPayment(orderId: number, paymentId: string, paymentStatus: string): Promise<Order | undefined> {
     const [updated] = await db.update(orders)
-      .set({ paymentId, paymentStatus, status: paymentStatus === "paid" ? "confirmed" : "pending" })
+      .set({ paymentId, paymentStatus, status: paymentStatus === "paid" ? "confirmed" : "pending", updatedAt: new Date() })
       .where(eq(orders.id, orderId))
       .returning();
     return updated;

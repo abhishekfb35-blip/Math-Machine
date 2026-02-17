@@ -38,6 +38,8 @@ export interface Product {
   audience: string | null;
   active: boolean | null;
   sortOrder: number | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface InsertProduct {
@@ -106,6 +108,7 @@ export interface Order {
   paymentStatus: string | null;
   notes: string | null;
   createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface InsertOrder {
@@ -163,6 +166,8 @@ export interface ProductImage {
   imageUrl: string;
   sortOrder: number | null;
   isPrimary: boolean | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface InsertProductImage {
@@ -179,8 +184,9 @@ export interface ProductReview {
   rating: number;
   title: string | null;
   body: string;
-  reviewDate: string | null;
+  amzReviewDate: string | null;
   verifiedPurchase: boolean | null;
+  createdAt: Date | null;
 }
 
 export interface InsertProductReview {
@@ -189,7 +195,7 @@ export interface InsertProductReview {
   rating: number;
   title?: string | null;
   body: string;
-  reviewDate?: string | null;
+  amzReviewDate?: string | null;
   verifiedPurchase?: boolean | null;
 }
 

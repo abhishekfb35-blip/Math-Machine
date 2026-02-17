@@ -1009,7 +1009,7 @@ export default function AdminCatalog() {
                     const date = prompt("Review date (e.g. 15 January 2025):") || "";
                     addReviewMutation.mutate({
                       productId: editingProduct.id!,
-                      review: { reviewerName: name, rating, title, body, reviewDate: date, verifiedPurchase: true },
+                      review: { reviewerName: name, rating, title, body, amzReviewDate: date, verifiedPurchase: true },
                     });
                   }}
                   data-testid="button-add-review"

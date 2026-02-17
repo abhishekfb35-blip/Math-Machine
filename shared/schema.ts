@@ -33,6 +33,8 @@ export const products = pgTable("products", {
   audience: text("audience").default("kids"),
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const carts = pgTable("carts", {
@@ -66,6 +68,7 @@ export const orders = pgTable("orders", {
   paymentStatus: text("payment_status").default("pending"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const orderItems = pgTable("order_items", {
@@ -91,6 +94,8 @@ export const productImages = pgTable("product_images", {
   imageUrl: text("image_url").notNull(),
   sortOrder: integer("sort_order").default(0),
   isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const productReviews = pgTable("product_reviews", {
@@ -100,8 +105,9 @@ export const productReviews = pgTable("product_reviews", {
   rating: integer("rating").notNull(),
   title: text("title"),
   body: text("body").notNull(),
-  reviewDate: text("review_date"),
+  amzReviewDate: text("amz_review_date"),
   verifiedPurchase: boolean("verified_purchase").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const tags = pgTable("tags", {
@@ -117,14 +123,14 @@ export const productTags = pgTable("product_tags", {
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
-export const insertProductSchema = createInsertSchema(products).omit({ id: true });
+export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
-export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true });
-export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true });
+export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true, createdAt: true });
 export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
 

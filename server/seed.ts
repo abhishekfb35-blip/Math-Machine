@@ -46,7 +46,7 @@ export async function seedDatabase() {
             rating: r.rating,
             title: r.title || null,
             body: r.body || null,
-            reviewDate: r.review_date || r.reviewDate || null,
+            amzReviewDate: r.review_date || r.amz_review_date || r.reviewDate || r.amzReviewDate || null,
             verifiedPurchase: r.verified_purchase ?? r.verifiedPurchase ?? true,
           }));
         if (skippedSlugs.length > 0) {
@@ -183,7 +183,7 @@ export async function seedDatabase() {
           rating: r.rating,
           title: r.title,
           body: r.body,
-          reviewDate: r.reviewDate || r.review_date,
+          amzReviewDate: r.amzReviewDate || r.amz_review_date || r.reviewDate || r.review_date,
           verifiedPurchase: r.verifiedPurchase ?? r.verified_purchase ?? false,
         }));
       if (skippedRevSlugs.length > 0) {

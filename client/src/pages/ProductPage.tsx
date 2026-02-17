@@ -434,8 +434,8 @@ export default function ProductPage() {
                         Verified Purchase
                       </Badge>
                     )}
-                    {review.reviewDate && (
-                      <span className="text-xs text-muted-foreground" data-testid={`text-review-date-${review.id}`}>{review.reviewDate}</span>
+                    {review.amzReviewDate && (
+                      <span className="text-xs text-muted-foreground" data-testid={`text-review-date-${review.id}`}>{review.amzReviewDate}</span>
                     )}
                   </div>
                 </div>
