@@ -7,7 +7,7 @@ export interface EnrichedCartItem extends CartItem {
 }
 
 export interface CartDetails {
-  id: number;
+  id: string;
   items: EnrichedCartItem[];
   itemCount: number;
   subtotal: number;
@@ -33,7 +33,7 @@ export class CartService {
     };
   }
 
-  async addItem(sessionId: string, productId: number, quantity: number, personalizationName: string | null): Promise<{ item: CartItem; isNew: boolean }> {
+  async addItem(sessionId: string, productId: string, quantity: number, personalizationName: string | null): Promise<{ item: CartItem; isNew: boolean }> {
     const product = await this.storage.getProductById(productId);
     if (!product) {
       throw new NotFoundError("Product not found");
@@ -60,7 +60,7 @@ export class CartService {
     return { item, isNew: true };
   }
 
-  async updateItem(itemId: number, quantity: number, personalizationName?: string): Promise<{ deleted: true } | CartItem> {
+  async updateItem(itemId: string, quantity: number, personalizationName?: string): Promise<{ deleted: true } | CartItem> {
     if (quantity === 0) {
       await this.storage.removeCartItem(itemId);
       return { deleted: true };
@@ -72,7 +72,7 @@ export class CartService {
     return updated;
   }
 
-  async removeItem(itemId: number): Promise<void> {
+  async removeItem(itemId: string): Promise<void> {
     await this.storage.removeCartItem(itemId);
   }
 

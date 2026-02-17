@@ -14,7 +14,7 @@ interface CartItemWithProduct extends CartItem {
 }
 
 interface CartData {
-  id: number;
+  id: string;
   items: CartItemWithProduct[];
   itemCount: number;
   subtotal: number;
@@ -94,7 +94,7 @@ export default function CartPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, quantity }: { id: number; quantity: number }) => {
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
       if (quantity === 0) {
         await apiRequest("DELETE", `/api/cart/items/${id}`);
       } else {
@@ -107,7 +107,7 @@ export default function CartPage() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/cart/items/${id}`);
     },
     onSuccess: () => {

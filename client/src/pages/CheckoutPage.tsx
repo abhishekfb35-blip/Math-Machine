@@ -17,7 +17,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import type { Product, CartItem } from "@shared/types";
 
 interface CartData {
-  id: number;
+  id: string;
   items: (CartItem & { product: Product | null })[];
   itemCount: number;
   subtotal: number;

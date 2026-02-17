@@ -1,5 +1,5 @@
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description: string | null;
@@ -16,14 +16,14 @@ export interface InsertCategory {
 }
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description: string | null;
   price: number;
   mrp: number | null;
   imageUrl: string;
-  categoryId: number;
+  categoryId: string;
   amazonAsin: string | null;
   color: string | null;
   material: string | null;
@@ -49,7 +49,7 @@ export interface InsertProduct {
   price: number;
   mrp?: number | null;
   imageUrl: string;
-  categoryId: number;
+  categoryId: string;
   amazonAsin?: string | null;
   color?: string | null;
   material?: string | null;
@@ -67,7 +67,7 @@ export interface InsertProduct {
 }
 
 export interface Cart {
-  id: number;
+  id: string;
   sessionId: string;
   createdAt: Date | null;
 }
@@ -77,22 +77,22 @@ export interface InsertCart {
 }
 
 export interface CartItem {
-  id: number;
-  cartId: number;
-  productId: number;
+  id: string;
+  cartId: string;
+  productId: string;
   quantity: number;
   personalizationName: string | null;
 }
 
 export interface InsertCartItem {
-  cartId: number;
-  productId: number;
+  cartId: string;
+  productId: string;
   quantity?: number;
   personalizationName?: string | null;
 }
 
 export interface Order {
-  id: number;
+  id: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -129,9 +129,9 @@ export interface InsertOrder {
 }
 
 export interface OrderItem {
-  id: number;
-  orderId: number;
-  productId: number;
+  id: string;
+  orderId: string;
+  productId: string;
   productName: string;
   productPrice: number;
   quantity: number;
@@ -140,8 +140,8 @@ export interface OrderItem {
 }
 
 export interface InsertOrderItem {
-  orderId: number;
-  productId: number;
+  orderId: string;
+  productId: string;
   productName: string;
   productPrice: number;
   quantity?: number;
@@ -150,7 +150,7 @@ export interface InsertOrderItem {
 }
 
 export interface SiteConfig {
-  id: number;
+  id: string;
   key: string;
   value: string;
 }
@@ -161,8 +161,8 @@ export interface InsertSiteConfig {
 }
 
 export interface ProductImage {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   imageUrl: string;
   sortOrder: number | null;
   isPrimary: boolean | null;
@@ -171,15 +171,15 @@ export interface ProductImage {
 }
 
 export interface InsertProductImage {
-  productId: number;
+  productId: string;
   imageUrl: string;
   sortOrder?: number | null;
   isPrimary?: boolean | null;
 }
 
 export interface ProductReview {
-  id: number;
-  productId: number;
+  id: string;
+  productId: string;
   reviewerName: string;
   rating: number;
   title: string | null;
@@ -190,7 +190,7 @@ export interface ProductReview {
 }
 
 export interface InsertProductReview {
-  productId: number;
+  productId: string;
   reviewerName: string;
   rating: number;
   title?: string | null;
@@ -200,7 +200,7 @@ export interface InsertProductReview {
 }
 
 export interface Tag {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
 }
@@ -211,12 +211,12 @@ export interface InsertTag {
 }
 
 export interface ProductTag {
-  id: number;
-  productId: number;
-  tagId: number;
+  id: string;
+  productId: string;
+  tagId: string;
 }
 
 export interface InsertProductTag {
-  productId: number;
-  tagId: number;
+  productId: string;
+  tagId: string;
 }

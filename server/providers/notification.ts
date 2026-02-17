@@ -1,5 +1,5 @@
 export interface OrderNotification {
-  orderId: number;
+  orderId: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -16,7 +16,7 @@ export interface NotificationResult {
 export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
-  sendOrderStatusUpdate(orderId: number, status: string, customerEmail: string): Promise<NotificationResult>;
+  sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
 }
 
 export class ConsoleNotificationService implements INotificationService {
@@ -30,7 +30,7 @@ export class ConsoleNotificationService implements INotificationService {
     return { success: true, channel: "console" };
   }
 
-  async sendOrderStatusUpdate(orderId: number, status: string, customerEmail: string): Promise<NotificationResult> {
+  async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult> {
     console.log(`[Order Update] Order #${orderId} → ${status} (${customerEmail})`);
     return { success: true, channel: "console" };
   }

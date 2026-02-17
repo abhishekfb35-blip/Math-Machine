@@ -48,8 +48,10 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 ## Database
 
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
+- **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
 - **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, and `site_config`.
 - **Product Categories**: Flat structure with a tagging system for cross-cutting attributes.
+- **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.
 - **Discount Logic**: "Buy 2 Get 1 Free" applied automatically, making the cheapest `floor(N/2)` items free for carts with 3+ items.
 
 ## Key Features

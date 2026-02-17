@@ -16,7 +16,7 @@ export interface CheckoutInput {
 }
 
 export interface CheckoutResult {
-  orderId: number;
+  orderId: string;
   subtotal: number;
   discount: number;
   total: number;
@@ -51,7 +51,7 @@ export class OrderService {
     const pricing = calculateDiscount(priceItems);
 
     const payment = await this.paymentProvider.createPaymentOrder({
-      orderId: 0,
+      orderId: "",
       amount: pricing.total,
       currency: "INR",
       customerName: input.customerName,
@@ -96,7 +96,7 @@ export class OrderService {
     };
   }
 
-  async getOrder(orderId: number): Promise<(Order & { items: any[] }) | null> {
+  async getOrder(orderId: string): Promise<(Order & { items: any[] }) | null> {
     const order = await this.storage.getOrderById(orderId);
     if (!order) return null;
     const items = await this.storage.getOrderItems(orderId);
@@ -104,7 +104,7 @@ export class OrderService {
   }
 
   private async createOrderItems(
-    orderId: number,
+    orderId: string,
     itemsWithProducts: { quantity: number; personalizationName: string | null; product: any }[]
   ): Promise<void> {
     const expanded: { product: any; personalizationName: string | null }[] = [];

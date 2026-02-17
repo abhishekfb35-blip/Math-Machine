@@ -73,7 +73,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/categories/:slug", async (req, res) => {
-    const cat = await storage.getCategoryBySlug(req.params.slug);
+    const cat = await storage.getCategoryBySlug(req.params.slug as string);
     if (!cat) return res.status(404).json({ message: "Category not found" });
     res.json(cat);
   });
@@ -84,28 +84,28 @@ export async function registerRoutes(
   });
 
   app.get("/api/products/category/:categoryId", async (req, res) => {
-    const categoryId = parseInt(req.params.categoryId);
-    if (isNaN(categoryId)) return res.status(400).json({ message: "Invalid category ID" });
+    const categoryId = req.params.categoryId as string;
+    if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     const prods = await storage.getProductsByCategory(categoryId);
     res.json(prods);
   });
 
   app.get("/api/products/:slug", async (req, res) => {
-    const prod = await storage.getProductBySlug(req.params.slug);
+    const prod = await storage.getProductBySlug(req.params.slug as string);
     if (!prod) return res.status(404).json({ message: "Product not found" });
     res.json(prod);
   });
 
   app.get("/api/products/:id/images", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const images = await storage.getProductImages(id);
     res.json(images);
   });
 
   app.get("/api/products/:id/reviews", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const reviews = await storage.getProductReviews(id);
     res.json(reviews);
   });
@@ -138,7 +138,7 @@ export async function registerRoutes(
   app.patch("/api/cart/items/:id", async (req, res) => {
     try {
       const input = updateCartItemSchema.parse(req.body);
-      const id = parseInt(req.params.id);
+      const id = req.params.id as string;
       const result = await cartService.updateItem(id, input.quantity, input.personalizationName);
       if ("deleted" in result) return res.status(204).send();
       res.json(result);
@@ -154,7 +154,7 @@ export async function registerRoutes(
   });
 
   app.delete("/api/cart/items/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = req.params.id as string;
     await cartService.removeItem(id);
     res.status(204).send();
   });
@@ -187,7 +187,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/site-config/:key", async (req, res) => {
-    const config = await storage.getSiteConfig(req.params.key);
+    const config = await storage.getSiteConfig(req.params.key as string);
     if (!config) return res.status(404).json({ message: "Config not found" });
     try {
       res.json({ key: config.key, value: JSON.parse(config.value) });
@@ -198,7 +198,7 @@ export async function registerRoutes(
 
   app.post("/api/site-config/:key", requireAdmin, async (req, res) => {
     try {
-      const key = req.params.key;
+      const key = req.params.key as string;
       const value = JSON.stringify(req.body.value);
       const config = await storage.upsertSiteConfig(key, value);
       res.json({ key: config.key, value: JSON.parse(config.value) });
@@ -209,7 +209,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/orders/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = req.params.id as string;
     const order = await orderService.getOrder(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
@@ -242,8 +242,8 @@ export async function registerRoutes(
   });
 
   app.put("/api/admin/categories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
       const data = insertCategorySchema.partial().parse(req.body);
       const updated = await storage.updateCategory(id, data);
@@ -258,8 +258,8 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteCategory(id);
     res.status(204).send();
   });
@@ -270,8 +270,8 @@ export async function registerRoutes(
   });
 
   app.get("/api/admin/products/category/:categoryId", requireAdmin, async (req, res) => {
-    const categoryId = parseInt(req.params.categoryId);
-    if (isNaN(categoryId)) return res.status(400).json({ message: "Invalid category ID" });
+    const categoryId = req.params.categoryId as string;
+    if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     const prods = await storage.getAllProductsByCategory(categoryId);
     res.json(prods);
   });
@@ -290,8 +290,8 @@ export async function registerRoutes(
   });
 
   app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
       const data = insertProductSchema.partial().parse(req.body);
       const updated = await storage.updateProduct(id, data);
@@ -306,15 +306,15 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteProduct(id);
     res.status(204).send();
   });
 
   app.post("/api/admin/products/:id/images", requireAdmin, async (req, res) => {
-    const productId = parseInt(req.params.id);
-    if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
+    const productId = req.params.id as string;
+    if (!productId) return res.status(400).json({ message: "Invalid product ID" });
     try {
       const img = await storage.createProductImage({ ...req.body, productId });
       res.status(201).json(img);
@@ -325,15 +325,15 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/products/:productId/images/:imageId", requireAdmin, async (req, res) => {
-    const imageId = parseInt(req.params.imageId);
-    if (isNaN(imageId)) return res.status(400).json({ message: "Invalid image ID" });
+    const imageId = req.params.imageId as string;
+    if (!imageId) return res.status(400).json({ message: "Invalid image ID" });
     await storage.deleteProductImage(imageId);
     res.status(204).send();
   });
 
   app.post("/api/admin/products/:id/reviews", requireAdmin, async (req, res) => {
-    const productId = parseInt(req.params.id);
-    if (isNaN(productId)) return res.status(400).json({ message: "Invalid product ID" });
+    const productId = req.params.id as string;
+    if (!productId) return res.status(400).json({ message: "Invalid product ID" });
     try {
       const review = await storage.createProductReview({ ...req.body, productId });
       res.status(201).json(review);
@@ -344,8 +344,8 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
-    const reviewId = parseInt(req.params.reviewId);
-    if (isNaN(reviewId)) return res.status(400).json({ message: "Invalid review ID" });
+    const reviewId = req.params.reviewId as string;
+    if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });
     await storage.deleteProductReview(reviewId);
     res.status(204).send();
   });
@@ -371,8 +371,8 @@ export async function registerRoutes(
   });
 
   app.put("/api/admin/tags/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
       const data = insertTagSchema.partial().parse(req.body);
       const updated = await storage.updateTag(id, data);
@@ -387,24 +387,24 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/tags/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
     await storage.deleteTag(id);
     res.status(204).send();
   });
 
   app.get("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const productTagsList = await storage.getProductTags(id);
     res.json(productTagsList);
   });
 
   app.put("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid product ID" });
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
     try {
-      const { tagIds } = z.object({ tagIds: z.array(z.number()) }).parse(req.body);
+      const { tagIds } = z.object({ tagIds: z.array(z.string()) }).parse(req.body);
       await storage.setProductTags(id, tagIds);
       res.json({ success: true });
     } catch (err) {

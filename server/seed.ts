@@ -23,13 +23,12 @@ export async function seedDatabase() {
     const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
 
     if (isFullySeeded) {
-      // Check if reviews need syncing
       const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
       const expectedReviews = data.productReviews?.length || 0;
       if (expectedReviews > 0 && Number(reviewCount) < expectedReviews) {
         console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
         const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
-        const slugToId: Record<string, number> = {};
+        const slugToId: Record<string, string> = {};
         for (const p of allProducts) { slugToId[p.slug] = p.id; }
         
         await db.delete(productReviews);
@@ -57,7 +56,6 @@ export async function seedDatabase() {
           await db.insert(productReviews).values(reviewValues.slice(i, i + 100));
         }
 
-        // Verification: confirm all reviews were inserted and linked to valid products
         const [{ actualCount }] = await db.select({ actualCount: sql<number>`count(*)` }).from(productReviews);
         const [{ orphanCount }] = await db.select({ orphanCount: sql<number>`count(*)` }).from(productReviews)
           .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
@@ -104,7 +102,7 @@ export async function seedDatabase() {
     ).returning();
     console.log(`  Seeded ${insertedCats.length} categories`);
 
-    const catSlugToId: Record<string, number> = {};
+    const catSlugToId: Record<string, string> = {};
     for (const cat of insertedCats) {
       catSlugToId[cat.slug] = cat.id;
     }
@@ -147,7 +145,7 @@ export async function seedDatabase() {
     }
     console.log(`  Seeded ${allInsertedProducts.length} products`);
 
-    const prodSlugToId: Record<string, number> = {};
+    const prodSlugToId: Record<string, string> = {};
     for (const prod of allInsertedProducts) {
       prodSlugToId[prod.slug] = prod.id;
     }
@@ -196,7 +194,6 @@ export async function seedDatabase() {
         await db.insert(productReviews).values(batch);
       }
       
-      // Verification
       const [{ actualRevCount }] = await db.select({ actualRevCount: sql<number>`count(*)` }).from(productReviews);
       const [{ orphanRevCount }] = await db.select({ orphanRevCount: sql<number>`count(*)` }).from(productReviews)
         .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
@@ -221,7 +218,7 @@ export async function seedDatabase() {
       ).returning();
       console.log(`  Seeded ${insertedTags.length} tags`);
 
-      const tagNameToId: Record<string, number> = {};
+      const tagNameToId: Record<string, string> = {};
       for (const tag of insertedTags) {
         tagNameToId[tag.name] = tag.id;
       }
@@ -255,7 +252,6 @@ export async function seedDatabase() {
       console.log(`  Seeded ${data.siteConfig.length} site config entries`);
     }
 
-    // Final verification summary
     const [{ finalCats }] = await db.select({ finalCats: sql<number>`count(*)` }).from(categories);
     const [{ finalProds }] = await db.select({ finalProds: sql<number>`count(*)` }).from(products);
     const [{ finalImgs }] = await db.select({ finalImgs: sql<number>`count(*)` }).from(productImages);

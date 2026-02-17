@@ -18,53 +18,53 @@ import { eq, and } from "drizzle-orm";
 export interface IStorage {
   getCategories(): Promise<Category[]>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
-  getCategoryById(id: number): Promise<Category | undefined>;
+  getCategoryById(id: string): Promise<Category | undefined>;
   createCategory(cat: InsertCategory): Promise<Category>;
-  updateCategory(id: number, data: Partial<InsertCategory>): Promise<Category | undefined>;
-  deleteCategory(id: number): Promise<void>;
+  updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<void>;
 
   getProducts(): Promise<Product[]>;
   getAllProducts(): Promise<Product[]>;
-  getProductsByCategory(categoryId: number): Promise<Product[]>;
-  getAllProductsByCategory(categoryId: number): Promise<Product[]>;
+  getProductsByCategory(categoryId: string): Promise<Product[]>;
+  getAllProductsByCategory(categoryId: string): Promise<Product[]>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
-  getProductById(id: number): Promise<Product | undefined>;
+  getProductById(id: string): Promise<Product | undefined>;
   createProduct(prod: InsertProduct): Promise<Product>;
-  updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined>;
-  deleteProduct(id: number): Promise<void>;
+  updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<void>;
 
   getOrCreateCart(sessionId: string): Promise<Cart>;
-  getCartItems(cartId: number): Promise<CartItem[]>;
+  getCartItems(cartId: string): Promise<CartItem[]>;
   addCartItem(item: InsertCartItem): Promise<CartItem>;
-  updateCartItem(id: number, quantity: number, personalizationName?: string): Promise<CartItem | undefined>;
-  removeCartItem(id: number): Promise<void>;
-  clearCart(cartId: number): Promise<void>;
+  updateCartItem(id: string, quantity: number, personalizationName?: string): Promise<CartItem | undefined>;
+  removeCartItem(id: string): Promise<void>;
+  clearCart(cartId: string): Promise<void>;
 
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
-  getOrderById(id: number): Promise<Order | undefined>;
-  getOrderItems(orderId: number): Promise<OrderItem[]>;
-  updateOrderPayment(orderId: number, paymentId: string, paymentStatus: string): Promise<Order | undefined>;
+  getOrderById(id: string): Promise<Order | undefined>;
+  getOrderItems(orderId: string): Promise<OrderItem[]>;
+  updateOrderPayment(orderId: string, paymentId: string, paymentStatus: string): Promise<Order | undefined>;
 
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
   upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
 
-  getProductImages(productId: number): Promise<ProductImage[]>;
+  getProductImages(productId: string): Promise<ProductImage[]>;
   createProductImage(img: InsertProductImage): Promise<ProductImage>;
-  deleteProductImage(id: number): Promise<void>;
+  deleteProductImage(id: string): Promise<void>;
 
-  getProductReviews(productId: number): Promise<ProductReview[]>;
+  getProductReviews(productId: string): Promise<ProductReview[]>;
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
-  deleteProductReview(id: number): Promise<void>;
+  deleteProductReview(id: string): Promise<void>;
 
   getTags(): Promise<Tag[]>;
   createTag(tag: InsertTag): Promise<Tag>;
-  updateTag(id: number, data: Partial<InsertTag>): Promise<Tag | undefined>;
-  deleteTag(id: number): Promise<void>;
+  updateTag(id: string, data: Partial<InsertTag>): Promise<Tag | undefined>;
+  deleteTag(id: string): Promise<void>;
 
-  getProductTags(productId: number): Promise<Tag[]>;
-  setProductTags(productId: number, tagIds: number[]): Promise<void>;
+  getProductTags(productId: string): Promise<Tag[]>;
+  setProductTags(productId: string, tagIds: string[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -77,7 +77,7 @@ export class DatabaseStorage implements IStorage {
     return cat;
   }
 
-  async getCategoryById(id: number): Promise<Category | undefined> {
+  async getCategoryById(id: string): Promise<Category | undefined> {
     const [cat] = await db.select().from(categories).where(eq(categories.id, id));
     return cat;
   }
@@ -87,12 +87,12 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateCategory(id: number, data: Partial<InsertCategory>): Promise<Category | undefined> {
+  async updateCategory(id: string, data: Partial<InsertCategory>): Promise<Category | undefined> {
     const [updated] = await db.update(categories).set(data).where(eq(categories.id, id)).returning();
     return updated;
   }
 
-  async deleteCategory(id: number): Promise<void> {
+  async deleteCategory(id: string): Promise<void> {
     const categoryProducts = await db.select({ id: products.id }).from(products).where(eq(products.categoryId, id));
     for (const prod of categoryProducts) {
       await this.deleteProduct(prod.id);
@@ -108,13 +108,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(products).orderBy(products.sortOrder);
   }
 
-  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
     return await db.select().from(products)
       .where(and(eq(products.categoryId, categoryId), eq(products.active, true)))
       .orderBy(products.sortOrder);
   }
 
-  async getAllProductsByCategory(categoryId: number): Promise<Product[]> {
+  async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
     return await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder);
@@ -125,7 +125,7 @@ export class DatabaseStorage implements IStorage {
     return prod;
   }
 
-  async getProductById(id: number): Promise<Product | undefined> {
+  async getProductById(id: string): Promise<Product | undefined> {
     const [prod] = await db.select().from(products).where(eq(products.id, id));
     return prod;
   }
@@ -135,12 +135,12 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined> {
+  async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
     const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     return updated;
   }
 
-  async deleteProduct(id: number): Promise<void> {
+  async deleteProduct(id: string): Promise<void> {
     await db.delete(productTags).where(eq(productTags.productId, id));
     await db.delete(productImages).where(eq(productImages.productId, id));
     await db.delete(productReviews).where(eq(productReviews.productId, id));
@@ -155,7 +155,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getCartItems(cartId: number): Promise<CartItem[]> {
+  async getCartItems(cartId: string): Promise<CartItem[]> {
     return await db.select().from(cartItems).where(eq(cartItems.cartId, cartId));
   }
 
@@ -164,7 +164,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateCartItem(id: number, quantity: number, personalizationName?: string): Promise<CartItem | undefined> {
+  async updateCartItem(id: string, quantity: number, personalizationName?: string): Promise<CartItem | undefined> {
     const updates: Partial<CartItem> = { quantity };
     if (personalizationName !== undefined) {
       updates.personalizationName = personalizationName;
@@ -173,11 +173,11 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async removeCartItem(id: number): Promise<void> {
+  async removeCartItem(id: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.id, id));
   }
 
-  async clearCart(cartId: number): Promise<void> {
+  async clearCart(cartId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.cartId, cartId));
   }
 
@@ -191,16 +191,16 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getOrderById(id: number): Promise<Order | undefined> {
+  async getOrderById(id: string): Promise<Order | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
     return order;
   }
 
-  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+  async getOrderItems(orderId: string): Promise<OrderItem[]> {
     return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   }
 
-  async updateOrderPayment(orderId: number, paymentId: string, paymentStatus: string): Promise<Order | undefined> {
+  async updateOrderPayment(orderId: string, paymentId: string, paymentStatus: string): Promise<Order | undefined> {
     const [updated] = await db.update(orders)
       .set({ paymentId, paymentStatus, status: paymentStatus === "paid" ? "confirmed" : "pending", updatedAt: new Date() })
       .where(eq(orders.id, orderId))
@@ -226,7 +226,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getProductImages(productId: number): Promise<ProductImage[]> {
+  async getProductImages(productId: string): Promise<ProductImage[]> {
     return await db.select().from(productImages)
       .where(eq(productImages.productId, productId))
       .orderBy(productImages.sortOrder);
@@ -237,11 +237,11 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async deleteProductImage(id: number): Promise<void> {
+  async deleteProductImage(id: string): Promise<void> {
     await db.delete(productImages).where(eq(productImages.id, id));
   }
 
-  async getProductReviews(productId: number): Promise<ProductReview[]> {
+  async getProductReviews(productId: string): Promise<ProductReview[]> {
     return await db.select().from(productReviews)
       .where(eq(productReviews.productId, productId))
       .orderBy(productReviews.rating);
@@ -252,7 +252,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async deleteProductReview(id: number): Promise<void> {
+  async deleteProductReview(id: string): Promise<void> {
     await db.delete(productReviews).where(eq(productReviews.id, id));
   }
 
@@ -265,17 +265,17 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateTag(id: number, data: Partial<InsertTag>): Promise<Tag | undefined> {
+  async updateTag(id: string, data: Partial<InsertTag>): Promise<Tag | undefined> {
     const [updated] = await db.update(tags).set(data).where(eq(tags.id, id)).returning();
     return updated;
   }
 
-  async deleteTag(id: number): Promise<void> {
+  async deleteTag(id: string): Promise<void> {
     await db.delete(productTags).where(eq(productTags.tagId, id));
     await db.delete(tags).where(eq(tags.id, id));
   }
 
-  async getProductTags(productId: number): Promise<Tag[]> {
+  async getProductTags(productId: string): Promise<Tag[]> {
     const rows = await db
       .select({ id: tags.id, name: tags.name, description: tags.description })
       .from(productTags)
@@ -284,7 +284,7 @@ export class DatabaseStorage implements IStorage {
     return rows;
   }
 
-  async setProductTags(productId: number, tagIds: number[]): Promise<void> {
+  async setProductTags(productId: string, tagIds: string[]): Promise<void> {
     await db.delete(productTags).where(eq(productTags.productId, productId));
     if (tagIds.length > 0) {
       await db.insert(productTags).values(tagIds.map(tagId => ({ productId, tagId })));

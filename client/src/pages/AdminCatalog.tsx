@@ -39,7 +39,7 @@ export default function AdminCatalog() {
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [isNew, setIsNew] = useState(false);
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
@@ -117,7 +117,7 @@ export default function AdminCatalog() {
   });
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/categories/${id}`);
     },
     onSuccess: () => {
@@ -181,7 +181,7 @@ export default function AdminCatalog() {
   });
 
   const deleteTagMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/tags/${id}`);
     },
     onSuccess: () => {
@@ -194,7 +194,7 @@ export default function AdminCatalog() {
   });
 
   const deleteProductMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/products/${id}`);
     },
     onSuccess: () => {
@@ -208,7 +208,7 @@ export default function AdminCatalog() {
   });
 
   const addImageMutation = useMutation({
-    mutationFn: async ({ productId, imageUrl }: { productId: number; imageUrl: string }) => {
+    mutationFn: async ({ productId, imageUrl }: { productId: string; imageUrl: string }) => {
       const res = await apiRequest("POST", `/api/admin/products/${productId}/images`, {
         imageUrl,
         sortOrder: (productImages?.length || 0),
@@ -223,7 +223,7 @@ export default function AdminCatalog() {
   });
 
   const deleteImageMutation = useMutation({
-    mutationFn: async ({ productId, imageId }: { productId: number; imageId: number }) => {
+    mutationFn: async ({ productId, imageId }: { productId: string; imageId: string }) => {
       await apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
     },
     onSuccess: () => {
@@ -233,7 +233,7 @@ export default function AdminCatalog() {
   });
 
   const addReviewMutation = useMutation({
-    mutationFn: async ({ productId, review }: { productId: number; review: any }) => {
+    mutationFn: async ({ productId, review }: { productId: string; review: any }) => {
       const res = await apiRequest("POST", `/api/admin/products/${productId}/reviews`, review);
       return res.json();
     },
@@ -244,7 +244,7 @@ export default function AdminCatalog() {
   });
 
   const deleteReviewMutation = useMutation({
-    mutationFn: async ({ productId, reviewId }: { productId: number; reviewId: number }) => {
+    mutationFn: async ({ productId, reviewId }: { productId: string; reviewId: string }) => {
       await apiRequest("DELETE", `/api/admin/products/${productId}/reviews/${reviewId}`);
     },
     onSuccess: () => {

@@ -6,7 +6,7 @@ export interface PaymentResult {
 }
 
 export interface PaymentOrderOptions {
-  orderId: number;
+  orderId: string;
   amount: number;
   currency?: string;
   customerName: string;
