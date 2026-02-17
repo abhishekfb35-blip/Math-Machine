@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState } from "react";
-import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search } from "lucide-react";
+import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export default function ProductPage() {
   const [personalizationName, setPersonalizationName] = useState("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
 
   const { data: product, isLoading: productLoading } = useQuery<Product>({
     queryKey: ["/api/products", slug],
@@ -158,7 +160,11 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-6">
 
           <div className="space-y-3">
-            <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
+            <div
+              className="relative aspect-square overflow-hidden rounded-md bg-muted cursor-zoom-in group"
+              onClick={() => setZoomDialogOpen(true)}
+              data-testid="button-open-zoom"
+            >
               <img
                 src={getProductImageUrl(currentImage?.imageUrl || product.imageUrl, "large")}
                 alt={product.name}
@@ -179,7 +185,19 @@ export default function ProductPage() {
                   {discountPercent}% OFF
                 </Badge>
               )}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm rounded-md px-3 py-1.5 flex items-center gap-1.5 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <Search className="w-3 h-3" />
+                Click to see full view
+              </div>
             </div>
+
+            <ImageZoomDialog
+              open={zoomDialogOpen}
+              onOpenChange={setZoomDialogOpen}
+              images={images}
+              initialIndex={selectedImageIndex}
+              productName={product.name}
+            />
 
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1" data-testid="image-thumbnails">
