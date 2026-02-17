@@ -174,7 +174,7 @@ export default function Home() {
                 <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-sm">{card.title}</h3>
+                <h3 className="font-semibold text-base">{card.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
                   {card.description}
                 </p>
