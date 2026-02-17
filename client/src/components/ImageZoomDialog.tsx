@@ -88,11 +88,8 @@ export default function ImageZoomDialog({
             <img
               src={getProductImageUrl(currentImage.imageUrl, "large")}
               alt={`${productName} view ${selectedIndex + 1}`}
-              className="transition-transform duration-200 ease-out"
+              className="absolute inset-0 w-full h-full object-contain transition-transform duration-200 ease-out"
               style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
                 transform: isZoomed ? "scale(2.5)" : "scale(1)",
                 transformOrigin: transformOrigin,
               }}
