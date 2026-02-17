@@ -157,7 +157,7 @@ export default function ShopPage() {
                       <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
                         {category.name}
                       </h2>
-                      <p className="text-sm text-white/70">{banner.description}</p>
+                      <p className="text-xs text-white/70">{banner.description}</p>
                     </div>
                   </div>
                 )}

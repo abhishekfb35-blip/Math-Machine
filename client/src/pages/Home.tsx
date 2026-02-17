@@ -175,7 +175,7 @@ export default function Home() {
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="font-semibold text-sm">{card.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
                   {card.description}
                 </p>
               </div>
@@ -205,7 +205,7 @@ export default function Home() {
                   </div>
                   <div className="mt-3 space-y-1 px-1">
                     <h3 className="font-bold text-base" data-testid={`text-collection-title-${si}-${ci}`}>{card.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {card.description}
                     </p>
                   </div>
