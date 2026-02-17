@@ -98,9 +98,13 @@ export default function ProductPage() {
     ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
     : 0;
 
-  const images = productImages && productImages.length > 0
-    ? productImages
-    : product ? [{ id: 0, productId: product.id, imageUrl: product.imageUrl, sortOrder: 0, isPrimary: true }] : [];
+  const images = product ? (() => {
+    const mainImage = { id: 0, productId: product.id, imageUrl: product.imageUrl, sortOrder: 0, isPrimary: true };
+    if (productImages && productImages.length > 0) {
+      return [mainImage, ...productImages.filter(img => img.imageUrl !== product.imageUrl)];
+    }
+    return [mainImage];
+  })() : [];
 
   const currentImage = images[selectedImageIndex] || images[0];
 

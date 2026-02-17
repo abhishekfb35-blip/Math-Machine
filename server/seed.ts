@@ -28,20 +28,26 @@ export async function seedDatabase() {
       const expectedReviews = data.productReviews?.length || 0;
       if (expectedReviews > 0 && Number(reviewCount) < expectedReviews) {
         console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
+        const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
+        const slugToId: Record<string, number> = {};
+        for (const p of allProducts) { slugToId[p.slug] = p.id; }
+        
         await db.delete(productReviews);
-        const reviewValues = data.productReviews.map((r: any) => ({
-          productId: r.product_id,
-          reviewerName: r.reviewer_name,
-          rating: r.rating,
-          title: r.title || null,
-          body: r.body || null,
-          reviewDate: r.review_date || null,
-          verifiedPurchase: r.verified_purchase ?? true,
-        }));
+        const reviewValues = data.productReviews
+          .filter((r: any) => slugToId[r.product_slug || r.productSlug])
+          .map((r: any) => ({
+            productId: slugToId[r.product_slug || r.productSlug],
+            reviewerName: r.reviewer_name || r.reviewerName,
+            rating: r.rating,
+            title: r.title || null,
+            body: r.body || null,
+            reviewDate: r.review_date || r.reviewDate || null,
+            verifiedPurchase: r.verified_purchase ?? r.verifiedPurchase ?? true,
+          }));
         for (let i = 0; i < reviewValues.length; i += 100) {
           await db.insert(productReviews).values(reviewValues.slice(i, i + 100));
         }
-        console.log(`Reviews synced: ${expectedReviews} reviews loaded.`);
+        console.log(`Reviews synced: ${reviewValues.length} reviews loaded.`);
       } else {
         console.log("Database already seeded, skipping.");
       }
