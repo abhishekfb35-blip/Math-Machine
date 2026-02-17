@@ -22,6 +22,79 @@ import type { Category, Product, ProductImage, ProductReview, Tag } from "@share
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
+function ProductTagSelector({ productId, allTags }: { productId: string; allTags: Tag[] }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+
+  const { data: productTagsList, isLoading } = useQuery<Tag[]>({
+    queryKey: ["/api/admin/products", productId, "tags"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/products/${productId}/tags`);
+      return res.json();
+    },
+    enabled: true,
+  });
+
+  const currentTagIds = productTagsList?.map(t => t.id) || [];
+
+  const toggleTagMutation = useMutation({
+    mutationFn: async (tagId: string) => {
+      const newIds = currentTagIds.includes(tagId)
+        ? currentTagIds.filter(id => id !== tagId)
+        : [...currentTagIds, tagId];
+      await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: newIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update tags", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-1 flex-wrap">
+        {productTagsList && productTagsList.length > 0 && productTagsList.map(tag => (
+          <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
+            {tag.name}
+          </Badge>
+        ))}
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setOpen(!open)}
+          data-testid={`button-tags-${productId}`}
+        >
+          <TagIcon className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-background border rounded-md shadow-lg p-2 min-w-[160px]" data-testid={`dropdown-tags-${productId}`}>
+          <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">Tags</p>
+          {allTags.length === 0 && (
+            <p className="text-xs text-muted-foreground px-1 py-2">No tags created yet</p>
+          )}
+          {allTags.map(tag => (
+            <label
+              key={tag.id}
+              className="flex items-center gap-2 px-1 py-1 rounded hover-elevate cursor-pointer"
+              data-testid={`checkbox-tag-${productId}-${tag.id}`}
+            >
+              <Checkbox
+                checked={currentTagIds.includes(tag.id)}
+                onCheckedChange={() => toggleTagMutation.mutate(tag.id)}
+                disabled={toggleTagMutation.isPending}
+              />
+              <span className="text-sm">{tag.name}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function useAdminLogout() {
   const { toast } = useToast();
   return async () => {
@@ -552,6 +625,9 @@ export default function AdminCatalog() {
                       {prod.material && <span className="ml-2">{prod.material}</span>}
                       {prod.gsm && <span className="ml-1">{prod.gsm} GSM</span>}
                     </p>
+                    <div className="mt-1">
+                      <ProductTagSelector productId={prod.id} allTags={allTags || []} />
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
