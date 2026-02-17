@@ -63,7 +63,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               <img
                 src={getProductImageUrl(product.imageUrl, "small")}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 data-testid="img-quickadd-product"
               />
             </div>

@@ -116,7 +116,7 @@ function ImageField({ label, value, onChange, testId, fallbackImage }: { label: 
           <img
             src={displaySrc}
             alt={label}
-            className="w-full max-h-40 object-cover"
+            className="w-full max-h-40 object-contain"
             data-testid={`${testId}-preview`}
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />

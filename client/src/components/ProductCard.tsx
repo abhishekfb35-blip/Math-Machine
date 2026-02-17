@@ -11,7 +11,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <img
             src={getProductImageUrl(product.imageUrl, "medium")}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             data-testid={`img-product-${product.id}`}
           />

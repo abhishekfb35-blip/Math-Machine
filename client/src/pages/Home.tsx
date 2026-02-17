@@ -200,7 +200,7 @@ export default function Home() {
                     <img
                       src={card.imageUrl || (si === 0 ? defaultCollectionImages[ci] : si === 1 ? defaultProductTypeImages[ci] : undefined) || kidsBanner}
                       alt={card.title}
-                      className="w-full aspect-[4/3] object-cover transition-opacity duration-300 group-hover:opacity-90"
+                      className="w-full aspect-[4/3] object-contain transition-opacity duration-300 group-hover:opacity-90"
                     />
                   </div>
                   <div className="mt-3 space-y-1 px-1">

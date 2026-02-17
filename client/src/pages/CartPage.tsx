@@ -36,7 +36,7 @@ function CartItemRow({ item, onRemove, onUpdateQty }: {
           <img
             src={getProductImageUrl(item.product.imageUrl, "small")}
             alt={item.product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             data-testid={`img-cart-item-${item.id}`}
           />
         </div>

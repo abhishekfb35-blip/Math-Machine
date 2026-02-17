@@ -349,7 +349,7 @@ export default function AdminCatalog() {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
                     {cat.imageUrl && (
-                      <img src={getProductImageUrl(cat.imageUrl, "small")} alt={cat.name} className="w-full h-full object-cover" />
+                      <img src={getProductImageUrl(cat.imageUrl, "small")} alt={cat.name} className="w-full h-full object-contain" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -457,7 +457,7 @@ export default function AdminCatalog() {
             />
             {editingCategory.imageUrl && (
               <div className="mt-2 w-24 h-24 rounded-md overflow-hidden bg-muted">
-                <img src={editingCategory.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                <img src={editingCategory.imageUrl} alt="Preview" className="w-full h-full object-contain" />
               </div>
             )}
           </div>
@@ -533,7 +533,7 @@ export default function AdminCatalog() {
               <Card key={prod.id} className="p-3" data-testid={`card-product-${prod.id}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                    <img src={getProductImageUrl(prod.imageUrl, "small")} alt={prod.name} className="w-full h-full object-cover" />
+                    <img src={getProductImageUrl(prod.imageUrl, "small")} alt={prod.name} className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -679,7 +679,7 @@ export default function AdminCatalog() {
                     className="hidden"
                     onChange={(e) => { if (e.target.files?.[0]) handleMainImageUpload(e.target.files[0]); }}
                   />
-                  <img src={getProductImageUrl(editingProduct.imageUrl, "small")} alt="Main" className="w-full h-full object-cover rounded-md" />
+                  <img src={getProductImageUrl(editingProduct.imageUrl, "small")} alt="Main" className="w-full h-full object-contain rounded-md" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
                     <Upload className="w-4 h-4 text-white" />
                   </div>
@@ -706,7 +706,7 @@ export default function AdminCatalog() {
                       } catch { toast({ title: "Upload failed", variant: "destructive" }); }
                     }}
                   />
-                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-cover rounded-md" />
+                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
                     <Upload className="w-4 h-4 text-white" />
                   </div>

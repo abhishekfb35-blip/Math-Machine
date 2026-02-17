@@ -213,7 +213,7 @@ export default function ProductPage() {
                     <img
                       src={getProductImageUrl(img.imageUrl, "small")}
                       alt={`${product.name} view ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </button>
                 ))}

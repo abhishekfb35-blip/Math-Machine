@@ -245,7 +245,7 @@ export default function CheckoutPage() {
               {cart.items.filter(i => i.product).map((item) => (
                 <div key={item.id} className="flex gap-3" data-testid={`checkout-item-${item.id}`}>
                   <div className="w-12 h-12 rounded overflow-hidden bg-muted shrink-0">
-                    <img src={getProductImageUrl(item.product!.imageUrl, "small")} alt={item.product!.name} className="w-full h-full object-cover" />
+                    <img src={getProductImageUrl(item.product!.imageUrl, "small")} alt={item.product!.name} className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium line-clamp-1">{item.product!.name}</p>

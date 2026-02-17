@@ -22,7 +22,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
           <img
             src={getProductImageUrl(product.imageUrl, "medium")}
             alt={product.name}
-            className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
+            className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-90"
             loading="lazy"
             data-testid={`img-product-${product.id}`}
           />
