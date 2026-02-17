@@ -13,7 +13,7 @@ import type {
   ProductTag, InsertProductTag,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, ilike, sql } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -27,6 +27,8 @@ export interface IStorage {
   getAllProducts(): Promise<Product[]>;
   getProductsByCategory(categoryId: string): Promise<Product[]>;
   getAllProductsByCategory(categoryId: string): Promise<Product[]>;
+  searchProducts(query: string): Promise<Product[]>;
+  searchAllProducts(query: string): Promise<Product[]>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
   getProductById(id: string): Promise<Product | undefined>;
   createProduct(prod: InsertProduct): Promise<Product>;
@@ -117,6 +119,33 @@ export class DatabaseStorage implements IStorage {
   async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
     return await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
+      .orderBy(products.sortOrder);
+  }
+
+  async searchProducts(query: string): Promise<Product[]> {
+    const pattern = `%${query}%`;
+    return await db.select().from(products)
+      .where(and(
+        eq(products.active, true),
+        or(
+          ilike(products.name, pattern),
+          ilike(products.sku, pattern),
+          ilike(products.description, pattern),
+        )
+      ))
+      .orderBy(products.sortOrder);
+  }
+
+  async searchAllProducts(query: string): Promise<Product[]> {
+    const pattern = `%${query}%`;
+    return await db.select().from(products)
+      .where(
+        or(
+          ilike(products.name, pattern),
+          ilike(products.sku, pattern),
+          ilike(products.description, pattern),
+        )
+      )
       .orderBy(products.sortOrder);
   }
 

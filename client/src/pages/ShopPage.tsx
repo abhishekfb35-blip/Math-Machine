@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
@@ -62,6 +63,7 @@ export default function ShopPage() {
 
   const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const p = new URLSearchParams(searchString);
@@ -95,8 +97,17 @@ export default function ShopPage() {
   const filteredProducts = useMemo(() => {
     if (!products || !filteredCategories.length) return [];
     const catIds = new Set(filteredCategories.map((c) => c.id));
-    return products.filter((p) => catIds.has(p.categoryId));
-  }, [products, filteredCategories]);
+    let result = products.filter((p) => catIds.has(p.categoryId));
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [products, filteredCategories, searchQuery]);
 
   const groupedByCategory = useMemo(() => {
     return filteredCategories.map((cat) => ({
@@ -108,7 +119,26 @@ export default function ShopPage() {
   return (
     <div className="pb-20 md:pb-8">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products by name, SKU..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+              data-testid="input-search-products"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                data-testid="button-clear-search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
             {filters.map((f) => (
@@ -138,7 +168,9 @@ export default function ShopPage() {
           <ProductGridSkeleton />
         ) : groupedByCategory.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground">No products found for this filter.</p>
+            <p className="text-muted-foreground">
+              {searchQuery.trim() ? `No products found for "${searchQuery}"` : "No products found for this filter."}
+            </p>
           </div>
         ) : (
           groupedByCategory.map(({ category, products: catProducts }) => {

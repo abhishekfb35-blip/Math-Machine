@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut, ArrowRightLeft
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut, ArrowRightLeft, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -115,6 +115,9 @@ export default function AdminCatalog() {
   const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [isNew, setIsNew] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [adminSearchActive, setAdminSearchActive] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
@@ -128,6 +131,16 @@ export default function AdminCatalog() {
       return res.json();
     },
     enabled: !!selectedCategory,
+  });
+
+  const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
+    queryKey: ["/api/admin/products/search", adminSearchQuery],
+    queryFn: async () => {
+      if (!adminSearchQuery.trim()) return [];
+      const res = await apiRequest("GET", `/api/admin/products/search?q=${encodeURIComponent(adminSearchQuery.trim())}`);
+      return res.json();
+    },
+    enabled: adminSearchActive && adminSearchQuery.trim().length >= 2,
   });
 
   const { data: productImages } = useQuery<ProductImage[]>({
@@ -424,7 +437,103 @@ export default function AdminCatalog() {
           </div>
         </div>
 
-        {catsLoading ? (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search all products by name, SKU..."
+            value={adminSearchQuery}
+            onChange={(e) => {
+              setAdminSearchQuery(e.target.value);
+              setAdminSearchActive(e.target.value.trim().length >= 2);
+            }}
+            className="pl-9 pr-9"
+            data-testid="input-admin-search"
+          />
+          {adminSearchQuery && (
+            <button
+              onClick={() => { setAdminSearchQuery(""); setAdminSearchActive(false); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              data-testid="button-clear-admin-search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {adminSearchActive && adminSearchQuery.trim().length >= 2 ? (
+          searchLoading ? (
+            <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground mb-2">{searchResults?.length || 0} results for "{adminSearchQuery}"</p>
+              {searchResults?.map((prod) => {
+                const cat = categories?.find(c => c.id === prod.categoryId);
+                return (
+                  <Card key={prod.id} className="p-3" data-testid={`card-search-product-${prod.id}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        <img src={getProductImageUrl(prod.imageUrl, "small")} alt={prod.name} className="w-full h-full object-contain" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-sm truncate">{prod.name}</p>
+                          {!prod.active && (
+                            <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
+                              <EyeOff className="w-2.5 h-2.5 mr-0.5" /> Hidden
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {prod.sku && <span className="font-mono mr-2">{prod.sku}</span>}
+                          ₹{prod.price.toLocaleString("en-IN")}
+                          {cat && <span className="ml-2 text-muted-foreground">in {cat.name}</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" data-testid={`button-move-search-${prod.id}`}>
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {categories?.filter(c => c.id !== prod.categoryId).map(c => (
+                              <DropdownMenuItem
+                                key={c.id}
+                                onClick={() => moveProductMutation.mutate({ productId: prod.id, categoryId: c.id, categoryName: c.name })}
+                              >
+                                {c.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            const cat2 = categories?.find(c => c.id === prod.categoryId);
+                            if (cat2) setSelectedCategory(cat2);
+                            setIsNew(false);
+                            setEditingProduct({ ...prod });
+                            setView("edit-product");
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+              {searchResults?.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No products match your search</p>
+                </div>
+              )}
+            </div>
+          )
+        ) : catsLoading ? (
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
         ) : (
           <div className="space-y-2">
@@ -432,7 +541,7 @@ export default function AdminCatalog() {
               <Card
                 key={cat.id}
                 className="p-3 hover-elevate cursor-pointer"
-                onClick={() => { setSelectedCategory(cat); setView("products"); }}
+                onClick={() => { setSelectedCategory(cat); setCategoryFilter(""); setView("products"); }}
                 data-testid={`card-category-${cat.id}`}
               >
                 <div className="flex items-center gap-3">
@@ -614,11 +723,35 @@ export default function AdminCatalog() {
           </Button>
         </div>
 
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Filter products in this category..."
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="pl-9 pr-9"
+            data-testid="input-category-filter"
+          />
+          {categoryFilter && (
+            <button
+              onClick={() => setCategoryFilter("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              data-testid="button-clear-category-filter"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
         {prodsLoading ? (
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : (
           <div className="space-y-2">
-            {products?.map((prod) => (
+            {products?.filter((p) => {
+              if (!categoryFilter.trim()) return true;
+              const q = categoryFilter.trim().toLowerCase();
+              return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
+            }).map((prod) => (
               <Card key={prod.id} className="p-3" data-testid={`card-product-${prod.id}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">

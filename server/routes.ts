@@ -83,6 +83,13 @@ export async function registerRoutes(
     res.json(prods);
   });
 
+  app.get("/api/products/search", async (req, res) => {
+    const q = (req.query.q as string || "").trim();
+    if (!q) return res.json([]);
+    const prods = await storage.searchProducts(q);
+    res.json(prods);
+  });
+
   app.get("/api/products/category/:categoryId", async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
@@ -266,6 +273,13 @@ export async function registerRoutes(
 
   app.get("/api/admin/products", requireAdmin, async (_req, res) => {
     const prods = await storage.getAllProducts();
+    res.json(prods);
+  });
+
+  app.get("/api/admin/products/search", requireAdmin, async (req, res) => {
+    const q = (req.query.q as string || "").trim();
+    if (!q) return res.json([]);
+    const prods = await storage.searchAllProducts(q);
     res.json(prods);
   });
 
