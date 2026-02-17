@@ -105,7 +105,7 @@ async function run() {
           rating: r.rating,
           title: r.title || null,
           body: r.body,
-          reviewDate: null,
+          amzReviewDate: null,
           verifiedPurchase: r.verifiedPurchase,
         });
         revs++;
