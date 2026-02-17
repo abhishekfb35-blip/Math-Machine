@@ -25,8 +25,19 @@ export async function seedDatabase() {
     if (isFullySeeded) {
       const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
       const expectedReviews = data.productReviews?.length || 0;
-      if (expectedReviews > 0 && Number(reviewCount) < expectedReviews) {
-        console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
+
+      const [{ orphanCount }] = await db.select({ orphanCount: sql<number>`count(*)` }).from(productReviews)
+        .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
+        .where(sql`${products.id} IS NULL`);
+      const hasOrphans = Number(orphanCount) > 0;
+      const needsSync = (expectedReviews > 0 && Number(reviewCount) < expectedReviews) || hasOrphans;
+
+      if (needsSync) {
+        if (hasOrphans) {
+          console.log(`Found ${orphanCount} orphaned reviews (linked to non-existent products). Re-syncing all reviews...`);
+        } else {
+          console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
+        }
         const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
         const slugToId: Record<string, string> = {};
         for (const p of allProducts) { slugToId[p.slug] = p.id; }
@@ -57,16 +68,16 @@ export async function seedDatabase() {
         }
 
         const [{ actualCount }] = await db.select({ actualCount: sql<number>`count(*)` }).from(productReviews);
-        const [{ orphanCount }] = await db.select({ orphanCount: sql<number>`count(*)` }).from(productReviews)
+        const [{ finalOrphanCount }] = await db.select({ finalOrphanCount: sql<number>`count(*)` }).from(productReviews)
           .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
           .where(sql`${products.id} IS NULL`);
         
         const inserted = Number(actualCount);
-        const orphans = Number(orphanCount);
+        const finalOrphans = Number(finalOrphanCount);
         if (inserted !== reviewValues.length) {
           console.error(`  VERIFICATION FAILED: Expected ${reviewValues.length} reviews, but found ${inserted} in DB.`);
-        } else if (orphans > 0) {
-          console.error(`  VERIFICATION FAILED: ${orphans} reviews are linked to non-existent products.`);
+        } else if (finalOrphans > 0) {
+          console.error(`  VERIFICATION FAILED: ${finalOrphans} reviews are linked to non-existent products.`);
         } else {
           console.log(`  VERIFIED: ${inserted} reviews synced, all linked to valid products. 0 orphans.`);
         }
