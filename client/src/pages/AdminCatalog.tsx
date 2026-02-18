@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
@@ -232,6 +232,8 @@ export default function AdminCatalog() {
     },
   });
 
+  const closeAfterSaveRef = React.useRef(false);
+
   const saveProductMutation = useMutation({
     mutationFn: async (data: Partial<Product>) => {
       if (data.id) {
@@ -248,15 +250,21 @@ export default function AdminCatalog() {
         return product;
       }
     },
-    onSuccess: () => {
+    onSuccess: (product: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: isNew ? "Product created" : "Product updated" });
-      setView("products");
-      setEditingProduct(null);
+      if (closeAfterSaveRef.current || isNew) {
+        setView("products");
+        setEditingProduct(null);
+      } else {
+        setEditingProduct((prev: any) => prev ? { ...prev, id: product.id ?? prev.id } : prev);
+      }
+      closeAfterSaveRef.current = false;
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+      closeAfterSaveRef.current = false;
     },
   });
 
@@ -1243,14 +1251,45 @@ export default function AdminCatalog() {
             </div>
           )}
 
-          <Button
-            className="w-full"
-            onClick={() => saveProductMutation.mutate(editingProduct as any)}
-            disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
-            data-testid="button-save-product"
-          >
-            {saveProductMutation.isPending ? "Saving..." : isNew ? "Create Product" : "Save Changes"}
-          </Button>
+          {isNew ? (
+            <Button
+              className="w-full"
+              onClick={() => {
+                closeAfterSaveRef.current = true;
+                saveProductMutation.mutate(editingProduct as any);
+              }}
+              disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
+              data-testid="button-save-product"
+            >
+              {saveProductMutation.isPending ? "Creating..." : "Create Product"}
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                variant="outline"
+                onClick={() => {
+                  closeAfterSaveRef.current = false;
+                  saveProductMutation.mutate(editingProduct as any);
+                }}
+                disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
+                data-testid="button-save-product"
+              >
+                {saveProductMutation.isPending && !closeAfterSaveRef.current ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  closeAfterSaveRef.current = true;
+                  saveProductMutation.mutate(editingProduct as any);
+                }}
+                disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
+                data-testid="button-save-close-product"
+              >
+                {saveProductMutation.isPending && closeAfterSaveRef.current ? "Saving..." : "Save & Close"}
+              </Button>
+            </div>
+          )}
 
 
           {/* Reviews Section */}
