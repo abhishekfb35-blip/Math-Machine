@@ -5,6 +5,7 @@ import { SlidersHorizontal, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
@@ -192,9 +193,14 @@ export default function ShopPage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-4 space-y-0.5">
-                      <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
-                        {category.name}
-                      </h2>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
+                          {category.name}
+                        </h2>
+                        <Badge className="no-default-hover-elevate no-default-active-elevate bg-white/20 text-white border-white/30 text-xs" data-testid={`badge-count-${category.slug}`}>
+                          {catProducts.length} items
+                        </Badge>
+                      </div>
                       <p className="text-xs text-white/70">{banner.description}</p>
                     </div>
                   </div>

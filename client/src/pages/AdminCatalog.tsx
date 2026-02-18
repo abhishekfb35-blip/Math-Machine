@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
@@ -122,6 +122,20 @@ export default function AdminCatalog() {
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
   });
+
+  const { data: allProducts } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const productCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (allProducts) {
+      for (const p of allProducts) {
+        counts[p.categoryId] = (counts[p.categoryId] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [allProducts]);
 
   const { data: products, isLoading: prodsLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/category", selectedCategory?.id],
@@ -551,7 +565,12 @@ export default function AdminCatalog() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate" data-testid={`text-category-name-${cat.id}`}>{cat.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-sm truncate" data-testid={`text-category-name-${cat.id}`}>{cat.name}</p>
+                      <Badge variant="secondary" className="text-xs" data-testid={`badge-category-count-${cat.id}`}>
+                        {productCountByCategory[cat.id] || 0} items
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{cat.description}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
