@@ -135,11 +135,11 @@ export const defaultHero: HeroConfig = {
 };
 
 export const defaultHeader: HeaderConfig = {
-  brandName: "Turtle Little",
+  brandName: "TurtleLittle",
 };
 
 export const defaultPromise: PromiseConfig = {
-  label: "The Turtle Little Promise",
+  label: "The TurtleLittle Promise",
   heading: "Crafted with Care, Personalised with Love",
   subheading: "Every product is made from premium fabrics and meticulously embroidered to create something truly special.",
   cards: [
@@ -222,7 +222,7 @@ export const defaultStats: StatsConfig = {
 };
 
 export const defaultFooter: FooterConfig = {
-  brandName: "Turtle Little",
+  brandName: "TurtleLittle",
   brandStory: "Premium personalised towels and blankets, embroidered with love. Each product is crafted with the finest fabrics and meticulous attention to detail, making every piece a thoughtful gift.",
   whatsappUrl: "https://wa.me/919990079722",
   email: "hello@turtlelittle.com",
