@@ -95,6 +95,7 @@ export default function AdminAuditLog() {
 
   const { data, isLoading } = useQuery<{ logs: AuditLog[]; total: number }>({
     queryKey: ["/api/admin/audit-logs", entityTypeFilter, page],
+    refetchOnMount: "always",
     queryFn: async () => {
       const params = new URLSearchParams();
       if (entityTypeFilter !== "all") params.set("entityType", entityTypeFilter);
