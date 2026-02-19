@@ -1,32 +1,24 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronLeft, ChevronRight, Clock, User, Package, FolderOpen, Tag as TagIcon, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, User, Package, FolderOpen, Tag as TagIcon, Settings, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AuditLog } from "@shared/types";
 
-const ENTITY_TYPES = [
-  { value: "all", label: "All Types" },
-  { value: "category", label: "Categories" },
-  { value: "product", label: "Products" },
-  { value: "tag", label: "Tags" },
-  { value: "site-config", label: "Site Config" },
-];
+const ENTITY_TYPE_META: Record<string, { label: string; pluralLabel: string; icon: typeof Package }> = {
+  category: { label: "Category", pluralLabel: "Categories", icon: FolderOpen },
+  product: { label: "Product", pluralLabel: "Products", icon: Package },
+  tag: { label: "Tag", pluralLabel: "Tags", icon: TagIcon },
+  "site-config": { label: "Site Config", pluralLabel: "Site Config", icon: Settings },
+};
 
 const ACTION_COLORS: Record<string, string> = {
   created: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   updated: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   deleted: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-};
-
-const ENTITY_ICONS: Record<string, typeof Package> = {
-  category: FolderOpen,
-  product: Package,
-  tag: TagIcon,
 };
 
 function formatDate(dateStr: string | Date | null) {
@@ -87,110 +79,221 @@ function truncateValue(val: string, max = 80) {
   return val.length > max ? val.slice(0, max) + "..." : val;
 }
 
-const PAGE_SIZE = 20;
+type TypeSummary = { entityType: string; count: number; lastChangeAt: string | null };
+type EntitySummary = { entityId: string; entityName: string | null; count: number; lastChangeAt: string | null; lastAction: string | null };
 
-export default function AdminAuditLog() {
-  const [entityTypeFilter, setEntityTypeFilter] = useState("all");
-  const [page, setPage] = useState(0);
-
-  const { data, isLoading } = useQuery<{ logs: AuditLog[]; total: number }>({
-    queryKey: ["/api/admin/audit-logs", entityTypeFilter, page],
+function TypeSummaryLevel({ onSelectType }: { onSelectType: (type: string) => void }) {
+  const { data, isLoading } = useQuery<TypeSummary[]>({
+    queryKey: ["/api/admin/audit-logs/type-summary"],
     refetchOnMount: "always",
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (entityTypeFilter !== "all") params.set("entityType", entityTypeFilter);
-      params.set("limit", String(PAGE_SIZE));
-      params.set("offset", String(page * PAGE_SIZE));
-      const res = await fetch(`/api/admin/audit-logs?${params}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch audit logs");
+      const res = await fetch("/api/admin/audit-logs/type-summary", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
   });
 
-  const logs = data?.logs || [];
-  const total = data?.total || 0;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i} className="p-4"><Skeleton className="h-5 w-1/2 mb-2" /><Skeleton className="h-3 w-1/3" /></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <Clock className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+        <p className="text-muted-foreground" data-testid="text-no-logs">No audit log entries yet</p>
+        <p className="text-xs text-muted-foreground mt-1">Changes made in the admin area will appear here</p>
+      </Card>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-24" data-testid="admin-audit-log-page">
-      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold" data-testid="text-audit-log-title">Audit Log</h1>
-          <p className="text-sm text-muted-foreground">Track all admin changes</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Link href="/admin/catalog">
-            <Button variant="outline" size="sm" data-testid="link-back-catalog">
-              <ChevronLeft className="w-4 h-4 mr-1" /> Catalog
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <div className="space-y-2">
+      {data.map((item) => {
+        const meta = ENTITY_TYPE_META[item.entityType] || { label: item.entityType, pluralLabel: item.entityType, icon: Package };
+        const Icon = meta.icon;
+        return (
+          <Card
+            key={item.entityType}
+            className="p-4 cursor-pointer hover-elevate"
+            onClick={() => onSelectType(item.entityType)}
+            data-testid={`card-type-${item.entityType}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-md bg-muted">
+                <Icon className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium" data-testid={`text-type-label-${item.entityType}`}>{meta.pluralLabel}</div>
+                <div className="text-xs text-muted-foreground">
+                  {item.count} {item.count === 1 ? "change" : "changes"}
+                  {item.lastChangeAt && <span> &middot; Last: {formatDate(item.lastChangeAt)}</span>}
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
 
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Filter className="w-4 h-4 text-muted-foreground" />
-        <Select value={entityTypeFilter} onValueChange={(v) => { setEntityTypeFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[160px]" data-testid="select-entity-type-filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ENTITY_TYPES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {total > 0 && (
-          <span className="text-sm text-muted-foreground" data-testid="text-audit-count">
-            {total} {total === 1 ? "entry" : "entries"}
-          </span>
-        )}
+function EntitySummaryLevel({ entityType, onSelectEntity, onBack }: { entityType: string; onSelectEntity: (id: string, name: string | null) => void; onBack: () => void }) {
+  const meta = ENTITY_TYPE_META[entityType] || { label: entityType, pluralLabel: entityType, icon: Package };
+
+  const { data, isLoading } = useQuery<EntitySummary[]>({
+    queryKey: ["/api/admin/audit-logs/entity-summary", entityType],
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/audit-logs/entity-summary?entityType=${entityType}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  return (
+    <div>
+      <Button variant="ghost" size="sm" onClick={onBack} className="mb-3" data-testid="button-back-types">
+        <ChevronLeft className="w-4 h-4 mr-1" /> All Types
+      </Button>
+      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2" data-testid="text-entity-type-heading">
+        <meta.icon className="w-5 h-5 text-muted-foreground" />
+        {meta.pluralLabel}
+      </h2>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4"><Skeleton className="h-4 w-2/3 mb-2" /><Skeleton className="h-3 w-1/3" /></Card>
+          ))}
+        </div>
+      ) : !data || data.length === 0 ? (
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground text-sm">No entries for this type</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {data.map((entity) => (
+            <Card
+              key={entity.entityId}
+              className="p-4 cursor-pointer hover-elevate"
+              onClick={() => onSelectEntity(entity.entityId, entity.entityName)}
+              data-testid={`card-entity-${entity.entityId}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm" data-testid={`text-entity-name-${entity.entityId}`}>
+                    {entity.entityName || entity.entityId}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs text-muted-foreground">
+                      {entity.count} {entity.count === 1 ? "change" : "changes"}
+                    </span>
+                    {entity.lastAction && (
+                      <Badge className={`no-default-hover-elevate no-default-active-elevate text-xs ${ACTION_COLORS[entity.lastAction] || ""}`}>
+                        {entity.lastAction}
+                      </Badge>
+                    )}
+                    {entity.lastChangeAt && (
+                      <span className="text-xs text-muted-foreground">{formatDate(entity.lastChangeAt)}</span>
+                    )}
+                  </div>
+                  <span className="font-mono text-xs opacity-50 mt-0.5 block" data-testid={`text-entity-id-${entity.entityId}`}>
+                    ID: {entity.entityId}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EntityTimeline({ entityType, entityId, entityName, onBack }: { entityType: string; entityId: string; entityName: string | null; onBack: () => void }) {
+  const { data, isLoading } = useQuery<{ logs: AuditLog[]; total: number }>({
+    queryKey: ["/api/admin/audit-logs", entityType, entityId],
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const params = new URLSearchParams({ entityType, entityId, limit: "50" });
+      const res = await fetch(`/api/admin/audit-logs?${params}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const meta = ENTITY_TYPE_META[entityType] || { label: entityType, pluralLabel: entityType, icon: Package };
+  const logs = data?.logs || [];
+
+  return (
+    <div>
+      <Button variant="ghost" size="sm" onClick={onBack} className="mb-3" data-testid="button-back-entities">
+        <ChevronLeft className="w-4 h-4 mr-1" /> {meta.pluralLabel}
+      </Button>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2" data-testid="text-timeline-heading">
+          <meta.icon className="w-5 h-5 text-muted-foreground" />
+          {entityName || entityId}
+        </h2>
+        <div className="flex items-center gap-1 mt-0.5">
+          <Hash className="w-3 h-3 text-muted-foreground" />
+          <span className="font-mono text-xs text-muted-foreground" data-testid="text-timeline-entity-id">{entityId}</span>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="p-4">
-              <Skeleton className="h-4 w-3/4 mb-2" />
-              <Skeleton className="h-3 w-1/2" />
-            </Card>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4"><Skeleton className="h-4 w-3/4 mb-2" /><Skeleton className="h-3 w-1/2" /></Card>
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Clock className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground" data-testid="text-no-logs">No audit log entries yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Changes made in the admin area will appear here</p>
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground text-sm">No changes recorded</p>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {logs.map((log) => {
-            const Icon = ENTITY_ICONS[log.entityType] || Package;
-            const changes = formatChanges(log.changes, log.action);
-            return (
-              <Card key={log.id} className="p-4" data-testid={`card-audit-${log.id}`}>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 p-1.5 rounded-md bg-muted">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
+        <div className="relative">
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
+          <div className="space-y-3">
+            {logs.map((log, idx) => {
+              const changes = formatChanges(log.changes, log.action);
+              return (
+                <div key={log.id} className="relative pl-10" data-testid={`card-timeline-${log.id}`}>
+                  <div className={`absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 border-background ${
+                    log.action === "created" ? "bg-green-500" : log.action === "deleted" ? "bg-red-500" : "bg-blue-500"
+                  }`} />
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
                       <Badge
                         className={`no-default-hover-elevate no-default-active-elevate text-xs ${ACTION_COLORS[log.action] || ""}`}
                         data-testid={`badge-action-${log.id}`}
                       >
                         {log.action}
                       </Badge>
-                      <span className="font-medium text-sm" data-testid={`text-entity-name-${log.id}`}>
-                        {log.entityName || log.entityId}
-                      </span>
-                      <Badge variant="secondary" className="text-xs capitalize">
-                        {log.entityType}
-                      </Badge>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          <span data-testid={`text-username-${log.id}`}>{log.username}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span data-testid={`text-time-${log.id}`}>{formatDate(log.createdAt)}</span>
+                        </span>
+                      </div>
                     </div>
 
                     {changes.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {changes.slice(0, 5).map((c, i) => (
+                      <div className="space-y-1">
+                        {changes.slice(0, 8).map((c, i) => (
                           <div key={i} className="text-xs flex items-start gap-1 flex-wrap">
                             <span className="font-medium text-muted-foreground min-w-[60px]">{c.label}:</span>
                             {c.from !== undefined && (
@@ -199,7 +302,7 @@ export default function AdminAuditLog() {
                               </span>
                             )}
                             {c.from !== undefined && c.to !== undefined && (
-                              <span className="text-muted-foreground mx-0.5">→</span>
+                              <span className="text-muted-foreground mx-0.5">&rarr;</span>
                             )}
                             {c.to !== undefined && (
                               <span className="text-green-600 dark:text-green-400">
@@ -208,57 +311,59 @@ export default function AdminAuditLog() {
                             )}
                           </div>
                         ))}
-                        {changes.length > 5 && (
-                          <p className="text-xs text-muted-foreground">+{changes.length - 5} more fields</p>
+                        {changes.length > 8 && (
+                          <p className="text-xs text-muted-foreground">+{changes.length - 8} more fields</p>
                         )}
                       </div>
                     )}
-
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        <span data-testid={`text-username-${log.id}`}>{log.username}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span data-testid={`text-time-${log.id}`}>{formatDate(log.createdAt)}</span>
-                      </span>
-                      <span className="font-mono opacity-60" data-testid={`text-entity-id-${log.id}`}>
-                        ID: {log.entityId}
-                      </span>
-                    </div>
-                  </div>
+                  </Card>
                 </div>
-              </Card>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(p => p - 1)}
-            data-testid="button-prev-page"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground" data-testid="text-page-info">
-            Page {page + 1} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage(p => p + 1)}
-            data-testid="button-next-page"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+export default function AdminAuditLog() {
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<{ id: string; name: string | null } | null>(null);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-24" data-testid="admin-audit-log-page">
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold" data-testid="text-audit-log-title">Audit Log</h1>
+          <p className="text-sm text-muted-foreground">Track all admin changes</p>
         </div>
+        <Link href="/admin/catalog">
+          <Button variant="outline" size="sm" data-testid="link-back-catalog">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Catalog
+          </Button>
+        </Link>
+      </div>
+
+      {!selectedType && !selectedEntity && (
+        <TypeSummaryLevel onSelectType={(type) => { setSelectedType(type); setSelectedEntity(null); }} />
+      )}
+
+      {selectedType && !selectedEntity && (
+        <EntitySummaryLevel
+          entityType={selectedType}
+          onSelectEntity={(id, name) => setSelectedEntity({ id, name })}
+          onBack={() => setSelectedType(null)}
+        />
+      )}
+
+      {selectedType && selectedEntity && (
+        <EntityTimeline
+          entityType={selectedType}
+          entityId={selectedEntity.id}
+          entityName={selectedEntity.name}
+          onBack={() => setSelectedEntity(null)}
+        />
       )}
     </div>
   );

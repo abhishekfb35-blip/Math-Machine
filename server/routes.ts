@@ -486,6 +486,28 @@ export async function registerRoutes(
 
   // ── Audit Log Routes ──
 
+  app.get("/api/admin/audit-logs/type-summary", requireAdmin, async (_req, res) => {
+    try {
+      const summary = await storage.getAuditLogTypeSummary();
+      res.json(summary);
+    } catch (err) {
+      console.error("Get audit log type summary error:", err);
+      res.status(500).json({ message: "Failed to fetch audit log summary" });
+    }
+  });
+
+  app.get("/api/admin/audit-logs/entity-summary", requireAdmin, async (req, res) => {
+    try {
+      const entityType = req.query.entityType as string;
+      if (!entityType) return res.status(400).json({ message: "entityType is required" });
+      const summary = await storage.getAuditLogEntitySummary(entityType);
+      res.json(summary);
+    } catch (err) {
+      console.error("Get audit log entity summary error:", err);
+      res.status(500).json({ message: "Failed to fetch entity summary" });
+    }
+  });
+
   app.get("/api/admin/audit-logs", requireAdmin, async (req, res) => {
     try {
       const entityType = req.query.entityType as string | undefined;

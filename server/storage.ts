@@ -72,6 +72,8 @@ export interface IStorage {
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(filters?: { entityType?: string; entityId?: string; limit?: number; offset?: number }): Promise<AuditLog[]>;
   getAuditLogCount(filters?: { entityType?: string; entityId?: string }): Promise<number>;
+  getAuditLogTypeSummary(): Promise<{ entityType: string; count: number; lastChangeAt: Date | null }[]>;
+  getAuditLogEntitySummary(entityType: string): Promise<{ entityId: string; entityName: string | null; count: number; lastChangeAt: Date | null; lastAction: string | null }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -370,6 +372,40 @@ export class DatabaseStorage implements IStorage {
     }
     const result = await query;
     return Number(result[0]?.count || 0);
+  }
+  async getAuditLogTypeSummary(): Promise<{ entityType: string; count: number; lastChangeAt: Date | null }[]> {
+    const result = await db
+      .select({
+        entityType: auditLogs.entityType,
+        count: sql<number>`count(*)`,
+        lastChangeAt: sql<Date>`max(${auditLogs.createdAt})`,
+      })
+      .from(auditLogs)
+      .groupBy(auditLogs.entityType)
+      .orderBy(sql`max(${auditLogs.createdAt}) desc`);
+    return result.map(r => ({ entityType: r.entityType, count: Number(r.count), lastChangeAt: r.lastChangeAt }));
+  }
+
+  async getAuditLogEntitySummary(entityType: string): Promise<{ entityId: string; entityName: string | null; count: number; lastChangeAt: Date | null; lastAction: string | null }[]> {
+    const result = await db
+      .select({
+        entityId: auditLogs.entityId,
+        entityName: sql<string | null>`(array_agg(${auditLogs.entityName} ORDER BY ${auditLogs.createdAt} DESC))[1]`,
+        count: sql<number>`count(*)`,
+        lastChangeAt: sql<Date>`max(${auditLogs.createdAt})`,
+        lastAction: sql<string | null>`(array_agg(${auditLogs.action} ORDER BY ${auditLogs.createdAt} DESC))[1]`,
+      })
+      .from(auditLogs)
+      .where(eq(auditLogs.entityType, entityType))
+      .groupBy(auditLogs.entityId)
+      .orderBy(sql`max(${auditLogs.createdAt}) desc`);
+    return result.map(r => ({
+      entityId: r.entityId,
+      entityName: r.entityName,
+      count: Number(r.count),
+      lastChangeAt: r.lastChangeAt,
+      lastAction: r.lastAction,
+    }));
   }
 }
 
