@@ -5,7 +5,7 @@ import crypto from "crypto";
 const ADMIN_SESSION_COOKIE = "admin_session";
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-const activeSessions = new Map<string, { expiresAt: number }>();
+const activeSessions = new Map<string, { expiresAt: number; username: string }>();
 
 function getAdminCredentials() {
   const username = process.env.ADMIN_USERNAME;
@@ -47,6 +47,7 @@ export async function handleAdminLogin(req: Request, res: Response) {
   const sessionToken = crypto.randomBytes(32).toString("hex");
   activeSessions.set(sessionToken, {
     expiresAt: Date.now() + SESSION_MAX_AGE,
+    username,
   });
 
   res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
@@ -105,6 +106,17 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   }
 
   next();
+}
+
+export function getAdminUsername(req: Request): string {
+  const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+  if (token) {
+    const session = activeSessions.get(token);
+    if (session && session.expiresAt >= Date.now()) {
+      return session.username;
+    }
+  }
+  return "unknown";
 }
 
 export async function generatePasswordHash(password: string): Promise<string> {

@@ -137,6 +137,19 @@ export const insertCategorySchema = createInsertSchema(categories).omit({ id: tr
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
+export const auditLogs = pgTable("audit_logs", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  entityName: text("entity_name"),
+  action: text("action").notNull(),
+  changes: text("changes"),
+  username: text("username").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
+
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
@@ -157,4 +170,5 @@ export type {
   ProductReview, InsertProductReview,
   Tag, InsertTag,
   ProductTag, InsertProductTag,
+  AuditLog, InsertAuditLog,
 } from "./types";

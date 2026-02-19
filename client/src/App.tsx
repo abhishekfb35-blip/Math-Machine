@@ -20,6 +20,7 @@ import OrderConfirmation from "@/pages/OrderConfirmation";
 import CollectionPage from "@/pages/CollectionPage";
 import AdminBuilder from "@/pages/AdminBuilder";
 import AdminCatalog from "@/pages/AdminCatalog";
+import AdminAuditLog from "@/pages/AdminAuditLog";
 import AdminGuard from "@/components/AdminGuard";
 import NotFound from "@/pages/not-found";
 
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/admin/login" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
       <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
+      <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />
       <Route component={NotFound} />
     </Switch>
   );

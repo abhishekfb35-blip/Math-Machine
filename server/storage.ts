@@ -1,4 +1,4 @@
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -11,9 +11,10 @@ import type {
   ProductReview, InsertProductReview,
   Tag, InsertTag,
   ProductTag, InsertProductTag,
+  AuditLog, InsertAuditLog,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -67,6 +68,10 @@ export interface IStorage {
 
   getProductTags(productId: string): Promise<Tag[]>;
   setProductTags(productId: string, tagIds: string[]): Promise<void>;
+
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(filters?: { entityType?: string; entityId?: string; limit?: number; offset?: number }): Promise<AuditLog[]>;
+  getAuditLogCount(filters?: { entityType?: string; entityId?: string }): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -318,6 +323,53 @@ export class DatabaseStorage implements IStorage {
     if (tagIds.length > 0) {
       await db.insert(productTags).values(tagIds.map(tagId => ({ productId, tagId })));
     }
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [created] = await db.insert(auditLogs).values(log).returning();
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(auditLogs)
+      .where(and(eq(auditLogs.entityType, log.entityType), eq(auditLogs.entityId, log.entityId)));
+    const count = Number(countResult[0]?.count || 0);
+    if (count > 10) {
+      const oldest = await db
+        .select({ id: auditLogs.id })
+        .from(auditLogs)
+        .where(and(eq(auditLogs.entityType, log.entityType), eq(auditLogs.entityId, log.entityId)))
+        .orderBy(asc(auditLogs.createdAt))
+        .limit(count - 10);
+      for (const row of oldest) {
+        await db.delete(auditLogs).where(eq(auditLogs.id, row.id));
+      }
+    }
+    return created;
+  }
+
+  async getAuditLogs(filters?: { entityType?: string; entityId?: string; limit?: number; offset?: number }): Promise<AuditLog[]> {
+    const conditions = [];
+    if (filters?.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
+    if (filters?.entityId) conditions.push(eq(auditLogs.entityId, filters.entityId));
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
+    const query = db.select().from(auditLogs);
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions)).orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
+    }
+    return await query.orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
+  }
+
+  async getAuditLogCount(filters?: { entityType?: string; entityId?: string }): Promise<number> {
+    const conditions = [];
+    if (filters?.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
+    if (filters?.entityId) conditions.push(eq(auditLogs.entityId, filters.entityId));
+    const query = db.select({ count: sql<number>`count(*)` }).from(auditLogs);
+    if (conditions.length > 0) {
+      const result = await query.where(and(...conditions));
+      return Number(result[0]?.count || 0);
+    }
+    const result = await query;
+    return Number(result[0]?.count || 0);
   }
 }
 

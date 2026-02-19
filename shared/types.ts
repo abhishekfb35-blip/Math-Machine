@@ -222,3 +222,23 @@ export interface InsertProductTag {
   productId: string;
   tagId: string;
 }
+
+export interface AuditLog {
+  id: string;
+  entityType: string;
+  entityId: string;
+  entityName: string | null;
+  action: string;
+  changes: string | null;
+  username: string;
+  createdAt: Date | null;
+}
+
+export interface InsertAuditLog {
+  entityType: string;
+  entityId: string;
+  entityName?: string | null;
+  action: string;
+  changes?: string | null;
+  username: string;
+}

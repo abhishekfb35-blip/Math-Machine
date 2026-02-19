@@ -429,6 +429,9 @@ export default function AdminCatalog() {
             <Link href="/admin/builder">
               <Button variant="outline" size="sm" data-testid="link-builder">Page Builder</Button>
             </Link>
+            <Link href="/admin/audit-log">
+              <Button variant="outline" size="sm" data-testid="link-audit-log">Audit Log</Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"

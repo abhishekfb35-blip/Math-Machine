@@ -12,7 +12,7 @@ import { paymentProvider } from "./providers/payment";
 import { notificationService } from "./providers/notification";
 import { CartService, NotFoundError } from "./services/cartService";
 import { OrderService, EmptyCartError } from "./services/orderService";
-import { handleAdminLogin, handleAdminLogout, handleAdminCheck, requireAdmin } from "./adminAuth";
+import { handleAdminLogin, handleAdminLogout, handleAdminCheck, requireAdmin, getAdminUsername } from "./adminAuth";
 
 const cartService = new CartService(storage);
 const orderService = new OrderService(storage, paymentProvider, notificationService);
@@ -208,6 +208,10 @@ export async function registerRoutes(
       const key = req.params.key as string;
       const value = JSON.stringify(req.body.value);
       const config = await storage.upsertSiteConfig(key, value);
+      await storage.createAuditLog({
+        entityType: "site-config", entityId: key, entityName: key,
+        action: "updated", changes: JSON.stringify({ key }), username: getAdminUsername(req),
+      });
       res.json({ key: config.key, value: JSON.parse(config.value) });
     } catch (err) {
       console.error("Site config save error:", err);
@@ -239,6 +243,10 @@ export async function registerRoutes(
     try {
       const data = insertCategorySchema.parse(req.body);
       const cat = await storage.createCategory(data);
+      await storage.createAuditLog({
+        entityType: "category", entityId: cat.id, entityName: cat.name,
+        action: "created", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
       res.status(201).json(cat);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -252,9 +260,14 @@ export async function registerRoutes(
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
+      const before = await storage.getCategoryById(id);
       const data = insertCategorySchema.partial().parse(req.body);
       const updated = await storage.updateCategory(id, data);
       if (!updated) return res.status(404).json({ message: "Category not found" });
+      await storage.createAuditLog({
+        entityType: "category", entityId: id, entityName: updated.name,
+        action: "updated", changes: JSON.stringify({ before, after: data }), username: getAdminUsername(req),
+      });
       res.json(updated);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -267,7 +280,12 @@ export async function registerRoutes(
   app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
+    const before = await storage.getCategoryById(id);
     await storage.deleteCategory(id);
+    await storage.createAuditLog({
+      entityType: "category", entityId: id, entityName: before?.name || "Unknown",
+      action: "deleted", changes: JSON.stringify(before), username: getAdminUsername(req),
+    });
     res.status(204).send();
   });
 
@@ -294,6 +312,11 @@ export async function registerRoutes(
     try {
       const data = insertProductSchema.parse(req.body);
       const prod = await storage.createProduct(data);
+      await storage.createAuditLog({
+        entityType: "product", entityId: prod.id, entityName: prod.name,
+        action: "created", changes: JSON.stringify({ name: data.name, slug: data.slug, price: data.price, categoryId: data.categoryId }),
+        username: getAdminUsername(req),
+      });
       res.status(201).json(prod);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -307,9 +330,22 @@ export async function registerRoutes(
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
+      const before = await storage.getProductById(id);
       const data = insertProductSchema.partial().parse(req.body);
       const updated = await storage.updateProduct(id, data);
       if (!updated) return res.status(404).json({ message: "Product not found" });
+      const changedFields: Record<string, { from: any; to: any }> = {};
+      if (before) {
+        for (const key of Object.keys(data) as (keyof typeof data)[]) {
+          if (data[key] !== undefined && (before as any)[key] !== data[key]) {
+            changedFields[key] = { from: (before as any)[key], to: data[key] };
+          }
+        }
+      }
+      await storage.createAuditLog({
+        entityType: "product", entityId: id, entityName: updated.name,
+        action: "updated", changes: JSON.stringify(changedFields), username: getAdminUsername(req),
+      });
       res.json(updated);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -322,7 +358,13 @@ export async function registerRoutes(
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
+    const before = await storage.getProductById(id);
     await storage.deleteProduct(id);
+    await storage.createAuditLog({
+      entityType: "product", entityId: id, entityName: before?.name || "Unknown",
+      action: "deleted", changes: JSON.stringify({ name: before?.name, sku: before?.sku, categoryId: before?.categoryId }),
+      username: getAdminUsername(req),
+    });
     res.status(204).send();
   });
 
@@ -375,6 +417,10 @@ export async function registerRoutes(
     try {
       const data = insertTagSchema.parse(req.body);
       const tag = await storage.createTag(data);
+      await storage.createAuditLog({
+        entityType: "tag", entityId: tag.id, entityName: tag.name,
+        action: "created", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
       res.status(201).json(tag);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -388,9 +434,14 @@ export async function registerRoutes(
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
+      const before = await storage.getTags().then(t => t.find(x => x.id === id));
       const data = insertTagSchema.partial().parse(req.body);
       const updated = await storage.updateTag(id, data);
       if (!updated) return res.status(404).json({ message: "Tag not found" });
+      await storage.createAuditLog({
+        entityType: "tag", entityId: id, entityName: updated.name,
+        action: "updated", changes: JSON.stringify({ before, after: data }), username: getAdminUsername(req),
+      });
       res.json(updated);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -403,7 +454,12 @@ export async function registerRoutes(
   app.delete("/api/admin/tags/:id", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
+    const before = await storage.getTags().then(t => t.find(x => x.id === id));
     await storage.deleteTag(id);
+    await storage.createAuditLog({
+      entityType: "tag", entityId: id, entityName: before?.name || "Unknown",
+      action: "deleted", changes: JSON.stringify(before), username: getAdminUsername(req),
+    });
     res.status(204).send();
   });
 
@@ -425,6 +481,25 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Set product tags error:", err);
       res.status(500).json({ message: "Failed to set product tags" });
+    }
+  });
+
+  // ── Audit Log Routes ──
+
+  app.get("/api/admin/audit-logs", requireAdmin, async (req, res) => {
+    try {
+      const entityType = req.query.entityType as string | undefined;
+      const entityId = req.query.entityId as string | undefined;
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const [logs, total] = await Promise.all([
+        storage.getAuditLogs({ entityType, entityId, limit, offset }),
+        storage.getAuditLogCount({ entityType, entityId }),
+      ]);
+      res.json({ logs, total });
+    } catch (err) {
+      console.error("Get audit logs error:", err);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
     }
   });
 
