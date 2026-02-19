@@ -213,7 +213,7 @@ export default function AdminAuditLog() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <User className="w-3 h-3" />
                         <span data-testid={`text-username-${log.id}`}>{log.username}</span>
@@ -221,6 +221,9 @@ export default function AdminAuditLog() {
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span data-testid={`text-time-${log.id}`}>{formatDate(log.createdAt)}</span>
+                      </span>
+                      <span className="font-mono opacity-60" data-testid={`text-entity-id-${log.id}`}>
+                        ID: {log.entityId}
                       </span>
                     </div>
                   </div>
