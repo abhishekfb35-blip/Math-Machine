@@ -236,6 +236,127 @@ export const defaultFooter: FooterConfig = {
   ],
 };
 
+export interface PageSection {
+  heading: string;
+  body: string;
+}
+
+export interface AboutPageConfig {
+  title: string;
+  intro: string;
+  sections: PageSection[];
+  valueCards: { title: string; description: string }[];
+  contactWhatsapp: string;
+  contactEmail: string;
+  contactLocation: string;
+}
+
+export interface TermsPageConfig {
+  title: string;
+  lastUpdated: string;
+  sections: PageSection[];
+}
+
+export interface PrivacyPageConfig {
+  title: string;
+  lastUpdated: string;
+  sections: PageSection[];
+}
+
+export interface RefundPageConfig {
+  title: string;
+  lastUpdated: string;
+  sections: PageSection[];
+}
+
+export interface ShippingPageConfig {
+  title: string;
+  lastUpdated: string;
+  sections: PageSection[];
+}
+
+export const defaultAboutPage: AboutPageConfig = {
+  title: "About TurtleLittle",
+  intro: "TurtleLittle was born from a simple idea: that everyday essentials like towels, blankets, and bathrobes can be something truly special when made personal. We believe in the magic of seeing your own name beautifully embroidered on a premium product — it transforms something ordinary into a cherished keepsake.",
+  sections: [
+    { heading: "What We Do", body: "We specialise in personalised, embroidered luxury towels, blankets, and bathrobes for kids, adults, and couples. Every product is crafted using premium fabrics — our towels are made from 550 GSM zero-twist cotton that's incredibly soft and absorbent. Each item is embroidered with care, featuring your chosen name, initials, or design." },
+    { heading: "Our Collections", body: "From Disney princesses and superheroes for kids to elegant monograms for adults and matching \"King & Queen\" sets for couples — we have something for everyone. Our products make perfect gifts for birthdays, baby showers, weddings, anniversaries, housewarmings, and every celebration in between." },
+    { heading: "Our Promise", body: "At TurtleLittle, we're committed to delivering products that exceed your expectations. Every towel, blanket, and bathrobe is made to be soft, durable, and beautifully personalised. If you're ever not satisfied with the quality of your product, we'll make it right — that's our promise to you." },
+  ],
+  valueCards: [
+    { title: "Handcrafted Quality", description: "Every piece is individually embroidered with precision and care, ensuring a premium finish." },
+    { title: "Made with Love", description: "We put our heart into every product, because we know it's going to be loved by someone special." },
+    { title: "Premium Fabrics", description: "550 GSM zero-twist cotton towels and ultra-soft blankets — only the best materials make it into our products." },
+    { title: "All-India Delivery", description: "We deliver across India so you can send a personalised gift to anyone, anywhere." },
+  ],
+  contactWhatsapp: "+91 99900 79722",
+  contactEmail: "hello@turtlelittle.com",
+  contactLocation: "New Delhi, India",
+};
+
+export const defaultTermsPage: TermsPageConfig = {
+  title: "Terms & Conditions",
+  lastUpdated: "February 2026",
+  sections: [
+    { heading: "1. Introduction", body: "Welcome to TurtleLittle (\"we,\" \"our,\" or \"us\"). These Terms & Conditions govern your use of our website turtlelittle.com and the purchase of our products. By accessing our website or placing an order, you agree to be bound by these terms. Please read them carefully before using our services." },
+    { heading: "2. Products & Personalisation", body: "TurtleLittle offers personalised embroidered towels, blankets, and bathrobes. All personalisation details (names, initials, designs) provided by the customer must be accurate. We are not responsible for errors in personalisation caused by incorrect information provided by the customer. Due to the personalised nature of our products, please double-check all details before confirming your order." },
+    { heading: "3. Pricing & Payment", body: "All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise. We reserve the right to change prices at any time without prior notice. Payment must be completed at the time of placing an order through our accepted payment methods. We use secure, industry-standard payment processing to protect your financial information." },
+    { heading: "4. Orders & Confirmation", body: "Once you place an order, you will receive an order confirmation. This confirmation does not guarantee acceptance of your order. We reserve the right to cancel or refuse any order for reasons including product availability, pricing errors, or suspected fraudulent activity. In such cases, you will be notified and any payment made will be refunded." },
+    { heading: "5. Shipping & Delivery", body: "We aim to dispatch all orders within 3-5 business days after order confirmation. Delivery timelines depend on your location and the shipping partner. Please refer to our Shipping Policy for detailed information on delivery timelines and charges." },
+    { heading: "6. Returns & Refunds", body: "Due to the personalised nature of our products, returns and exchanges are accepted only in cases of manufacturing defects or incorrect items delivered. Please refer to our Refund & Cancellation Policy for complete details on the return process and eligibility." },
+    { heading: "7. Intellectual Property", body: "All content on turtlelittle.com, including text, images, logos, designs, and graphics, is the property of TurtleLittle and is protected by applicable intellectual property laws. You may not reproduce, distribute, or use any content from our website without our prior written permission." },
+    { heading: "8. Limitation of Liability", body: "TurtleLittle shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products. Our total liability shall not exceed the amount paid by you for the specific product in question." },
+    { heading: "9. Governing Law", body: "These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts in New Delhi, India." },
+    { heading: "10. Contact Us", body: "If you have any questions about these Terms & Conditions, please reach out to us at hello@turtlelittle.com or call us at +91 99900 79722." },
+  ],
+};
+
+export const defaultPrivacyPage: PrivacyPageConfig = {
+  title: "Privacy Policy",
+  lastUpdated: "February 2026",
+  sections: [
+    { heading: "1. Introduction", body: "TurtleLittle (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you visit turtlelittle.com or purchase our products." },
+    { heading: "2. Information We Collect", body: "We collect the following types of information:\n• Personal Information: Name, email address, phone number, shipping address, and billing address when you place an order.\n• Personalisation Details: Names and initials you provide for embroidery on our products.\n• Payment Information: Payment details are processed securely through our payment gateway partners and are not stored on our servers.\n• Usage Data: Browser type, pages visited, time spent on pages, and other analytics data to improve our website experience.\n• Cookies: We use cookies to maintain your cart, remember preferences, and improve your browsing experience." },
+    { heading: "3. How We Use Your Information", body: "• To process and fulfill your orders, including personalisation and delivery.\n• To communicate with you about your orders, including shipping updates via WhatsApp or phone.\n• To improve our website, products, and customer service.\n• To send promotional communications (only with your consent, and you can opt out at any time).\n• To prevent fraud and ensure the security of transactions." },
+    { heading: "4. Information Sharing", body: "We do not sell, trade, or rent your personal information to third parties. We may share your information only with:\n• Shipping Partners: To deliver your orders.\n• Payment Processors: To process your payments securely.\n• Legal Requirements: When required by law or to protect our rights." },
+    { heading: "5. Cookies", body: "Our website uses cookies to enhance your experience. Cookies help us remember your cart items and preferences. You can manage or disable cookies through your browser settings, though some features of the website may not function properly without them." },
+    { heading: "6. Data Security", body: "We implement industry-standard security measures to protect your personal information, including SSL encryption for all data transmission. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security." },
+    { heading: "7. Data Retention", body: "We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, including order fulfillment, customer support, and legal obligations. You may request deletion of your data by contacting us." },
+    { heading: "8. Your Rights", body: "You have the right to:\n• Access the personal information we hold about you.\n• Request correction of inaccurate information.\n• Request deletion of your personal data.\n• Opt out of promotional communications at any time." },
+    { heading: "9. Changes to This Policy", body: "We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated date. We encourage you to review this policy periodically." },
+    { heading: "10. Contact Us", body: "For any privacy-related questions or requests, please contact us at hello@turtlelittle.com or call us at +91 99900 79722." },
+  ],
+};
+
+export const defaultRefundPage: RefundPageConfig = {
+  title: "Refund & Cancellation Policy",
+  lastUpdated: "February 2026",
+  sections: [
+    { heading: "1. Personalised Products", body: "Since all TurtleLittle products are personalised with custom embroidery (names, initials, or specific designs), they are made-to-order and cannot be resold. Therefore, we do not accept returns or exchanges for change of mind, incorrect personalisation details provided by the customer, or size/colour preferences after the order has been placed." },
+    { heading: "2. Eligible Returns", body: "We accept returns and provide replacements or refunds only in the following cases:\n• Manufacturing Defects: If the product has a defect in the fabric, stitching, or embroidery quality.\n• Wrong Item: If you receive a product different from what you ordered.\n• Damaged in Transit: If the product arrives damaged due to shipping." },
+    { heading: "3. How to Request a Return", body: "To initiate a return, please follow these steps:\n1. Contact us within 48 hours of receiving your order via WhatsApp at +91 99900 79722 or email at hello@turtlelittle.com.\n2. Share clear photographs of the product showing the defect or issue.\n3. Include your order number and a brief description of the problem.\n4. Our team will review your request and respond within 24-48 hours." },
+    { heading: "4. Refund Process", body: "Once your return request is approved, we will offer you the choice of a replacement product or a full refund. Refunds will be processed to the original payment method within 7-10 business days. For Cash on Delivery (COD) orders, refunds will be processed via bank transfer — we will collect your bank details securely." },
+    { heading: "5. Order Cancellation", body: "You may cancel your order within 2 hours of placing it by contacting us via WhatsApp or email. After this window, your order may already be in production and cannot be cancelled. For cancelled orders where payment was already made, a full refund will be processed within 7-10 business days." },
+    { heading: "6. Non-Returnable Items", body: "The following are not eligible for returns:\n• Products that have been used, washed, or altered after delivery.\n• Products returned without prior approval from our team.\n• Products where the issue is due to incorrect personalisation details provided by the customer." },
+    { heading: "7. Contact Us", body: "For any questions about returns, refunds, or cancellations, please reach out to us at hello@turtlelittle.com or WhatsApp us at +91 99900 79722." },
+  ],
+};
+
+export const defaultShippingPage: ShippingPageConfig = {
+  title: "Shipping Policy",
+  lastUpdated: "February 2026",
+  sections: [
+    { heading: "1. Processing Time", body: "Since all TurtleLittle products are personalised with custom embroidery, each item is made-to-order. Orders typically take 3-5 business days to process and prepare for dispatch. During festive seasons or high-demand periods, processing may take slightly longer." },
+    { heading: "2. Delivery Timeline", body: "After dispatch, estimated delivery times are:\n• Metro Cities (Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad): 2-4 business days\n• Other Cities & Towns: 4-7 business days\n• Remote Areas: 7-10 business days\n\nPlease note that delivery timelines are estimates and may vary based on the shipping partner and your location. You will receive a shipping confirmation with tracking details once your order is dispatched." },
+    { heading: "3. Shipping Charges", body: "We offer free shipping across India on all orders. No minimum order value is required. We want the joy of receiving a personalised TurtleLittle product to begin the moment you place your order." },
+    { heading: "4. Shipping Partners", body: "We work with reputable logistics partners to ensure safe and timely delivery of your orders. All products are carefully packaged to protect the embroidery and fabric during transit." },
+    { heading: "5. Order Tracking", body: "Once your order is dispatched, you will receive a tracking number via WhatsApp or email. You can use this to track the real-time status of your delivery. If you haven't received tracking details within 5 business days of placing your order, please contact us." },
+    { heading: "6. Delivery Issues", body: "If your order has not arrived within the estimated delivery timeline, or if you receive a damaged package, please contact us immediately via WhatsApp at +91 99900 79722 or email at hello@turtlelittle.com. We will work with the shipping partner to resolve the issue as quickly as possible." },
+    { heading: "7. Incorrect Address", body: "Please ensure that the shipping address provided at checkout is accurate and complete. TurtleLittle is not responsible for delays or non-delivery caused by incorrect or incomplete addresses. If you need to change your shipping address after placing an order, contact us within 2 hours of placing the order." },
+    { heading: "8. Contact Us", body: "For any shipping-related queries, please reach out to us at hello@turtlelittle.com or WhatsApp us at +91 99900 79722." },
+  ],
+};
+
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
   kids: { title: "Popular for Kids Towels", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
   couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/collection/couples" },

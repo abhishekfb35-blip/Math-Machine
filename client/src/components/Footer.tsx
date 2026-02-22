@@ -100,6 +100,9 @@ export default function Footer() {
             <Link href="/admin/builder" className="text-xs opacity-30 hover:opacity-60 transition-opacity" data-testid="link-footer-admin-builder">
               Page Builder
             </Link>
+            <Link href="/admin/pages" className="text-xs opacity-30 hover:opacity-60 transition-opacity" data-testid="link-footer-admin-pages">
+              Policy Page Builders
+            </Link>
           </div>
           <p className="text-xs opacity-50" data-testid="text-footer-copyright">
             &copy; {new Date().getFullYear()} {config.brandName}. All rights reserved.
