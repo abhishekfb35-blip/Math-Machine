@@ -1,7 +1,7 @@
 import type { IStorage } from "../storage";
 import type { Order } from "@shared/types";
 import type { IPaymentProvider } from "../providers/payment";
-import type { INotificationService } from "../providers/notification";
+import type { INotificationService, OrderItemDetail } from "../providers/notification";
 import { calculateDiscount } from "./discountService";
 
 export interface CheckoutInput {
@@ -76,7 +76,7 @@ export class OrderService {
       paymentId: payment.paymentId,
     });
 
-    await this.createOrderItems(order.id, itemsWithProducts);
+    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
     await this.storage.clearCart(cart.id);
 
     this.notificationService.sendOrderConfirmation({
@@ -85,7 +85,15 @@ export class OrderService {
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
       total: pricing.total,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
       itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
+      items: orderItemDetails,
+      shippingAddress: input.shippingAddress,
+      shippingCity: input.shippingCity,
+      shippingState: input.shippingState,
+      shippingPincode: input.shippingPincode,
+      paymentStatus: payment.status,
     }).catch(err => console.error("Notification error:", err));
 
     return {
@@ -106,7 +114,7 @@ export class OrderService {
   private async createOrderItems(
     orderId: string,
     itemsWithProducts: { quantity: number; personalizationName: string | null; product: any }[]
-  ): Promise<void> {
+  ): Promise<OrderItemDetail[]> {
     const expanded: { product: any; personalizationName: string | null }[] = [];
     itemsWithProducts.forEach(item => {
       for (let i = 0; i < item.quantity; i++) {
@@ -117,6 +125,7 @@ export class OrderService {
 
     const totalCount = expanded.length;
     const numFree = totalCount >= 3 ? Math.floor(totalCount / 2) : 0;
+    const details: OrderItemDetail[] = [];
 
     for (let i = 0; i < expanded.length; i++) {
       const item = expanded[i];
@@ -131,7 +140,15 @@ export class OrderService {
         personalizationName: item.personalizationName,
         isFree,
       });
+      details.push({
+        productName: item.product.name,
+        productPrice: item.product.price,
+        quantity: 1,
+        personalizationName: item.personalizationName,
+        isFree,
+      });
     }
+    return details;
   }
 }
 

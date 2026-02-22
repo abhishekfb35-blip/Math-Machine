@@ -77,4 +77,5 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Validation**: Zod
 - **Payment Gateway**: CodPaymentProvider (Cash on Delivery)
 - **File Storage**: LocalFileStorage (disk-based)
-- **Notifications**: ConsoleNotificationService
+- **Notifications**: ResendNotificationService (Resend API for transactional emails), falls back to ConsoleNotificationService if RESEND_API_KEY is not set
+- **Email Integration**: Resend (resend.com) — sends order confirmation to customers and new order alerts to admin. Configured via RESEND_API_KEY secret, EMAIL_FROM and ADMIN_EMAIL env vars. From address: orders@turtlelittle.com (requires domain verification in Resend). Admin alerts go to hello@turtlelittle.com.
