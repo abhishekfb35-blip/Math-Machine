@@ -22,7 +22,7 @@ export default function AboutPage() {
 
       <div className="space-y-8">
         <section>
-          <p className="text-sm leading-relaxed text-muted-foreground">{config.intro}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{config.intro}</p>
         </section>
 
         {config.sections.map((section, idx) => (

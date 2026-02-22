@@ -6,22 +6,33 @@ import { defaultShippingPage, type ShippingPageConfig } from "@/lib/siteConfigDe
 
 function renderBody(body: string) {
   const lines = body.split("\n");
-  const elements: JSX.Element[] = [];
+  const elements: (JSX.Element | null)[] = [];
   let listItems: string[] = [];
   let listType: "bullet" | "numbered" | null = null;
+  let paragraphLines: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphLines.length > 0) {
+      const text = paragraphLines.join("\n");
+      elements.push(
+        <p key={`p-${elements.length}`} className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{text}</p>
+      );
+      paragraphLines = [];
+    }
+  };
 
   const flushList = () => {
     if (listItems.length > 0) {
       if (listType === "numbered") {
         elements.push(
           <ol key={`ol-${elements.length}`} className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground mt-2">
-            {listItems.map((item, i) => <li key={i} dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />)}
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
           </ol>
         );
       } else {
         elements.push(
           <ul key={`ul-${elements.length}`} className="list-disc pl-5 space-y-1 text-sm text-muted-foreground mt-2">
-            {listItems.map((item, i) => <li key={i} dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />)}
+            {listItems.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
         );
       }
@@ -32,24 +43,23 @@ function renderBody(body: string) {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith("•") || trimmed.startsWith("-")) {
+    if (trimmed.startsWith("•") || trimmed.startsWith("- ")) {
+      flushParagraph();
       if (listType !== "bullet") flushList();
       listType = "bullet";
       listItems.push(trimmed.replace(/^[•\-]\s*/, ""));
     } else if (/^\d+\.\s/.test(trimmed)) {
+      flushParagraph();
       if (listType !== "numbered") flushList();
       listType = "numbered";
       listItems.push(trimmed.replace(/^\d+\.\s*/, ""));
     } else {
       flushList();
-      if (trimmed) {
-        elements.push(
-          <p key={`p-${elements.length}`} className="text-sm leading-relaxed text-muted-foreground" dangerouslySetInnerHTML={{ __html: trimmed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
-        );
-      }
+      paragraphLines.push(line);
     }
   }
   flushList();
+  flushParagraph();
   return elements;
 }
 
