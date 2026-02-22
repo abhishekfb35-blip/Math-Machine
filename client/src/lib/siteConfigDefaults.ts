@@ -237,7 +237,7 @@ export const defaultFooter: FooterConfig = {
 };
 
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
-  kids: { title: "Popular for Kids", subtitle: "Disney princesses, superheroes & more", link: "/collection/kids" },
+  kids: { title: "Popular for Kids Towels", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
   couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/collection/couples" },
   blankets: { title: "Cozy Blankets", subtitle: "Soft personalised AC blankets for kids", link: "/collection/kids" },
   bathrobes: { title: "Luxury Bathrobes", subtitle: "Premium personalised cotton bathrobes", link: "/category/bathrobes" },

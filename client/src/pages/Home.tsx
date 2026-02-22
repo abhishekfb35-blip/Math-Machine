@@ -94,7 +94,7 @@ export default function Home() {
 
   const kidsProducts = products?.filter((p) => {
     const cat = categories?.find((c) => c.id === p.categoryId);
-    return cat && (cat.slug.includes("girls") || cat.slug.includes("boys")) && !cat.slug.includes("couple");
+    return cat && cat.slug === "kids-bath-towels";
   }) || [];
 
   const adultProducts = products?.filter((p) => {
