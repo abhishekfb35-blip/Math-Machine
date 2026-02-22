@@ -75,7 +75,24 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 mt-8 pt-6 flex flex-col items-center gap-2">
+        <div className="border-t border-background/10 mt-8 pt-6 flex flex-col items-center gap-4">
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/about" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-about">
+              About Us
+            </Link>
+            <Link href="/terms" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-terms">
+              Terms & Conditions
+            </Link>
+            <Link href="/privacy" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-privacy">
+              Privacy Policy
+            </Link>
+            <Link href="/refund-policy" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-refund">
+              Refund Policy
+            </Link>
+            <Link href="/shipping" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-shipping">
+              Shipping Policy
+            </Link>
+          </nav>
           <div className="flex items-center gap-4">
             <Link href="/admin/catalog" className="text-xs opacity-30 hover:opacity-60 transition-opacity" data-testid="link-footer-admin-catalog">
               Admin Catalog

@@ -22,6 +22,11 @@ import AdminBuilder from "@/pages/AdminBuilder";
 import AdminCatalog from "@/pages/AdminCatalog";
 import AdminAuditLog from "@/pages/AdminAuditLog";
 import AdminGuard from "@/components/AdminGuard";
+import TermsPage from "@/pages/TermsPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import RefundPolicyPage from "@/pages/RefundPolicyPage";
+import AboutPage from "@/pages/AboutPage";
+import ShippingPolicyPage from "@/pages/ShippingPolicyPage";
 import NotFound from "@/pages/not-found";
 
 function ScrollToTop() {
@@ -47,6 +52,11 @@ function Router() {
       <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
       <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/refund-policy" component={RefundPolicyPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/shipping" component={ShippingPolicyPage} />
       <Route component={NotFound} />
     </Switch>
   );
