@@ -52,6 +52,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  app.use(compression());
+
   if (fileStorage instanceof LocalFileStorage) {
     const express = await import("express");
     app.use("/uploads", express.default.static(fileStorage.getUploadsDir()));
