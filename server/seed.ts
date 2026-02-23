@@ -23,6 +23,24 @@ export async function seedDatabase() {
     const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
 
     if (isFullySeeded) {
+      // Always sync site_config (including policy pages) on every run
+      if (data.siteConfig && data.siteConfig.length > 0) {
+        let configSynced = 0;
+        for (const sc of data.siteConfig) {
+          const existing = await db.select().from(siteConfig).where(sql`${siteConfig.key} = ${sc.key}`);
+          if (existing.length === 0) {
+            await db.insert(siteConfig).values({ key: sc.key, value: sc.value });
+            configSynced++;
+          } else if (existing[0].value !== sc.value) {
+            await db.update(siteConfig).set({ value: sc.value }).where(sql`${siteConfig.key} = ${sc.key}`);
+            configSynced++;
+          }
+        }
+        if (configSynced > 0) {
+          console.log(`Synced ${configSynced} site config entries (including policy pages).`);
+        }
+      }
+
       const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
       const expectedReviews = data.productReviews?.length || 0;
 
