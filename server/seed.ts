@@ -24,21 +24,31 @@ export async function seedDatabase() {
 
     if (isFullySeeded) {
       // Always sync site_config (including policy pages) on every run
+      console.log(`Site config sync: seed data has ${data.siteConfig?.length || 0} entries`);
       if (data.siteConfig && data.siteConfig.length > 0) {
         let configSynced = 0;
         for (const sc of data.siteConfig) {
-          const existing = await db.select().from(siteConfig).where(sql`${siteConfig.key} = ${sc.key}`);
-          if (existing.length === 0) {
-            await db.insert(siteConfig).values({ key: sc.key, value: sc.value });
-            configSynced++;
-          } else if (existing[0].value !== sc.value) {
-            await db.update(siteConfig).set({ value: sc.value }).where(sql`${siteConfig.key} = ${sc.key}`);
-            configSynced++;
+          try {
+            const existing = await db.select().from(siteConfig).where(sql`${siteConfig.key} = ${sc.key}`);
+            if (existing.length === 0) {
+              console.log(`  Inserting missing config: ${sc.key}`);
+              await db.insert(siteConfig).values({ key: sc.key, value: sc.value });
+              configSynced++;
+            } else if (existing[0].value !== sc.value) {
+              await db.update(siteConfig).set({ value: sc.value }).where(sql`${siteConfig.key} = ${sc.key}`);
+              configSynced++;
+            }
+          } catch (err: any) {
+            console.error(`  Error syncing config key "${sc.key}":`, err.message);
           }
         }
         if (configSynced > 0) {
           console.log(`Synced ${configSynced} site config entries (including policy pages).`);
+        } else {
+          console.log(`Site config: all ${data.siteConfig.length} entries already up to date.`);
         }
+      } else {
+        console.log("Site config sync: no siteConfig data found in seed data!");
       }
 
       const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
