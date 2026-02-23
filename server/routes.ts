@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import type { Server } from "http";
+import compression from "compression";
 import { storage } from "./storage";
 import { addToCartSchema, updateCartItemSchema, checkoutSchema } from "@shared/routes";
 import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@shared/schema";
