@@ -1,4 +1,4 @@
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -12,9 +12,10 @@ import type {
   Tag, InsertTag,
   ProductTag, InsertProductTag,
   AuditLog, InsertAuditLog,
+  Customer, InsertCustomer,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -78,6 +79,18 @@ export interface IStorage {
   getAuditLogCount(filters?: { entityType?: string; entityId?: string }): Promise<number>;
   getAuditLogTypeSummary(): Promise<{ entityType: string; count: number; lastChangeAt: Date | null }[]>;
   getAuditLogEntitySummary(entityType: string): Promise<{ entityId: string; entityName: string | null; count: number; lastChangeAt: Date | null; lastAction: string | null }[]>;
+
+  getCustomerByEmail(email: string): Promise<Customer | undefined>;
+  getCustomerById(id: string): Promise<Customer | undefined>;
+  getCustomerByGoogleId(googleId: string): Promise<Customer | undefined>;
+  createCustomer(data: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: string, data: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  createOtp(email: string, otp: string, expiresAt: Date): Promise<void>;
+  verifyOtp(email: string, otp: string): Promise<boolean>;
+  createCustomerSession(customerId: string, token: string, expiresAt: Date): Promise<void>;
+  getCustomerBySessionToken(token: string): Promise<Customer | undefined>;
+  deleteCustomerSession(token: string): Promise<void>;
+  getOrdersByCustomerId(customerId: string): Promise<Order[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -474,6 +487,79 @@ export class DatabaseStorage implements IStorage {
       lastChangeAt: r.lastChangeAt,
       lastAction: r.lastAction,
     }));
+  }
+
+  async getCustomerByEmail(email: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.email, email.toLowerCase()));
+    return customer;
+  }
+
+  async getCustomerById(id: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer;
+  }
+
+  async getCustomerByGoogleId(googleId: string): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.googleId, googleId));
+    return customer;
+  }
+
+  async createCustomer(data: InsertCustomer): Promise<Customer> {
+    const [customer] = await db.insert(customers).values({ ...data, email: data.email.toLowerCase() }).returning();
+    return customer;
+  }
+
+  async updateCustomer(id: string, data: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [customer] = await db.update(customers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(customers.id, id))
+      .returning();
+    return customer;
+  }
+
+  async createOtp(email: string, otp: string, expiresAt: Date): Promise<void> {
+    await db.insert(customerOtps).values({ email: email.toLowerCase(), otp, expiresAt });
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<boolean> {
+    const [record] = await db.select().from(customerOtps)
+      .where(and(
+        eq(customerOtps.email, email.toLowerCase()),
+        eq(customerOtps.otp, otp),
+        eq(customerOtps.used, false),
+        gt(customerOtps.expiresAt, new Date())
+      ))
+      .orderBy(desc(customerOtps.createdAt))
+      .limit(1);
+    if (record) {
+      await db.update(customerOtps).set({ used: true }).where(eq(customerOtps.id, record.id));
+      return true;
+    }
+    return false;
+  }
+
+  async createCustomerSession(customerId: string, token: string, expiresAt: Date): Promise<void> {
+    await db.insert(customerSessions).values({ customerId, token, expiresAt });
+  }
+
+  async getCustomerBySessionToken(token: string): Promise<Customer | undefined> {
+    const [session] = await db.select().from(customerSessions)
+      .where(and(
+        eq(customerSessions.token, token),
+        gt(customerSessions.expiresAt, new Date())
+      ));
+    if (!session) return undefined;
+    return this.getCustomerById(session.customerId);
+  }
+
+  async deleteCustomerSession(token: string): Promise<void> {
+    await db.delete(customerSessions).where(eq(customerSessions.token, token));
+  }
+
+  async getOrdersByCustomerId(customerId: string): Promise<Order[]> {
+    return await db.select().from(orders)
+      .where(eq(orders.customerId, customerId))
+      .orderBy(desc(orders.createdAt));
   }
 }
 

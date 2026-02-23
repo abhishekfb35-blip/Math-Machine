@@ -64,6 +64,7 @@ export const cartItems = pgTable("cart_items", {
 
 export const orders = pgTable("orders", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
+  customerId: text("customer_id"),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone").notNull(),
@@ -150,6 +151,40 @@ export const auditLogs = pgTable("audit_logs", {
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
 
+export const customers = pgTable("customers", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  phone: text("phone"),
+  shippingAddress: text("shipping_address"),
+  shippingCity: text("shipping_city"),
+  shippingState: text("shipping_state"),
+  shippingPincode: text("shipping_pincode"),
+  googleId: text("google_id").unique(),
+  avatarUrl: text("avatar_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const customerOtps = pgTable("customer_otps", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  email: text("email").notNull(),
+  otp: text("otp").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const customerSessions = pgTable("customer_sessions", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  customerId: text("customer_id").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true, updatedAt: true });
+
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
@@ -171,4 +206,5 @@ export type {
   Tag, InsertTag,
   ProductTag, InsertProductTag,
   AuditLog, InsertAuditLog,
+  Customer, InsertCustomer,
 } from "./types";

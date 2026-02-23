@@ -93,8 +93,36 @@ export interface InsertCartItem {
   personalizationName?: string | null;
 }
 
+export interface Customer {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingState: string | null;
+  shippingPincode: string | null;
+  googleId: string | null;
+  avatarUrl: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export interface InsertCustomer {
+  email: string;
+  name?: string | null;
+  phone?: string | null;
+  shippingAddress?: string | null;
+  shippingCity?: string | null;
+  shippingState?: string | null;
+  shippingPincode?: string | null;
+  googleId?: string | null;
+  avatarUrl?: string | null;
+}
+
 export interface Order {
   id: string;
+  customerId: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -114,6 +142,7 @@ export interface Order {
 }
 
 export interface InsertOrder {
+  customerId?: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone: string;

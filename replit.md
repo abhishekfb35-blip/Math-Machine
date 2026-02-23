@@ -68,6 +68,9 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - Dynamic homepage content management.
 - Comprehensive product data and customer reviews.
 - Optimized product images for various sizes (Small, Medium, Large) served from `client/public/images/products/`.
+- **Customer Authentication**: Email OTP (via Resend) + Google OAuth login. Customer sessions stored in `customer_sessions` table with httpOnly cookies. Customers can save profile/address (auto-fills checkout), view order history. Tables: `customers`, `customer_otps`, `customer_sessions`. Orders linked to customers via `customerId` field.
+- **Key Auth Routes**: `/api/auth/send-otp`, `/api/auth/verify-otp`, `/api/auth/google`, `/api/auth/me`, `/api/auth/profile`, `/api/auth/logout`, `/api/auth/orders`.
+- **Auth Pages**: `/signin` (email OTP + Google), `/account` (profile + order history).
 
 # External Dependencies
 

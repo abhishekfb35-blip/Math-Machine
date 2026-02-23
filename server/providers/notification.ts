@@ -35,6 +35,7 @@ export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
+  sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -284,6 +285,11 @@ export class ConsoleNotificationService implements INotificationService {
     console.log(`[Order Update] Order #${orderId} → ${status} (${customerEmail})`);
     return { success: true, channel: "console" };
   }
+
+  async sendOtpEmail(email: string, otp: string): Promise<NotificationResult> {
+    console.log(`[OTP] Code ${otp} sent to ${email}`);
+    return { success: true, channel: "console" };
+  }
 }
 
 export class ResendNotificationService implements INotificationService {
@@ -373,6 +379,42 @@ export class ResendNotificationService implements INotificationService {
       return { success: true, channel: "resend" };
     } catch (err) {
       console.error("Resend status update error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendOtpEmail(email: string, otp: string): Promise<NotificationResult> {
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: `${otp} is your TurtleLittle verification code`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
+      <p style="color: #cccccc; margin: 8px 0 0; font-size: 13px;">Personalised Luxury Towels & Blankets</p>
+    </div>
+    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; text-align: center;">
+      <h2 style="color: #1a1a1a; margin: 0 0 8px; font-size: 22px;">Your Verification Code</h2>
+      <p style="color: #666; font-size: 14px; margin: 0 0 24px;">Enter this code to sign in to your account.</p>
+      <div style="background: #f9f9f9; border-radius: 12px; padding: 24px; display: inline-block;">
+        <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #1a1a1a;">${otp}</span>
+      </div>
+      <p style="color: #999; font-size: 13px; margin-top: 24px;">This code expires in 10 minutes.</p>
+      <p style="color: #999; font-size: 12px; margin-top: 16px;">If you didn't request this code, you can safely ignore this email.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend OTP error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }

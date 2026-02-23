@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CartData {
   id: string;
@@ -28,6 +29,7 @@ interface CartData {
 export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { customer } = useAuth();
 
   const { data: cart, isLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
@@ -36,13 +38,13 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      customerName: "",
-      customerEmail: "",
-      customerPhone: "",
-      shippingAddress: "",
-      shippingCity: "",
-      shippingState: "",
-      shippingPincode: "",
+      customerName: customer?.name || "",
+      customerEmail: customer?.email || "",
+      customerPhone: customer?.phone || "",
+      shippingAddress: customer?.shippingAddress || "",
+      shippingCity: customer?.shippingCity || "",
+      shippingState: customer?.shippingState || "",
+      shippingPincode: customer?.shippingPincode || "",
       notes: "",
     },
   });

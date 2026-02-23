@@ -1,16 +1,19 @@
 import { useLocation, Link } from "wouter";
-import { Home, Search, ShoppingBag, Grid3X3 } from "lucide-react";
+import { Home, Search, ShoppingBag, Grid3X3, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 const tabs = [
   { label: "Home", icon: Home, path: "/" },
   { label: "Shop", icon: Grid3X3, path: "/shop" },
   { label: "Cart", icon: ShoppingBag, path: "/cart" },
+  { label: "Account", icon: User, path: "/account" },
 ];
 
 export default function BottomNav() {
   const [location] = useLocation();
+  const { isAuthenticated } = useAuth();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -29,8 +32,9 @@ export default function BottomNav() {
       <div className="flex items-center justify-around h-16 px-2">
         {tabs.map((tab) => {
           const active = isActive(tab.path);
+          const href = tab.label === "Account" && !isAuthenticated ? "/signin" : tab.path;
           return (
-            <Link key={tab.path} href={tab.path}>
+            <Link key={tab.path} href={href}>
               <div
                 role="button"
                 aria-label={tab.label}

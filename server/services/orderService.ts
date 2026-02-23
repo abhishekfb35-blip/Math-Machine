@@ -5,6 +5,7 @@ import type { INotificationService, OrderItemDetail } from "../providers/notific
 import { calculateDiscount } from "./discountService";
 
 export interface CheckoutInput {
+  customerId?: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -60,6 +61,7 @@ export class OrderService {
     });
 
     const order = await this.storage.createOrder({
+      customerId: input.customerId || null,
       customerName: input.customerName,
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,

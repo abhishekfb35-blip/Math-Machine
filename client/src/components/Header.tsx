@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, type HeaderConfig } from "@/lib/siteConfigDefaults";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -15,6 +16,7 @@ export default function Header() {
   const config = useSiteConfig<HeaderConfig>("header", defaultHeader);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const { customer, isAuthenticated } = useAuth();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -79,6 +81,17 @@ export default function Header() {
             <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
+
+            <Link href={isAuthenticated ? "/account" : "/signin"}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={isAuthenticated ? "text-primary" : ""}
+                data-testid="button-account"
+              >
+                <User className="w-4 h-4" />
+              </Button>
+            </Link>
 
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">

@@ -25,6 +25,8 @@ import AdminPages from "@/pages/AdminPages";
 import AdminOrders from "@/pages/AdminOrders";
 import AdminExport from "@/pages/AdminExport";
 import AdminGuard from "@/components/AdminGuard";
+import SignInPage from "@/pages/SignInPage";
+import AccountPage from "@/pages/AccountPage";
 import TermsPage from "@/pages/TermsPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import RefundPolicyPage from "@/pages/RefundPolicyPage";
@@ -51,6 +53,8 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/order/:id" component={OrderConfirmation} />
+      <Route path="/signin" component={SignInPage} />
+      <Route path="/account" component={AccountPage} />
       <Route path="/admin/login" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
       <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
