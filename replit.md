@@ -71,6 +71,8 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Customer Authentication**: Email OTP (via Resend) + Google OAuth login. Customer sessions stored in `customer_sessions` table with httpOnly cookies. Customers can save profile/address (auto-fills checkout), view order history. Tables: `customers`, `customer_otps`, `customer_sessions`. Orders linked to customers via `customerId` field.
 - **Key Auth Routes**: `/api/auth/send-otp`, `/api/auth/verify-otp`, `/api/auth/google`, `/api/auth/me`, `/api/auth/profile`, `/api/auth/logout`, `/api/auth/orders`.
 - **Auth Pages**: `/signin` (email OTP + Google), `/account` (profile + order history).
+- **SEO**: Per-page titles, meta descriptions, canonical URLs, Open Graph tags, Twitter cards via react-helmet-async. JSON-LD structured data (Product, Organization, BreadcrumbList). Dynamic `/sitemap.xml` with 470+ URLs. `robots.txt` blocking admin/cart/checkout. OG image at `/og-image.png`.
+- **Payments**: Dual payment system — Razorpay (online, HMAC-SHA256 verified) + COD. Razorpay order ID persisted in `razorpay_order_id` column. Test/live keys swappable via secrets.
 
 # External Dependencies
 
@@ -79,7 +81,8 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Backend Libraries**: Express, cookie-parser, tsx
 - **ORM**: Drizzle ORM
 - **Validation**: Zod
-- **Payment Gateway**: CodPaymentProvider (Cash on Delivery)
+- **SEO**: react-helmet-async for per-page meta tags, JSON-LD structured data (Product, Organization, BreadcrumbList), dynamic sitemap.xml, robots.txt
+- **Payment Gateway**: Razorpay (online payments) + CodPaymentProvider (Cash on Delivery)
 - **File Storage**: LocalFileStorage (disk-based)
 - **Notifications**: ResendNotificationService (Resend API for transactional emails), falls back to ConsoleNotificationService if RESEND_API_KEY is not set
 - **Email Integration**: Resend (resend.com) — sends order confirmation to customers and new order alerts to admin. Configured via RESEND_API_KEY secret, EMAIL_FROM and ADMIN_EMAIL env vars. From address: orders@turtlelittle.com (requires domain verification in Resend). Admin alerts go to hello@turtlelittle.com.
