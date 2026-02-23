@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,14 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/google-client-id")
+      .then(r => r.json())
+      .then(d => { if (d.clientId) setGoogleClientId(d.clientId); })
+      .catch(() => {});
+  }, []);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +58,7 @@ export default function SignInPage() {
   };
 
   const handleGoogleSignIn = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
+    if (!googleClientId) {
       toast({ title: "Google Sign-In not available", description: "Email sign-in is available above.", variant: "destructive" });
       return;
     }
@@ -63,7 +70,7 @@ export default function SignInPage() {
     }
 
     google.accounts.id.initialize({
-      client_id: clientId,
+      client_id: googleClientId,
       callback: async (response: any) => {
         if (!response.credential) return;
         setLoading(true);

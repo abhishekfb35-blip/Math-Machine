@@ -840,6 +840,11 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/auth/google-client-id", (_req: Request, res: Response) => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    res.json({ clientId: clientId || null });
+  });
+
   // Google OAuth routes
   app.post("/api/auth/google", async (req: Request, res: Response) => {
     try {
