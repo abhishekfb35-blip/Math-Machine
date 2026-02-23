@@ -7,6 +7,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import multer from "multer";
 import path from "path";
+import { execSync } from "child_process";
 import { fileStorage, LocalFileStorage } from "./providers/fileStorage";
 import { paymentProvider } from "./providers/payment";
 import { notificationService } from "./providers/notification";
@@ -316,6 +317,83 @@ export async function registerRoutes(
       }
       console.error("Admin order notes update error:", err);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ── Admin Data Export Routes (protected) ──
+
+  app.get("/api/admin/export/sql", requireAdmin, async (_req, res) => {
+    try {
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        return res.status(500).json({ message: "Database not configured" });
+      }
+      const dump = execSync(`pg_dump "${databaseUrl}" --no-owner --no-privileges --clean --if-exists`, {
+        encoding: "utf-8",
+        maxBuffer: 50 * 1024 * 1024,
+      });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      res.setHeader("Content-Type", "application/sql");
+      res.setHeader("Content-Disposition", `attachment; filename="turtlelittle_backup_${timestamp}.sql"`);
+      res.send(`-- TurtleLittle Full Database Backup\n-- Generated: ${new Date().toISOString()}\n\n${dump}`);
+    } catch (err) {
+      console.error("SQL export error:", err);
+      res.status(500).json({ message: "Failed to export database" });
+    }
+  });
+
+  app.get("/api/admin/export/csv/:table", requireAdmin, async (req, res) => {
+    try {
+      const allowedTables = [
+        "categories", "products", "tags", "product_tags", "product_images",
+        "product_reviews", "orders", "order_items", "carts", "cart_items",
+        "site_config", "audit_logs"
+      ];
+      const table = req.params.table;
+      if (!allowedTables.includes(table)) {
+        return res.status(400).json({ message: "Invalid table name" });
+      }
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        return res.status(500).json({ message: "Database not configured" });
+      }
+      const csv = execSync(
+        `psql "${databaseUrl}" -c "COPY ${table} TO STDOUT WITH CSV HEADER"`,
+        { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 }
+      );
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${table}_${timestamp}.csv"`);
+      res.send(csv);
+    } catch (err) {
+      console.error("CSV export error:", err);
+      res.status(500).json({ message: "Failed to export table" });
+    }
+  });
+
+  app.get("/api/admin/export/tables", requireAdmin, async (_req, res) => {
+    try {
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        return res.status(500).json({ message: "Database not configured" });
+      }
+      const tables = [
+        "categories", "products", "tags", "product_tags", "product_images",
+        "product_reviews", "orders", "order_items", "carts", "cart_items",
+        "site_config", "audit_logs"
+      ];
+      const counts: Record<string, number> = {};
+      for (const table of tables) {
+        const result = execSync(
+          `psql "${databaseUrl}" -t -c "SELECT COUNT(*) FROM ${table}"`,
+          { encoding: "utf-8" }
+        ).trim();
+        counts[table] = parseInt(result, 10) || 0;
+      }
+      res.json({ tables: counts });
+    } catch (err) {
+      console.error("Table list error:", err);
+      res.status(500).json({ message: "Failed to get table info" });
     }
   });
 
