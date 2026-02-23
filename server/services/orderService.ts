@@ -16,6 +16,12 @@ export interface CheckoutInput {
   notes?: string | null;
 }
 
+export interface PaidCheckoutInput extends CheckoutInput {
+  paymentId: string;
+  razorpayOrderId: string;
+  paymentStatus: "paid";
+}
+
 export interface CheckoutResult {
   orderId: string;
   subtotal: number;
@@ -96,6 +102,73 @@ export class OrderService {
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
       paymentStatus: payment.status,
+    }).catch(err => console.error("Notification error:", err));
+
+    return {
+      orderId: order.id,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      total: pricing.total,
+    };
+  }
+
+  async checkoutWithPayment(sessionId: string, input: PaidCheckoutInput): Promise<CheckoutResult> {
+    const cart = await this.storage.getOrCreateCart(sessionId);
+    const items = await this.storage.getCartItems(cart.id);
+
+    if (items.length === 0) {
+      throw new EmptyCartError("Cart is empty");
+    }
+
+    const itemsWithProducts = await Promise.all(
+      items.map(async (item) => {
+        const product = await this.storage.getProductById(item.productId);
+        return { ...item, product };
+      })
+    );
+
+    const priceItems = itemsWithProducts
+      .filter(i => i.product)
+      .map(i => ({ price: i.product!.price, quantity: i.quantity }));
+
+    const pricing = calculateDiscount(priceItems);
+
+    const order = await this.storage.createOrder({
+      customerId: input.customerId || null,
+      customerName: input.customerName,
+      customerEmail: input.customerEmail,
+      customerPhone: input.customerPhone,
+      shippingAddress: input.shippingAddress,
+      shippingCity: input.shippingCity,
+      shippingState: input.shippingState,
+      shippingPincode: input.shippingPincode,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      total: pricing.total,
+      status: "confirmed",
+      paymentStatus: "paid",
+      notes: input.notes || null,
+      paymentId: input.paymentId,
+    });
+
+    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
+    await this.storage.clearCart(cart.id);
+
+    this.notificationService.sendOrderConfirmation({
+      orderId: order.id,
+      customerName: input.customerName,
+      customerEmail: input.customerEmail,
+      customerPhone: input.customerPhone,
+      total: pricing.total,
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
+      items: orderItemDetails,
+      shippingAddress: input.shippingAddress,
+      shippingCity: input.shippingCity,
+      shippingState: input.shippingState,
+      shippingPincode: input.shippingPincode,
+      paymentStatus: "paid",
     }).catch(err => console.error("Notification error:", err));
 
     return {

@@ -105,6 +105,13 @@ export default function OrderConfirmation() {
           <p>Phone: {order.customerPhone}</p>
           <p>Email: {order.customerEmail}</p>
           {order.notes && <p className="text-muted-foreground">Notes: {order.notes}</p>}
+          <Separator />
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Payment</span>
+            <span className="font-medium" data-testid="text-payment-status">
+              {order.paymentStatus === "paid" ? "Paid Online" : order.paymentStatus === "cod" ? "Cash on Delivery" : order.paymentStatus}
+            </span>
+          </div>
         </Card>
 
         <div className="text-center pt-4">

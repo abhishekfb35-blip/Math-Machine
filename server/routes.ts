@@ -10,7 +10,7 @@ import multer from "multer";
 import path from "path";
 import { execSync } from "child_process";
 import { fileStorage, LocalFileStorage } from "./providers/fileStorage";
-import { paymentProvider } from "./providers/payment";
+import { codProvider, getRazorpayProvider } from "./providers/payment";
 import { notificationService } from "./providers/notification";
 import { CartService, NotFoundError } from "./services/cartService";
 import { OrderService, EmptyCartError } from "./services/orderService";
@@ -18,7 +18,7 @@ import { handleAdminLogin, handleAdminLogout, handleAdminCheck, requireAdmin, ge
 import { OAuth2Client } from "google-auth-library";
 
 const cartService = new CartService(storage);
-const orderService = new OrderService(storage, paymentProvider, notificationService);
+const orderService = new OrderService(storage, codProvider, notificationService);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -171,13 +171,100 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  app.get("/api/razorpay/key", (_req, res) => {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    if (!keyId) {
+      return res.json({ available: false });
+    }
+    res.json({ available: true, keyId });
+  });
+
+  app.post("/api/razorpay/create-order", async (req, res) => {
+    try {
+      const razorpay = getRazorpayProvider();
+      if (!razorpay) {
+        return res.status(503).json({ message: "Online payment is not configured" });
+      }
+
+      const sessionId = getSessionId(req, res);
+      const cart = await storage.getOrCreateCart(sessionId);
+      const items = await storage.getCartItems(cart.id);
+
+      if (items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+
+      const itemsWithProducts = await Promise.all(
+        items.map(async (item) => {
+          const product = await storage.getProductById(item.productId);
+          return { ...item, product };
+        })
+      );
+
+      const { calculateDiscount } = await import("./services/discountService");
+      const priceItems = itemsWithProducts
+        .filter(i => i.product)
+        .map(i => ({ price: i.product!.price, quantity: i.quantity }));
+      const pricing = calculateDiscount(priceItems);
+
+      const result = await razorpay.createPaymentOrder({
+        orderId: `cart_${cart.id}`,
+        amount: pricing.total,
+        currency: "INR",
+        customerName: req.body.customerName || "",
+        customerEmail: req.body.customerEmail || "",
+        customerPhone: req.body.customerPhone || "",
+      });
+
+      if (!result.success) {
+        return res.status(500).json({ message: result.error || "Failed to create payment order" });
+      }
+
+      res.json({
+        razorpayOrderId: result.razorpayOrderId,
+        amount: pricing.total,
+        currency: "INR",
+      });
+    } catch (err) {
+      console.error("Razorpay create order error:", err);
+      res.status(500).json({ message: "Failed to create payment order" });
+    }
+  });
+
   app.post("/api/checkout", async (req, res) => {
     try {
-      const input = checkoutSchema.parse(req.body);
+      const { paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature, ...checkoutData } = req.body;
+      const input = checkoutSchema.parse(checkoutData);
       const sessionId = getSessionId(req, res);
 
       const customer = await getAuthenticatedCustomer(req);
       const customerId = customer?.id || null;
+
+      if (paymentMethod === "razorpay") {
+        const razorpay = getRazorpayProvider();
+        if (!razorpay) {
+          return res.status(503).json({ message: "Online payment is not configured" });
+        }
+
+        if (!razorpayPaymentId || !razorpayOrderId || !razorpaySignature) {
+          return res.status(400).json({ message: "Missing payment details" });
+        }
+
+        const verification = await razorpay.verifyPayment(razorpayPaymentId, razorpaySignature, razorpayOrderId);
+        if (!verification.success) {
+          return res.status(400).json({ message: verification.error || "Payment verification failed" });
+        }
+
+        const razorpayOrderService = new OrderService(storage, razorpay, notificationService);
+        const result = await razorpayOrderService.checkoutWithPayment(sessionId, {
+          ...input,
+          customerId,
+          paymentId: razorpayPaymentId,
+          razorpayOrderId,
+          paymentStatus: "paid",
+        });
+        return res.status(201).json(result);
+      }
 
       const result = await orderService.checkout(sessionId, { ...input, customerId });
       res.status(201).json(result);
