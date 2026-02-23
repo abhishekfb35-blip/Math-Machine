@@ -25,6 +25,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - **Order Confirmation** (`/order/:id`): Order details.
     - **Admin Builder** (`/admin/builder`): Dynamic homepage layout and collection management.
     - **Admin Catalog** (`/admin/catalog`): CMS for managing categories and products (with "Save" and "Save & Close" buttons).
+    - **Admin Orders** (`/admin/orders`): Order management with list view, status filters, search, order detail with items/address/payment, status updates (triggers customer email), and internal notes.
     - **Admin Audit Log** (`/admin/audit-log`): Timeline of all admin changes with entity type filtering and pagination.
 - **Core UI Components**: AnnouncementBar, Header, BottomNav (mobile), Footer, ProductCardNew with quick-add, QuickAddSheet for personalization, and a floating WhatsAppButton.
 
@@ -51,7 +52,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
 - **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
 - **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, and `audit_logs`.
-- **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, and site config. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
+- **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, site config, and order status changes. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
 - **Product Categories**: Flat structure with a tagging system for cross-cutting attributes.
 - **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.
 - **Discount Logic**: "Buy 2 Get 1 Free" applied automatically, making the cheapest `floor(N/2)` items free for carts with 3+ items.

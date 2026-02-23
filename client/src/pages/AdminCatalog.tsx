@@ -426,6 +426,9 @@ export default function AdminCatalog() {
             <p className="text-sm text-muted-foreground">Manage categories and products</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Link href="/admin/orders">
+              <Button variant="outline" size="sm" data-testid="link-orders">Orders</Button>
+            </Link>
             <Link href="/admin/builder">
               <Button variant="outline" size="sm" data-testid="link-builder">Page Builder</Button>
             </Link>

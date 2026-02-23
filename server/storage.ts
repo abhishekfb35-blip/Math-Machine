@@ -48,6 +48,10 @@ export interface IStorage {
   getOrderById(id: string): Promise<Order | undefined>;
   getOrderItems(orderId: string): Promise<OrderItem[]>;
   updateOrderPayment(orderId: string, paymentId: string, paymentStatus: string): Promise<Order | undefined>;
+  getAllOrders(filters?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<Order[]>;
+  getOrderCount(filters?: { status?: string; search?: string }): Promise<number>;
+  updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>;
+  updateOrderNotes(orderId: string, notes: string): Promise<Order | undefined>;
 
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
@@ -243,6 +247,70 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updated;
   }
+
+  async getAllOrders(filters?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<Order[]> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(orders.status, filters.status));
+    }
+    if (filters?.search) {
+      const term = `%${filters.search}%`;
+      conditions.push(
+        or(
+          ilike(orders.customerName, term),
+          ilike(orders.customerEmail, term),
+          ilike(orders.customerPhone, term),
+          ilike(orders.id, term),
+        )!
+      );
+    }
+    const query = db.select().from(orders);
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+    const result = await (where ? query.where(where) : query)
+      .orderBy(desc(orders.createdAt))
+      .limit(filters?.limit || 50)
+      .offset(filters?.offset || 0);
+    return result;
+  }
+
+  async getOrderCount(filters?: { status?: string; search?: string }): Promise<number> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(orders.status, filters.status));
+    }
+    if (filters?.search) {
+      const term = `%${filters.search}%`;
+      conditions.push(
+        or(
+          ilike(orders.customerName, term),
+          ilike(orders.customerEmail, term),
+          ilike(orders.customerPhone, term),
+          ilike(orders.id, term),
+        )!
+      );
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+    const query = db.select({ count: sql<number>`count(*)` }).from(orders);
+    const [result] = await (where ? query.where(where) : query);
+    return Number(result.count);
+  }
+
+  async updateOrderStatus(orderId: string, status: string): Promise<Order | undefined> {
+    const [updated] = await db.update(orders)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updated;
+  }
+
+  async updateOrderNotes(orderId: string, notes: string): Promise<Order | undefined> {
+    const [updated] = await db.update(orders)
+      .set({ notes, updatedAt: new Date() })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updated;
+  }
+
   async getSiteConfig(key: string): Promise<SiteConfig | undefined> {
     const [config] = await db.select().from(siteConfig).where(eq(siteConfig.key, key));
     return config;

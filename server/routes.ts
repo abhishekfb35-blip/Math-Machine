@@ -232,6 +232,93 @@ export async function registerRoutes(
   app.post("/api/admin/logout", handleAdminLogout);
   app.get("/api/admin/check", handleAdminCheck);
 
+  // ── Admin Order Management Routes (protected) ──
+
+  app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const search = req.query.search as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const filters = { status: status || undefined, search: search || undefined, limit, offset };
+      const [ordersList, total] = await Promise.all([
+        storage.getAllOrders(filters),
+        storage.getOrderCount({ status: filters.status, search: filters.search }),
+      ]);
+      res.json({ orders: ordersList, total, limit, offset });
+    } catch (err) {
+      console.error("Admin orders list error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/orders/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = req.params.id as string;
+      const order = await storage.getOrderById(id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      const items = await storage.getOrderItems(id);
+      res.json({ ...order, items });
+    } catch (err) {
+      console.error("Admin order detail error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  const orderStatusSchema = z.object({
+    status: z.enum(["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]),
+  });
+
+  const orderNotesSchema = z.object({
+    notes: z.string().default(""),
+  });
+
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const id = req.params.id as string;
+      const { status } = orderStatusSchema.parse(req.body);
+      const order = await storage.getOrderById(id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      const updated = await storage.updateOrderStatus(id, status);
+      await storage.createAuditLog({
+        entityType: "order",
+        entityId: id,
+        entityName: `Order #${id.slice(-8).toUpperCase()}`,
+        action: "status_updated",
+        changes: JSON.stringify({ from: order.status, to: status }),
+        username: getAdminUsername(req),
+      });
+      if (["shipped", "delivered", "cancelled"].includes(status) && order.customerEmail) {
+        notificationService.sendOrderStatusUpdate(id, status, order.customerEmail)
+          .catch(err => console.error("Status notification error:", err));
+      }
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      }
+      console.error("Admin order status update error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/admin/orders/:id/notes", requireAdmin, async (req, res) => {
+    try {
+      const id = req.params.id as string;
+      const { notes } = orderNotesSchema.parse(req.body);
+      const order = await storage.getOrderById(id);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      const updated = await storage.updateOrderNotes(id, notes || "");
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      }
+      console.error("Admin order notes update error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ── Admin CMS Routes (protected) ──
 
   app.get("/api/admin/categories", requireAdmin, async (_req, res) => {
