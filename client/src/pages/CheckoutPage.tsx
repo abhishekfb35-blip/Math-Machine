@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { ArrowLeft, Gift, CreditCard, Banknote, Shield } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -224,6 +225,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8">
+      <SEO title="Checkout" noindex={true} path="/checkout" />
       <Link href="/cart">
         <Button variant="ghost" size="sm" className="mb-3" data-testid="button-back-to-cart">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Cart

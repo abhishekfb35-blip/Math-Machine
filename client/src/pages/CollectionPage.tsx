@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { ChevronRight, ChevronLeft, ArrowLeft, SlidersHorizontal } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -297,6 +298,10 @@ export default function CollectionPage() {
 
   return (
     <div className="pb-20 md:pb-8">
+      <SEO
+        title={`${audienceLabels[audience] || "Collection"}`}
+        path={`/collection/${audience}`}
+      />
       <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">
         <div className="space-y-1">
           <Link href="/shop">

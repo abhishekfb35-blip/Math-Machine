@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /order/
+Disallow: /signin
+Disallow: /account
+
+Sitemap: https://turtlelittle.com/sitemap.xml

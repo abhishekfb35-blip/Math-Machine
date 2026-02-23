@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { ChevronRight } from "lucide-react";
+import SEO, { BreadcrumbJsonLd } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,17 @@ export default function CategoryPage() {
 
   return (
     <div className="pb-20 md:pb-8">
+      {category && (
+        <SEO
+          title={category.name}
+          description={`Shop ${category.name} from TurtleLittle. Personalised luxury embroidered products, handcrafted with love. Buy 2 Get 1 Free.`.substring(0, 160)}
+          path={`/category/${slug}`}
+          jsonLd={BreadcrumbJsonLd([
+            { name: "Home", url: "/" },
+            { name: category.name, url: `/category/${slug}` },
+          ])}
+        />
+      )}
       {bannerImage && (
         <div className="relative overflow-hidden" data-testid="banner-category">
           <img

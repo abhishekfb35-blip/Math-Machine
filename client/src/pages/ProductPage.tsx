@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useCallback } from "react";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search } from "lucide-react";
+import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -146,6 +147,32 @@ export default function ProductPage() {
 
   return (
     <div className="pb-20 md:pb-8">
+      {product && (
+        <SEO
+          title={product.name}
+          description={(product.description || "").substring(0, 160)}
+          path={`/product/${slug}`}
+          type="product"
+          image={product.imageUrl ? `https://turtlelittle.com${product.imageUrl}` : undefined}
+          jsonLd={[
+            ProductJsonLd({
+              name: product.name,
+              description: product.description || "",
+              price: product.price,
+              mrp: product.mrp || product.price,
+              imageUrl: product.imageUrl,
+              slug: product.slug,
+              sku: product.sku || "",
+              availability: true,
+            }),
+            BreadcrumbJsonLd([
+              { name: "Home", url: "/" },
+              { name: "Shop", url: "/shop" },
+              { name: product.name, url: `/product/${slug}` },
+            ]),
+          ]}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap" data-testid="nav-breadcrumb">
           <Link href="/" className="hover:text-foreground transition-colors">Home</Link>

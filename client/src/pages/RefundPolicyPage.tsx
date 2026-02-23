@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ChevronLeft } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultRefundPage, type RefundPageConfig } from "@/lib/siteConfigDefaults";
@@ -68,6 +69,7 @@ export default function RefundPolicyPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="refund-policy-page">
+      <SEO title="Refund Policy" path="/refund-policy" />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home

@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Gift } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -149,6 +150,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 pb-24 md:pb-8">
+      <SEO title="Shopping Cart" noindex={true} path="/cart" />
       <h1 className="text-xl font-bold mb-4" data-testid="text-cart-title">
         Cart ({cart?.itemCount || 0})
       </h1>

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
 import { SlidersHorizontal, Search, X } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -125,6 +126,7 @@ export default function ShopPage() {
 
   return (
     <div className="pb-20 md:pb-8">
+      <SEO title="Shop All Products" description="Browse our complete collection of personalised luxury towels, blankets & bathrobes. Buy 2 Get 1 Free." path="/shop" />
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
           <div className="relative">

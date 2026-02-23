@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ArrowRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
+import SEO, { OrganizationJsonLd } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -119,6 +120,7 @@ export default function Home() {
 
   return (
     <div className="pb-20 md:pb-0">
+      <SEO path="/" jsonLd={OrganizationJsonLd()} />
       <section className="relative overflow-hidden" data-testid="section-hero">
         <div className="absolute inset-0">
           <img
