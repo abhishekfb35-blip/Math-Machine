@@ -438,6 +438,9 @@ export default function AdminCatalog() {
             <Link href="/admin/pages">
               <Button variant="outline" size="sm" data-testid="link-policy-pages">Policy Page Builders</Button>
             </Link>
+            <Link href="/admin/export">
+              <Button variant="outline" size="sm" data-testid="link-export">Export Data</Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"

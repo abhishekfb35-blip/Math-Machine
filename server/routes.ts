@@ -349,7 +349,7 @@ export async function registerRoutes(
         "product_reviews", "orders", "order_items", "carts", "cart_items",
         "site_config", "audit_logs"
       ];
-      const table = req.params.table;
+      const table = req.params.table as string;
       if (!allowedTables.includes(table)) {
         return res.status(400).json({ message: "Invalid table name" });
       }

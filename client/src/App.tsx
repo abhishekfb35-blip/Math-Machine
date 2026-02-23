@@ -23,6 +23,7 @@ import AdminCatalog from "@/pages/AdminCatalog";
 import AdminAuditLog from "@/pages/AdminAuditLog";
 import AdminPages from "@/pages/AdminPages";
 import AdminOrders from "@/pages/AdminOrders";
+import AdminExport from "@/pages/AdminExport";
 import AdminGuard from "@/components/AdminGuard";
 import TermsPage from "@/pages/TermsPage";
 import PrivacyPage from "@/pages/PrivacyPage";
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />
       <Route path="/admin/pages" component={() => <AdminGuard><AdminPages /></AdminGuard>} />
       <Route path="/admin/orders" component={() => <AdminGuard><AdminOrders /></AdminGuard>} />
+      <Route path="/admin/export" component={() => <AdminGuard><AdminExport /></AdminGuard>} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
