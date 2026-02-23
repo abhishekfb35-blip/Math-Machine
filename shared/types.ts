@@ -135,6 +135,7 @@ export interface Order {
   total: number;
   status: string;
   paymentId: string | null;
+  razorpayOrderId: string | null;
   paymentStatus: string | null;
   notes: string | null;
   createdAt: Date | null;
@@ -155,6 +156,7 @@ export interface InsertOrder {
   total: number;
   status?: string;
   paymentId?: string | null;
+  razorpayOrderId?: string | null;
   paymentStatus?: string | null;
   notes?: string | null;
 }

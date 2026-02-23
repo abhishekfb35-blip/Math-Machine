@@ -77,6 +77,7 @@ export const orders = pgTable("orders", {
   total: integer("total").notNull(),
   status: text("status").notNull().default("pending"),
   paymentId: text("payment_id"),
+  razorpayOrderId: text("razorpay_order_id"),
   paymentStatus: text("payment_status").default("pending"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

@@ -149,6 +149,7 @@ export class OrderService {
       paymentStatus: "paid",
       notes: input.notes || null,
       paymentId: input.paymentId,
+      razorpayOrderId: input.razorpayOrderId,
     });
 
     const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
