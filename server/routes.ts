@@ -473,6 +473,457 @@ Sitemap: https://turtlelittle.com/sitemap.xml
     }
   });
 
+  // ── Admin Deploy Check (Code Health) ──
+
+  app.get("/api/admin/deploy-check", requireAdmin, async (_req, res) => {
+    try {
+      const fs = await import("fs");
+      const distDir = path.resolve(import.meta.dirname, "..", "dist");
+      const publicDir = path.resolve(distDir, "public");
+      const serverBundle = path.resolve(distDir, "index.cjs");
+      const srcDir = path.resolve(import.meta.dirname);
+      const clientDir = path.resolve(import.meta.dirname, "..", "client");
+      const sharedDir = path.resolve(import.meta.dirname, "..", "shared");
+
+      const results: {
+        buildExists: boolean;
+        buildTimestamp: string | null;
+        buildAgeMinutes: number | null;
+        sourceNewerThanBuild: boolean;
+        newestSourceFile: string | null;
+        newestSourceTimestamp: string | null;
+        routeChecks: { route: string; found: boolean }[];
+        staticFileChecks: { file: string; exists: boolean; size?: number }[];
+        overallStatus: "pass" | "warn" | "fail";
+        issues: string[];
+      } = {
+        buildExists: false,
+        buildTimestamp: null,
+        buildAgeMinutes: null,
+        sourceNewerThanBuild: false,
+        newestSourceFile: null,
+        newestSourceTimestamp: null,
+        routeChecks: [],
+        staticFileChecks: [],
+        overallStatus: "pass",
+        issues: [],
+      };
+
+      if (!fs.existsSync(serverBundle)) {
+        results.issues.push("Production bundle dist/index.cjs does not exist. Run npm run build.");
+        results.overallStatus = "fail";
+        return res.json(results);
+      }
+
+      results.buildExists = true;
+      const buildStat = fs.statSync(serverBundle);
+      results.buildTimestamp = buildStat.mtime.toISOString();
+      results.buildAgeMinutes = Math.round((Date.now() - buildStat.mtime.getTime()) / 60000);
+
+      function getNewestFileTime(dir: string): { file: string; mtime: Date } | null {
+        let newest: { file: string; mtime: Date } | null = null;
+        try {
+          const items = fs.readdirSync(dir, { withFileTypes: true });
+          for (const item of items) {
+            const fullPath = path.join(dir, item.name);
+            if (item.name === "node_modules" || item.name === "dist" || item.name === ".git") continue;
+            if (item.isDirectory()) {
+              const sub = getNewestFileTime(fullPath);
+              if (sub && (!newest || sub.mtime > newest.mtime)) {
+                newest = sub;
+              }
+            } else if (item.isFile() && /\.(ts|tsx|css|html|json)$/.test(item.name)) {
+              const stat = fs.statSync(fullPath);
+              if (!newest || stat.mtime > newest.mtime) {
+                newest = { file: fullPath, mtime: stat.mtime };
+              }
+            }
+          }
+        } catch {}
+        return newest;
+      }
+
+      const newestServer = getNewestFileTime(srcDir);
+      const newestClient = getNewestFileTime(clientDir);
+      const newestShared = getNewestFileTime(sharedDir);
+      const candidates = [newestServer, newestClient, newestShared].filter(Boolean) as { file: string; mtime: Date }[];
+      const newestSource = candidates.length > 0
+        ? candidates.reduce((a, b) => (a.mtime > b.mtime ? a : b), candidates[0])
+        : null;
+
+      if (newestSource) {
+        const projectRoot = path.resolve(import.meta.dirname, "..");
+        results.newestSourceFile = newestSource.file.replace(projectRoot + "/", "");
+        results.newestSourceTimestamp = newestSource.mtime.toISOString();
+        results.sourceNewerThanBuild = newestSource.mtime > buildStat.mtime;
+        if (results.sourceNewerThanBuild) {
+          results.issues.push(`Source file "${results.newestSourceFile}" is newer than the build. Rebuild needed.`);
+          results.overallStatus = "warn";
+        }
+      }
+
+      const bundleContent = fs.readFileSync(serverBundle, "utf-8");
+      const criticalRoutes = [
+        { route: "/sitemap.xml", searchTerm: "sitemap.xml" },
+        { route: "/robots.txt", searchTerm: "robots.txt" },
+        { route: "/api/categories", searchTerm: '"/api/categories"' },
+        { route: "/api/products", searchTerm: '"/api/products"' },
+        { route: "/api/cart", searchTerm: '"/api/cart"' },
+        { route: "/api/checkout", searchTerm: "checkout" },
+        { route: "/api/auth", searchTerm: "/api/auth" },
+        { route: "/api/admin/orders", searchTerm: "/api/admin/orders" },
+        { route: "Razorpay integration", searchTerm: "razorpay" },
+        { route: "/api/admin/deploy-check", searchTerm: "deploy-check" },
+        { route: "/api/admin/data-check", searchTerm: "data-check" },
+      ];
+
+      for (const check of criticalRoutes) {
+        const found = bundleContent.toLowerCase().includes(check.searchTerm.toLowerCase());
+        results.routeChecks.push({ route: check.route, found });
+        if (!found) {
+          results.issues.push(`Route "${check.route}" not found in production bundle.`);
+          results.overallStatus = "fail";
+        }
+      }
+
+      const criticalFiles = [
+        "index.html", "favicon.png", "manifest.json", "sw.js",
+      ];
+
+      for (const file of criticalFiles) {
+        const filePath = path.resolve(publicDir, file);
+        const exists = fs.existsSync(filePath);
+        const size = exists ? fs.statSync(filePath).size : undefined;
+        results.staticFileChecks.push({ file, exists, size });
+        if (!exists) {
+          results.issues.push(`Static file "${file}" missing from dist/public/.`);
+          results.overallStatus = "fail";
+        }
+      }
+
+      const assetDirs = ["assets", "images"];
+      for (const dir of assetDirs) {
+        const dirPath = path.resolve(publicDir, dir);
+        const exists = fs.existsSync(dirPath);
+        results.staticFileChecks.push({ file: `${dir}/`, exists });
+        if (!exists) {
+          results.issues.push(`Directory "${dir}/" missing from dist/public/.`);
+          results.overallStatus = "fail";
+        }
+      }
+
+      res.json(results);
+    } catch (err) {
+      console.error("Deploy check error:", err);
+      res.status(500).json({ message: "Failed to run deploy check" });
+    }
+  });
+
+  // ── Admin Data/Schema Check (Database Health) ──
+
+  app.get("/api/admin/data-check", requireAdmin, async (_req, res) => {
+    try {
+      const { pool } = await import("./db");
+      const environment = process.env.NODE_ENV || "development";
+
+      const expectedSchema: Record<string, { column: string; type: string; nullable: boolean }[]> = {
+        categories: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "slug", type: "text", nullable: false },
+          { column: "description", type: "text", nullable: true },
+          { column: "image_url", type: "text", nullable: true },
+          { column: "sort_order", type: "integer", nullable: true },
+        ],
+        products: [
+          { column: "id", type: "text", nullable: false },
+          { column: "sku", type: "text", nullable: true },
+          { column: "name", type: "text", nullable: false },
+          { column: "slug", type: "text", nullable: false },
+          { column: "description", type: "text", nullable: true },
+          { column: "price", type: "integer", nullable: false },
+          { column: "mrp", type: "integer", nullable: true },
+          { column: "image_url", type: "text", nullable: false },
+          { column: "category_id", type: "text", nullable: false },
+          { column: "amazon_asin", type: "text", nullable: true },
+          { column: "color", type: "text", nullable: true },
+          { column: "material", type: "text", nullable: true },
+          { column: "gsm", type: "integer", nullable: true },
+          { column: "dimensions", type: "text", nullable: true },
+          { column: "weight_grams", type: "integer", nullable: true },
+          { column: "items_in_set", type: "integer", nullable: true },
+          { column: "special_features", type: "text", nullable: true },
+          { column: "bullet_points", type: "text", nullable: true },
+          { column: "search_keywords", type: "text", nullable: true },
+          { column: "product_type", type: "text", nullable: true },
+          { column: "audience", type: "text", nullable: true },
+          { column: "active", type: "boolean", nullable: true },
+          { column: "sort_order", type: "integer", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+          { column: "updated_at", type: "timestamp without time zone", nullable: true },
+        ],
+        product_images: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "image_url", type: "text", nullable: false },
+          { column: "sort_order", type: "integer", nullable: true },
+          { column: "is_primary", type: "boolean", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+          { column: "updated_at", type: "timestamp without time zone", nullable: true },
+        ],
+        product_reviews: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "reviewer_name", type: "text", nullable: false },
+          { column: "rating", type: "integer", nullable: false },
+          { column: "title", type: "text", nullable: true },
+          { column: "body", type: "text", nullable: false },
+          { column: "amz_review_date", type: "text", nullable: true },
+          { column: "verified_purchase", type: "boolean", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+        tags: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "description", type: "text", nullable: true },
+        ],
+        product_tags: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "tag_id", type: "text", nullable: false },
+        ],
+        carts: [
+          { column: "id", type: "text", nullable: false },
+          { column: "session_id", type: "character varying", nullable: false },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+        cart_items: [
+          { column: "id", type: "text", nullable: false },
+          { column: "cart_id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "quantity", type: "integer", nullable: false },
+          { column: "personalization_name", type: "text", nullable: true },
+        ],
+        orders: [
+          { column: "id", type: "text", nullable: false },
+          { column: "customer_id", type: "text", nullable: true },
+          { column: "customer_name", type: "text", nullable: false },
+          { column: "customer_email", type: "text", nullable: false },
+          { column: "customer_phone", type: "text", nullable: false },
+          { column: "shipping_address", type: "text", nullable: false },
+          { column: "shipping_city", type: "text", nullable: false },
+          { column: "shipping_state", type: "text", nullable: false },
+          { column: "shipping_pincode", type: "text", nullable: false },
+          { column: "subtotal", type: "integer", nullable: false },
+          { column: "discount", type: "integer", nullable: false },
+          { column: "total", type: "integer", nullable: false },
+          { column: "status", type: "text", nullable: false },
+          { column: "payment_id", type: "text", nullable: true },
+          { column: "razorpay_order_id", type: "text", nullable: true },
+          { column: "payment_status", type: "text", nullable: true },
+          { column: "notes", type: "text", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+          { column: "updated_at", type: "timestamp without time zone", nullable: true },
+        ],
+        order_items: [
+          { column: "id", type: "text", nullable: false },
+          { column: "order_id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "product_name", type: "text", nullable: false },
+          { column: "product_price", type: "integer", nullable: false },
+          { column: "quantity", type: "integer", nullable: false },
+          { column: "personalization_name", type: "text", nullable: true },
+          { column: "is_free", type: "boolean", nullable: true },
+        ],
+        site_config: [
+          { column: "id", type: "text", nullable: false },
+          { column: "key", type: "text", nullable: false },
+          { column: "value", type: "text", nullable: false },
+        ],
+        audit_logs: [
+          { column: "id", type: "text", nullable: false },
+          { column: "entity_type", type: "text", nullable: false },
+          { column: "entity_id", type: "text", nullable: false },
+          { column: "entity_name", type: "text", nullable: true },
+          { column: "action", type: "text", nullable: false },
+          { column: "changes", type: "text", nullable: true },
+          { column: "username", type: "text", nullable: false },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+        customers: [
+          { column: "id", type: "text", nullable: false },
+          { column: "email", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: true },
+          { column: "phone", type: "text", nullable: true },
+          { column: "shipping_address", type: "text", nullable: true },
+          { column: "shipping_city", type: "text", nullable: true },
+          { column: "shipping_state", type: "text", nullable: true },
+          { column: "shipping_pincode", type: "text", nullable: true },
+          { column: "google_id", type: "text", nullable: true },
+          { column: "avatar_url", type: "text", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+          { column: "updated_at", type: "timestamp without time zone", nullable: true },
+        ],
+        customer_otps: [
+          { column: "id", type: "text", nullable: false },
+          { column: "email", type: "text", nullable: false },
+          { column: "otp", type: "text", nullable: false },
+          { column: "expires_at", type: "timestamp without time zone", nullable: false },
+          { column: "used", type: "boolean", nullable: true },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+        customer_sessions: [
+          { column: "id", type: "text", nullable: false },
+          { column: "customer_id", type: "text", nullable: false },
+          { column: "token", type: "text", nullable: false },
+          { column: "expires_at", type: "timestamp without time zone", nullable: false },
+          { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+      };
+
+      const schemaQuery = await pool.query(`
+        SELECT table_name, column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position
+      `);
+
+      const actualSchema: Record<string, { column: string; type: string; nullable: boolean }[]> = {};
+      for (const row of schemaQuery.rows) {
+        if (!actualSchema[row.table_name]) {
+          actualSchema[row.table_name] = [];
+        }
+        actualSchema[row.table_name].push({
+          column: row.column_name,
+          type: row.data_type,
+          nullable: row.is_nullable === "YES",
+        });
+      }
+
+      const structureChecks: {
+        table: string;
+        status: "pass" | "warn" | "fail" | "missing_table";
+        missingColumns: string[];
+        extraColumns: string[];
+        typeMismatches: { column: string; expected: string; actual: string }[];
+      }[] = [];
+
+      for (const [tableName, expectedCols] of Object.entries(expectedSchema)) {
+        const actual = actualSchema[tableName];
+        if (!actual) {
+          structureChecks.push({
+            table: tableName,
+            status: "missing_table",
+            missingColumns: expectedCols.map(c => c.column),
+            extraColumns: [],
+            typeMismatches: [],
+          });
+          continue;
+        }
+
+        const actualMap = new Map(actual.map(c => [c.column, c]));
+        const expectedMap = new Map(expectedCols.map(c => [c.column, c]));
+        const missingColumns: string[] = [];
+        const extraColumns: string[] = [];
+        const typeMismatches: { column: string; expected: string; actual: string }[] = [];
+
+        for (const exp of expectedCols) {
+          const act = actualMap.get(exp.column);
+          if (!act) {
+            missingColumns.push(exp.column);
+          } else if (act.type !== exp.type) {
+            typeMismatches.push({ column: exp.column, expected: exp.type, actual: act.type });
+          }
+        }
+
+        for (const act of actual) {
+          if (!expectedMap.has(act.column)) {
+            extraColumns.push(act.column);
+          }
+        }
+
+        const status = missingColumns.length > 0 || typeMismatches.length > 0 ? "fail" : extraColumns.length > 0 ? "warn" : "pass";
+        structureChecks.push({ table: tableName, status, missingColumns, extraColumns, typeMismatches });
+      }
+
+      const tableCounts: { table: string; count: number; status: "pass" | "warn" | "empty" }[] = [];
+      const mustHaveData = ["categories", "products"];
+
+      for (const tableName of Object.keys(expectedSchema)) {
+        try {
+          const countResult = await pool.query(`SELECT COUNT(*) as cnt FROM "${tableName}"`);
+          const count = parseInt(countResult.rows[0].cnt, 10);
+          const status = count === 0 && mustHaveData.includes(tableName) ? "empty" : count === 0 ? "warn" : "pass";
+          tableCounts.push({ table: tableName, count, status });
+        } catch {
+          tableCounts.push({ table: tableName, count: -1, status: "warn" });
+        }
+      }
+
+      const integrityIssues: string[] = [];
+
+      const orphanedProducts = await pool.query(`
+        SELECT p.id, p.name FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE c.id IS NULL
+      `);
+      if (orphanedProducts.rows.length > 0) {
+        integrityIssues.push(`${orphanedProducts.rows.length} product(s) reference non-existent categories: ${orphanedProducts.rows.map(r => r.name).join(", ")}`);
+      }
+
+      const productsNoImages = await pool.query(`
+        SELECT p.id, p.name FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id
+        WHERE pi.id IS NULL AND p.active = true
+      `);
+      if (productsNoImages.rows.length > 0) {
+        integrityIssues.push(`${productsNoImages.rows.length} active product(s) have no additional images: ${productsNoImages.rows.slice(0, 5).map(r => r.name).join(", ")}${productsNoImages.rows.length > 5 ? "..." : ""}`);
+      }
+
+      const orphanedCartItems = await pool.query(`
+        SELECT ci.id FROM cart_items ci
+        LEFT JOIN carts c ON ci.cart_id = c.id
+        WHERE c.id IS NULL
+      `);
+      if (orphanedCartItems.rows.length > 0) {
+        integrityIssues.push(`${orphanedCartItems.rows.length} orphaned cart item(s) with no parent cart.`);
+      }
+
+      const orphanedOrderItems = await pool.query(`
+        SELECT oi.id FROM order_items oi
+        LEFT JOIN orders o ON oi.order_id = o.id
+        WHERE o.id IS NULL
+      `);
+      if (orphanedOrderItems.rows.length > 0) {
+        integrityIssues.push(`${orphanedOrderItems.rows.length} orphaned order item(s) with no parent order.`);
+      }
+
+      const configKeys = await pool.query(`SELECT key FROM site_config`);
+      const existingKeys = configKeys.rows.map(r => r.key);
+      const expectedConfigKeys = ["header", "hero", "homepageCollections"];
+      const missingConfigKeys = expectedConfigKeys.filter(k => !existingKeys.includes(k));
+
+      const overallStatus = structureChecks.some(c => c.status === "fail" || c.status === "missing_table")
+        ? "fail"
+        : structureChecks.some(c => c.status === "warn") || tableCounts.some(c => c.status === "empty") || integrityIssues.length > 0
+        ? "warn"
+        : "pass";
+
+      res.json({
+        environment,
+        timestamp: new Date().toISOString(),
+        overallStatus,
+        structureChecks,
+        tableCounts,
+        integrityIssues,
+        siteConfig: { existingKeys, missingConfigKeys },
+      });
+    } catch (err) {
+      console.error("Data check error:", err);
+      res.status(500).json({ message: "Failed to run data check" });
+    }
+  });
+
   // ── Admin Data Export Routes (protected) ──
 
   app.get("/api/admin/export/sql", requireAdmin, async (_req, res) => {

@@ -25,6 +25,8 @@ import AdminAuditLog from "@/pages/AdminAuditLog";
 import AdminPages from "@/pages/AdminPages";
 import AdminOrders from "@/pages/AdminOrders";
 import AdminExport from "@/pages/AdminExport";
+import AdminDataCheck from "@/pages/AdminDataCheck";
+import AdminDeployCheck from "@/pages/AdminDeployCheck";
 import AdminGuard from "@/components/AdminGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
@@ -63,6 +65,8 @@ function Router() {
       <Route path="/admin/pages" component={() => <AdminGuard><AdminPages /></AdminGuard>} />
       <Route path="/admin/orders" component={() => <AdminGuard><AdminOrders /></AdminGuard>} />
       <Route path="/admin/export" component={() => <AdminGuard><AdminExport /></AdminGuard>} />
+      <Route path="/admin/deploy-check" component={() => <AdminGuard><AdminDeployCheck /></AdminGuard>} />
+      <Route path="/admin/data-check" component={() => <AdminGuard><AdminDataCheck /></AdminGuard>} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
