@@ -963,16 +963,16 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!p.description || p.description.trim().length === 0) {
-          metaTags.issues.push({ severity: "error", message: `Missing description (used as meta description)`, entity: p.name });
+          metaTags.issues.push({ severity: "error", message: `Missing description (used as meta description)`, entity: `${p.name} (${p.id})` });
         } else {
           points++;
           if (p.description.length < 50) {
-            metaTags.issues.push({ severity: "warning", message: `Description too short (${p.description.length} chars, min 50)`, entity: p.name });
+            metaTags.issues.push({ severity: "warning", message: `Description too short (${p.description.length} chars, min 50)`, entity: `${p.name} (${p.id})` });
           } else {
             points++;
           }
           if (p.description.length > 300) {
-            metaTags.issues.push({ severity: "info", message: `Description very long (${p.description.length} chars), may be truncated in search results`, entity: p.name });
+            metaTags.issues.push({ severity: "info", message: `Description very long (${p.description.length} chars), may be truncated in search results`, entity: `${p.name} (${p.id})` });
           } else {
             points++;
           }
@@ -1002,10 +1002,10 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!p.slug) {
-          urls.issues.push({ severity: "error", message: `Missing slug`, entity: p.name });
+          urls.issues.push({ severity: "error", message: `Missing slug`, entity: `${p.name} (${p.id})` });
         } else {
           if (!slugRegex.test(p.slug)) {
-            urls.issues.push({ severity: "warning", message: `Slug not URL-friendly: "${p.slug}"`, entity: p.name });
+            urls.issues.push({ severity: "warning", message: `Slug not URL-friendly: "${p.slug}"`, entity: `${p.name} (${p.id})` });
           } else {
             points++;
           }
@@ -1093,22 +1093,22 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (p.name && p.name.trim()) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing name (required for Product schema)`, entity: p.name || `ID: ${p.id}` });
+        else structuredData.issues.push({ severity: "error", message: `Missing name (required for Product schema)`, entity: `${p.name || 'Unnamed'} (${p.id})` });
 
         if (p.description && p.description.trim()) points++;
-        else structuredData.issues.push({ severity: "warning", message: `Missing description for structured data`, entity: p.name });
+        else structuredData.issues.push({ severity: "warning", message: `Missing description for structured data`, entity: `${p.name} (${p.id})` });
 
         if (p.imageUrl && p.imageUrl.trim()) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing image for structured data`, entity: p.name });
+        else structuredData.issues.push({ severity: "error", message: `Missing image for structured data`, entity: `${p.name} (${p.id})` });
 
         if (p.price && p.price > 0) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing or zero price`, entity: p.name });
+        else structuredData.issues.push({ severity: "error", message: `Missing or zero price`, entity: `${p.name} (${p.id})` });
 
         if (p.sku && p.sku.trim()) points++;
-        else structuredData.issues.push({ severity: "warning", message: `Missing SKU`, entity: p.name });
+        else structuredData.issues.push({ severity: "warning", message: `Missing SKU`, entity: `${p.name} (${p.id})` });
 
         if (p.categoryId && !categoryMap.has(p.categoryId)) {
-          structuredData.issues.push({ severity: "error", message: `References non-existent category (ID: ${p.categoryId})`, entity: p.name });
+          structuredData.issues.push({ severity: "error", message: `References non-existent category (ID: ${p.categoryId})`, entity: `${p.name} (${p.id})` });
         }
 
         structuredData.score += points;
@@ -1125,19 +1125,19 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         if (p.description && p.description.length >= 100) {
           points++;
         } else if (p.description) {
-          content.issues.push({ severity: "warning", message: `Short description (${p.description.length} chars, recommended 100+)`, entity: p.name });
+          content.issues.push({ severity: "warning", message: `Short description (${p.description.length} chars, recommended 100+)`, entity: `${p.name} (${p.id})` });
         }
 
         if (p.bulletPoints && p.bulletPoints.trim()) {
           points++;
         } else {
-          content.issues.push({ severity: "info", message: `No bullet points`, entity: p.name });
+          content.issues.push({ severity: "info", message: `No bullet points`, entity: `${p.name} (${p.id})` });
         }
 
         if (p.searchKeywords && p.searchKeywords.trim()) {
           points++;
         } else {
-          content.issues.push({ severity: "info", message: `No search keywords`, entity: p.name });
+          content.issues.push({ severity: "info", message: `No search keywords`, entity: `${p.name} (${p.id})` });
         }
 
         content.score += points;
