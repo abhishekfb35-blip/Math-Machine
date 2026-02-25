@@ -11,6 +11,7 @@ interface AuditIssue {
   severity: "error" | "warning" | "info";
   message: string;
   entity?: string;
+  entityId?: string;
 }
 
 interface AuditCategory {
@@ -102,11 +103,16 @@ function CategorySection({ category }: { category: AuditCategory }) {
       {expanded && category.issues.length > 0 && (
         <div className="border-t px-4 py-3 space-y-2 max-h-80 overflow-y-auto" data-testid={`list-issues-${category.name.toLowerCase().replace(/\s+/g, "-")}`}>
           {category.issues.map((issue, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-sm py-1">
+            <div key={idx} className="flex items-start gap-2 text-sm py-1.5 border-b border-border/40 last:border-0">
               <SeverityIcon severity={issue.severity} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 {issue.entity && <span className="font-medium text-xs text-muted-foreground block truncate">{issue.entity}</span>}
                 <span className="text-foreground/80">{issue.message}</span>
+                {issue.entityId && (
+                  <span className="block mt-0.5 text-[11px] font-mono font-semibold text-foreground/60" data-testid={`text-entity-id-${idx}`}>
+                    ID: {issue.entityId}
+                  </span>
+                )}
               </div>
             </div>
           ))}
