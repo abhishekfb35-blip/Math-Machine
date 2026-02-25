@@ -803,6 +803,8 @@ Sitemap: https://turtlelittle.com/sitemap.xml
       const structureChecks: {
         table: string;
         status: "pass" | "warn" | "fail" | "missing_table";
+        expectedColumns: { column: string; type: string; nullable: boolean }[];
+        actualColumns: { column: string; type: string; nullable: boolean }[];
         missingColumns: string[];
         extraColumns: string[];
         typeMismatches: { column: string; expected: string; actual: string }[];
@@ -814,6 +816,8 @@ Sitemap: https://turtlelittle.com/sitemap.xml
           structureChecks.push({
             table: tableName,
             status: "missing_table",
+            expectedColumns: expectedCols,
+            actualColumns: [],
             missingColumns: expectedCols.map(c => c.column),
             extraColumns: [],
             typeMismatches: [],
@@ -843,7 +847,7 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         }
 
         const status = missingColumns.length > 0 || typeMismatches.length > 0 ? "fail" : extraColumns.length > 0 ? "warn" : "pass";
-        structureChecks.push({ table: tableName, status, missingColumns, extraColumns, typeMismatches });
+        structureChecks.push({ table: tableName, status, expectedColumns: expectedCols, actualColumns: actual, missingColumns, extraColumns, typeMismatches });
       }
 
       const tableCounts: { table: string; count: number; status: "pass" | "warn" | "empty" }[] = [];

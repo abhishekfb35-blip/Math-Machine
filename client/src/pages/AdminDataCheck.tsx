@@ -1,13 +1,22 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronLeft, Database, AlertTriangle, CheckCircle2, XCircle, Info, RefreshCw, Server } from "lucide-react";
+import { ChevronLeft, Database, AlertTriangle, CheckCircle2, XCircle, Info, RefreshCw, Server, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+interface ColumnInfo {
+  column: string;
+  type: string;
+  nullable: boolean;
+}
+
 interface StructureCheck {
   table: string;
   status: "pass" | "warn" | "fail" | "missing_table";
+  expectedColumns: ColumnInfo[];
+  actualColumns: ColumnInfo[];
   missingColumns: string[];
   extraColumns: string[];
   typeMismatches: { column: string; expected: string; actual: string }[];
@@ -76,6 +85,146 @@ function OverallStatusBanner({ status }: { status: string }) {
         <p className="font-semibold text-red-800 dark:text-red-300">Issues Detected</p>
         <p className="text-sm text-red-700 dark:text-red-400">Critical schema or data problems found. Immediate action required.</p>
       </div>
+    </div>
+  );
+}
+
+function SchemaStructureList({ checks }: { checks: StructureCheck[] }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggle = (table: string) => {
+    setExpanded(prev => ({ ...prev, [table]: !prev[table] }));
+  };
+
+  return (
+    <div className="space-y-3">
+      {checks.map((check) => {
+        const isOpen = expanded[check.table] || false;
+        const colCount = check.actualColumns?.length || 0;
+        const expectedCount = check.expectedColumns?.length || 0;
+
+        return (
+          <div key={check.table} className="border rounded-md" data-testid={`schema-table-${check.table}`}>
+            <button
+              onClick={() => toggle(check.table)}
+              className="w-full flex items-center justify-between gap-2 p-3 hover:bg-muted/50 transition-colors text-left"
+              data-testid={`button-expand-${check.table}`}
+            >
+              <div className="flex items-center gap-2">
+                {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                <StatusIcon status={check.status} />
+                <span className="font-medium font-mono text-sm">{check.table}</span>
+                <span className="text-xs text-muted-foreground">({colCount} col{colCount !== 1 ? "s" : ""})</span>
+              </div>
+              <StatusBadge status={check.status} />
+            </button>
+
+            {check.missingColumns.length > 0 && (
+              <div className="px-3 pb-2 pl-12">
+                <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Missing columns:</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {check.missingColumns.map((col) => (
+                    <Badge key={col} variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-mono">{col}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {check.extraColumns.length > 0 && (
+              <div className="px-3 pb-2 pl-12">
+                <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mb-1">Extra columns (not in schema):</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {check.extraColumns.map((col) => (
+                    <Badge key={col} variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-mono">{col}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {check.typeMismatches.length > 0 && (
+              <div className="px-3 pb-2 pl-12">
+                <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Type mismatches:</p>
+                <div className="space-y-1">
+                  {check.typeMismatches.map((m) => (
+                    <p key={m.column} className="text-xs font-mono text-red-600 dark:text-red-400">
+                      {m.column}: expected <span className="font-semibold">{m.expected}</span>, got <span className="font-semibold">{m.actual}</span>
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isOpen && check.actualColumns && check.actualColumns.length > 0 && (
+              <div className="border-t px-3 py-3 bg-muted/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Actual: {colCount} columns | Expected: {expectedCount} columns
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">Column</th>
+                        <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">Type</th>
+                        <th className="text-left py-1.5 font-medium text-muted-foreground">Nullable</th>
+                        <th className="text-left py-1.5 font-medium text-muted-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {check.actualColumns.map((col) => {
+                        const isMissing = check.missingColumns.includes(col.column);
+                        const isExtra = check.extraColumns.includes(col.column);
+                        const mismatch = check.typeMismatches.find(m => m.column === col.column);
+                        const expectedCol = check.expectedColumns?.find(e => e.column === col.column);
+
+                        let rowClass = "";
+                        let statusLabel = "OK";
+                        if (isExtra) {
+                          rowClass = "bg-yellow-50 dark:bg-yellow-900/10";
+                          statusLabel = "Extra";
+                        } else if (mismatch) {
+                          rowClass = "bg-red-50 dark:bg-red-900/10";
+                          statusLabel = "Type mismatch";
+                        }
+
+                        return (
+                          <tr key={col.column} className={`border-b last:border-b-0 ${rowClass}`}>
+                            <td className="py-1.5 pr-4 font-mono">{col.column}</td>
+                            <td className="py-1.5 pr-4 font-mono text-muted-foreground">
+                              {col.type}
+                              {mismatch && (
+                                <span className="text-red-600 dark:text-red-400 ml-1">(expected: {mismatch.expected})</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 text-muted-foreground">{col.nullable ? "Yes" : "No"}</td>
+                            <td className="py-1.5">
+                              {statusLabel === "OK" && <span className="text-green-600 dark:text-green-400">OK</span>}
+                              {statusLabel === "Extra" && <span className="text-yellow-600 dark:text-yellow-400">Extra</span>}
+                              {statusLabel === "Type mismatch" && <span className="text-red-600 dark:text-red-400">Mismatch</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {check.missingColumns.map((col) => {
+                        const expectedCol = check.expectedColumns?.find(e => e.column === col);
+                        return (
+                          <tr key={col} className="border-b last:border-b-0 bg-red-50 dark:bg-red-900/10">
+                            <td className="py-1.5 pr-4 font-mono text-red-600 dark:text-red-400">{col}</td>
+                            <td className="py-1.5 pr-4 font-mono text-red-600 dark:text-red-400">{expectedCol?.type || "?"}</td>
+                            <td className="py-1.5 text-red-600 dark:text-red-400">{expectedCol?.nullable ? "Yes" : "No"}</td>
+                            <td className="py-1.5"><span className="text-red-600 dark:text-red-400 font-medium">Missing</span></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -151,58 +300,7 @@ export default function AdminDataCheck() {
               </Badge>
             </div>
 
-            <div className="space-y-3">
-              {data.structureChecks.map((check) => (
-                <div key={check.table} className="border rounded-md p-3" data-testid={`schema-table-${check.table}`}>
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <StatusIcon status={check.status} />
-                      <span className="font-medium font-mono text-sm">{check.table}</span>
-                    </div>
-                    <StatusBadge status={check.status} />
-                  </div>
-
-                  {check.missingColumns.length > 0 && (
-                    <div className="mt-2 pl-6">
-                      <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Missing columns:</p>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {check.missingColumns.map((col) => (
-                          <Badge key={col} variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-mono">
-                            {col}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {check.extraColumns.length > 0 && (
-                    <div className="mt-2 pl-6">
-                      <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mb-1">Extra columns (not in schema):</p>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {check.extraColumns.map((col) => (
-                          <Badge key={col} variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-mono">
-                            {col}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {check.typeMismatches.length > 0 && (
-                    <div className="mt-2 pl-6">
-                      <p className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Type mismatches:</p>
-                      <div className="space-y-1">
-                        {check.typeMismatches.map((m) => (
-                          <p key={m.column} className="text-xs font-mono text-red-600 dark:text-red-400">
-                            {m.column}: expected <span className="font-semibold">{m.expected}</span>, got <span className="font-semibold">{m.actual}</span>
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <SchemaStructureList checks={data.structureChecks} />
           </Card>
 
           <Card className="p-6" data-testid="section-row-counts">
