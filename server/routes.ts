@@ -72,6 +72,22 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/robots.txt", (_req, res) => {
+    const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /order/
+Disallow: /signin
+Disallow: /account
+
+Sitemap: https://turtlelittle.com/sitemap.xml
+`;
+    res.set("Content-Type", "text/plain");
+    res.send(robotsTxt);
+  });
+
   app.get("/sitemap.xml", async (_req, res) => {
     try {
       const categories = await storage.getCategories();
