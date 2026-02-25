@@ -8,6 +8,9 @@ import { z } from "zod";
 import crypto from "crypto";
 import multer from "multer";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const currentDir = typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 import { execSync } from "child_process";
 import { fileStorage, LocalFileStorage } from "./providers/fileStorage";
 import { codProvider, getRazorpayProvider } from "./providers/payment";
@@ -478,9 +481,9 @@ Sitemap: https://turtlelittle.com/sitemap.xml
   app.get("/api/admin/deploy-check", requireAdmin, async (_req, res) => {
     try {
       const fs = await import("fs");
-      const projectRoot = path.resolve(import.meta.dirname, "..");
-      const isProduction = import.meta.dirname.endsWith("/dist") || import.meta.dirname.endsWith("\\dist");
-      const distDir = isProduction ? import.meta.dirname : path.resolve(projectRoot, "dist");
+      const projectRoot = path.resolve(currentDir, "..");
+      const isProduction = currentDir.endsWith("/dist") || currentDir.endsWith("\\dist");
+      const distDir = isProduction ? currentDir : path.resolve(projectRoot, "dist");
       const publicDir = path.resolve(distDir, "public");
       const serverBundle = path.resolve(distDir, "index.cjs");
       const srcDir = path.resolve(projectRoot, "server");
@@ -934,10 +937,10 @@ Sitemap: https://turtlelittle.com/sitemap.xml
   app.get("/api/admin/seo-audit", requireAdmin, async (_req, res) => {
     try {
       const fs = await import("fs");
-      const seoIsProduction = import.meta.dirname.endsWith("/dist") || import.meta.dirname.endsWith("\\dist");
+      const seoIsProduction = currentDir.endsWith("/dist") || currentDir.endsWith("\\dist");
       const seoPublicDir = seoIsProduction
-        ? path.resolve(import.meta.dirname, "public")
-        : path.resolve(import.meta.dirname, "..", "client", "public");
+        ? path.resolve(currentDir, "public")
+        : path.resolve(currentDir, "..", "client", "public");
       const products = await storage.getProducts();
       const categories = await storage.getCategories();
       const { pool } = await import("./db");
