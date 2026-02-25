@@ -1064,19 +1064,19 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!row.image_url || row.image_url.trim() === "") {
-          images.issues.push({ severity: "error", message: `Missing primary image`, entity: row.name });
+          images.issues.push({ severity: "error", message: `Missing primary image`, entity: `${row.name} (${row.id})` });
         } else {
           points++;
           const imgPath = path.resolve(import.meta.dirname, "..", "client", "public", row.image_url.replace(/^\//, ""));
           if (!fs.existsSync(imgPath)) {
-            images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: row.name });
+            images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: `${row.name} (${row.id})` });
           } else {
             points++;
           }
         }
 
         if (parseInt(row.img_count) === 0) {
-          images.issues.push({ severity: "info", message: `No additional gallery images`, entity: row.name });
+          images.issues.push({ severity: "info", message: `No additional gallery images`, entity: `${row.name} (${row.id})` });
         } else {
           points++;
         }
