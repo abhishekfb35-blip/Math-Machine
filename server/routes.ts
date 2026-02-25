@@ -941,7 +941,7 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         severity: "error" | "warning" | "info";
         message: string;
         entity?: string;
-        entityId?: string;
+        entitySku?: string;
       }
 
       interface AuditCategory {
@@ -964,16 +964,16 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!p.description || p.description.trim().length === 0) {
-          metaTags.issues.push({ severity: "error", message: `Missing description (used as meta description)`, entity: p.name, entityId: p.id });
+          metaTags.issues.push({ severity: "error", message: `Missing description (used as meta description)`, entity: p.name, entitySku: p.sku });
         } else {
           points++;
           if (p.description.length < 50) {
-            metaTags.issues.push({ severity: "warning", message: `Description too short (${p.description.length} chars, min 50)`, entity: p.name, entityId: p.id });
+            metaTags.issues.push({ severity: "warning", message: `Description too short (${p.description.length} chars, min 50)`, entity: p.name, entitySku: p.sku });
           } else {
             points++;
           }
           if (p.description.length > 300) {
-            metaTags.issues.push({ severity: "info", message: `Description very long (${p.description.length} chars), may be truncated in search results`, entity: p.name, entityId: p.id });
+            metaTags.issues.push({ severity: "info", message: `Description very long (${p.description.length} chars), may be truncated in search results`, entity: p.name, entitySku: p.sku });
           } else {
             points++;
           }
@@ -1003,10 +1003,10 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!p.slug) {
-          urls.issues.push({ severity: "error", message: `Missing slug`, entity: p.name, entityId: p.id });
+          urls.issues.push({ severity: "error", message: `Missing slug`, entity: p.name, entitySku: p.sku });
         } else {
           if (!slugRegex.test(p.slug)) {
-            urls.issues.push({ severity: "warning", message: `Slug not URL-friendly: "${p.slug}"`, entity: p.name, entityId: p.id });
+            urls.issues.push({ severity: "warning", message: `Slug not URL-friendly: "${p.slug}"`, entity: p.name, entitySku: p.sku });
           } else {
             points++;
           }
@@ -1052,11 +1052,11 @@ Sitemap: https://turtlelittle.com/sitemap.xml
       const images: AuditCategory = { name: "Images", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
 
       const imgResult = await pool.query(`
-        SELECT p.id, p.name, p.image_url, COUNT(pi.id) as img_count
+        SELECT p.id, p.name, p.sku, p.image_url, COUNT(pi.id) as img_count
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
         WHERE p.active = true
-        GROUP BY p.id, p.name, p.image_url
+        GROUP BY p.id, p.name, p.sku, p.image_url
       `);
 
       for (const row of imgResult.rows) {
@@ -1065,19 +1065,19 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (!row.image_url || row.image_url.trim() === "") {
-          images.issues.push({ severity: "error", message: `Missing primary image`, entity: row.name, entityId: row.id });
+          images.issues.push({ severity: "error", message: `Missing primary image`, entity: row.name, entitySku: row.sku });
         } else {
           points++;
           const imgPath = path.resolve(import.meta.dirname, "..", "client", "public", row.image_url.replace(/^\//, ""));
           if (!fs.existsSync(imgPath)) {
-            images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: row.name, entityId: row.id });
+            images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: row.name, entitySku: row.sku });
           } else {
             points++;
           }
         }
 
         if (parseInt(row.img_count) === 0) {
-          images.issues.push({ severity: "info", message: `No additional gallery images`, entity: row.name, entityId: row.id });
+          images.issues.push({ severity: "info", message: `No additional gallery images`, entity: row.name, entitySku: row.sku });
         } else {
           points++;
         }
@@ -1094,22 +1094,22 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         let points = 0;
 
         if (p.name && p.name.trim()) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing name (required for Product schema)`, entity: p.name || 'Unnamed', entityId: p.id });
+        else structuredData.issues.push({ severity: "error", message: `Missing name (required for Product schema)`, entity: p.name || 'Unnamed', entitySku: p.sku });
 
         if (p.description && p.description.trim()) points++;
-        else structuredData.issues.push({ severity: "warning", message: `Missing description for structured data`, entity: p.name, entityId: p.id });
+        else structuredData.issues.push({ severity: "warning", message: `Missing description for structured data`, entity: p.name, entitySku: p.sku });
 
         if (p.imageUrl && p.imageUrl.trim()) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing image for structured data`, entity: p.name, entityId: p.id });
+        else structuredData.issues.push({ severity: "error", message: `Missing image for structured data`, entity: p.name, entitySku: p.sku });
 
         if (p.price && p.price > 0) points++;
-        else structuredData.issues.push({ severity: "error", message: `Missing or zero price`, entity: p.name, entityId: p.id });
+        else structuredData.issues.push({ severity: "error", message: `Missing or zero price`, entity: p.name, entitySku: p.sku });
 
         if (p.sku && p.sku.trim()) points++;
-        else structuredData.issues.push({ severity: "warning", message: `Missing SKU`, entity: p.name, entityId: p.id });
+        else structuredData.issues.push({ severity: "warning", message: `Missing SKU`, entity: p.name, entitySku: p.sku });
 
         if (p.categoryId && !categoryMap.has(p.categoryId)) {
-          structuredData.issues.push({ severity: "error", message: `References non-existent category (ID: ${p.categoryId})`, entity: p.name, entityId: p.id });
+          structuredData.issues.push({ severity: "error", message: `References non-existent category (ID: ${p.categoryId})`, entity: p.name, entitySku: p.sku });
         }
 
         structuredData.score += points;
@@ -1126,19 +1126,19 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         if (p.description && p.description.length >= 100) {
           points++;
         } else if (p.description) {
-          content.issues.push({ severity: "warning", message: `Short description (${p.description.length} chars, recommended 100+)`, entity: p.name, entityId: p.id });
+          content.issues.push({ severity: "warning", message: `Short description (${p.description.length} chars, recommended 100+)`, entity: p.name, entitySku: p.sku });
         }
 
         if (p.bulletPoints && p.bulletPoints.trim()) {
           points++;
         } else {
-          content.issues.push({ severity: "info", message: `No bullet points`, entity: p.name, entityId: p.id });
+          content.issues.push({ severity: "info", message: `No bullet points`, entity: p.name, entitySku: p.sku });
         }
 
         if (p.searchKeywords && p.searchKeywords.trim()) {
           points++;
         } else {
-          content.issues.push({ severity: "info", message: `No search keywords`, entity: p.name, entityId: p.id });
+          content.issues.push({ severity: "info", message: `No search keywords`, entity: p.name, entitySku: p.sku });
         }
 
         content.score += points;

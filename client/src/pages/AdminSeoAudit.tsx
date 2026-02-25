@@ -11,7 +11,7 @@ interface AuditIssue {
   severity: "error" | "warning" | "info";
   message: string;
   entity?: string;
-  entityId?: string;
+  entitySku?: string;
 }
 
 interface AuditCategory {
@@ -108,9 +108,9 @@ function CategorySection({ category }: { category: AuditCategory }) {
               <div className="min-w-0 flex-1">
                 {issue.entity && <span className="font-medium text-xs text-muted-foreground block truncate">{issue.entity}</span>}
                 <span className="text-foreground/80">{issue.message}</span>
-                {issue.entityId && (
-                  <span className="block mt-0.5 text-[11px] font-mono font-semibold text-foreground/60" data-testid={`text-entity-id-${idx}`}>
-                    ID: {issue.entityId}
+                {issue.entitySku && (
+                  <span className="block mt-0.5 text-[11px] font-mono font-semibold text-foreground/60" data-testid={`text-entity-sku-${idx}`}>
+                    SKU: {issue.entitySku}
                   </span>
                 )}
               </div>
