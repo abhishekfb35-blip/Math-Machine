@@ -478,12 +478,14 @@ Sitemap: https://turtlelittle.com/sitemap.xml
   app.get("/api/admin/deploy-check", requireAdmin, async (_req, res) => {
     try {
       const fs = await import("fs");
-      const distDir = path.resolve(import.meta.dirname, "..", "dist");
+      const projectRoot = path.resolve(import.meta.dirname, "..");
+      const isProduction = import.meta.dirname.endsWith("/dist") || import.meta.dirname.endsWith("\\dist");
+      const distDir = isProduction ? import.meta.dirname : path.resolve(projectRoot, "dist");
       const publicDir = path.resolve(distDir, "public");
       const serverBundle = path.resolve(distDir, "index.cjs");
-      const srcDir = path.resolve(import.meta.dirname);
-      const clientDir = path.resolve(import.meta.dirname, "..", "client");
-      const sharedDir = path.resolve(import.meta.dirname, "..", "shared");
+      const srcDir = path.resolve(projectRoot, "server");
+      const clientDir = path.resolve(projectRoot, "client");
+      const sharedDir = path.resolve(projectRoot, "shared");
 
       const results: {
         buildExists: boolean;
@@ -552,7 +554,6 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         : null;
 
       if (newestSource) {
-        const projectRoot = path.resolve(import.meta.dirname, "..");
         results.newestSourceFile = newestSource.file.replace(projectRoot + "/", "");
         results.newestSourceTimestamp = newestSource.mtime.toISOString();
         results.sourceNewerThanBuild = newestSource.mtime > buildStat.mtime;
@@ -933,6 +934,10 @@ Sitemap: https://turtlelittle.com/sitemap.xml
   app.get("/api/admin/seo-audit", requireAdmin, async (_req, res) => {
     try {
       const fs = await import("fs");
+      const seoIsProduction = import.meta.dirname.endsWith("/dist") || import.meta.dirname.endsWith("\\dist");
+      const seoPublicDir = seoIsProduction
+        ? path.resolve(import.meta.dirname, "public")
+        : path.resolve(import.meta.dirname, "..", "client", "public");
       const products = await storage.getProducts();
       const categories = await storage.getCategories();
       const { pool } = await import("./db");
@@ -1068,7 +1073,7 @@ Sitemap: https://turtlelittle.com/sitemap.xml
           images.issues.push({ severity: "error", message: `Missing primary image`, entity: row.name, entitySku: row.sku });
         } else {
           points++;
-          const imgPath = path.resolve(import.meta.dirname, "..", "client", "public", row.image_url.replace(/^\//, ""));
+          const imgPath = path.resolve(seoPublicDir, row.image_url.replace(/^\//, ""));
           if (!fs.existsSync(imgPath)) {
             images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: row.name, entitySku: row.sku });
           } else {
@@ -1147,17 +1152,15 @@ Sitemap: https://turtlelittle.com/sitemap.xml
 
       const technical: AuditCategory = { name: "Technical SEO", score: 0, maxScore: 7, passed: 0, total: 7, issues: [] };
 
-      const publicDir = path.resolve(import.meta.dirname, "..", "client", "public");
-
-      const ogImageExists = fs.existsSync(path.resolve(publicDir, "og-image.png"));
+      const ogImageExists = fs.existsSync(path.resolve(seoPublicDir, "og-image.png"));
       if (ogImageExists) { technical.score++; technical.passed++; }
       else technical.issues.push({ severity: "error", message: "OG image (og-image.png) not found in public/" });
 
-      const manifestExists = fs.existsSync(path.resolve(publicDir, "manifest.json"));
+      const manifestExists = fs.existsSync(path.resolve(seoPublicDir, "manifest.json"));
       if (manifestExists) { technical.score++; technical.passed++; }
       else technical.issues.push({ severity: "warning", message: "manifest.json not found (PWA support)" });
 
-      const faviconExists = fs.existsSync(path.resolve(publicDir, "favicon.png"));
+      const faviconExists = fs.existsSync(path.resolve(seoPublicDir, "favicon.png"));
       if (faviconExists) { technical.score++; technical.passed++; }
       else technical.issues.push({ severity: "warning", message: "favicon.png not found" });
 
