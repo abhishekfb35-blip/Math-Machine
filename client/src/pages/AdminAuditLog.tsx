@@ -267,9 +267,9 @@ export default function AdminAuditLog() {
           <h1 className="text-xl font-bold" data-testid="text-audit-log-title">Audit Log</h1>
           <p className="text-sm text-muted-foreground">Track all admin changes</p>
         </div>
-        <Link href="/admin/catalog">
-          <Button variant="outline" size="sm" data-testid="link-back-catalog">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Catalog
+        <Link href="/admin">
+          <Button variant="outline" size="sm" data-testid="link-back-dashboard">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Dashboard
           </Button>
         </Link>
       </div>

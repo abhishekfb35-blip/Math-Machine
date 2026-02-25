@@ -35,7 +35,7 @@ export default function AdminLogin() {
 
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
       await queryClient.refetchQueries({ queryKey: ["/api/admin/check"] });
-      setLocation("/admin/catalog");
+      setLocation("/admin");
     } catch {
       toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
     } finally {

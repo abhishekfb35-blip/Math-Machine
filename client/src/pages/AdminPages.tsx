@@ -233,8 +233,8 @@ export default function AdminPages() {
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="admin-pages">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin/catalog">
-            <Button variant="ghost" size="sm" data-testid="link-back-admin">
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" data-testid="link-back-dashboard">
               <ArrowLeft className="w-4 h-4 mr-1" /> Admin
             </Button>
           </Link>

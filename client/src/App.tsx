@@ -27,6 +27,7 @@ import AdminOrders from "@/pages/AdminOrders";
 import AdminExport from "@/pages/AdminExport";
 import AdminChecks from "@/pages/AdminChecks";
 import AdminDataCheck from "@/pages/AdminDataCheck";
+import AdminDashboard from "@/pages/AdminDashboard";
 import AdminDeployCheck from "@/pages/AdminDeployCheck";
 import AdminSeoAudit from "@/pages/AdminSeoAudit";
 import AdminGuard from "@/components/AdminGuard";
@@ -60,7 +61,8 @@ function Router() {
       <Route path="/order/:id" component={OrderConfirmation} />
       <Route path="/signin" component={SignInPage} />
       <Route path="/account" component={AccountPage} />
-      <Route path="/admin/login" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
+      <Route path="/admin" component={() => <AdminGuard><AdminDashboard /></AdminGuard>} />
+      <Route path="/admin/login" component={() => <AdminGuard><AdminDashboard /></AdminGuard>} />
       <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
       <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />

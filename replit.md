@@ -23,6 +23,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - **Cart** (`/cart`): Item management, discount display, order summary.
     - **Checkout** (`/checkout`): Address form and order summary.
     - **Order Confirmation** (`/order/:id`): Order details.
+    - **Admin Dashboard** (`/admin`): Central entry point for all admin functions. Shows card grid linking to Catalog, Orders, Page Builder, Policy Pages, Health Checks, Audit Log, and Export Data. Login redirects here.
     - **Admin Builder** (`/admin/builder`): Dynamic homepage layout and collection management.
     - **Admin Catalog** (`/admin/catalog`): CMS for managing categories and products (with "Save" and "Save & Close" buttons).
     - **Admin Orders** (`/admin/orders`): Order management with list view, status filters, search, order detail with items/address/payment, status updates (triggers customer email), and internal notes.

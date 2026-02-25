@@ -87,8 +87,8 @@ export default function AdminExport() {
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
       <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link href="/admin/catalog">
-            <Button variant="ghost" size="icon" data-testid="button-back-catalog">
+          <Link href="/admin">
+            <Button variant="ghost" size="icon" data-testid="button-back-dashboard">
               <ChevronLeft className="w-5 h-5" />
             </Button>
           </Link>

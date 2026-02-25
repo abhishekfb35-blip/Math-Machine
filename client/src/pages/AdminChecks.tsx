@@ -31,7 +31,7 @@ export default function AdminChecks() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
       <div className="flex items-center gap-2 mb-6 flex-wrap">
-        <Link href="/admin/catalog">
+        <Link href="/admin">
           <Button variant="ghost" size="icon" data-testid="button-back-catalog">
             <ChevronLeft className="w-5 h-5" />
           </Button>

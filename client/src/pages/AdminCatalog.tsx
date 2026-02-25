@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, LogOut, ArrowRightLeft, Search
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -107,7 +107,6 @@ function useAdminLogout() {
 
 export default function AdminCatalog() {
   const { toast } = useToast();
-  const handleLogout = useAdminLogout();
   const [view, setView] = useState<View>("categories");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -426,23 +425,10 @@ export default function AdminCatalog() {
             <p className="text-sm text-muted-foreground">Manage categories and products</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Link href="/admin/orders">
-              <Button variant="outline" size="sm" data-testid="link-orders">Orders</Button>
-            </Link>
-            <Link href="/admin/builder">
-              <Button variant="outline" size="sm" data-testid="link-builder">Page Builder</Button>
-            </Link>
-            <Link href="/admin/audit-log">
-              <Button variant="outline" size="sm" data-testid="link-audit-log">Audit Log</Button>
-            </Link>
-            <Link href="/admin/pages">
-              <Button variant="outline" size="sm" data-testid="link-policy-pages">Policy Page Builders</Button>
-            </Link>
-            <Link href="/admin/export">
-              <Button variant="outline" size="sm" data-testid="link-export">Export Data</Button>
-            </Link>
-            <Link href="/admin/checks">
-              <Button variant="outline" size="sm" data-testid="link-checks">Checks</Button>
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" data-testid="link-dashboard">
+                <ChevronLeft className="w-4 h-4 mr-1" /> Dashboard
+              </Button>
             </Link>
             <Button
               variant="outline"
@@ -451,14 +437,6 @@ export default function AdminCatalog() {
               data-testid="button-tags"
             >
               <TagIcon className="w-4 h-4 mr-1" /> Tags
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <LogOut className="w-4 h-4 mr-1" /> Logout
             </Button>
             <Button
               size="sm"

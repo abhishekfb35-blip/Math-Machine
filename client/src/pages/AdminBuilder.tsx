@@ -806,9 +806,9 @@ export default function AdminBuilder() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Link href="/admin/catalog">
-                <Button variant="outline" size="sm" data-testid="link-catalog">
-                  <Package className="w-4 h-4 mr-1" /> Product Catalog
+              <Link href="/admin">
+                <Button variant="ghost" size="sm" data-testid="link-dashboard">
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Dashboard
                 </Button>
               </Link>
               <Button
