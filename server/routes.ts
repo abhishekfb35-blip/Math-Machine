@@ -928,6 +928,291 @@ Sitemap: https://turtlelittle.com/sitemap.xml
     }
   });
 
+  // ── Admin SEO Audit ──
+
+  app.get("/api/admin/seo-audit", requireAdmin, async (_req, res) => {
+    try {
+      const fs = await import("fs");
+      const products = await storage.getProducts();
+      const categories = await storage.getCategories();
+      const { pool } = await import("./db");
+
+      interface AuditIssue {
+        severity: "error" | "warning" | "info";
+        message: string;
+        entity?: string;
+      }
+
+      interface AuditCategory {
+        name: string;
+        score: number;
+        maxScore: number;
+        passed: number;
+        total: number;
+        issues: AuditIssue[];
+      }
+
+      const activeProducts = products.filter(p => p.active);
+      const inactiveProducts = products.filter(p => !p.active);
+
+      const metaTags: AuditCategory = { name: "Meta Tags", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
+
+      for (const p of activeProducts) {
+        metaTags.total++;
+        metaTags.maxScore += 3;
+        let points = 0;
+
+        if (!p.description || p.description.trim().length === 0) {
+          metaTags.issues.push({ severity: "error", message: `Missing description (used as meta description)`, entity: p.name });
+        } else {
+          points++;
+          if (p.description.length < 50) {
+            metaTags.issues.push({ severity: "warning", message: `Description too short (${p.description.length} chars, min 50)`, entity: p.name });
+          } else {
+            points++;
+          }
+          if (p.description.length > 300) {
+            metaTags.issues.push({ severity: "info", message: `Description very long (${p.description.length} chars), may be truncated in search results`, entity: p.name });
+          } else {
+            points++;
+          }
+        }
+        metaTags.score += points;
+      }
+
+      for (const c of categories) {
+        metaTags.total++;
+        metaTags.maxScore += 1;
+        if (!c.description || c.description.trim().length === 0) {
+          metaTags.issues.push({ severity: "warning", message: `Category missing description`, entity: c.name });
+        } else {
+          metaTags.score++;
+        }
+      }
+      metaTags.passed = metaTags.total - metaTags.issues.filter(i => i.severity === "error").length;
+
+      const urls: AuditCategory = { name: "URLs & Slugs", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
+
+      const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+      const productSlugs = new Map<string, string[]>();
+
+      for (const p of activeProducts) {
+        urls.total++;
+        urls.maxScore += 2;
+        let points = 0;
+
+        if (!p.slug) {
+          urls.issues.push({ severity: "error", message: `Missing slug`, entity: p.name });
+        } else {
+          if (!slugRegex.test(p.slug)) {
+            urls.issues.push({ severity: "warning", message: `Slug not URL-friendly: "${p.slug}"`, entity: p.name });
+          } else {
+            points++;
+          }
+          const existing = productSlugs.get(p.slug) || [];
+          existing.push(p.name);
+          productSlugs.set(p.slug, existing);
+          points++;
+        }
+        urls.score += points;
+      }
+
+      for (const [slug, names] of productSlugs) {
+        if (names.length > 1) {
+          urls.issues.push({ severity: "error", message: `Duplicate product slug "${slug}" used by: ${names.join(", ")}` });
+          urls.score -= names.length;
+        }
+      }
+
+      const catSlugs = new Map<string, string[]>();
+      for (const c of categories) {
+        urls.total++;
+        urls.maxScore += 1;
+        if (!c.slug) {
+          urls.issues.push({ severity: "error", message: `Category missing slug`, entity: c.name });
+        } else {
+          if (!slugRegex.test(c.slug)) {
+            urls.issues.push({ severity: "warning", message: `Category slug not URL-friendly: "${c.slug}"`, entity: c.name });
+          } else {
+            urls.score++;
+          }
+          const existing = catSlugs.get(c.slug) || [];
+          existing.push(c.name);
+          catSlugs.set(c.slug, existing);
+        }
+      }
+      for (const [slug, names] of catSlugs) {
+        if (names.length > 1) {
+          urls.issues.push({ severity: "error", message: `Duplicate category slug "${slug}" used by: ${names.join(", ")}` });
+        }
+      }
+      urls.passed = urls.total - urls.issues.filter(i => i.severity === "error").length;
+
+      const images: AuditCategory = { name: "Images", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
+
+      const imgResult = await pool.query(`
+        SELECT p.id, p.name, p.image_url, COUNT(pi.id) as img_count
+        FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id
+        WHERE p.active = true
+        GROUP BY p.id, p.name, p.image_url
+      `);
+
+      for (const row of imgResult.rows) {
+        images.total++;
+        images.maxScore += 3;
+        let points = 0;
+
+        if (!row.image_url || row.image_url.trim() === "") {
+          images.issues.push({ severity: "error", message: `Missing primary image`, entity: row.name });
+        } else {
+          points++;
+          const imgPath = path.resolve(import.meta.dirname, "..", "client", "public", row.image_url.replace(/^\//, ""));
+          if (!fs.existsSync(imgPath)) {
+            images.issues.push({ severity: "warning", message: `Primary image file not found: ${row.image_url}`, entity: row.name });
+          } else {
+            points++;
+          }
+        }
+
+        if (parseInt(row.img_count) === 0) {
+          images.issues.push({ severity: "info", message: `No additional gallery images`, entity: row.name });
+        } else {
+          points++;
+        }
+        images.score += points;
+      }
+      images.passed = images.total - images.issues.filter(i => i.severity === "error").length;
+
+      const structuredData: AuditCategory = { name: "Structured Data", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
+      const categoryMap = new Map(categories.map(c => [c.id, c]));
+
+      for (const p of activeProducts) {
+        structuredData.total++;
+        structuredData.maxScore += 5;
+        let points = 0;
+
+        if (p.name && p.name.trim()) points++;
+        else structuredData.issues.push({ severity: "error", message: `Missing name (required for Product schema)`, entity: p.name || `ID: ${p.id}` });
+
+        if (p.description && p.description.trim()) points++;
+        else structuredData.issues.push({ severity: "warning", message: `Missing description for structured data`, entity: p.name });
+
+        if (p.imageUrl && p.imageUrl.trim()) points++;
+        else structuredData.issues.push({ severity: "error", message: `Missing image for structured data`, entity: p.name });
+
+        if (p.price && p.price > 0) points++;
+        else structuredData.issues.push({ severity: "error", message: `Missing or zero price`, entity: p.name });
+
+        if (p.sku && p.sku.trim()) points++;
+        else structuredData.issues.push({ severity: "warning", message: `Missing SKU`, entity: p.name });
+
+        if (p.categoryId && !categoryMap.has(p.categoryId)) {
+          structuredData.issues.push({ severity: "error", message: `References non-existent category (ID: ${p.categoryId})`, entity: p.name });
+        }
+
+        structuredData.score += points;
+      }
+      structuredData.passed = structuredData.total - structuredData.issues.filter(i => i.severity === "error").length;
+
+      const content: AuditCategory = { name: "Content Quality", score: 0, maxScore: 0, passed: 0, total: 0, issues: [] };
+
+      for (const p of activeProducts) {
+        content.total++;
+        content.maxScore += 3;
+        let points = 0;
+
+        if (p.description && p.description.length >= 100) {
+          points++;
+        } else if (p.description) {
+          content.issues.push({ severity: "warning", message: `Short description (${p.description.length} chars, recommended 100+)`, entity: p.name });
+        }
+
+        if (p.bulletPoints && p.bulletPoints.trim()) {
+          points++;
+        } else {
+          content.issues.push({ severity: "info", message: `No bullet points`, entity: p.name });
+        }
+
+        if (p.searchKeywords && p.searchKeywords.trim()) {
+          points++;
+        } else {
+          content.issues.push({ severity: "info", message: `No search keywords`, entity: p.name });
+        }
+
+        content.score += points;
+      }
+      content.passed = content.total - content.issues.filter(i => i.severity === "error" || i.severity === "warning").length;
+
+      const technical: AuditCategory = { name: "Technical SEO", score: 0, maxScore: 7, passed: 0, total: 7, issues: [] };
+
+      const publicDir = path.resolve(import.meta.dirname, "..", "client", "public");
+
+      const ogImageExists = fs.existsSync(path.resolve(publicDir, "og-image.png"));
+      if (ogImageExists) { technical.score++; technical.passed++; }
+      else technical.issues.push({ severity: "error", message: "OG image (og-image.png) not found in public/" });
+
+      const manifestExists = fs.existsSync(path.resolve(publicDir, "manifest.json"));
+      if (manifestExists) { technical.score++; technical.passed++; }
+      else technical.issues.push({ severity: "warning", message: "manifest.json not found (PWA support)" });
+
+      const faviconExists = fs.existsSync(path.resolve(publicDir, "favicon.png"));
+      if (faviconExists) { technical.score++; technical.passed++; }
+      else technical.issues.push({ severity: "warning", message: "favicon.png not found" });
+
+      const sitemapActiveCount = activeProducts.length + categories.length + 7;
+      technical.score++;
+      technical.passed++;
+      technical.issues.push({ severity: "info", message: `Sitemap covers ~${sitemapActiveCount} URLs (${activeProducts.length} products, ${categories.length} categories, 7 static pages)` });
+
+      technical.score++;
+      technical.passed++;
+
+      if (inactiveProducts.length > 0) {
+        technical.issues.push({ severity: "info", message: `${inactiveProducts.length} inactive product(s) excluded from sitemap` });
+      }
+
+      technical.score++;
+      technical.passed++;
+
+      const hasRobotsTxt = true;
+      if (hasRobotsTxt) { technical.score++; technical.passed++; }
+
+      const allCategories = [metaTags, urls, images, structuredData, content, technical];
+      const totalScore = allCategories.reduce((s, c) => s + c.score, 0);
+      const totalMaxScore = allCategories.reduce((s, c) => s + c.maxScore, 0);
+      const overallScore = totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
+
+      const totalIssues = {
+        errors: allCategories.reduce((s, c) => s + c.issues.filter(i => i.severity === "error").length, 0),
+        warnings: allCategories.reduce((s, c) => s + c.issues.filter(i => i.severity === "warning").length, 0),
+        info: allCategories.reduce((s, c) => s + c.issues.filter(i => i.severity === "info").length, 0),
+      };
+
+      res.json({
+        overallScore,
+        totalIssues,
+        categories: allCategories.map(c => ({
+          name: c.name,
+          score: c.maxScore > 0 ? Math.round((c.score / c.maxScore) * 100) : 100,
+          passed: c.passed,
+          total: c.total,
+          issues: c.issues,
+        })),
+        summary: {
+          activeProducts: activeProducts.length,
+          inactiveProducts: inactiveProducts.length,
+          totalCategories: categories.length,
+          sitemapUrls: sitemapActiveCount,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("SEO audit error:", err);
+      res.status(500).json({ message: "Failed to run SEO audit" });
+    }
+  });
+
   // ── Admin Data Export Routes (protected) ──
 
   app.get("/api/admin/export/sql", requireAdmin, async (_req, res) => {

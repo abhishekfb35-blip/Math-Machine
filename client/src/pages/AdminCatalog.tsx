@@ -441,6 +441,9 @@ export default function AdminCatalog() {
             <Link href="/admin/export">
               <Button variant="outline" size="sm" data-testid="link-export">Export Data</Button>
             </Link>
+            <Link href="/admin/checks">
+              <Button variant="outline" size="sm" data-testid="link-checks">Checks</Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
