@@ -526,7 +526,7 @@ export default function AdminCatalog() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => window.open(`/admin/catalog/product/${prod.id}`, '_blank')}
+                          onClick={() => { window.open(`/admin/catalog/product/${prod.id}`, '_blank'); window.focus(); }}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -738,6 +738,7 @@ export default function AdminCatalog() {
                     a.click();
                     document.body.removeChild(a);
                   });
+                  window.focus();
                 }}
                 data-testid="button-bulk-edit"
               >
@@ -874,7 +875,7 @@ export default function AdminCatalog() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => window.open(`/admin/catalog/product/${prod.id}`, '_blank')}
+                      onClick={() => { window.open(`/admin/catalog/product/${prod.id}`, '_blank'); window.focus(); }}
                       data-testid={`button-edit-product-${prod.id}`}
                     >
                       <Pencil className="w-4 h-4" />
