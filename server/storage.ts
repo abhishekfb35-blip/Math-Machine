@@ -127,23 +127,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.active, true)).orderBy(products.sortOrder);
+    return await db.select().from(products).where(eq(products.active, true)).orderBy(products.sortOrder, products.name);
   }
 
   async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products).orderBy(products.sortOrder);
+    return await db.select().from(products).orderBy(products.sortOrder, products.name);
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
     return await db.select().from(products)
       .where(and(eq(products.categoryId, categoryId), eq(products.active, true)))
-      .orderBy(products.sortOrder);
+      .orderBy(products.sortOrder, products.name);
   }
 
   async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
     return await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
-      .orderBy(products.sortOrder);
+      .orderBy(products.sortOrder, products.name);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
@@ -157,7 +157,7 @@ export class DatabaseStorage implements IStorage {
           ilike(products.description, pattern),
         )
       ))
-      .orderBy(products.sortOrder);
+      .orderBy(products.sortOrder, products.name);
   }
 
   async searchAllProducts(query: string): Promise<Product[]> {
@@ -170,7 +170,7 @@ export class DatabaseStorage implements IStorage {
           ilike(products.description, pattern),
         )
       )
-      .orderBy(products.sortOrder);
+      .orderBy(products.sortOrder, products.name);
   }
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
