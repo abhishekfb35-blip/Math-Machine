@@ -911,9 +911,97 @@ Sitemap: https://turtlelittle.com/sitemap.xml
       const expectedConfigKeys = ["header", "hero", "homepageCollections"];
       const missingConfigKeys = expectedConfigKeys.filter(k => !existingKeys.includes(k));
 
-      const overallStatus = structureChecks.some(c => c.status === "fail" || c.status === "missing_table")
+      const isCuid2 = (val: string) => /^[a-z0-9]{24,}$/.test(val);
+
+      const idFormatTables = ["categories", "products", "product_images", "product_reviews", "tags"];
+      const idFormatChecks: { table: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; sampleIds: string[]; status: "pass" | "fail" | "empty" }[] = [];
+
+      for (const table of idFormatTables) {
+        try {
+          const countResult = await pool.query(`SELECT COUNT(*)::int as cnt FROM "${table}"`);
+          const total = countResult.rows[0].cnt;
+          if (total === 0) {
+            idFormatChecks.push({ table, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
+            continue;
+          }
+          const idsResult = await pool.query(`SELECT id FROM "${table}" LIMIT 100`);
+          const allIds = idsResult.rows.map((r: any) => String(r.id));
+          const cuid2Count = allIds.filter(isCuid2).length;
+          const nonCuid2Count = allIds.length - cuid2Count;
+          const fullNonCuid2 = total > 100 ? Math.round((nonCuid2Count / allIds.length) * total) : nonCuid2Count;
+          const fullCuid2 = total - fullNonCuid2;
+
+          const sampleResult = await pool.query(`SELECT id FROM "${table}" ORDER BY id LIMIT 3`);
+          const sampleIds = sampleResult.rows.map((r: any) => String(r.id));
+
+          idFormatChecks.push({
+            table,
+            totalRows: total,
+            cuid2Count: fullCuid2,
+            nonCuid2Count: fullNonCuid2,
+            sampleIds,
+            status: fullNonCuid2 > 0 ? "fail" : "pass",
+          });
+        } catch {
+          idFormatChecks.push({ table, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
+        }
+      }
+
+      const fkIdChecks: { table: string; column: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; status: "pass" | "fail" | "empty" }[] = [];
+      const fkColumns: { table: string; column: string }[] = [
+        { table: "products", column: "category_id" },
+        { table: "product_images", column: "product_id" },
+        { table: "product_reviews", column: "product_id" },
+      ];
+      for (const fk of fkColumns) {
+        try {
+          const countResult = await pool.query(`SELECT COUNT(*)::int as cnt FROM "${fk.table}"`);
+          const total = countResult.rows[0].cnt;
+          if (total === 0) {
+            fkIdChecks.push({ ...fk, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
+            continue;
+          }
+          const vals = await pool.query(`SELECT "${fk.column}" as val FROM "${fk.table}" WHERE "${fk.column}" IS NOT NULL LIMIT 100`);
+          const allVals = vals.rows.map((r: any) => String(r.val));
+          const c2 = allVals.filter(isCuid2).length;
+          const nc2 = allVals.length - c2;
+          const fullNc2 = total > 100 ? Math.round((nc2 / allVals.length) * total) : nc2;
+          fkIdChecks.push({ ...fk, totalRows: total, cuid2Count: total - fullNc2, nonCuid2Count: fullNc2, status: fullNc2 > 0 ? "fail" : "pass" });
+        } catch {
+          fkIdChecks.push({ ...fk, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
+        }
+      }
+
+      const completenessFields = ["sku", "material", "color", "dimensions", "audience", "product_type"];
+      const dataCompleteness: { field: string; totalProducts: number; nullCount: number; populatedCount: number; status: "pass" | "warn" }[] = [];
+      try {
+        const totalProducts = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products`)).rows[0].cnt;
+        for (const field of completenessFields) {
+          const nulls = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products WHERE "${field}" IS NULL OR "${field}" = ''`)).rows[0].cnt;
+          dataCompleteness.push({
+            field,
+            totalProducts,
+            nullCount: nulls,
+            populatedCount: totalProducts - nulls,
+            status: nulls > 0 ? "warn" : "pass",
+          });
+        }
+      } catch { /* table may not exist */ }
+
+      const sampleData: { products: { id: string; slug: string; sku: string | null }[]; categories: { id: string; slug: string; name: string }[] } = { products: [], categories: [] };
+      try {
+        const sp = await pool.query(`SELECT id, slug, sku FROM products ORDER BY slug LIMIT 5`);
+        sampleData.products = sp.rows.map((r: any) => ({ id: String(r.id), slug: r.slug, sku: r.sku }));
+        const sc = await pool.query(`SELECT id, slug, name FROM categories ORDER BY slug LIMIT 5`);
+        sampleData.categories = sc.rows.map((r: any) => ({ id: String(r.id), slug: r.slug, name: r.name }));
+      } catch { /* ignore */ }
+
+      const hasIdFormatIssues = idFormatChecks.some(c => c.status === "fail") || fkIdChecks.some(c => c.status === "fail");
+      const hasCompletenessIssues = dataCompleteness.some(c => c.status === "warn");
+
+      const overallStatus = structureChecks.some(c => c.status === "fail" || c.status === "missing_table") || hasIdFormatIssues
         ? "fail"
-        : structureChecks.some(c => c.status === "warn") || tableCounts.some(c => c.status === "empty") || integrityIssues.length > 0
+        : structureChecks.some(c => c.status === "warn") || tableCounts.some(c => c.status === "empty") || integrityIssues.length > 0 || hasCompletenessIssues
         ? "warn"
         : "pass";
 
@@ -925,6 +1013,10 @@ Sitemap: https://turtlelittle.com/sitemap.xml
         tableCounts,
         integrityIssues,
         siteConfig: { existingKeys, missingConfigKeys },
+        idFormatChecks,
+        fkIdChecks,
+        dataCompleteness,
+        sampleData,
       });
     } catch (err) {
       console.error("Data check error:", err);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronLeft, Database, AlertTriangle, CheckCircle2, XCircle, Info, RefreshCw, Server, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronLeft, Database, AlertTriangle, CheckCircle2, XCircle, Info, RefreshCw, Server, ChevronDown, ChevronRight, Key, BarChart3, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,37 @@ interface TableCount {
   status: "pass" | "warn" | "empty";
 }
 
+interface IdFormatCheck {
+  table: string;
+  totalRows: number;
+  cuid2Count: number;
+  nonCuid2Count: number;
+  sampleIds: string[];
+  status: "pass" | "fail" | "empty";
+}
+
+interface FkIdCheck {
+  table: string;
+  column: string;
+  totalRows: number;
+  cuid2Count: number;
+  nonCuid2Count: number;
+  status: "pass" | "fail" | "empty";
+}
+
+interface DataCompletenessItem {
+  field: string;
+  totalProducts: number;
+  nullCount: number;
+  populatedCount: number;
+  status: "pass" | "warn";
+}
+
+interface SampleData {
+  products: { id: string; slug: string; sku: string | null }[];
+  categories: { id: string; slug: string; name: string }[];
+}
+
 interface DataCheckResponse {
   environment: string;
   timestamp: string;
@@ -39,6 +70,10 @@ interface DataCheckResponse {
     existingKeys: string[];
     missingConfigKeys: string[];
   };
+  idFormatChecks?: IdFormatCheck[];
+  fkIdChecks?: FkIdCheck[];
+  dataCompleteness?: DataCompletenessItem[];
+  sampleData?: SampleData;
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -173,10 +208,8 @@ function SchemaStructureList({ checks }: { checks: StructureCheck[] }) {
                     </thead>
                     <tbody>
                       {check.actualColumns.map((col) => {
-                        const isMissing = check.missingColumns.includes(col.column);
                         const isExtra = check.extraColumns.includes(col.column);
                         const mismatch = check.typeMismatches.find(m => m.column === col.column);
-                        const expectedCol = check.expectedColumns?.find(e => e.column === col.column);
 
                         let rowClass = "";
                         let statusLabel = "OK";
@@ -239,14 +272,14 @@ export default function AdminDataCheck() {
     <div className="max-w-5xl mx-auto px-4 py-6 pb-24">
       <div className="flex items-center justify-between gap-2 mb-6 flex-wrap">
         <div className="flex items-center gap-3">
-          <Link href="/admin/checks">
+          <Link href="/admin">
             <Button variant="ghost" size="icon" data-testid="button-back-catalog">
               <ChevronLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
             <h1 className="text-xl font-bold" data-testid="text-data-check-title">Database Health Check</h1>
-            <p className="text-sm text-muted-foreground">Schema structure and data integrity</p>
+            <p className="text-sm text-muted-foreground">Schema structure, ID formats, and data integrity</p>
           </div>
         </div>
         <Button
@@ -291,6 +324,88 @@ export default function AdminDataCheck() {
 
           <OverallStatusBanner status={data.overallStatus} />
 
+          {data.idFormatChecks && data.idFormatChecks.length > 0 && (
+            <Card className="p-6" data-testid="section-id-format">
+              <div className="flex items-center gap-2 mb-4">
+                <Key className="w-5 h-5 text-muted-foreground" />
+                <h2 className="font-semibold text-lg">ID Format (Primary Keys)</h2>
+                <Badge variant="secondary" className="ml-auto">
+                  {data.idFormatChecks.filter(c => c.status === "pass").length}/{data.idFormatChecks.filter(c => c.status !== "empty").length} CUID2
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">All IDs should be CUID2 format (24+ lowercase alphanumeric characters). Non-CUID2 IDs indicate a data mismatch.</p>
+              <div className="space-y-2">
+                {data.idFormatChecks.map((check) => (
+                  <div key={check.table} className="border rounded-md p-3" data-testid={`id-format-${check.table}`}>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <StatusIcon status={check.status} />
+                        <span className="font-mono text-sm font-medium">{check.table}</span>
+                        <span className="text-xs text-muted-foreground">({check.totalRows} rows)</span>
+                      </div>
+                      <StatusBadge status={check.status} />
+                    </div>
+                    {check.status !== "empty" && (
+                      <>
+                        <div className="flex gap-4 text-xs mb-2">
+                          <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
+                          {check.nonCuid2Count > 0 && (
+                            <span className="text-red-600 dark:text-red-400 font-medium">Non-CUID2: {check.nonCuid2Count}</span>
+                          )}
+                        </div>
+                        {check.sampleIds.length > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            <span className="font-medium">Sample IDs: </span>
+                            {check.sampleIds.map((id, i) => (
+                              <span key={i}>
+                                <code className={`px-1 py-0.5 rounded text-[11px] ${/^[a-z0-9]{24,}$/.test(id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>{id}</code>
+                                {i < check.sampleIds.length - 1 && " "}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {data.fkIdChecks && data.fkIdChecks.length > 0 && (
+            <Card className="p-6" data-testid="section-fk-format">
+              <div className="flex items-center gap-2 mb-4">
+                <Key className="w-5 h-5 text-muted-foreground" />
+                <h2 className="font-semibold text-lg">ID Format (Foreign Keys)</h2>
+                <Badge variant="secondary" className="ml-auto">
+                  {data.fkIdChecks.filter(c => c.status === "pass").length}/{data.fkIdChecks.filter(c => c.status !== "empty").length} CUID2
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">Foreign key references should also be CUID2 format to match primary keys.</p>
+              <div className="space-y-2">
+                {data.fkIdChecks.map((check) => (
+                  <div key={`${check.table}-${check.column}`} className="border rounded-md p-3" data-testid={`fk-format-${check.table}-${check.column}`}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <StatusIcon status={check.status} />
+                        <span className="font-mono text-sm"><span className="font-medium">{check.table}</span>.<span className="text-muted-foreground">{check.column}</span></span>
+                      </div>
+                      <StatusBadge status={check.status} />
+                    </div>
+                    {check.status !== "empty" && (
+                      <div className="flex gap-4 text-xs mt-1">
+                        <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
+                        {check.nonCuid2Count > 0 && (
+                          <span className="text-red-600 dark:text-red-400 font-medium">Non-CUID2: {check.nonCuid2Count}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6" data-testid="section-schema">
             <div className="flex items-center gap-2 mb-4">
               <Database className="w-5 h-5 text-muted-foreground" />
@@ -323,6 +438,46 @@ export default function AdminDataCheck() {
             </div>
           </Card>
 
+          {data.dataCompleteness && data.dataCompleteness.length > 0 && (
+            <Card className="p-6" data-testid="section-completeness">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-muted-foreground" />
+                <h2 className="font-semibold text-lg">Product Data Completeness</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">Checks for null or empty values in important product fields.</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Field</th>
+                      <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Populated</th>
+                      <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Null/Empty</th>
+                      <th className="text-right py-2 font-medium text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.dataCompleteness.map((item) => (
+                      <tr key={item.field} className={`border-b last:border-b-0 ${item.status === "warn" ? "bg-yellow-50 dark:bg-yellow-900/10" : ""}`} data-testid={`completeness-${item.field}`}>
+                        <td className="py-2 pr-4 font-mono text-sm">{item.field}</td>
+                        <td className="py-2 pr-4 text-right tabular-nums">{item.populatedCount}</td>
+                        <td className="py-2 pr-4 text-right tabular-nums">
+                          {item.nullCount > 0 ? (
+                            <span className="text-yellow-600 dark:text-yellow-400 font-medium">{item.nullCount}</span>
+                          ) : (
+                            <span className="text-green-600 dark:text-green-400">0</span>
+                          )}
+                        </td>
+                        <td className="py-2 text-right">
+                          <StatusIcon status={item.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6" data-testid="section-integrity">
             <h2 className="font-semibold text-lg mb-4">Data Integrity</h2>
             {data.integrityIssues.length === 0 ? (
@@ -341,6 +496,78 @@ export default function AdminDataCheck() {
               </div>
             )}
           </Card>
+
+          {data.sampleData && (
+            <Card className="p-6" data-testid="section-sample-data">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="w-5 h-5 text-muted-foreground" />
+                <h2 className="font-semibold text-lg">Sample Data (for comparison)</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">Compare these values between dev and production to verify IDs and data match.</p>
+
+              {data.sampleData.categories.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-2">Categories</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">Slug</th>
+                          <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">ID</th>
+                          <th className="text-left py-1.5 font-medium text-muted-foreground">Name</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.sampleData.categories.map((cat) => (
+                          <tr key={cat.slug} className="border-b last:border-b-0" data-testid={`sample-cat-${cat.slug}`}>
+                            <td className="py-1.5 pr-4 font-mono">{cat.slug}</td>
+                            <td className="py-1.5 pr-4">
+                              <code className={`px-1 py-0.5 rounded text-[11px] ${/^[a-z0-9]{24,}$/.test(cat.id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>{cat.id}</code>
+                            </td>
+                            <td className="py-1.5">{cat.name}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {data.sampleData.products.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Products</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">Slug</th>
+                          <th className="text-left py-1.5 pr-4 font-medium text-muted-foreground">ID</th>
+                          <th className="text-left py-1.5 font-medium text-muted-foreground">SKU</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.sampleData.products.map((prod) => (
+                          <tr key={prod.slug} className="border-b last:border-b-0" data-testid={`sample-prod-${prod.slug}`}>
+                            <td className="py-1.5 pr-4 font-mono">{prod.slug}</td>
+                            <td className="py-1.5 pr-4">
+                              <code className={`px-1 py-0.5 rounded text-[11px] ${/^[a-z0-9]{24,}$/.test(prod.id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>{prod.id}</code>
+                            </td>
+                            <td className="py-1.5">
+                              {prod.sku ? (
+                                <code className="px-1 py-0.5 rounded text-[11px] bg-muted">{prod.sku}</code>
+                              ) : (
+                                <span className="text-red-500 dark:text-red-400 text-[11px] font-medium">null</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
           <Card className="p-6" data-testid="section-site-config">
             <h2 className="font-semibold text-lg mb-4">Site Configuration</h2>
