@@ -335,17 +335,18 @@ export default function AdminDataCheck() {
             <Card className="p-6" data-testid="section-id-format">
               <div className="flex items-center gap-2 mb-4">
                 <Key className="w-5 h-5 text-muted-foreground" />
-                <h2 className="font-semibold text-lg">ID Format (Primary Keys)</h2>
+                <h2 className="font-semibold text-lg">Key Column Checks (IDs &amp; SKU)</h2>
                 <Badge variant="secondary" className="ml-auto">
-                  {data.idFormatChecks.filter(c => c.status === "pass").length}/{data.idFormatChecks.filter(c => c.status !== "empty").length} CUID2
+                  {data.idFormatChecks.filter(c => c.status === "pass").length}/{data.idFormatChecks.filter(c => c.status !== "empty").length} OK
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">All IDs should be CUID2 format (24+ lowercase alphanumeric characters). Non-CUID2 IDs indicate a data mismatch.</p>
+              <p className="text-xs text-muted-foreground mb-3">IDs should be CUID2 format (24+ lowercase alphanumeric, text type). SKU should be text type with no null values.</p>
               <div className="space-y-2">
                 {data.idFormatChecks.map((check) => {
                   const typeMismatch = check.actualType !== check.expectedType;
+                  const isIdColumn = (check.column || "id") === "id";
                   return (
-                  <div key={check.table} className="border rounded-md p-3" data-testid={`id-format-${check.table}`}>
+                  <div key={`${check.table}-${check.column}`} className="border rounded-md p-3" data-testid={`id-format-${check.table}-${check.column}`}>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
                         <StatusIcon status={check.status} />
@@ -363,9 +364,13 @@ export default function AdminDataCheck() {
                               <span className="text-red-600 dark:text-red-400 ml-1">(expected: <code className="px-1 py-0.5 rounded text-[11px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{check.expectedType}</code>)</span>
                             )}
                           </span>
-                          <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
+                          {isIdColumn ? (
+                            <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
+                          ) : (
+                            <span className="text-green-600 dark:text-green-400">Populated: {check.cuid2Count}</span>
+                          )}
                           {check.nonCuid2Count > 0 && (
-                            <span className="text-red-600 dark:text-red-400 font-medium">{check.nonCuid2Count} of {check.totalRows} rows mismatched</span>
+                            <span className="text-red-600 dark:text-red-400 font-medium">{check.nonCuid2Count} of {check.totalRows} rows {isIdColumn ? "mismatched" : "null/empty"}</span>
                           )}
                         </div>
                         {check.sampleIds.length > 0 && (
@@ -373,7 +378,7 @@ export default function AdminDataCheck() {
                             <span className="font-medium">Sample values: </span>
                             {check.sampleIds.map((id, i) => (
                               <span key={i}>
-                                <code className={`px-1 py-0.5 rounded text-[11px] ${/^[a-z0-9]{24,}$/.test(id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>{id}</code>
+                                <code className={`px-1 py-0.5 rounded text-[11px] ${isIdColumn ? (/^[a-z0-9]{24,}$/.test(id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400") : "bg-muted"}`}>{id}</code>
                                 {i < check.sampleIds.length - 1 && " "}
                               </span>
                             ))}

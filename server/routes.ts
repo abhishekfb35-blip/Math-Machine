@@ -956,6 +956,27 @@ Sitemap: https://turtlelittle.com/sitemap.xml
             sampleIds,
             status: fullNonCuid2 > 0 || actualType !== "text" ? "fail" : "pass",
           });
+
+          if (table === "products") {
+            try {
+              const skuType = await getColumnType("products", "sku");
+              const skuNulls = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products WHERE sku IS NULL OR sku = ''`)).rows[0].cnt;
+              const skuPopulated = total - skuNulls;
+              const skuSample = await pool.query(`SELECT sku FROM products WHERE sku IS NOT NULL AND sku != '' ORDER BY sku LIMIT 3`);
+              const skuSampleVals = skuSample.rows.map((r: any) => String(r.sku));
+              idFormatChecks.push({
+                table: "products",
+                column: "sku",
+                actualType: skuType,
+                expectedType: "text",
+                totalRows: total,
+                cuid2Count: skuPopulated,
+                nonCuid2Count: skuNulls,
+                sampleIds: skuSampleVals,
+                status: skuNulls > 0 || skuType !== "text" ? "fail" : "pass",
+              });
+            } catch { /* skip */ }
+          }
         } catch {
           idFormatChecks.push({ table, column: "id", actualType: "unknown", expectedType: "text", totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
         }
