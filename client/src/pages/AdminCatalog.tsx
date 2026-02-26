@@ -728,8 +728,11 @@ export default function AdminCatalog() {
                 variant="outline"
                 disabled={selectedProductIds.size > 15}
                 onClick={() => {
-                  selectedProductIds.forEach(id => {
-                    window.open(`/admin/catalog/product/${id}`, '_blank');
+                  const ids = Array.from(selectedProductIds);
+                  ids.forEach((id, index) => {
+                    setTimeout(() => {
+                      window.open(`/admin/catalog/product/${id}`, '_blank');
+                    }, index * 150);
                   });
                 }}
                 data-testid="button-bulk-edit"
