@@ -913,15 +913,26 @@ Sitemap: https://turtlelittle.com/sitemap.xml
 
       const isCuid2 = (val: string) => /^[a-z0-9]{24,}$/.test(val);
 
+      const getColumnType = async (tableName: string, columnName: string): Promise<string> => {
+        try {
+          const r = await pool.query(
+            `SELECT data_type FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`,
+            [tableName, columnName]
+          );
+          return r.rows[0]?.data_type || "unknown";
+        } catch { return "unknown"; }
+      };
+
       const idFormatTables = ["categories", "products", "product_images", "product_reviews", "tags"];
-      const idFormatChecks: { table: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; sampleIds: string[]; status: "pass" | "fail" | "empty" }[] = [];
+      const idFormatChecks: { table: string; column: string; actualType: string; expectedType: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; sampleIds: string[]; status: "pass" | "fail" | "empty" }[] = [];
 
       for (const table of idFormatTables) {
         try {
+          const actualType = await getColumnType(table, "id");
           const countResult = await pool.query(`SELECT COUNT(*)::int as cnt FROM "${table}"`);
           const total = countResult.rows[0].cnt;
           if (total === 0) {
-            idFormatChecks.push({ table, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
+            idFormatChecks.push({ table, column: "id", actualType, expectedType: "text", totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
             continue;
           }
           const idsResult = await pool.query(`SELECT id FROM "${table}" LIMIT 100`);
@@ -936,18 +947,21 @@ Sitemap: https://turtlelittle.com/sitemap.xml
 
           idFormatChecks.push({
             table,
+            column: "id",
+            actualType,
+            expectedType: "text",
             totalRows: total,
             cuid2Count: fullCuid2,
             nonCuid2Count: fullNonCuid2,
             sampleIds,
-            status: fullNonCuid2 > 0 ? "fail" : "pass",
+            status: fullNonCuid2 > 0 || actualType !== "text" ? "fail" : "pass",
           });
         } catch {
-          idFormatChecks.push({ table, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
+          idFormatChecks.push({ table, column: "id", actualType: "unknown", expectedType: "text", totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, sampleIds: [], status: "empty" });
         }
       }
 
-      const fkIdChecks: { table: string; column: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; status: "pass" | "fail" | "empty" }[] = [];
+      const fkIdChecks: { table: string; column: string; actualType: string; expectedType: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; status: "pass" | "fail" | "empty" }[] = [];
       const fkColumns: { table: string; column: string }[] = [
         { table: "products", column: "category_id" },
         { table: "product_images", column: "product_id" },
@@ -955,10 +969,11 @@ Sitemap: https://turtlelittle.com/sitemap.xml
       ];
       for (const fk of fkColumns) {
         try {
+          const actualType = await getColumnType(fk.table, fk.column);
           const countResult = await pool.query(`SELECT COUNT(*)::int as cnt FROM "${fk.table}"`);
           const total = countResult.rows[0].cnt;
           if (total === 0) {
-            fkIdChecks.push({ ...fk, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
+            fkIdChecks.push({ ...fk, actualType, expectedType: "text", totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
             continue;
           }
           const vals = await pool.query(`SELECT "${fk.column}" as val FROM "${fk.table}" WHERE "${fk.column}" IS NOT NULL LIMIT 100`);
@@ -966,9 +981,9 @@ Sitemap: https://turtlelittle.com/sitemap.xml
           const c2 = allVals.filter(isCuid2).length;
           const nc2 = allVals.length - c2;
           const fullNc2 = total > 100 ? Math.round((nc2 / allVals.length) * total) : nc2;
-          fkIdChecks.push({ ...fk, totalRows: total, cuid2Count: total - fullNc2, nonCuid2Count: fullNc2, status: fullNc2 > 0 ? "fail" : "pass" });
+          fkIdChecks.push({ ...fk, actualType, expectedType: "text", totalRows: total, cuid2Count: total - fullNc2, nonCuid2Count: fullNc2, status: fullNc2 > 0 || actualType !== "text" ? "fail" : "pass" });
         } catch {
-          fkIdChecks.push({ ...fk, totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
+          fkIdChecks.push({ ...fk, actualType: "unknown", expectedType: "text", totalRows: 0, cuid2Count: 0, nonCuid2Count: 0, status: "empty" });
         }
       }
 

@@ -30,6 +30,9 @@ interface TableCount {
 
 interface IdFormatCheck {
   table: string;
+  column: string;
+  actualType: string;
+  expectedType: string;
   totalRows: number;
   cuid2Count: number;
   nonCuid2Count: number;
@@ -40,6 +43,8 @@ interface IdFormatCheck {
 interface FkIdCheck {
   table: string;
   column: string;
+  actualType: string;
+  expectedType: string;
   totalRows: number;
   cuid2Count: number;
   nonCuid2Count: number;
@@ -335,27 +340,35 @@ export default function AdminDataCheck() {
               </div>
               <p className="text-xs text-muted-foreground mb-3">All IDs should be CUID2 format (24+ lowercase alphanumeric characters). Non-CUID2 IDs indicate a data mismatch.</p>
               <div className="space-y-2">
-                {data.idFormatChecks.map((check) => (
+                {data.idFormatChecks.map((check) => {
+                  const typeMismatch = check.actualType !== check.expectedType;
+                  return (
                   <div key={check.table} className="border rounded-md p-3" data-testid={`id-format-${check.table}`}>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
                         <StatusIcon status={check.status} />
-                        <span className="font-mono text-sm font-medium">{check.table}</span>
+                        <span className="font-mono text-sm font-medium">{check.table}<span className="text-muted-foreground">.{check.column || "id"}</span></span>
                         <span className="text-xs text-muted-foreground">({check.totalRows} rows)</span>
                       </div>
                       <StatusBadge status={check.status} />
                     </div>
                     {check.status !== "empty" && (
                       <>
-                        <div className="flex gap-4 text-xs mb-2">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2">
+                          <span>
+                            Column type: <code className={`px-1 py-0.5 rounded text-[11px] ${typeMismatch ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium" : "bg-muted"}`}>{check.actualType}</code>
+                            {typeMismatch && (
+                              <span className="text-red-600 dark:text-red-400 ml-1">(expected: <code className="px-1 py-0.5 rounded text-[11px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{check.expectedType}</code>)</span>
+                            )}
+                          </span>
                           <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
                           {check.nonCuid2Count > 0 && (
-                            <span className="text-red-600 dark:text-red-400 font-medium">Non-CUID2: {check.nonCuid2Count}</span>
+                            <span className="text-red-600 dark:text-red-400 font-medium">{check.nonCuid2Count} of {check.totalRows} rows mismatched</span>
                           )}
                         </div>
                         {check.sampleIds.length > 0 && (
                           <div className="text-xs text-muted-foreground">
-                            <span className="font-medium">Sample IDs: </span>
+                            <span className="font-medium">Sample values: </span>
                             {check.sampleIds.map((id, i) => (
                               <span key={i}>
                                 <code className={`px-1 py-0.5 rounded text-[11px] ${/^[a-z0-9]{24,}$/.test(id) ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"}`}>{id}</code>
@@ -367,7 +380,8 @@ export default function AdminDataCheck() {
                       </>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
@@ -383,25 +397,34 @@ export default function AdminDataCheck() {
               </div>
               <p className="text-xs text-muted-foreground mb-3">Foreign key references should also be CUID2 format to match primary keys.</p>
               <div className="space-y-2">
-                {data.fkIdChecks.map((check) => (
+                {data.fkIdChecks.map((check) => {
+                  const typeMismatch = check.actualType !== check.expectedType;
+                  return (
                   <div key={`${check.table}-${check.column}`} className="border rounded-md p-3" data-testid={`fk-format-${check.table}-${check.column}`}>
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <div className="flex items-center gap-2">
                         <StatusIcon status={check.status} />
-                        <span className="font-mono text-sm"><span className="font-medium">{check.table}</span>.<span className="text-muted-foreground">{check.column}</span></span>
+                        <span className="font-mono text-sm font-medium">{check.table}<span className="text-muted-foreground">.{check.column}</span></span>
                       </div>
                       <StatusBadge status={check.status} />
                     </div>
                     {check.status !== "empty" && (
-                      <div className="flex gap-4 text-xs mt-1">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-1">
+                        <span>
+                          Column type: <code className={`px-1 py-0.5 rounded text-[11px] ${typeMismatch ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium" : "bg-muted"}`}>{check.actualType}</code>
+                          {typeMismatch && (
+                            <span className="text-red-600 dark:text-red-400 ml-1">(expected: <code className="px-1 py-0.5 rounded text-[11px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{check.expectedType}</code>)</span>
+                          )}
+                        </span>
                         <span className="text-green-600 dark:text-green-400">CUID2: {check.cuid2Count}</span>
                         {check.nonCuid2Count > 0 && (
-                          <span className="text-red-600 dark:text-red-400 font-medium">Non-CUID2: {check.nonCuid2Count}</span>
+                          <span className="text-red-600 dark:text-red-400 font-medium">{check.nonCuid2Count} of {check.totalRows} rows mismatched</span>
                         )}
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
