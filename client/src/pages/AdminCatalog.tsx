@@ -118,6 +118,7 @@ export default function AdminCatalog() {
   const [adminSearchActive, setAdminSearchActive] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [bulkEditLinks, setBulkEditLinks] = useState<{id: string; name: string}[]>([]);
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
@@ -729,15 +730,11 @@ export default function AdminCatalog() {
                 disabled={selectedProductIds.size > 15}
                 onClick={() => {
                   const ids = Array.from(selectedProductIds);
-                  ids.forEach((id) => {
-                    const a = document.createElement('a');
-                    a.href = `/admin/catalog/product/${id}`;
-                    a.target = '_blank';
-                    a.rel = 'noopener';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                  const links = ids.map(id => {
+                    const prod = filteredProducts.find(p => p.id === id);
+                    return { id, name: prod?.name || id };
                   });
+                  setBulkEditLinks(links);
                 }}
                 data-testid="button-bulk-edit"
               >
@@ -793,6 +790,48 @@ export default function AdminCatalog() {
             </button>
           )}
         </div>
+
+        {bulkEditLinks.length > 0 && (
+          <div className="mb-4 border rounded-lg p-4 bg-muted/30" data-testid="bulk-edit-panel">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm">Open {bulkEditLinks.length} products to edit:</h4>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => {
+                    bulkEditLinks.forEach(link => {
+                      window.open(`/admin/catalog/product/${link.id}`, `product_${link.id}`);
+                    });
+                  }}
+                  data-testid="button-open-all-tabs"
+                >
+                  Open All Tabs
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setBulkEditLinks([])} data-testid="button-close-bulk-panel">
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-1">
+              {bulkEditLinks.map((link, i) => (
+                <a
+                  key={link.id}
+                  href={`/admin/catalog/product/${link.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline truncate block py-0.5"
+                  data-testid={`bulk-link-${link.id}`}
+                >
+                  {i + 1}. {link.name}
+                </a>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Click "Open All Tabs" or click individual links. If blocked, allow popups for this site in your browser.
+            </p>
+          </div>
+        )}
 
         {prodsLoading ? (
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
