@@ -988,13 +988,16 @@ Sitemap: https://turtlelittle.com/sitemap.xml
       }
 
       const completenessFields = ["sku", "material", "color", "dimensions", "audience", "product_type"];
-      const dataCompleteness: { field: string; totalProducts: number; nullCount: number; populatedCount: number; status: "pass" | "warn" }[] = [];
+      const dataCompleteness: { field: string; actualType: string; expectedType: string; totalProducts: number; nullCount: number; populatedCount: number; status: "pass" | "warn" }[] = [];
       try {
         const totalProducts = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products`)).rows[0].cnt;
         for (const field of completenessFields) {
+          const actualType = await getColumnType("products", field);
           const nulls = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products WHERE "${field}" IS NULL OR "${field}" = ''`)).rows[0].cnt;
           dataCompleteness.push({
             field,
+            actualType,
+            expectedType: "text",
             totalProducts,
             nullCount: nulls,
             populatedCount: totalProducts - nulls,

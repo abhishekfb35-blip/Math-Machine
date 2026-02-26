@@ -53,6 +53,8 @@ interface FkIdCheck {
 
 interface DataCompletenessItem {
   field: string;
+  actualType: string;
+  expectedType: string;
   totalProducts: number;
   nullCount: number;
   populatedCount: number;
@@ -467,34 +469,44 @@ export default function AdminDataCheck() {
                 <BarChart3 className="w-5 h-5 text-muted-foreground" />
                 <h2 className="font-semibold text-lg">Product Data Completeness</h2>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">Checks for null or empty values in important product fields.</p>
+              <p className="text-xs text-muted-foreground mb-3">Checks column data types and null/empty values in important product fields.</p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Field</th>
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Column</th>
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Type</th>
                       <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Populated</th>
                       <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Null/Empty</th>
                       <th className="text-right py-2 font-medium text-muted-foreground">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.dataCompleteness.map((item) => (
-                      <tr key={item.field} className={`border-b last:border-b-0 ${item.status === "warn" ? "bg-yellow-50 dark:bg-yellow-900/10" : ""}`} data-testid={`completeness-${item.field}`}>
-                        <td className="py-2 pr-4 font-mono text-sm">{item.field}</td>
+                    {data.dataCompleteness.map((item) => {
+                      const typeMismatch = item.actualType && item.expectedType && item.actualType !== item.expectedType;
+                      return (
+                      <tr key={item.field} className={`border-b last:border-b-0 ${item.status === "warn" || typeMismatch ? "bg-yellow-50 dark:bg-yellow-900/10" : ""}`} data-testid={`completeness-${item.field}`}>
+                        <td className="py-2 pr-4 font-mono text-sm">products.{item.field}</td>
+                        <td className="py-2 pr-4 text-sm">
+                          <code className={`px-1 py-0.5 rounded text-[11px] ${typeMismatch ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium" : "bg-muted"}`}>{item.actualType || "?"}</code>
+                          {typeMismatch && (
+                            <span className="text-red-600 dark:text-red-400 text-xs ml-1">(expected: <code className="px-1 py-0.5 rounded text-[11px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{item.expectedType}</code>)</span>
+                          )}
+                        </td>
                         <td className="py-2 pr-4 text-right tabular-nums">{item.populatedCount}</td>
                         <td className="py-2 pr-4 text-right tabular-nums">
                           {item.nullCount > 0 ? (
-                            <span className="text-yellow-600 dark:text-yellow-400 font-medium">{item.nullCount}</span>
+                            <span className="text-yellow-600 dark:text-yellow-400 font-medium">{item.nullCount} of {item.totalProducts}</span>
                           ) : (
                             <span className="text-green-600 dark:text-green-400">0</span>
                           )}
                         </td>
                         <td className="py-2 text-right">
-                          <StatusIcon status={item.status} />
+                          <StatusIcon status={typeMismatch ? "fail" : item.status} />
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
