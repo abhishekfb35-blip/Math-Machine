@@ -25,7 +25,8 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - **Order Confirmation** (`/order/:id`): Order details.
     - **Admin Dashboard** (`/admin`): Central entry point for all admin functions. Shows card grid linking to Catalog, Orders, Page Builder, Policy Pages, Health Checks, Audit Log, and Export Data. Login redirects here.
     - **Admin Builder** (`/admin/builder`): Dynamic homepage layout and collection management.
-    - **Admin Catalog** (`/admin/catalog`): CMS for managing categories and products (with "Save" and "Save & Close" buttons).
+    - **Admin Catalog** (`/admin/catalog`): CMS for managing categories and products. Product list has checkboxes for bulk selection (up to 15) to open multiple products in new tabs for editing. Individual edit buttons also open in new tabs.
+    - **Admin Product Edit** (`/admin/catalog/product/:id`): Standalone product editor opened in a new tab. Has Save and Save & Close (closes tab) buttons.
     - **Admin Orders** (`/admin/orders`): Order management with list view, status filters, search, order detail with items/address/payment, status updates (triggers customer email), and internal notes.
     - **Admin Audit Log** (`/admin/audit-log`): Timeline of all admin changes with entity type filtering and pagination.
     - **Admin Deploy Check** (`/admin/deploy-check`): Code health report — verifies production bundle includes all routes, static files, and checks if rebuild is needed.

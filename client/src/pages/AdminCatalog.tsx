@@ -117,6 +117,7 @@ export default function AdminCatalog() {
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSearchActive, setAdminSearchActive] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
@@ -525,13 +526,7 @@ export default function AdminCatalog() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => {
-                            const cat2 = categories?.find(c => c.id === prod.categoryId);
-                            if (cat2) setSelectedCategory(cat2);
-                            setIsNew(false);
-                            setEditingProduct({ ...prod });
-                            setView("edit-product");
-                          }}
+                          onClick={() => window.open(`/admin/catalog/product/${prod.id}`, '_blank')}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -704,43 +699,72 @@ export default function AdminCatalog() {
 
   // ── Products List View ──
   if (view === "products" && selectedCategory) {
+    const filteredProducts = products?.filter((p) => {
+      if (!categoryFilter.trim()) return true;
+      const q = categoryFilter.trim().toLowerCase();
+      return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
+    }) || [];
+    const allSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedProductIds.has(p.id));
+    const someSelected = selectedProductIds.size > 0;
+
     return (
       <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("categories"); setSelectedCategory(null); }} data-testid="button-back-categories-from-products">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("categories"); setSelectedCategory(null); setSelectedProductIds(new Set()); }} data-testid="button-back-categories-from-products">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Categories
         </Button>
 
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold" data-testid="text-products-title">{selectedCategory.name}</h1>
-            <p className="text-sm text-muted-foreground">{products?.length || 0} products</p>
+            <p className="text-sm text-muted-foreground">
+              {products?.length || 0} products
+              {someSelected && <span className="ml-2 font-medium text-foreground">· {selectedProductIds.size} selected</span>}
+            </p>
           </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              setIsNew(true);
-              setEditingProduct({
-                name: "",
-                slug: "",
-                description: "",
-                price: 999,
-                mrp: undefined,
-                imageUrl: "/images/products/placeholder.jpg",
-                categoryId: selectedCategory.id,
-                active: true,
-                sortOrder: (products?.length || 0) + 1,
-                material: "Cotton",
-                gsm: 500,
-                dimensions: "120 x 60 cm",
-                audience: "kids",
-                productType: "towel",
-              });
-              setView("edit-product");
-            }}
-            data-testid="button-add-product"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add Product
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            {someSelected && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={selectedProductIds.size > 15}
+                onClick={() => {
+                  selectedProductIds.forEach(id => {
+                    window.open(`/admin/catalog/product/${id}`, '_blank');
+                  });
+                }}
+                data-testid="button-bulk-edit"
+              >
+                <Pencil className="w-4 h-4 mr-1" />
+                {selectedProductIds.size > 15 ? "Max 15" : `Edit ${selectedProductIds.size}`}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => {
+                setIsNew(true);
+                setEditingProduct({
+                  name: "",
+                  slug: "",
+                  description: "",
+                  price: 999,
+                  mrp: undefined,
+                  imageUrl: "/images/products/placeholder.jpg",
+                  categoryId: selectedCategory.id,
+                  active: true,
+                  sortOrder: (products?.length || 0) + 1,
+                  material: "Cotton",
+                  gsm: 500,
+                  dimensions: "120 x 60 cm",
+                  audience: "kids",
+                  productType: "towel",
+                });
+                setView("edit-product");
+              }}
+              data-testid="button-add-product"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Product
+            </Button>
+          </div>
         </div>
 
         <div className="relative mb-4">
@@ -767,13 +791,35 @@ export default function AdminCatalog() {
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : (
           <div className="space-y-2">
-            {products?.filter((p) => {
-              if (!categoryFilter.trim()) return true;
-              const q = categoryFilter.trim().toLowerCase();
-              return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
-            }).map((prod) => (
+            <div className="flex items-center gap-2 px-1 py-1">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedProductIds(new Set(filteredProducts.map(p => p.id)));
+                  } else {
+                    setSelectedProductIds(new Set());
+                  }
+                }}
+                data-testid="checkbox-select-all"
+              />
+              <span className="text-xs text-muted-foreground">Select all</span>
+            </div>
+            {filteredProducts.map((prod) => (
               <Card key={prod.id} className="p-3" data-testid={`card-product-${prod.id}`}>
                 <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedProductIds.has(prod.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedProductIds(prev => {
+                        const next = new Set(prev);
+                        if (checked) next.add(prod.id);
+                        else next.delete(prod.id);
+                        return next;
+                      });
+                    }}
+                    data-testid={`checkbox-product-${prod.id}`}
+                  />
                   <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
                     <img src={getProductImageUrl(prod.imageUrl, "small")} alt={prod.name} className="w-full h-full object-contain" />
                   </div>
@@ -821,11 +867,7 @@ export default function AdminCatalog() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => {
-                        setIsNew(false);
-                        setEditingProduct({ ...prod });
-                        setView("edit-product");
-                      }}
+                      onClick={() => window.open(`/admin/catalog/product/${prod.id}`, '_blank')}
                       data-testid={`button-edit-product-${prod.id}`}
                     >
                       <Pencil className="w-4 h-4" />

@@ -1391,6 +1391,14 @@ Sitemap: https://turtlelittle.com/sitemap.xml
     }
   });
 
+  app.get("/api/admin/products/:id", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
+    const product = await storage.getProductById(id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json(product);
+  });
+
   app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
