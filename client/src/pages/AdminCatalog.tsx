@@ -729,10 +729,14 @@ export default function AdminCatalog() {
                 disabled={selectedProductIds.size > 15}
                 onClick={() => {
                   const ids = Array.from(selectedProductIds);
-                  ids.forEach((id, index) => {
-                    setTimeout(() => {
-                      window.open(`/admin/catalog/product/${id}`, '_blank');
-                    }, index * 150);
+                  ids.forEach((id) => {
+                    const a = document.createElement('a');
+                    a.href = `/admin/catalog/product/${id}`;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                   });
                 }}
                 data-testid="button-bulk-edit"
