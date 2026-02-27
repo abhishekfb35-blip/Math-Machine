@@ -145,6 +145,8 @@ export function registerCheckoutRoutes(app: Express) {
       const host = req.headers["x-forwarded-host"] || req.headers.host;
       const baseUrl = `${protocol}://${host}`;
 
+      await storage.clearCart(cart.id);
+
       const encryptedData = buildEncryptedRequest({
         orderId: order.id,
         amount: pricing.total,
@@ -225,12 +227,6 @@ export function registerCheckoutRoutes(app: Express) {
 
       if (orderStatus === "Success") {
         await storage.updateOrderPayment(orderId, trackingId, "paid");
-
-        const sessionId = req.cookies?.cart_session;
-        if (sessionId) {
-          const cart = await storage.getOrCreateCart(sessionId);
-          await storage.clearCart(cart.id);
-        }
 
         const orderItems = await storage.getOrderItems(orderId);
         const itemDetails = orderItems.map(item => ({

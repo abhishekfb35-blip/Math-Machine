@@ -232,6 +232,7 @@ export default function CheckoutPage() {
         return;
       }
 
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       setCcaFormData({
         encryptedData: data.encryptedData,
         accessCode: data.accessCode,
@@ -422,7 +423,7 @@ export default function CheckoutPage() {
                     >
                       <CreditCard className={`w-5 h-5 shrink-0 ${paymentMethod === "razorpay" ? "text-primary" : "text-muted-foreground"}`} />
                       <div>
-                        <p className="text-sm font-medium">Pay Online</p>
+                        <p className="text-sm font-medium">Razorpay</p>
                         <p className="text-xs text-muted-foreground">UPI, Cards, Net Banking</p>
                       </div>
                     </button>
@@ -440,7 +441,7 @@ export default function CheckoutPage() {
                     >
                       <Globe className={`w-5 h-5 shrink-0 ${paymentMethod === "ccavenue" ? "text-primary" : "text-muted-foreground"}`} />
                       <div>
-                        <p className="text-sm font-medium">Pay Online</p>
+                        <p className="text-sm font-medium">CCAvenue</p>
                         <p className="text-xs text-muted-foreground">Cards, Net Banking, UPI, Wallets</p>
                       </div>
                     </button>
