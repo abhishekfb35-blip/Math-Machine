@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
+import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
@@ -192,7 +193,7 @@ function ProductImageManager({ productId }: { productId: string }) {
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
         {images?.map((img, idx) => (
           <div key={img.id} className="relative group" data-testid={`image-thumb-${img.id}`}>
-            <div className="w-12 h-12 rounded border overflow-hidden bg-muted">
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted`}>
               <img
                 src={getProductImageUrl(img.imageUrl, "small")}
                 alt=""
@@ -1215,7 +1216,7 @@ export default function AdminCatalog() {
             </Label>
             <div className="flex flex-wrap gap-2">
               {editingProduct.imageUrl && (
-                <label className="relative w-24 h-24 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
+                <label className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group`} data-testid="thumbnail-main-image">
                   <input
                     type="file"
                     accept="image/*"
@@ -1230,7 +1231,7 @@ export default function AdminCatalog() {
                 </label>
               )}
               {editingProduct.id && productImages?.filter(img => img.imageUrl !== editingProduct.imageUrl).map((img) => (
-                <label key={img.id} className="relative w-24 h-24 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
+                <label key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted cursor-pointer group`} data-testid={`thumbnail-image-${img.id}`}>
                   <input
                     type="file"
                     accept="image/*"
@@ -1262,7 +1263,7 @@ export default function AdminCatalog() {
                   </button>
                 </label>
               ))}
-              <label className="w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
+              <label className={`${THUMBNAIL_SIZES.adminEditor} rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate`} data-testid="button-upload-image">
                 <input
                   type="file"
                   accept="image/*"

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
+import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -238,7 +239,7 @@ export default function ProductPage() {
                   <button
                     key={img.id}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
+                    className={`flex-shrink-0 ${THUMBNAIL_SIZES.productGallery} rounded-md overflow-hidden border-2 transition-colors ${
                       idx === selectedImageIndex ? "border-primary" : "border-transparent"
                     }`}
                     data-testid={`button-thumbnail-${idx}`}
