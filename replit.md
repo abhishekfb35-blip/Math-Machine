@@ -38,6 +38,18 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Framework**: Express 5 on Node.js with TypeScript.
 - **Cart Sessions**: Cookie-based for persistence.
 - **API Endpoints**: Comprehensive REST API for categories, products, cart management, checkout, orders, and site configuration.
+- **Route Structure** (`server/routes/`): Modular route files, each exporting a `register*Routes(app)` function:
+    - `helpers.ts` — Shared utilities: `getSessionId`, `getCustomerToken`, `getAuthenticatedCustomer`, `upload` (multer), `currentDir`.
+    - `index.ts` — Master router that imports and registers all route groups.
+    - `products.ts` — Public product/category/review/image endpoints.
+    - `cart.ts` — Cart CRUD endpoints using `CartService`.
+    - `checkout.ts` — Checkout, Razorpay, CCAvenue, order fetch, site-config endpoints.
+    - `auth.ts` — Customer auth (OTP, Google OAuth, profile, order history).
+    - `seo.ts` — `robots.txt` and `sitemap.xml` generation.
+    - `admin/catalog.ts` — Admin CRUD for categories, products, images, reviews, tags.
+    - `admin/orders.ts` — Admin auth (login/logout/check) and order management.
+    - `admin/health.ts` — Deploy check, data check, SEO audit, data export, audit logs, file upload.
+- **Entry point**: `server/routes.ts` re-exports `registerRoutes` from `server/routes/index.ts` for backward compatibility.
 
 ## Shared Layer (`shared/`)
 
