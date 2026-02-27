@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, Gift, CreditCard, Banknote, Shield } from "lucide-react";
+import { ArrowLeft, Gift, CreditCard, Banknote, Shield, Globe } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface CartData {
   id: string;
@@ -30,6 +30,10 @@ interface CartData {
 interface RazorpayConfig {
   available: boolean;
   keyId?: string;
+}
+
+interface CCAvenueConfig {
+  available: boolean;
 }
 
 declare global {
@@ -56,8 +60,31 @@ export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { customer } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "ccavenue" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const ccaFormRef = useRef<HTMLFormElement>(null);
+  const [ccaFormData, setCcaFormData] = useState<{ encryptedData: string; accessCode: string; ccavenueUrl: string } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    if (error) {
+      const messages: Record<string, string> = {
+        payment_cancelled: "Payment was cancelled. You can try again.",
+        payment_failed: "Payment failed. Please try a different payment method.",
+        processing_error: "There was an error processing your payment. Please try again.",
+        no_response: "No response received from payment gateway.",
+        invalid_response: "Invalid response from payment gateway.",
+        order_not_found: "Order not found. Please try again.",
+      };
+      toast({
+        title: "Payment Issue",
+        description: messages[error] || "Something went wrong with your payment.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/checkout");
+    }
+  }, [toast]);
 
   const { data: cart, isLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
@@ -67,13 +94,20 @@ export default function CheckoutPage() {
     queryKey: ["/api/razorpay/key"],
   });
 
+  const { data: ccavenueConfig } = useQuery<CCAvenueConfig>({
+    queryKey: ["/api/ccavenue/config"],
+  });
+
   useEffect(() => {
     if (razorpayConfig?.available) {
       loadRazorpayScript();
-    } else if (razorpayConfig && !razorpayConfig.available) {
+      setPaymentMethod("razorpay");
+    } else if (ccavenueConfig?.available) {
+      setPaymentMethod("ccavenue");
+    } else {
       setPaymentMethod("cod");
     }
-  }, [razorpayConfig]);
+  }, [razorpayConfig, ccavenueConfig]);
 
   const form = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
@@ -186,9 +220,40 @@ export default function CheckoutPage() {
     }
   }, [razorpayConfig, toast, navigate]);
 
+  const handleCCAvenueCheckout = useCallback(async (formData: CheckoutInput) => {
+    setIsProcessingPayment(true);
+    try {
+      const res = await apiRequest("POST", "/api/ccavenue/initiate", formData);
+      const data = await res.json();
+
+      if (!data.encryptedData) {
+        toast({ title: "Error", description: "Failed to initiate payment. Please try again.", variant: "destructive" });
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      setCcaFormData({
+        encryptedData: data.encryptedData,
+        accessCode: data.accessCode,
+        ccavenueUrl: data.ccavenueUrl,
+      });
+    } catch {
+      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+      setIsProcessingPayment(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (ccaFormData && ccaFormRef.current) {
+      ccaFormRef.current.submit();
+    }
+  }, [ccaFormData]);
+
   const onSubmit = (data: CheckoutInput) => {
     if (paymentMethod === "razorpay") {
       handleRazorpayCheckout(data);
+    } else if (paymentMethod === "ccavenue") {
+      handleCCAvenueCheckout(data);
     } else {
       codCheckoutMutation.mutate(data);
     }
@@ -362,6 +427,24 @@ export default function CheckoutPage() {
                       </div>
                     </button>
                   )}
+                  {ccavenueConfig?.available && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("ccavenue")}
+                      className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                        paymentMethod === "ccavenue"
+                          ? "border-primary bg-primary/5 dark:bg-primary/10"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                      data-testid="button-payment-ccavenue"
+                    >
+                      <Globe className={`w-5 h-5 shrink-0 ${paymentMethod === "ccavenue" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div>
+                        <p className="text-sm font-medium">Pay Online</p>
+                        <p className="text-xs text-muted-foreground">Cards, Net Banking, UPI, Wallets</p>
+                      </div>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cod")}
@@ -379,10 +462,10 @@ export default function CheckoutPage() {
                     </div>
                   </button>
                 </div>
-                {paymentMethod === "razorpay" && (
+                {(paymentMethod === "razorpay" || paymentMethod === "ccavenue") && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Shield className="w-3.5 h-3.5" />
-                    <span>Secured by Razorpay. Your payment details are encrypted.</span>
+                    <span>Secured payment. Your payment details are encrypted.</span>
                   </div>
                 )}
               </Card>
@@ -412,7 +495,7 @@ export default function CheckoutPage() {
               >
                 {isPending
                   ? "Processing..."
-                  : paymentMethod === "razorpay"
+                  : paymentMethod === "razorpay" || paymentMethod === "ccavenue"
                     ? `Pay ₹${cart.total.toLocaleString("en-IN")}`
                     : `Place Order - ₹${cart.total.toLocaleString("en-IN")}`}
               </Button>
@@ -473,6 +556,18 @@ export default function CheckoutPage() {
           )}
         </div>
       </div>
+
+      {ccaFormData && (
+        <form
+          ref={ccaFormRef}
+          method="POST"
+          action={ccaFormData.ccavenueUrl}
+          style={{ display: "none" }}
+        >
+          <input type="hidden" name="encRequest" value={ccaFormData.encryptedData} />
+          <input type="hidden" name="access_code" value={ccaFormData.accessCode} />
+        </form>
+      )}
     </div>
   );
 }

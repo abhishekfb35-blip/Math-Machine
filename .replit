@@ -44,3 +44,4 @@ waitForPort = 5000
 ADMIN_PASSWORD = "turtle2026"
 EMAIL_FROM = "TurtleLittle <orders@mail.turtlelittle.com>"
 ADMIN_EMAIL = "hello@mail.turtlelittle.com"
+CCAVENUE_MODE = "test"
