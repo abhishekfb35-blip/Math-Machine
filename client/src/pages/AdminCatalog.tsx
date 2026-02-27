@@ -104,7 +104,7 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId }: { productId: string }) {
+function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -137,7 +137,14 @@ function ProductImageManager({ productId }: { productId: string }) {
     const orderedExisting = localOrder
       ? localOrder.map(id => existingImages.find(img => img.id === id)).filter(Boolean) as ProductImage[]
       : existingImages;
+    const mainItem = mainImageUrl ? [{
+      type: "main" as const,
+      id: "main",
+      imageUrl: mainImageUrl,
+      isDeleted: false,
+    }] : [];
     return [
+      ...mainItem,
       ...orderedExisting.map(img => ({
         type: "existing" as const,
         id: img.id,
@@ -151,7 +158,7 @@ function ProductImageManager({ productId }: { productId: string }) {
         isDeleted: false,
       })),
     ];
-  }, [images, localOrder, pendingDeletes, pendingAdds]);
+  }, [images, localOrder, pendingDeletes, pendingAdds, mainImageUrl]);
 
   const markForDelete = (id: string) => {
     setPendingDeletes(prev => new Set(prev).add(id));
@@ -267,20 +274,22 @@ function ProductImageManager({ productId }: { productId: string }) {
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
         {activeItems.map((item, idx) => (
           <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
-            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "main" ? "border-2 border-primary/40" : item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
               <img
                 src={getProductImageUrl(item.imageUrl, "small")}
                 alt=""
                 className="w-full h-full object-contain"
               />
             </div>
-            <button
-              onClick={() => item.type === "existing" ? markForDelete(item.id) : removeNewImage(item.id)}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-              data-testid={`button-delete-image-${item.id}`}
-            >
-              <X className="w-2.5 h-2.5" />
-            </button>
+            {item.type !== "main" && (
+              <button
+                onClick={() => item.type === "existing" ? markForDelete(item.id) : removeNewImage(item.id)}
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                data-testid={`button-delete-image-${item.id}`}
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            )}
             {item.type === "existing" && (
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
                 {idx > 0 && activeItems[idx - 1]?.type === "existing" && (
@@ -658,17 +667,25 @@ export default function AdminCatalog() {
     },
   });
 
-  const handleImageUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url && editingProduct?.id) {
-        addImageMutation.mutate({ productId: editingProduct.id, imageUrl: data.url });
+  const handleImageUpload = async (files: FileList) => {
+    if (!editingProduct?.id) return;
+    let uploaded = 0;
+    for (let i = 0; i < files.length; i++) {
+      const formData = new FormData();
+      formData.append("image", files[i]);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.url) {
+          addImageMutation.mutate({ productId: editingProduct.id, imageUrl: data.url });
+          uploaded++;
+        }
+      } catch {
+        toast({ title: `Failed to upload ${files[i].name}`, variant: "destructive" });
       }
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
+    }
+    if (uploaded > 0) {
+      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} added` });
     }
   };
 
@@ -1188,7 +1205,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} />
+                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
               </Card>
             ))}
             {products?.length === 0 && (
@@ -1350,30 +1367,9 @@ export default function AdminCatalog() {
                   <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">Main</Badge>
                 </label>
               )}
-              {editingProduct.id && productImages?.filter(img => img.imageUrl !== editingProduct.imageUrl).map((img) => (
-                <label key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted cursor-pointer group`} data-testid={`thumbnail-image-${img.id}`}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      if (!e.target.files?.[0]) return;
-                      const formData = new FormData();
-                      formData.append("image", e.target.files[0]);
-                      try {
-                        const res = await fetch("/api/upload", { method: "POST", body: formData });
-                        const data = await res.json();
-                        if (data.url) {
-                          deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id });
-                          addImageMutation.mutate({ productId: editingProduct.id!, imageUrl: data.url });
-                        }
-                      } catch { toast({ title: "Upload failed", variant: "destructive" }); }
-                    }}
-                  />
+              {editingProduct.id && productImages?.map((img) => (
+                <div key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group`} data-testid={`thumbnail-image-${img.id}`}>
                   <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
-                    <Upload className="w-4 h-4 text-white" />
-                  </div>
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id }); }}
                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-10"
@@ -1381,14 +1377,15 @@ export default function AdminCatalog() {
                   >
                     <X className="w-3 h-3" />
                   </button>
-                </label>
+                </div>
               ))}
               <label className={`${THUMBNAIL_SIZES.adminEditor} rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate`} data-testid="button-upload-image">
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
-                  onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }}
+                  onChange={(e) => { if (e.target.files?.length) handleImageUpload(e.target.files); }}
                 />
                 <Upload className="w-5 h-5 text-muted-foreground/50" />
                 <span className="text-[10px] text-muted-foreground/50 mt-0.5">Add</span>
