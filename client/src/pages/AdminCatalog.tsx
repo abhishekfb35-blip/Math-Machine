@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  MoveLeft, MoveRight, Loader2
+  MoveLeft, MoveRight, Loader2, Undo2, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -98,10 +98,21 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
   );
 }
 
+interface PendingAdd {
+  tempId: string;
+  imageUrl: string;
+  sortOrder: number;
+}
+
 function ProductImageManager({ productId }: { productId: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
   const { data: images, isLoading } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", productId, "images"],
@@ -111,46 +122,59 @@ function ProductImageManager({ productId }: { productId: string }) {
     },
   });
 
-  const addImageMutation = useMutation({
-    mutationFn: async (imageUrl: string) => {
-      return apiRequest("POST", `/api/admin/products/${productId}/images`, {
-        imageUrl,
-        sortOrder: images?.length || 0,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-    },
-  });
+  const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
+  const orderChanged = useMemo(() => {
+    if (!localOrder) return false;
+    const activeServerIds = serverIds.filter(id => !pendingDeletes.has(id));
+    const activeLocalIds = localOrder.filter(id => !pendingDeletes.has(id));
+    return JSON.stringify(activeServerIds) !== JSON.stringify(activeLocalIds);
+  }, [localOrder, serverIds, pendingDeletes]);
 
-  const deleteImageMutation = useMutation({
-    mutationFn: async (imageId: string) => {
-      return apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-    },
-  });
+  const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || orderChanged;
 
-  const reorderMutation = useMutation({
-    mutationFn: async (imageIds: string[]) => {
-      return apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-    },
-    onError: () => {
-      toast({ title: "Failed to reorder images", variant: "destructive" });
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-    },
-  });
+  const displayItems = useMemo(() => {
+    const existingImages = images || [];
+    const orderedExisting = localOrder
+      ? localOrder.map(id => existingImages.find(img => img.id === id)).filter(Boolean) as ProductImage[]
+      : existingImages;
+    return [
+      ...orderedExisting.map(img => ({
+        type: "existing" as const,
+        id: img.id,
+        imageUrl: img.imageUrl,
+        isDeleted: pendingDeletes.has(img.id),
+      })),
+      ...pendingAdds.map(add => ({
+        type: "new" as const,
+        id: add.tempId,
+        imageUrl: add.imageUrl,
+        isDeleted: false,
+      })),
+    ];
+  }, [images, localOrder, pendingDeletes, pendingAdds]);
+
+  const markForDelete = (id: string) => {
+    setPendingDeletes(prev => new Set(prev).add(id));
+  };
+
+  const undoDelete = (id: string) => {
+    setPendingDeletes(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const removeNewImage = (tempId: string) => {
+    setPendingAdds(prev => prev.filter(a => a.tempId !== tempId));
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
     let uploaded = 0;
-    const baseOrder = images?.length || 0;
+    const baseOrder = (images?.length || 0) + pendingAdds.length;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -159,10 +183,11 @@ function ProductImageManager({ productId }: { productId: string }) {
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
-          await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+          setPendingAdds(prev => [...prev, {
+            tempId: `new-${Date.now()}-${i}`,
             imageUrl: data.url,
             sortOrder: baseOrder + uploaded,
-          });
+          }]);
           uploaded++;
         }
       } catch {
@@ -170,65 +195,134 @@ function ProductImageManager({ productId }: { productId: string }) {
       }
     }
     setUploading(false);
-    queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
     if (uploaded > 0) {
-      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} uploaded` });
+      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged for save` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const moveImage = (index: number, direction: -1 | 1) => {
-    if (!images) return;
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= images.length) return;
-    const newOrder = [...images];
-    const [moved] = newOrder.splice(index, 1);
-    newOrder.splice(newIndex, 0, moved);
-    reorderMutation.mutate(newOrder.map(img => img.id));
+    const activeItems = displayItems.filter(item => !item.isDeleted);
+    const activeIndex = activeItems.findIndex((_, i) => i === index);
+    if (activeIndex < 0) return;
+    const newIndex = activeIndex + direction;
+    if (newIndex < 0 || newIndex >= activeItems.length) return;
+
+    const existingOnly = activeItems.filter(item => item.type === "existing");
+    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[activeIndex].id);
+    const existingNewIndex = existingOnly.findIndex(item => item.id === activeItems[newIndex].id);
+
+    if (existingIndex >= 0 && existingNewIndex >= 0) {
+      const currentOrder = localOrder || serverIds;
+      const newOrder = [...currentOrder];
+      const fromIdx = newOrder.indexOf(existingOnly[existingIndex].id);
+      const toIdx = newOrder.indexOf(existingOnly[existingNewIndex].id);
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const [moved] = newOrder.splice(fromIdx, 1);
+        newOrder.splice(toIdx, 0, moved);
+        setLocalOrder(newOrder);
+      }
+    }
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      for (const id of pendingDeletes) {
+        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${id}`);
+      }
+      for (const add of pendingAdds) {
+        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+          imageUrl: add.imageUrl,
+          sortOrder: add.sortOrder,
+        });
+      }
+      if (orderChanged && localOrder) {
+        const activeOrder = localOrder.filter(id => !pendingDeletes.has(id));
+        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: activeOrder });
+      }
+      setPendingDeletes(new Set());
+      setPendingAdds([]);
+      setLocalOrder(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      toast({ title: "Images saved" });
+    } catch {
+      toast({ title: "Failed to save images", variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const handleReset = () => {
+    setPendingDeletes(new Set());
+    setPendingAdds([]);
+    setLocalOrder(null);
+  };
+
+  const activeItems = displayItems.filter(item => !item.isDeleted);
+  const deletedItems = displayItems.filter(item => item.isDeleted);
 
   return (
     <div className="mt-2" data-testid={`image-manager-${productId}`}>
       <div className="flex items-center gap-1 flex-wrap">
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
-        {images?.map((img, idx) => (
-          <div key={img.id} className="relative group" data-testid={`image-thumb-${img.id}`}>
-            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted`}>
+        {activeItems.map((item, idx) => (
+          <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
               <img
-                src={getProductImageUrl(img.imageUrl, "small")}
+                src={getProductImageUrl(item.imageUrl, "small")}
                 alt=""
                 className="w-full h-full object-contain"
               />
             </div>
             <button
-              onClick={() => {
-                if (confirm("Delete this image?")) deleteImageMutation.mutate(img.id);
-              }}
+              onClick={() => item.type === "existing" ? markForDelete(item.id) : removeNewImage(item.id)}
               className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-              data-testid={`button-delete-image-${img.id}`}
+              data-testid={`button-delete-image-${item.id}`}
             >
               <X className="w-2.5 h-2.5" />
             </button>
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
-              {idx > 0 && (
-                <button
-                  onClick={() => moveImage(idx, -1)}
-                  className="text-white hover:text-blue-300 p-0"
-                  data-testid={`button-move-left-${img.id}`}
-                >
-                  <ChevronLeft className="w-3 h-3" />
-                </button>
-              )}
-              {idx < (images?.length || 0) - 1 && (
-                <button
-                  onClick={() => moveImage(idx, 1)}
-                  className="text-white hover:text-blue-300 p-0"
-                  data-testid={`button-move-right-${img.id}`}
-                >
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              )}
+            {item.type === "existing" && (
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
+                {idx > 0 && activeItems[idx - 1]?.type === "existing" && (
+                  <button
+                    onClick={() => moveImage(idx, -1)}
+                    className="text-white hover:text-blue-300 p-0"
+                    data-testid={`button-move-left-${item.id}`}
+                  >
+                    <ChevronLeft className="w-3 h-3" />
+                  </button>
+                )}
+                {idx < activeItems.length - 1 && activeItems[idx + 1]?.type === "existing" && (
+                  <button
+                    onClick={() => moveImage(idx, 1)}
+                    className="text-white hover:text-blue-300 p-0"
+                    data-testid={`button-move-right-${item.id}`}
+                  >
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+        {deletedItems.map(item => (
+          <div key={item.id} className="relative" data-testid={`image-thumb-deleted-${item.id}`}>
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted opacity-30`}>
+              <img
+                src={getProductImageUrl(item.imageUrl, "small")}
+                alt=""
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-red-500/20" />
             </div>
+            <button
+              onClick={() => undoDelete(item.id)}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center z-10"
+              data-testid={`button-undo-delete-${item.id}`}
+              title="Undo delete"
+            >
+              <Undo2 className="w-2.5 h-2.5" />
+            </button>
           </div>
         ))}
         <input
@@ -245,12 +339,38 @@ function ProductImageManager({ productId }: { productId: string }) {
           variant="outline"
           className="h-10 px-2 text-xs"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
+          disabled={uploading || saving}
           data-testid={`button-upload-images-${productId}`}
         >
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
         </Button>
       </div>
+      {hasPendingChanges && (
+        <div className="flex items-center gap-1 mt-1.5" data-testid={`image-save-controls-${productId}`}>
+          <Button
+            size="sm"
+            variant="default"
+            className="h-6 px-2 text-[10px] gap-1"
+            onClick={handleSave}
+            disabled={saving}
+            data-testid={`button-save-images-${productId}`}
+          >
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            Save
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-[10px] gap-1"
+            onClick={handleReset}
+            disabled={saving}
+            data-testid={`button-reset-images-${productId}`}
+          >
+            <Undo2 className="w-3 h-3" />
+            Reset
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
