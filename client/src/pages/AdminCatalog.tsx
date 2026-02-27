@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search
+  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
+  MoveLeft, MoveRight, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -92,6 +93,163 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ProductImageManager({ productId }: { productId: string }) {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const { data: images, isLoading } = useQuery<ProductImage[]>({
+    queryKey: ["/api/products", productId, "images"],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${productId}/images`);
+      return res.json();
+    },
+  });
+
+  const addImageMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      return apiRequest("POST", `/api/admin/products/${productId}/images`, {
+        imageUrl,
+        sortOrder: images?.length || 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      return apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    },
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (imageIds: string[]) => {
+      return apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to reorder images", variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    let uploaded = 0;
+    const baseOrder = images?.length || 0;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.url) {
+          await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+            imageUrl: data.url,
+            sortOrder: baseOrder + uploaded,
+          });
+          uploaded++;
+        }
+      } catch {
+        toast({ title: `Failed to upload ${file.name}`, variant: "destructive" });
+      }
+    }
+    setUploading(false);
+    queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    if (uploaded > 0) {
+      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} uploaded` });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    if (!images) return;
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= images.length) return;
+    const newOrder = [...images];
+    const [moved] = newOrder.splice(index, 1);
+    newOrder.splice(newIndex, 0, moved);
+    reorderMutation.mutate(newOrder.map(img => img.id));
+  };
+
+  return (
+    <div className="mt-2" data-testid={`image-manager-${productId}`}>
+      <div className="flex items-center gap-1 flex-wrap">
+        {isLoading && <Skeleton className="w-10 h-10 rounded" />}
+        {images?.map((img, idx) => (
+          <div key={img.id} className="relative group" data-testid={`image-thumb-${img.id}`}>
+            <div className="w-10 h-10 rounded border overflow-hidden bg-muted">
+              <img
+                src={getProductImageUrl(img.imageUrl, "small")}
+                alt=""
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
+              {idx > 0 && (
+                <button
+                  onClick={() => moveImage(idx, -1)}
+                  className="text-white hover:text-blue-300 p-0"
+                  data-testid={`button-move-left-${img.id}`}
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (confirm("Delete this image?")) deleteImageMutation.mutate(img.id);
+                }}
+                className="text-white hover:text-red-300 p-0"
+                data-testid={`button-delete-image-${img.id}`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+              {idx < (images?.length || 0) - 1 && (
+                <button
+                  onClick={() => moveImage(idx, 1)}
+                  className="text-white hover:text-blue-300 p-0"
+                  data-testid={`button-move-right-${img.id}`}
+                >
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+          data-testid={`input-upload-images-${productId}`}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-10 px-2 text-xs"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          data-testid={`button-upload-images-${productId}`}
+        >
+          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -894,6 +1052,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
+                <ProductImageManager productId={prod.id} />
               </Card>
             ))}
             {products?.length === 0 && (

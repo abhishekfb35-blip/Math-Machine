@@ -61,6 +61,7 @@ export interface IStorage {
   getProductImages(productId: string): Promise<ProductImage[]>;
   createProductImage(img: InsertProductImage): Promise<ProductImage>;
   deleteProductImage(id: string): Promise<void>;
+  reorderProductImages(productId: string, imageIds: string[]): Promise<void>;
 
   getProductReviews(productId: string): Promise<ProductReview[]>;
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
@@ -356,6 +357,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProductImage(id: string): Promise<void> {
     await db.delete(productImages).where(eq(productImages.id, id));
+  }
+
+  async reorderProductImages(productId: string, imageIds: string[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < imageIds.length; i++) {
+        await tx.update(productImages)
+          .set({ sortOrder: i })
+          .where(and(eq(productImages.id, imageIds[i]), eq(productImages.productId, productId)));
+      }
+    });
   }
 
   async getProductReviews(productId: string): Promise<ProductReview[]> {

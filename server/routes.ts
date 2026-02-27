@@ -1591,6 +1591,19 @@ Sitemap: https://turtlelittle.com/sitemap.xml
     res.status(204).send();
   });
 
+  app.put("/api/admin/products/:id/images/reorder", requireAdmin, async (req, res) => {
+    const productId = req.params.id as string;
+    const { imageIds } = req.body;
+    if (!productId || !Array.isArray(imageIds)) return res.status(400).json({ message: "Invalid request" });
+    try {
+      await storage.reorderProductImages(productId, imageIds);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Reorder images error:", err);
+      res.status(500).json({ message: "Failed to reorder images" });
+    }
+  });
+
   app.post("/api/admin/products/:id/reviews", requireAdmin, async (req, res) => {
     const productId = req.params.id as string;
     if (!productId) return res.status(400).json({ message: "Invalid product ID" });
