@@ -278,6 +278,28 @@ export default function CheckoutPage() {
     );
   }
 
+  if (ccaFormData || (isProcessingPayment && paymentMethod === "ccavenue")) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
+        <SEO title="Redirecting to Payment" noindex={true} path="/checkout" />
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+        <h1 className="text-xl font-semibold" data-testid="text-redirecting">Redirecting to CCAvenue...</h1>
+        <p className="text-sm text-muted-foreground">Please wait while we redirect you to the payment page.</p>
+        {ccaFormData && (
+          <form
+            ref={ccaFormRef}
+            method="POST"
+            action={ccaFormData.ccavenueUrl}
+            style={{ display: "none" }}
+          >
+            <input type="hidden" name="encRequest" value={ccaFormData.encryptedData} />
+            <input type="hidden" name="access_code" value={ccaFormData.accessCode} />
+          </form>
+        )}
+      </div>
+    );
+  }
+
   if (!cart || cart.items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
@@ -557,18 +579,6 @@ export default function CheckoutPage() {
           )}
         </div>
       </div>
-
-      {ccaFormData && (
-        <form
-          ref={ccaFormRef}
-          method="POST"
-          action={ccaFormData.ccavenueUrl}
-          style={{ display: "none" }}
-        >
-          <input type="hidden" name="encRequest" value={ccaFormData.encryptedData} />
-          <input type="hidden" name="access_code" value={ccaFormData.accessCode} />
-        </form>
-      )}
     </div>
   );
 }
