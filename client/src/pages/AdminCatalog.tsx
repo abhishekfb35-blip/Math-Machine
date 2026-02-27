@@ -276,6 +276,8 @@ export default function AdminCatalog() {
   const [adminSearchActive, setAdminSearchActive] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
@@ -709,7 +711,7 @@ export default function AdminCatalog() {
               <Card
                 key={cat.id}
                 className="p-3 hover-elevate cursor-pointer"
-                onClick={() => { setSelectedCategory(cat); setCategoryFilter(""); setView("products"); }}
+                onClick={() => { setSelectedCategory(cat); setCategoryFilter(""); setCurrentPage(1); setView("products"); }}
                 data-testid={`card-category-${cat.id}`}
               >
                 <div className="flex items-center gap-3">
@@ -862,7 +864,11 @@ export default function AdminCatalog() {
       const q = categoryFilter.trim().toLowerCase();
       return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
     }) || [];
-    const allSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedProductIds.has(p.id));
+    const totalFiltered = filteredProducts.length;
+    const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
+    const safePage = Math.min(currentPage, totalPages || 1);
+    const paginatedProducts = pageSize === 0 ? filteredProducts : filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize);
+    const allSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.has(p.id));
     const someSelected = selectedProductIds.size > 0;
 
     return (
@@ -875,7 +881,8 @@ export default function AdminCatalog() {
           <div>
             <h1 className="text-xl font-bold" data-testid="text-products-title">{selectedCategory.name}</h1>
             <p className="text-sm text-muted-foreground">
-              {products?.length || 0} products
+              {totalFiltered} product{totalFiltered !== 1 ? "s" : ""}
+              {pageSize > 0 && totalPages > 1 && ` · page ${safePage} of ${totalPages}`}
               {someSelected && <span className="ml-2 font-medium text-foreground">· {selectedProductIds.size} selected</span>}
             </p>
           </div>
@@ -938,7 +945,7 @@ export default function AdminCatalog() {
           <Input
             placeholder="Filter products in this category..."
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
             className="pl-9 pr-9"
             data-testid="input-category-filter"
           />
@@ -962,16 +969,24 @@ export default function AdminCatalog() {
                 checked={allSelected}
                 onCheckedChange={(checked) => {
                   if (checked) {
-                    setSelectedProductIds(new Set(filteredProducts.map(p => p.id)));
+                    setSelectedProductIds(prev => {
+                      const next = new Set(prev);
+                      paginatedProducts.forEach(p => next.add(p.id));
+                      return next;
+                    });
                   } else {
-                    setSelectedProductIds(new Set());
+                    setSelectedProductIds(prev => {
+                      const next = new Set(prev);
+                      paginatedProducts.forEach(p => next.delete(p.id));
+                      return next;
+                    });
                   }
                 }}
                 data-testid="checkbox-select-all"
               />
-              <span className="text-xs text-muted-foreground">Select all</span>
+              <span className="text-xs text-muted-foreground">Select all on this page</span>
             </div>
-            {filteredProducts.map((prod) => (
+            {paginatedProducts.map((prod) => (
               <Card key={prod.id} className="p-3" data-testid={`card-product-${prod.id}`}>
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -1059,6 +1074,61 @@ export default function AdminCatalog() {
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>No products in this category</p>
+              </div>
+            )}
+
+            {totalFiltered > 0 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4" data-testid="pagination-controls">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Show</span>
+                  <Select
+                    value={pageSize === 0 ? "all" : String(pageSize)}
+                    onValueChange={(val) => {
+                      setPageSize(val === "all" ? 0 : Number(val));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-20 h-8 text-xs" data-testid="select-page-size">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-xs text-muted-foreground">
+                    of {totalFiltered} products
+                  </span>
+                </div>
+                {pageSize > 0 && totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      disabled={safePage <= 1}
+                      onClick={() => setCurrentPage(safePage - 1)}
+                      data-testid="button-prev-page"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2" data-testid="text-page-info">
+                      {safePage} / {totalPages}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      disabled={safePage >= totalPages}
+                      onClick={() => setCurrentPage(safePage + 1)}
+                      data-testid="button-next-page"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
