@@ -112,6 +112,41 @@ export async function seedDatabase() {
       } else {
         console.log("Database already seeded, skipping.");
       }
+
+      const [{ imgCount }] = await db.select({ imgCount: sql<number>`count(*)` }).from(productImages);
+      const expectedImages = data.productImages?.length || 0;
+      if (expectedImages > 0 && Number(imgCount) < expectedImages) {
+        console.log(`Syncing product images: ${imgCount} in DB, ${expectedImages} in seed data. Adding missing images...`);
+        const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
+        const slugToId: Record<string, string> = {};
+        for (const p of allProducts) { slugToId[p.slug] = p.id; }
+
+        await db.delete(productImages);
+
+        const imgSkippedSlugs: string[] = [];
+        const imgEntries = data.productImages
+          .filter((img: any) => {
+            const slug = img.productSlug || img.product_slug;
+            if (!slugToId[slug]) { imgSkippedSlugs.push(slug); return false; }
+            return true;
+          })
+          .map((img: any) => ({
+            productId: slugToId[img.productSlug || img.product_slug],
+            imageUrl: img.imageUrl || img.image_url,
+            sortOrder: img.sortOrder ?? img.sort_order ?? 0,
+            isPrimary: img.isPrimary ?? img.is_primary ?? false,
+          }));
+        if (imgSkippedSlugs.length > 0) {
+          const unique = Array.from(new Set(imgSkippedSlugs));
+          console.warn(`  WARNING: ${imgSkippedSlugs.length} images skipped — product slugs not found: ${unique.join(', ')}`);
+        }
+        for (let i = 0; i < imgEntries.length; i += 100) {
+          await db.insert(productImages).values(imgEntries.slice(i, i + 100));
+        }
+        const [{ finalImgCount }] = await db.select({ finalImgCount: sql<number>`count(*)` }).from(productImages);
+        console.log(`  VERIFIED: ${finalImgCount} product images synced.`);
+      }
+
       return;
     }
 

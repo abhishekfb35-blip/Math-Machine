@@ -53,6 +53,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 
 ## Database
 
+- **Environments**: Dev and production use **separate PostgreSQL databases**. The seed function (`server/seed.ts`) auto-syncs data (products, categories, reviews, images, tags, site config) on startup, but admin-created data (orders, uploaded images, etc.) is per-environment.
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
 - **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
 - **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, and `audit_logs`.
