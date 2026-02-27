@@ -238,7 +238,7 @@ export default function ProductPage() {
                   <button
                     key={img.id}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${
+                    className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
                       idx === selectedImageIndex ? "border-primary" : "border-transparent"
                     }`}
                     data-testid={`button-thumbnail-${idx}`}

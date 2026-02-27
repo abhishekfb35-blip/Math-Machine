@@ -267,7 +267,7 @@ export default function AdminProductEdit() {
           </Label>
           <div className="flex flex-wrap gap-2">
             {product.imageUrl && (
-              <label className="relative w-20 h-20 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
+              <label className="relative w-24 h-24 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
                 <input
                   type="file"
                   accept="image/*"
@@ -282,7 +282,7 @@ export default function AdminProductEdit() {
               </label>
             )}
             {productImages?.filter(img => img.imageUrl !== product.imageUrl).map((img) => (
-              <label key={img.id} className="relative w-20 h-20 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
+              <label key={img.id} className="relative w-24 h-24 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
                 <input
                   type="file"
                   accept="image/*"
@@ -314,7 +314,7 @@ export default function AdminProductEdit() {
                 </button>
               </label>
             ))}
-            <label className="w-20 h-20 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
+            <label className="w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
               <input
                 type="file"
                 accept="image/*"

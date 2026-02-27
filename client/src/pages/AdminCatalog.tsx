@@ -192,13 +192,22 @@ function ProductImageManager({ productId }: { productId: string }) {
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
         {images?.map((img, idx) => (
           <div key={img.id} className="relative group" data-testid={`image-thumb-${img.id}`}>
-            <div className="w-10 h-10 rounded border overflow-hidden bg-muted">
+            <div className="w-12 h-12 rounded border overflow-hidden bg-muted">
               <img
                 src={getProductImageUrl(img.imageUrl, "small")}
                 alt=""
                 className="w-full h-full object-contain"
               />
             </div>
+            <button
+              onClick={() => {
+                if (confirm("Delete this image?")) deleteImageMutation.mutate(img.id);
+              }}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+              data-testid={`button-delete-image-${img.id}`}
+            >
+              <X className="w-2.5 h-2.5" />
+            </button>
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
               {idx > 0 && (
                 <button
@@ -209,15 +218,6 @@ function ProductImageManager({ productId }: { productId: string }) {
                   <ChevronLeft className="w-3 h-3" />
                 </button>
               )}
-              <button
-                onClick={() => {
-                  if (confirm("Delete this image?")) deleteImageMutation.mutate(img.id);
-                }}
-                className="text-white hover:text-red-300 p-0"
-                data-testid={`button-delete-image-${img.id}`}
-              >
-                <X className="w-3 h-3" />
-              </button>
               {idx < (images?.length || 0) - 1 && (
                 <button
                   onClick={() => moveImage(idx, 1)}
@@ -1215,7 +1215,7 @@ export default function AdminCatalog() {
             </Label>
             <div className="flex flex-wrap gap-2">
               {editingProduct.imageUrl && (
-                <label className="relative w-20 h-20 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
+                <label className="relative w-24 h-24 rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group" data-testid="thumbnail-main-image">
                   <input
                     type="file"
                     accept="image/*"
@@ -1230,7 +1230,7 @@ export default function AdminCatalog() {
                 </label>
               )}
               {editingProduct.id && productImages?.filter(img => img.imageUrl !== editingProduct.imageUrl).map((img) => (
-                <label key={img.id} className="relative w-20 h-20 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
+                <label key={img.id} className="relative w-24 h-24 rounded-md overflow-visible bg-muted cursor-pointer group" data-testid={`thumbnail-image-${img.id}`}>
                   <input
                     type="file"
                     accept="image/*"
@@ -1262,7 +1262,7 @@ export default function AdminCatalog() {
                   </button>
                 </label>
               ))}
-              <label className="w-20 h-20 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
+              <label className="w-24 h-24 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate" data-testid="button-upload-image">
                 <input
                   type="file"
                   accept="image/*"
