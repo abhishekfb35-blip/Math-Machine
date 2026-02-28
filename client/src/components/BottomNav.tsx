@@ -13,7 +13,7 @@ const tabs = [
 
 export default function BottomNav() {
   const [location] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { customer, isAuthenticated } = useAuth();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -33,6 +33,7 @@ export default function BottomNav() {
         {tabs.map((tab) => {
           const active = isActive(tab.path);
           const href = tab.label === "Account" && !isAuthenticated ? "/signin" : tab.path;
+          const isAccountTab = tab.label === "Account";
           return (
             <Link key={tab.path} href={href}>
               <div
@@ -44,7 +45,13 @@ export default function BottomNav() {
                 data-testid={`tab-${tab.label.toLowerCase()}`}
               >
                 <div className="relative">
-                  <tab.icon className="w-5 h-5" />
+                  {isAccountTab && isAuthenticated ? (
+                    <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">
+                      {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
+                    </div>
+                  ) : (
+                    <tab.icon className="w-5 h-5" />
+                  )}
                   {tab.label === "Cart" && cart && cart.itemCount > 0 && (
                     <Badge
                       className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"

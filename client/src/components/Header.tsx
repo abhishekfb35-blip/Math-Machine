@@ -83,14 +83,25 @@ export default function Header() {
             </Button>
 
             <Link href={isAuthenticated ? "/account" : "/signin"}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={isAuthenticated ? "text-primary" : ""}
-                data-testid="button-account"
-              >
-                <User className="w-4 h-4" />
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  data-testid="button-account"
+                >
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                    {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  data-testid="button-account"
+                >
+                  <User className="w-4 h-4" />
+                </Button>
+              )}
             </Link>
 
             <Link href="/cart">
