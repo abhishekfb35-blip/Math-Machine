@@ -36,12 +36,12 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between gap-2 h-16 md:h-[86px]">
+        <div className="flex items-center justify-between gap-2 h-[72px] md:h-[86px]">
           <Link href="/" data-testid="link-home">
             <img
               src="/images/logo.png"
               alt={config.brandName}
-              className="h-[48px] md:h-[66px] w-auto cursor-pointer"
+              className="h-[55px] md:h-[66px] w-auto cursor-pointer"
               data-testid="img-brand-logo"
             />
           </Link>
@@ -69,7 +69,7 @@ export default function Header() {
                 data-testid="button-pwa-install"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Install</span>
+                <span>Install</span>
               </Button>
             )}
 
