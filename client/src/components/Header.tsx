@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download } from "lucide-react";
+import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const { customer, isAuthenticated } = useAuth();
+  const { installable, promptInstall } = usePWAInstall();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -58,6 +60,19 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-1">
+            {installable && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={promptInstall}
+                className="gap-1 text-xs"
+                data-testid="button-pwa-install"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Install</span>
+              </Button>
+            )}
+
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center gap-1" data-testid="form-header-search">
                 <div className="relative">
