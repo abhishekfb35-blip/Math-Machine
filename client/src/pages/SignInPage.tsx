@@ -28,7 +28,7 @@ export default function SignInPage() {
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
       toast({ title: "Welcome!", description: "Signed in with Google." });
-      navigate("/account");
+      navigate("/");
     } catch (err: any) {
       toast({ title: "Sign-in failed", description: err.message || "Please try again.", variant: "destructive" });
     } finally {
@@ -100,7 +100,7 @@ export default function SignInPage() {
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
       toast({ title: "Welcome!", description: "You're now signed in." });
-      navigate("/account");
+      navigate("/");
     } catch (err: any) {
       toast({ title: "Invalid code", description: "Please check and try again.", variant: "destructive" });
     } finally {
