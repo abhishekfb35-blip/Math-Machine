@@ -34,12 +34,12 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between gap-2 h-14">
+        <div className="flex items-center justify-between gap-2 h-16 md:h-[86px]">
           <Link href="/" data-testid="link-home">
             <img
               src="/images/logo.png"
               alt={config.brandName}
-              className="h-[46px] md:h-[60px] w-auto cursor-pointer"
+              className="h-[42px] md:h-[66px] w-auto cursor-pointer"
               data-testid="img-brand-logo"
             />
           </Link>
