@@ -41,7 +41,7 @@ export default function Header() {
             <img
               src="/images/logo.png"
               alt={config.brandName}
-              className="h-[42px] md:h-[66px] w-auto cursor-pointer"
+              className="h-[48px] md:h-[66px] w-auto cursor-pointer"
               data-testid="img-brand-logo"
             />
           </Link>
