@@ -118,15 +118,15 @@ export interface FeaturedSectionsConfig {
 export const defaultAnnouncement: AnnouncementConfig = {
   items: [
     { text: "Buy 2 Get 1 Free on all products" },
-    { text: "Free shipping across India" },
     { text: "Personalised embroidery on every product" },
+    { text: "Premium towels, blankets & bathrobes" },
   ],
 };
 
 export const defaultHero: HeroConfig = {
-  title: "Luxury Towels & Blankets",
+  title: "Luxury Towels, Blankets & Bathrobes",
   titleHighlight: "with Your Name",
-  subtitle: "Premium quality embroidered products, personalised with love. The perfect gift for your little ones and loved ones.",
+  subtitle: "Premium quality embroidered towels, blankets & bathrobes, personalised with love. The perfect gift for your little ones and loved ones.",
   primaryButtonText: "Shop Now",
   primaryButtonLink: "/shop",
   secondaryButtonText: "Couple Sets",

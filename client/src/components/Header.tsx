@@ -36,9 +36,12 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-2 h-14">
           <Link href="/" data-testid="link-home">
-            <span className="text-lg font-bold text-primary cursor-pointer" data-testid="text-brand-name">
-              {config.brandName}
-            </span>
+            <img
+              src="/images/logo.png"
+              alt={config.brandName}
+              className="h-10 w-auto cursor-pointer"
+              data-testid="img-brand-logo"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" data-testid="nav-desktop">

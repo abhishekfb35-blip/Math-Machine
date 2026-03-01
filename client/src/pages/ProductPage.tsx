@@ -461,7 +461,7 @@ export default function ProductPage() {
               </div>
               <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
                 <Check className="w-4 h-4 text-primary" />
-                <span className="text-[10px] text-muted-foreground">Free Shipping</span>
+                <span className="text-[10px] text-muted-foreground">Buy 2 Get 1 Free</span>
               </div>
             </div>
           </div>
