@@ -17,7 +17,7 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, History, Upload, Loader2, LogOut,
+  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
