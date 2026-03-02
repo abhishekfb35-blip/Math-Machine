@@ -38,12 +38,16 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-2 h-[72px] md:h-[86px]">
           <Link href="/" data-testid="link-home">
-            <img
-              src="/images/logo.png"
-              alt={config.brandName}
-              className="h-[55px] md:h-[66px] w-auto cursor-pointer"
-              data-testid="img-brand-logo"
-            />
+            <picture>
+              <source media="(min-width: 768px)" srcSet="/images/logo-desktop.png" />
+              <img
+                src="/images/logo-mobile.png"
+                alt={config.brandName}
+                className="h-[55px] md:h-[66px] w-auto cursor-pointer"
+                data-testid="img-brand-logo"
+                onError={(e) => { (e.target as HTMLImageElement).src = "/images/logo.png"; }}
+              />
+            </picture>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" data-testid="nav-desktop">

@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2 space-y-3">
-            <img src="/images/logo.png" alt={config.brandName} className="h-[54px] md:h-[72px] w-auto" data-testid="img-footer-brand" />
+            <img src="/images/logo-footer.png" alt={config.brandName} className="h-[54px] md:h-[72px] w-auto" data-testid="img-footer-brand" onError={(e) => { (e.target as HTMLImageElement).src = "/images/logo.png"; }} />
             <p className="text-sm opacity-70 max-w-sm leading-relaxed">
               {config.brandStory}
             </p>

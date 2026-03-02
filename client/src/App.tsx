@@ -31,6 +31,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminProductEdit from "@/pages/AdminProductEdit";
 import AdminDeployCheck from "@/pages/AdminDeployCheck";
 import AdminSeoAudit from "@/pages/AdminSeoAudit";
+import AdminBrandAssets from "@/pages/AdminBrandAssets";
 import AdminGuard from "@/components/AdminGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/admin/login" component={() => <AdminGuard><AdminDashboard /></AdminGuard>} />
       <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
       <Route path="/admin/catalog/product/:id" component={() => <AdminGuard><AdminProductEdit /></AdminGuard>} />
+      <Route path="/admin/brand" component={() => <AdminGuard><AdminBrandAssets /></AdminGuard>} />
       <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
       <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />
       <Route path="/admin/pages" component={() => <AdminGuard><AdminPages /></AdminGuard>} />

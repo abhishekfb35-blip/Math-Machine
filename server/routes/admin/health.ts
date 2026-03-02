@@ -1,10 +1,26 @@
 import type { Express, Request, Response } from "express";
 import path from "path";
+import fs from "fs";
 import { execSync } from "child_process";
 import { storage } from "../../storage";
 import { requireAdmin } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
+
+const BRAND_SLOTS: Record<string, string> = {
+  desktop: "logo-desktop.png",
+  mobile: "logo-mobile.png",
+  favicon: "logo-favicon.png",
+  footer: "logo-footer.png",
+};
+
+function getBrandImagesDir(): string {
+  const isProduction = currentDir.endsWith("/dist") || currentDir.endsWith("\\dist");
+  if (isProduction) {
+    return path.resolve(currentDir, "public", "images");
+  }
+  return path.resolve(currentDir, "..", "client", "public", "images");
+}
 
 export function registerAdminHealthRoutes(app: Express) {
 
@@ -18,6 +34,64 @@ export function registerAdminHealthRoutes(app: Express) {
     } catch (err) {
       console.error("Upload error:", err);
       res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  app.get("/api/admin/brand-logos", requireAdmin, async (_req: Request, res: Response) => {
+    try {
+      const imagesDir = getBrandImagesDir();
+      const logos: Record<string, string | null> = {};
+      for (const [slot, filename] of Object.entries(BRAND_SLOTS)) {
+        const filePath = path.join(imagesDir, filename);
+        logos[slot] = fs.existsSync(filePath) ? `/images/${filename}?t=${fs.statSync(filePath).mtimeMs}` : null;
+      }
+      res.json(logos);
+    } catch (err) {
+      console.error("Brand logos error:", err);
+      res.status(500).json({ message: "Failed to fetch brand logos" });
+    }
+  });
+
+  app.post("/api/admin/brand-logo", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
+    const slot = req.body?.slot as string;
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+    if (!slot || !BRAND_SLOTS[slot]) {
+      return res.status(400).json({ message: "Invalid slot. Must be one of: desktop, mobile, favicon, footer" });
+    }
+
+    const allowedMimes = ["image/png", "image/jpeg", "image/webp"];
+    if (!allowedMimes.includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file type. Only PNG, JPEG, and WebP are allowed." });
+    }
+    if (req.file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
+    }
+
+    try {
+      const imagesDir = getBrandImagesDir();
+      const targetPath = path.join(imagesDir, BRAND_SLOTS[slot]);
+      fs.writeFileSync(targetPath, req.file.buffer);
+
+      if (slot === "favicon") {
+        const faviconPath = path.join(imagesDir, "..", "favicon.png");
+        const icon192Path = path.join(imagesDir, "..", "icon-192.png");
+        const icon512Path = path.join(imagesDir, "..", "icon-512.png");
+        try {
+          execSync(`convert "${targetPath}" -resize 32x32 "${faviconPath}"`);
+          execSync(`convert "${targetPath}" -resize 192x192 "${icon192Path}"`);
+          execSync(`convert "${targetPath}" -resize 512x512 "${icon512Path}"`);
+        } catch (convertErr) {
+          console.warn("ImageMagick convert failed, using original file as favicon:", convertErr);
+          fs.copyFileSync(targetPath, faviconPath);
+        }
+      }
+
+      res.json({ url: `/images/${BRAND_SLOTS[slot]}?t=${Date.now()}` });
+    } catch (err) {
+      console.error("Brand logo upload error:", err);
+      res.status(500).json({ message: "Failed to upload brand logo" });
     }
   });
 
