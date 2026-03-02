@@ -16,6 +16,7 @@ import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
+import SignInModal from "@/components/SignInModal";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 interface CartData {
@@ -62,6 +63,8 @@ export default function CheckoutPage() {
   const { customer } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "ccavenue" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+  const pendingSubmitRef = useRef<CheckoutInput | null>(null);
   const ccaFormRef = useRef<HTMLFormElement>(null);
   const [ccaFormData, setCcaFormData] = useState<{ encryptedData: string; accessCode: string; ccavenueUrl: string } | null>(null);
 
@@ -250,7 +253,7 @@ export default function CheckoutPage() {
     }
   }, [ccaFormData]);
 
-  const onSubmit = (data: CheckoutInput) => {
+  const processOrder = useCallback((data: CheckoutInput) => {
     if (paymentMethod === "razorpay") {
       handleRazorpayCheckout(data);
     } else if (paymentMethod === "ccavenue") {
@@ -258,7 +261,27 @@ export default function CheckoutPage() {
     } else {
       codCheckoutMutation.mutate(data);
     }
+  }, [paymentMethod, handleRazorpayCheckout, handleCCAvenueCheckout, codCheckoutMutation]);
+
+  const onSubmit = (data: CheckoutInput) => {
+    if (!customer) {
+      pendingSubmitRef.current = data;
+      setShowSignInModal(true);
+      return;
+    }
+    processOrder(data);
   };
+
+  const handleSignInSuccess = useCallback(() => {
+    setShowSignInModal(false);
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    if (pendingSubmitRef.current) {
+      setTimeout(() => {
+        processOrder(pendingSubmitRef.current!);
+        pendingSubmitRef.current = null;
+      }, 300);
+    }
+  }, [processOrder]);
 
   const isPending = codCheckoutMutation.isPending || isProcessingPayment;
 
@@ -579,6 +602,12 @@ export default function CheckoutPage() {
           )}
         </div>
       </div>
+
+      <SignInModal
+        open={showSignInModal}
+        onClose={() => setShowSignInModal(false)}
+        onSuccess={handleSignInSuccess}
+      />
     </div>
   );
 }
