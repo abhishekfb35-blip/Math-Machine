@@ -11,6 +11,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import GoogleOneTap from "@/components/GoogleOneTap";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
 import CategoryPage from "@/pages/CategoryPage";
@@ -104,6 +105,7 @@ function App() {
           </div>
           <BottomNav />
           <WhatsAppButton />
+          <GoogleOneTap />
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
