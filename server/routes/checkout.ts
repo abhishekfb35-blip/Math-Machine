@@ -49,9 +49,19 @@ export function registerCheckoutRoutes(app: Express) {
         .map(i => ({ price: i.product!.price, quantity: i.quantity }));
       const pricing = calculateDiscount(priceItems);
 
+      let couponDiscount = 0;
+      const discountCode = req.body.discountCode;
+      if (discountCode?.trim()) {
+        const consent = await storage.getCustomerConsentByDiscountCode(discountCode.trim().toUpperCase());
+        if (consent && !consent.discountUsed) {
+          couponDiscount = Math.round(pricing.total * 0.10);
+        }
+      }
+      const finalAmount = Math.max(0, pricing.total - couponDiscount);
+
       const result = await razorpay.createPaymentOrder({
         orderId: `cart_${cart.id}`,
-        amount: pricing.total,
+        amount: finalAmount,
         currency: "INR",
         customerName: req.body.customerName || "",
         customerEmail: req.body.customerEmail || "",
@@ -64,7 +74,7 @@ export function registerCheckoutRoutes(app: Express) {
 
       res.json({
         razorpayOrderId: result.razorpayOrderId,
-        amount: pricing.total,
+        amount: finalAmount,
         currency: "INR",
       });
     } catch (err) {
@@ -104,6 +114,19 @@ export function registerCheckoutRoutes(app: Express) {
         .map(i => ({ price: i.product!.price, quantity: i.quantity }));
       const pricing = calculateDiscount(priceItems);
 
+      let couponDiscount = 0;
+      let consentId: string | null = null;
+      const discountCode = req.body.discountCode;
+      if (discountCode?.trim()) {
+        const consent = await storage.getCustomerConsentByDiscountCode(discountCode.trim().toUpperCase());
+        if (consent && !consent.discountUsed) {
+          couponDiscount = Math.round(pricing.total * 0.10);
+          consentId = consent.id;
+        }
+      }
+      const totalDiscount = pricing.discount + couponDiscount;
+      const finalTotal = Math.max(0, pricing.total - couponDiscount);
+
       const checkoutData = checkoutSchema.parse(req.body);
       const customer = await getAuthenticatedCustomer(req);
       const customerId = customer?.id || null;
@@ -118,13 +141,15 @@ export function registerCheckoutRoutes(app: Express) {
         shippingState: checkoutData.shippingState,
         shippingPincode: checkoutData.shippingPincode,
         subtotal: pricing.subtotal,
-        discount: pricing.discount,
-        total: pricing.total,
+        discount: totalDiscount,
+        total: finalTotal,
         status: "pending",
         paymentStatus: "pending",
         notes: checkoutData.notes || null,
         paymentId: null,
       });
+
+      if (consentId) await storage.markConsentDiscountUsed(consentId);
 
       const expandedItems = itemsWithProducts.filter(i => i.product);
       for (const item of expandedItems) {
@@ -149,7 +174,7 @@ export function registerCheckoutRoutes(app: Express) {
 
       const encryptedData = buildEncryptedRequest({
         orderId: order.id,
-        amount: pricing.total,
+        amount: finalTotal,
         currency: "INR",
         customerName: checkoutData.customerName,
         customerEmail: checkoutData.customerEmail,
@@ -272,12 +297,37 @@ export function registerCheckoutRoutes(app: Express) {
 
   app.post("/api/checkout", async (req, res) => {
     try {
-      const { paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature, ...checkoutData } = req.body;
+      const { paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature, discountCode, ...checkoutData } = req.body;
       const input = checkoutSchema.parse(checkoutData);
       const sessionId = getSessionId(req, res);
 
       const customer = await getAuthenticatedCustomer(req);
       const customerId = customer?.id || null;
+
+      let couponDiscount = 0;
+      let validatedDiscountCode: string | null = null;
+      let consentId: string | null = null;
+
+      if (discountCode?.trim()) {
+        const consent = await storage.getCustomerConsentByDiscountCode(discountCode.trim().toUpperCase());
+        if (consent && !consent.discountUsed) {
+          validatedDiscountCode = consent.discountCode;
+          consentId = consent.id;
+
+          const cart = await storage.getOrCreateCart(sessionId);
+          const items = await storage.getCartItems(cart.id);
+          const itemsWithProducts = await Promise.all(
+            items.map(async (item) => {
+              const product = await storage.getProductById(item.productId);
+              return { ...item, product };
+            })
+          );
+          const priceItems = itemsWithProducts.filter(i => i.product).map(i => ({ price: i.product!.price, quantity: i.quantity }));
+          const { calculateDiscount } = await import("../services/discountService");
+          const pricing = calculateDiscount(priceItems);
+          couponDiscount = Math.round(pricing.total * 0.10);
+        }
+      }
 
       if (paymentMethod === "razorpay") {
         const razorpay = getRazorpayProvider();
@@ -298,14 +348,18 @@ export function registerCheckoutRoutes(app: Express) {
         const result = await razorpayOrderService.checkoutWithPayment(sessionId, {
           ...input,
           customerId,
+          discountCode: validatedDiscountCode,
+          couponDiscount,
           paymentId: razorpayPaymentId,
           razorpayOrderId,
           paymentStatus: "paid",
         });
+        if (consentId) await storage.markConsentDiscountUsed(consentId);
         return res.status(201).json(result);
       }
 
-      const result = await orderService.checkout(sessionId, { ...input, customerId });
+      const result = await orderService.checkout(sessionId, { ...input, customerId, discountCode: validatedDiscountCode, couponDiscount });
+      if (consentId) await storage.markConsentDiscountUsed(consentId);
       res.status(201).json(result);
     } catch (err) {
       if (err instanceof z.ZodError) {

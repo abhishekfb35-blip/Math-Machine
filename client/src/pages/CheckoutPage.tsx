@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, Gift, CreditCard, Banknote, Shield, Globe } from "lucide-react";
+import { ArrowLeft, Gift, CreditCard, Banknote, Shield, Globe, Tag, Loader2, X, Check } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -65,6 +65,10 @@ export default function CheckoutPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [validatingDiscount, setValidatingDiscount] = useState(false);
   const ccaFormRef = useRef<HTMLFormElement>(null);
   const [ccaFormData, setCcaFormData] = useState<{ encryptedData: string; accessCode: string; ccavenueUrl: string } | null>(null);
 
@@ -128,7 +132,7 @@ export default function CheckoutPage() {
 
   const codCheckoutMutation = useMutation({
     mutationFn: async (data: CheckoutInput) => {
-      const res = await apiRequest("POST", "/api/checkout", { ...data, paymentMethod: "cod" });
+      const res = await apiRequest("POST", "/api/checkout", { ...data, paymentMethod: "cod", discountCode: appliedDiscount?.code || null });
       return res.json();
     },
     onSuccess: (data) => {
@@ -158,6 +162,7 @@ export default function CheckoutPage() {
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
+        discountCode: appliedDiscount?.code || null,
       });
       const orderData = await orderRes.json();
 
@@ -187,6 +192,7 @@ export default function CheckoutPage() {
             const checkoutRes = await apiRequest("POST", "/api/checkout", {
               ...formData,
               paymentMethod: "razorpay",
+              discountCode: appliedDiscount?.code || null,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
               razorpaySignature: response.razorpay_signature,
@@ -226,7 +232,7 @@ export default function CheckoutPage() {
   const handleCCAvenueCheckout = useCallback(async (formData: CheckoutInput) => {
     setIsProcessingPayment(true);
     try {
-      const res = await apiRequest("POST", "/api/ccavenue/initiate", formData);
+      const res = await apiRequest("POST", "/api/ccavenue/initiate", { ...formData, discountCode: appliedDiscount?.code || null });
       const data = await res.json();
 
       if (!data.encryptedData) {
@@ -252,6 +258,36 @@ export default function CheckoutPage() {
       ccaFormRef.current.submit();
     }
   }, [ccaFormData]);
+
+  const handleApplyDiscount = async () => {
+    const code = discountCodeInput.trim().toUpperCase();
+    if (!code) return;
+    setDiscountError("");
+    setValidatingDiscount(true);
+    try {
+      const res = await apiRequest("POST", "/api/discount/validate", { code });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedDiscount({ code: data.code, percent: data.discountPercent });
+        setDiscountError("");
+      } else {
+        setDiscountError(data.message || "Invalid discount code");
+      }
+    } catch {
+      setDiscountError("Could not validate code. Try again.");
+    } finally {
+      setValidatingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCodeInput("");
+    setDiscountError("");
+  };
+
+  const couponDiscount = appliedDiscount && cart ? Math.round(cart.total * appliedDiscount.percent / 100) : 0;
+  const finalTotal = cart ? cart.total - couponDiscount : 0;
 
   const processOrder = useCallback((data: CheckoutInput) => {
     if (paymentMethod === "razorpay") {
@@ -542,8 +578,8 @@ export default function CheckoutPage() {
                 {isPending
                   ? "Processing..."
                   : paymentMethod === "razorpay" || paymentMethod === "ccavenue"
-                    ? `Pay ₹${cart.total.toLocaleString("en-IN")}`
-                    : `Place Order - ₹${cart.total.toLocaleString("en-IN")}`}
+                    ? `Pay ₹${finalTotal.toLocaleString("en-IN")}`
+                    : `Place Order - ₹${finalTotal.toLocaleString("en-IN")}`}
               </Button>
             </form>
           </Form>
@@ -569,6 +605,49 @@ export default function CheckoutPage() {
               ))}
             </div>
             <Separator />
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" /> Discount Code
+              </p>
+              {appliedDiscount ? (
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">
+                  <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                  <span className="text-sm font-mono font-medium text-green-700 dark:text-green-300 flex-1" data-testid="text-applied-discount-code">{appliedDiscount.code}</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">{appliedDiscount.percent}% off</span>
+                  <button onClick={handleRemoveDiscount} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-1" data-testid="button-remove-discount">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={discountCodeInput}
+                    onChange={e => { setDiscountCodeInput(e.target.value.toUpperCase()); setDiscountError(""); }}
+                    className="text-sm font-mono uppercase"
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleApplyDiscount(); } }}
+                    data-testid="input-discount-code"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplyDiscount}
+                    disabled={validatingDiscount || !discountCodeInput.trim()}
+                    className="shrink-0 px-4"
+                    data-testid="button-apply-discount"
+                  >
+                    {validatingDiscount ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                  </Button>
+                </div>
+              )}
+              {discountError && (
+                <p className="text-xs text-destructive" data-testid="text-discount-error">{discountError}</p>
+              )}
+            </div>
+
+            <Separator />
             <div className="space-y-1 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -576,8 +655,14 @@ export default function CheckoutPage() {
               </div>
               {cart.discount > 0 && (
                 <div className="flex justify-between gap-4 text-primary">
-                  <span>Discount</span>
+                  <span>Buy 2 Get 1 Free</span>
                   <span>-₹{cart.discount.toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {couponDiscount > 0 && (
+                <div className="flex justify-between gap-4 text-green-600 dark:text-green-400">
+                  <span>Coupon ({appliedDiscount!.code})</span>
+                  <span>-₹{couponDiscount.toLocaleString("en-IN")}</span>
                 </div>
               )}
               <div className="flex justify-between gap-4 text-muted-foreground">
@@ -587,16 +672,16 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between gap-4 font-semibold text-base">
                 <span>Total</span>
-                <span data-testid="text-checkout-total">₹{cart.total.toLocaleString("en-IN")}</span>
+                <span data-testid="text-checkout-total">₹{finalTotal.toLocaleString("en-IN")}</span>
               </div>
             </div>
           </Card>
 
-          {cart.discount > 0 && (
+          {(cart.discount > 0 || couponDiscount > 0) && (
             <Card className="p-3 bg-primary/5 dark:bg-primary/10 border-primary/20">
               <div className="flex items-center gap-2">
                 <Gift className="w-4 h-4 text-primary shrink-0" />
-                <p className="text-xs font-medium">You saved ₹{cart.discount.toLocaleString("en-IN")} with our offer!</p>
+                <p className="text-xs font-medium">You saved ₹{(cart.discount + couponDiscount).toLocaleString("en-IN")} on this order!</p>
               </div>
             </Card>
           )}

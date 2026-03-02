@@ -64,6 +64,37 @@ export function registerConsentRoutes(app: Express) {
     }
   });
 
+  app.post("/api/discount/validate", async (req: Request, res: Response) => {
+    try {
+      const ip = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
+      const now = Date.now();
+      const lastAttempt = consentRateLimit.get(`discount_${ip}`) || 0;
+      if (now - lastAttempt < 2000) {
+        return res.status(429).json({ valid: false, message: "Please wait before trying again" });
+      }
+      consentRateLimit.set(`discount_${ip}`, now);
+
+      const { code } = req.body;
+      if (!code?.trim()) {
+        return res.status(400).json({ valid: false, message: "Please enter a discount code" });
+      }
+
+      const consent = await storage.getCustomerConsentByDiscountCode(code.trim().toUpperCase());
+      if (!consent) {
+        return res.json({ valid: false, message: "Invalid discount code" });
+      }
+
+      if (consent.discountUsed) {
+        return res.json({ valid: false, message: "This discount code has already been used" });
+      }
+
+      return res.json({ valid: true, discountPercent: 10, code: consent.discountCode });
+    } catch (err) {
+      console.error("Discount validate error:", err);
+      res.status(500).json({ valid: false, message: "Something went wrong" });
+    }
+  });
+
   app.get("/api/consent/check", async (req: Request, res: Response) => {
     try {
       const consentType = (req.query.consentType as string) || "whatsapp_marketing";

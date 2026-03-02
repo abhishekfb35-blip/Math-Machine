@@ -14,6 +14,8 @@ export interface CheckoutInput {
   shippingState: string;
   shippingPincode: string;
   notes?: string | null;
+  discountCode?: string | null;
+  couponDiscount?: number;
 }
 
 export interface PaidCheckoutInput extends CheckoutInput {
@@ -26,6 +28,7 @@ export interface CheckoutResult {
   orderId: string;
   subtotal: number;
   discount: number;
+  couponDiscount: number;
   total: number;
 }
 
@@ -57,9 +60,13 @@ export class OrderService {
 
     const pricing = calculateDiscount(priceItems);
 
+    const couponDiscount = input.couponDiscount || 0;
+    const finalTotal = Math.max(0, pricing.total - couponDiscount);
+    const totalDiscount = pricing.discount + couponDiscount;
+
     const payment = await this.paymentProvider.createPaymentOrder({
       orderId: "",
-      amount: pricing.total,
+      amount: finalTotal,
       currency: "INR",
       customerName: input.customerName,
       customerEmail: input.customerEmail,
@@ -76,8 +83,8 @@ export class OrderService {
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      total: pricing.total,
+      discount: totalDiscount,
+      total: finalTotal,
       status: payment.status === "cod" ? "confirmed" : "pending",
       paymentStatus: payment.status,
       notes: input.notes || null,
@@ -92,9 +99,9 @@ export class OrderService {
       customerName: input.customerName,
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
-      total: pricing.total,
+      total: finalTotal,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
+      discount: totalDiscount,
       itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
       items: orderItemDetails,
       shippingAddress: input.shippingAddress,
@@ -107,8 +114,9 @@ export class OrderService {
     return {
       orderId: order.id,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      total: pricing.total,
+      discount: totalDiscount,
+      couponDiscount,
+      total: finalTotal,
     };
   }
 
@@ -133,6 +141,10 @@ export class OrderService {
 
     const pricing = calculateDiscount(priceItems);
 
+    const couponDiscount = input.couponDiscount || 0;
+    const finalTotal = Math.max(0, pricing.total - couponDiscount);
+    const totalDiscount = pricing.discount + couponDiscount;
+
     const order = await this.storage.createOrder({
       customerId: input.customerId || null,
       customerName: input.customerName,
@@ -143,8 +155,8 @@ export class OrderService {
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      total: pricing.total,
+      discount: totalDiscount,
+      total: finalTotal,
       status: "confirmed",
       paymentStatus: "paid",
       notes: input.notes || null,
@@ -160,9 +172,9 @@ export class OrderService {
       customerName: input.customerName,
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
-      total: pricing.total,
+      total: finalTotal,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
+      discount: totalDiscount,
       itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
       items: orderItemDetails,
       shippingAddress: input.shippingAddress,
@@ -175,8 +187,9 @@ export class OrderService {
     return {
       orderId: order.id,
       subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      total: pricing.total,
+      discount: totalDiscount,
+      couponDiscount,
+      total: finalTotal,
     };
   }
 
