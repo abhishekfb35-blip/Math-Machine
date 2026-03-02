@@ -14,12 +14,73 @@ const BRAND_SLOTS: Record<string, string> = {
   footer: "logo-footer.png",
 };
 
-function getBrandImagesDir(): string {
+function getPublicDir(): string {
   const isProduction = currentDir.endsWith("/dist") || currentDir.endsWith("\\dist");
   if (isProduction) {
-    return path.resolve(currentDir, "public", "images");
+    return path.resolve(currentDir, "public");
   }
-  return path.resolve(process.cwd(), "client", "public", "images");
+  return path.resolve(process.cwd(), "client", "public");
+}
+
+function getBrandImagesDir(): string {
+  return path.resolve(getPublicDir(), "images");
+}
+
+function generatePWAIcons(sourcePath: string, publicDir: string): void {
+  const faviconPath = path.join(publicDir, "favicon.png");
+  const icon192Path = path.join(publicDir, "icon-192.png");
+  const icon512Path = path.join(publicDir, "icon-512.png");
+  try {
+    execSync(`convert "${sourcePath}" -resize 32x32! "${faviconPath}"`);
+    execSync(`convert "${sourcePath}" -resize 192x192! "${icon192Path}"`);
+    execSync(`convert "${sourcePath}" -resize 512x512! "${icon512Path}"`);
+  } catch (convertErr) {
+    console.warn("ImageMagick convert failed, writing raw copies:", convertErr);
+    const buf = fs.readFileSync(sourcePath);
+    fs.writeFileSync(faviconPath, buf);
+    fs.writeFileSync(icon192Path, buf);
+    fs.writeFileSync(icon512Path, buf);
+  }
+}
+
+export async function restoreBrandLogosFromDB(): Promise<void> {
+  try {
+    const publicDir = getPublicDir();
+    const imagesDir = getBrandImagesDir();
+
+    if (!fs.existsSync(imagesDir)) {
+      fs.mkdirSync(imagesDir, { recursive: true });
+    }
+
+    let hasFaviconSource = false;
+    for (const [slot, filename] of Object.entries(BRAND_SLOTS)) {
+      const config = await storage.getSiteConfig(`brand-logo-${slot}`);
+      if (config) {
+        const buf = Buffer.from(config.value, "base64");
+        fs.writeFileSync(path.join(imagesDir, filename), buf);
+        if (slot === "favicon") hasFaviconSource = true;
+      }
+    }
+
+    const pwaKeys = ["brand-pwa-favicon", "brand-pwa-icon-192", "brand-pwa-icon-512"];
+    const pwaFiles = ["favicon.png", "icon-192.png", "icon-512.png"];
+    let restoredPWA = false;
+    for (let i = 0; i < pwaKeys.length; i++) {
+      const config = await storage.getSiteConfig(pwaKeys[i]);
+      if (config) {
+        fs.writeFileSync(path.join(publicDir, pwaFiles[i]), Buffer.from(config.value, "base64"));
+        restoredPWA = true;
+      }
+    }
+
+    if (!restoredPWA && hasFaviconSource) {
+      generatePWAIcons(path.join(imagesDir, BRAND_SLOTS.favicon), publicDir);
+    }
+
+    console.log("Brand logos restored from database");
+  } catch (err) {
+    console.warn("Could not restore brand logos from DB (non-fatal):", err);
+  }
 }
 
 export function registerAdminHealthRoutes(app: Express) {
@@ -71,20 +132,29 @@ export function registerAdminHealthRoutes(app: Express) {
 
     try {
       const imagesDir = getBrandImagesDir();
+      const publicDir = getPublicDir();
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
       const targetPath = path.join(imagesDir, BRAND_SLOTS[slot]);
       fs.writeFileSync(targetPath, req.file.buffer);
 
+      await storage.upsertSiteConfig(`brand-logo-${slot}`, req.file.buffer.toString("base64"));
+
       if (slot === "favicon") {
-        const faviconPath = path.join(imagesDir, "..", "favicon.png");
-        const icon192Path = path.join(imagesDir, "..", "icon-192.png");
-        const icon512Path = path.join(imagesDir, "..", "icon-512.png");
-        try {
-          execSync(`convert "${targetPath}" -resize 32x32! "${faviconPath}"`);
-          execSync(`convert "${targetPath}" -resize 192x192! "${icon192Path}"`);
-          execSync(`convert "${targetPath}" -resize 512x512! "${icon512Path}"`);
-        } catch (convertErr) {
-          console.warn("ImageMagick convert failed, using original file as favicon:", convertErr);
-          fs.copyFileSync(targetPath, faviconPath);
+        generatePWAIcons(targetPath, publicDir);
+
+        const faviconPath = path.join(publicDir, "favicon.png");
+        const icon192Path = path.join(publicDir, "icon-192.png");
+        const icon512Path = path.join(publicDir, "icon-512.png");
+        if (fs.existsSync(faviconPath)) {
+          await storage.upsertSiteConfig("brand-pwa-favicon", fs.readFileSync(faviconPath).toString("base64"));
+        }
+        if (fs.existsSync(icon192Path)) {
+          await storage.upsertSiteConfig("brand-pwa-icon-192", fs.readFileSync(icon192Path).toString("base64"));
+        }
+        if (fs.existsSync(icon512Path)) {
+          await storage.upsertSiteConfig("brand-pwa-icon-512", fs.readFileSync(icon512Path).toString("base64"));
         }
       }
 
