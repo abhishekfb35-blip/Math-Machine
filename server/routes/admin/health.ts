@@ -79,9 +79,9 @@ export function registerAdminHealthRoutes(app: Express) {
         const icon192Path = path.join(imagesDir, "..", "icon-192.png");
         const icon512Path = path.join(imagesDir, "..", "icon-512.png");
         try {
-          execSync(`convert "${targetPath}" -resize 32x32 "${faviconPath}"`);
-          execSync(`convert "${targetPath}" -resize 192x192 "${icon192Path}"`);
-          execSync(`convert "${targetPath}" -resize 512x512 "${icon512Path}"`);
+          execSync(`convert "${targetPath}" -resize 32x32! "${faviconPath}"`);
+          execSync(`convert "${targetPath}" -resize 192x192! "${icon192Path}"`);
+          execSync(`convert "${targetPath}" -resize 512x512! "${icon512Path}"`);
         } catch (convertErr) {
           console.warn("ImageMagick convert failed, using original file as favicon:", convertErr);
           fs.copyFileSync(targetPath, faviconPath);
