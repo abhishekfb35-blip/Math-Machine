@@ -1,4 +1,4 @@
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -13,6 +13,7 @@ import type {
   ProductTag, InsertProductTag,
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
+  CustomerConsent, InsertCustomerConsent,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt } from "drizzle-orm";
@@ -92,6 +93,11 @@ export interface IStorage {
   getCustomerBySessionToken(token: string): Promise<Customer | undefined>;
   deleteCustomerSession(token: string): Promise<void>;
   getOrdersByCustomerId(customerId: string): Promise<Order[]>;
+
+  createCustomerConsent(data: InsertCustomerConsent): Promise<CustomerConsent>;
+  getCustomerConsentByEmail(email: string, consentType: string): Promise<CustomerConsent | undefined>;
+  getCustomerConsents(filters?: { limit?: number; offset?: number }): Promise<CustomerConsent[]>;
+  markConsentDiscountUsed(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -571,6 +577,33 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(orders)
       .where(eq(orders.customerId, customerId))
       .orderBy(desc(orders.createdAt));
+  }
+
+  async createCustomerConsent(data: InsertCustomerConsent): Promise<CustomerConsent> {
+    const [consent] = await db.insert(customerConsents).values(data).returning();
+    return consent;
+  }
+
+  async getCustomerConsentByEmail(email: string, consentType: string): Promise<CustomerConsent | undefined> {
+    const [consent] = await db.select().from(customerConsents)
+      .where(and(
+        eq(customerConsents.email, email),
+        eq(customerConsents.consentType, consentType),
+        eq(customerConsents.consentGiven, true),
+        sql`${customerConsents.revokedAt} IS NULL`
+      ));
+    return consent;
+  }
+
+  async getCustomerConsents(filters?: { limit?: number; offset?: number }): Promise<CustomerConsent[]> {
+    let query = db.select().from(customerConsents).orderBy(desc(customerConsents.consentedAt));
+    if (filters?.limit) query = query.limit(filters.limit) as any;
+    if (filters?.offset) query = query.offset(filters.offset) as any;
+    return await query;
+  }
+
+  async markConsentDiscountUsed(id: string): Promise<void> {
+    await db.update(customerConsents).set({ discountUsed: true }).where(eq(customerConsents.id, id));
   }
 }
 

@@ -12,6 +12,7 @@ import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import GoogleOneTap from "@/components/GoogleOneTap";
+import ConsentPopup from "@/components/ConsentPopup";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
 import CategoryPage from "@/pages/CategoryPage";
@@ -106,6 +107,7 @@ function App() {
           <BottomNav />
           <WhatsAppButton />
           <GoogleOneTap />
+          <ConsentPopup />
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

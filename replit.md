@@ -68,7 +68,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Environments**: Dev and production use **separate PostgreSQL databases**. The seed function (`server/seed.ts`) auto-syncs data (products, categories, reviews, images, tags, site config) on startup, but admin-created data (orders, uploaded images, etc.) is per-environment.
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
 - **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
-- **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, and `audit_logs`.
+- **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, `audit_logs`, and `customer_consents`.
 - **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, site config, and order status changes. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
 - **Product Categories**: Flat structure with a tagging system for cross-cutting attributes.
 - **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.
@@ -90,6 +90,9 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Auth Pages**: `/signin` (email OTP + Google), `/account` (profile + order history).
 - **SEO**: Per-page titles, meta descriptions, canonical URLs, Open Graph tags, Twitter cards via react-helmet-async. JSON-LD structured data (Product, Organization, BreadcrumbList). Dynamic `/sitemap.xml` with 470+ URLs. `robots.txt` blocking admin/cart/checkout. OG image at `/og-image.png`.
 - **Payments**: Dual payment system — Razorpay (online, HMAC-SHA256 verified) + COD. Razorpay order ID persisted in `razorpay_order_id` column. Test/live keys swappable via secrets.
+- **Customer Consent & Discount**: Popup appears after 2 scrolls or 5 seconds for non-consented users. Collects first/last name, email, optional phone. Stores full compliance audit trail (IP, user agent, page URL, consent text, timestamp) in `customer_consents` table. Issues a one-time 10% discount code (TL10-XXXXXXXX) on opt-in. `discountCode` and `discountUsed` fields track redemption. Routes: `POST /api/consent`, `GET /api/consent/check`. Component: `ConsentPopup.tsx`. Rate-limited (10s per IP).
+- **Google One Tap**: Automatic Google sign-in prompt on public pages for unauthenticated users. Component: `GoogleOneTap.tsx`.
+- **Brand Assets**: Admin page (`/admin/brand`) for uploading 4 logo slots (desktop, mobile, favicon, footer). Logos stored as base64 in `site_config` DB and restored on server startup via `restoreBrandLogosFromDB()`. Favicon upload auto-generates PWA icons (32x32, 192x192, 512x512).
 
 # External Dependencies
 

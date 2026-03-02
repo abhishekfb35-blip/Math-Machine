@@ -184,6 +184,28 @@ export const customerSessions = pgTable("customer_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const customerConsents = pgTable("customer_consents", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  customerId: text("customer_id"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  consentType: text("consent_type").notNull(),
+  consentGiven: boolean("consent_given").notNull(),
+  discountCode: text("discount_code"),
+  discountUsed: boolean("discount_used").default(false),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  pageUrl: text("page_url"),
+  consentMethod: text("consent_method"),
+  consentText: text("consent_text"),
+  consentedAt: timestamp("consented_at").defaultNow(),
+  revokedAt: timestamp("revoked_at"),
+});
+
+export const insertCustomerConsentSchema = createInsertSchema(customerConsents).omit({ id: true, consentedAt: true, revokedAt: true });
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true, updatedAt: true });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
@@ -208,4 +230,5 @@ export type {
   ProductTag, InsertProductTag,
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
+  CustomerConsent, InsertCustomerConsent,
 } from "./types";

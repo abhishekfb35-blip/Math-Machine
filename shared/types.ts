@@ -273,3 +273,40 @@ export interface InsertAuditLog {
   changes?: string | null;
   username: string;
 }
+
+export interface CustomerConsent {
+  id: string;
+  customerId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  consentType: string;
+  consentGiven: boolean;
+  discountCode: string | null;
+  discountUsed: boolean | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  pageUrl: string | null;
+  consentMethod: string | null;
+  consentText: string | null;
+  consentedAt: Date | null;
+  revokedAt: Date | null;
+}
+
+export interface InsertCustomerConsent {
+  customerId?: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string | null;
+  consentType: string;
+  consentGiven: boolean;
+  discountCode?: string | null;
+  discountUsed?: boolean | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  pageUrl?: string | null;
+  consentMethod?: string | null;
+  consentText?: string | null;
+}
