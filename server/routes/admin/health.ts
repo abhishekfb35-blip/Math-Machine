@@ -19,7 +19,7 @@ function getBrandImagesDir(): string {
   if (isProduction) {
     return path.resolve(currentDir, "public", "images");
   }
-  return path.resolve(currentDir, "..", "client", "public", "images");
+  return path.resolve(process.cwd(), "client", "public", "images");
 }
 
 export function registerAdminHealthRoutes(app: Express) {
