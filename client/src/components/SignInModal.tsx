@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, Mail, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-
-type Step = "email" | "otp";
 
 interface SignInModalProps {
   open: boolean;
@@ -15,9 +11,6 @@ interface SignInModalProps {
 
 export default function SignInModal({ open, onClose, onSuccess }: SignInModalProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -41,9 +34,6 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
 
   useEffect(() => {
     if (!open) return;
-    setStep("email");
-    setEmail("");
-    setOtp("");
     setLoading(false);
     googleInitialized.current = false;
   }, [open]);
@@ -86,38 +76,6 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
     }
   }, [open, googleClientId, handleGoogleCredential]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setLoading(true);
-    try {
-      await apiRequest("POST", "/api/auth/send-otp", { email: email.trim() });
-      setStep("otp");
-      toast({ title: "OTP sent!", description: `Check ${email} for the verification code.` });
-    } catch (err: any) {
-      toast({ title: "Failed to send OTP", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp.trim()) return;
-    setLoading(true);
-    try {
-      const res = await apiRequest("POST", "/api/auth/verify-otp", { email: email.trim(), otp: otp.trim() });
-      const data = await res.json();
-      queryClient.setQueryData(["/api/auth/me"], data.customer);
-      toast({ title: "Signed in!", description: "Placing your order..." });
-      onSuccess();
-    } catch (err: any) {
-      toast({ title: "Invalid OTP", description: err.message || "Please check and try again.", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!open) return null;
 
   return (
@@ -136,59 +94,17 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
             </p>
           </div>
 
+          {loading && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          )}
+
           <div ref={googleButtonRef} className="flex justify-center" data-testid="signin-modal-google" />
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-            <span className="text-xs text-gray-400 uppercase">or</span>
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-          </div>
-
-          {step === "email" ? (
-            <form onSubmit={handleSendOtp} className="space-y-3">
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                  autoFocus
-                  data-testid="signin-modal-email"
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading} data-testid="signin-modal-send-otp">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {loading ? "Sending..." : "Send OTP"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-3">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Enter the code sent to <strong>{email}</strong>
-              </p>
-              <Input
-                type="text"
-                placeholder="Enter 6-digit OTP"
-                value={otp}
-                onChange={e => setOtp(e.target.value)}
-                maxLength={6}
-                required
-                autoFocus
-                className="text-center text-lg tracking-widest"
-                data-testid="signin-modal-otp"
-              />
-              <Button type="submit" className="w-full" disabled={loading} data-testid="signin-modal-verify">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {loading ? "Verifying..." : "Verify & Continue"}
-              </Button>
-              <button type="button" onClick={() => setStep("email")} className="w-full text-center text-xs text-gray-400 hover:text-gray-600" data-testid="signin-modal-change-email">
-                Use a different email
-              </button>
-            </form>
-          )}
+          <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+            By signing in, you agree to our terms of service and privacy policy.
+          </p>
         </div>
       </div>
     </div>
