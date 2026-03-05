@@ -31,6 +31,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - **Admin Audit Log** (`/admin/audit-log`): Timeline of all admin changes with entity type filtering and pagination.
     - **Admin Deploy Check** (`/admin/deploy-check`): Code health report — verifies production bundle includes all routes, static files, and checks if rebuild is needed.
     - **Admin Data Check** (`/admin/data-check`): Database health report — compares table structures against expected schema, shows row counts, data integrity issues, and site config completeness. Open on both dev and production to compare side by side.
+    - **Admin Consent** (`/admin/consent`): Manage consent popup settings (headline, description, consent text, discount %, enable/disable) and view all collected signups with discount code usage status. Settings stored in `site_config` under key `consent-popup`.
 - **Core UI Components**: AnnouncementBar, Header, BottomNav (mobile), Footer, ProductCardNew with quick-add, QuickAddSheet for personalization, and a floating WhatsAppButton.
 
 ## Backend
@@ -48,6 +49,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - `seo.ts` — `robots.txt` and `sitemap.xml` generation.
     - `admin/catalog.ts` — Admin CRUD for categories, products, images, reviews, tags.
     - `admin/orders.ts` — Admin auth (login/logout/check) and order management.
+    - `admin/consent.ts` — Admin consent list with pagination and total count.
     - `admin/health.ts` — Deploy check, data check, SEO audit, data export, audit logs, file upload.
 - **Entry point**: `server/routes.ts` re-exports `registerRoutes` from `server/routes/index.ts` for backward compatibility.
 

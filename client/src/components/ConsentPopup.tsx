@@ -9,9 +9,21 @@ import { Input } from "@/components/ui/input";
 
 const STORAGE_KEY = "consent_popup_completed";
 const CONSENT_TYPE = "whatsapp_marketing";
-const CONSENT_TEXT = "I agree to receive order updates and promotional messages from TurtleLittle via WhatsApp and email.";
+
+const DEFAULT_HEADLINE = "Get 10% Off Your First Order";
+const DEFAULT_DESCRIPTION = "Sign up for updates and get an exclusive discount code";
+const DEFAULT_CONSENT_TEXT = "I agree to receive order updates and promotional messages from TurtleLittle via WhatsApp and email.";
+const DEFAULT_DISCOUNT_PERCENT = 10;
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
+
+interface PopupSettings {
+  enabled: boolean;
+  headline: string;
+  description: string;
+  consentText: string;
+  discountPercent: number;
+}
 
 export default function ConsentPopup() {
   const [location] = useLocation();
@@ -24,14 +36,45 @@ export default function ConsentPopup() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [settings, setSettings] = useState<PopupSettings | null>(null);
+  const settingsLoaded = useRef(false);
   const triggered = useRef(false);
   const scrollCount = useRef(0);
+
+  useEffect(() => {
+    if (settingsLoaded.current) return;
+    settingsLoaded.current = true;
+    fetch("/api/site-config/consent-popup")
+      .then(r => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then(d => {
+        setSettings({
+          enabled: d.value?.enabled ?? true,
+          headline: d.value?.headline || DEFAULT_HEADLINE,
+          description: d.value?.description || DEFAULT_DESCRIPTION,
+          consentText: d.value?.consentText || DEFAULT_CONSENT_TEXT,
+          discountPercent: d.value?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT,
+        });
+      })
+      .catch(() => {
+        setSettings({
+          enabled: true,
+          headline: DEFAULT_HEADLINE,
+          description: DEFAULT_DESCRIPTION,
+          consentText: DEFAULT_CONSENT_TEXT,
+          discountPercent: DEFAULT_DISCOUNT_PERCENT,
+        });
+      });
+  }, []);
 
   const shouldShow = useCallback(() => {
     if (localStorage.getItem(STORAGE_KEY)) return false;
     if (EXCLUDED_PREFIXES.some(p => location.startsWith(p))) return false;
+    if (settings && !settings.enabled) return false;
     return true;
-  }, [location]);
+  }, [location, settings]);
 
   const checkAlreadyConsented = useCallback(async () => {
     try {
@@ -69,7 +112,7 @@ export default function ConsentPopup() {
   }, [shouldShow, checkAlreadyConsented, isAuthenticated, customer]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !settings) return;
     if (!shouldShow()) return;
 
     const timer = setTimeout(() => {
@@ -91,12 +134,17 @@ export default function ConsentPopup() {
       window.removeEventListener("wheel", handleScroll);
       window.removeEventListener("touchmove", handleScroll);
     };
-  }, [authLoading, shouldShow, triggerPopup]);
+  }, [authLoading, settings, shouldShow, triggerPopup]);
 
   const handleDismiss = () => {
     setVisible(false);
     localStorage.setItem(STORAGE_KEY, "1");
   };
+
+  const consentText = settings?.consentText || DEFAULT_CONSENT_TEXT;
+  const headline = settings?.headline || DEFAULT_HEADLINE;
+  const description = settings?.description || DEFAULT_DESCRIPTION;
+  const discountPercent = settings?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +165,7 @@ export default function ConsentPopup() {
         consentType: CONSENT_TYPE,
         consentGiven: true,
         pageUrl: location,
-        consentText: CONSENT_TEXT,
+        consentText,
       });
       const data = await res.json();
       localStorage.setItem(STORAGE_KEY, "1");
@@ -144,7 +192,7 @@ export default function ConsentPopup() {
               <Gift className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">You're all set!</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">Here's your one-time 10% discount code:</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Here's your one-time {discountPercent}% discount code:</p>
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 font-mono text-lg font-bold text-green-700 dark:text-green-400 select-all" data-testid="discount-code">
               {discountCode}
             </div>
@@ -173,10 +221,8 @@ export default function ConsentPopup() {
             <div className="mx-auto w-14 h-14 bg-[hsl(var(--primary)/.1)] rounded-full flex items-center justify-center mb-3">
               <Gift className="w-7 h-7 text-[hsl(var(--primary))]" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Get 10% Off Your First Order</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Sign up for updates and get an exclusive discount code
-            </p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{headline}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -217,7 +263,7 @@ export default function ConsentPopup() {
             />
 
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              {CONSENT_TEXT}
+              {consentText}
             </p>
 
             <Button
@@ -227,7 +273,7 @@ export default function ConsentPopup() {
               data-testid="consent-submit"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {submitting ? "Signing up..." : "Get My 10% Discount"}
+              {submitting ? "Signing up..." : `Get My ${discountPercent}% Discount`}
             </Button>
 
             <button

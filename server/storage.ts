@@ -98,6 +98,7 @@ export interface IStorage {
   getCustomerConsentByEmail(email: string, consentType: string): Promise<CustomerConsent | undefined>;
   getCustomerConsentByDiscountCode(code: string): Promise<CustomerConsent | undefined>;
   getCustomerConsents(filters?: { limit?: number; offset?: number }): Promise<CustomerConsent[]>;
+  getCustomerConsentsCount(): Promise<number>;
   markConsentDiscountUsed(id: string): Promise<void>;
 }
 
@@ -611,6 +612,11 @@ export class DatabaseStorage implements IStorage {
     if (filters?.limit) query = query.limit(filters.limit) as any;
     if (filters?.offset) query = query.offset(filters.offset) as any;
     return await query;
+  }
+
+  async getCustomerConsentsCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(customerConsents);
+    return Number(result.count);
   }
 
   async markConsentDiscountUsed(id: string): Promise<void> {

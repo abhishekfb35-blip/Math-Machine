@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
@@ -44,6 +44,14 @@ const sections = [
     icon: Image,
     color: "text-pink-600 dark:text-pink-400",
     bg: "bg-pink-50 dark:bg-pink-950/30",
+  },
+  {
+    title: "Consent & Offers",
+    description: "Manage popup settings and view signups",
+    href: "/admin/consent",
+    icon: Gift,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-50 dark:bg-green-950/30",
   },
   {
     title: "Health Checks",
