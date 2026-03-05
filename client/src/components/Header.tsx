@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, type HeaderConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -17,7 +24,7 @@ export default function Header() {
   const config = useSiteConfig<HeaderConfig>("header", defaultHeader);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const { customer, isAuthenticated } = useAuth();
+  const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
@@ -104,9 +111,9 @@ export default function Header() {
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
 
-            <Link href={isAuthenticated ? "/account" : "/signin"}>
-              {isAuthenticated ? (
-                <>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -117,6 +124,21 @@ export default function Header() {
                       {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
                     </div>
                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/account")} data-testid="menu-item-account">
+                    <User className="w-4 h-4 mr-2" /> My Account
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { logout(); navigate("/"); }} data-testid="menu-item-signout">
+                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -128,17 +150,28 @@ export default function Header() {
                     </div>
                     <span className="text-sm">Hi, {(customer?.name || customer?.email || "User").split(" ")[0]}</span>
                   </Button>
-                </>
-              ) : (
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/account")} data-testid="menu-item-account-desktop">
+                    <User className="w-4 h-4 mr-2" /> My Account
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { logout(); navigate("/"); }} data-testid="menu-item-signout-desktop">
+                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/signin">
                 <Button
                   variant="ghost"
                   size="icon"
-                  data-testid="button-account"
+                  data-testid="button-signin"
                 >
                   <User className="w-4 h-4" />
                 </Button>
-              )}
-            </Link>
+              </Link>
+            )}
 
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
