@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
-import { ArrowLeft, Gift, CreditCard, Banknote, Shield, Globe, Tag, Loader2, X, Check } from "lucide-react";
+import { ArrowLeft, Gift, CreditCard, Banknote, Shield, Tag, Loader2, X, Check } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,10 +33,6 @@ interface RazorpayConfig {
   keyId?: string;
 }
 
-interface CCAvenueConfig {
-  available: boolean;
-}
-
 declare global {
   interface Window {
     Razorpay: any;
@@ -61,7 +57,7 @@ export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { customer } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "ccavenue" | "cod">("cod");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
@@ -69,8 +65,6 @@ export default function CheckoutPage() {
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
   const [discountError, setDiscountError] = useState("");
   const [validatingDiscount, setValidatingDiscount] = useState(false);
-  const ccaFormRef = useRef<HTMLFormElement>(null);
-  const [ccaFormData, setCcaFormData] = useState<{ encryptedData: string; accessCode: string; ccavenueUrl: string } | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -101,20 +95,14 @@ export default function CheckoutPage() {
     queryKey: ["/api/razorpay/key"],
   });
 
-  const { data: ccavenueConfig } = useQuery<CCAvenueConfig>({
-    queryKey: ["/api/ccavenue/config"],
-  });
-
   useEffect(() => {
     if (razorpayConfig?.available) {
       loadRazorpayScript();
       setPaymentMethod("razorpay");
-    } else if (ccavenueConfig?.available) {
-      setPaymentMethod("ccavenue");
     } else {
       setPaymentMethod("cod");
     }
-  }, [razorpayConfig, ccavenueConfig]);
+  }, [razorpayConfig]);
 
   const form = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutSchema),
@@ -229,35 +217,6 @@ export default function CheckoutPage() {
     }
   }, [razorpayConfig, toast, navigate, appliedDiscount]);
 
-  const handleCCAvenueCheckout = useCallback(async (formData: CheckoutInput) => {
-    setIsProcessingPayment(true);
-    try {
-      const res = await apiRequest("POST", "/api/ccavenue/initiate", { ...formData, discountCode: appliedDiscount?.code || null });
-      const data = await res.json();
-
-      if (!data.encryptedData) {
-        toast({ title: "Error", description: "Failed to initiate payment. Please try again.", variant: "destructive" });
-        setIsProcessingPayment(false);
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      setCcaFormData({
-        encryptedData: data.encryptedData,
-        accessCode: data.accessCode,
-        ccavenueUrl: data.ccavenueUrl,
-      });
-    } catch {
-      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
-      setIsProcessingPayment(false);
-    }
-  }, [toast, appliedDiscount]);
-
-  useEffect(() => {
-    if (ccaFormData && ccaFormRef.current) {
-      ccaFormRef.current.submit();
-    }
-  }, [ccaFormData]);
 
   const handleApplyDiscount = async () => {
     const code = discountCodeInput.trim().toUpperCase();
@@ -292,12 +251,10 @@ export default function CheckoutPage() {
   const processOrder = useCallback((data: CheckoutInput) => {
     if (paymentMethod === "razorpay") {
       handleRazorpayCheckout(data);
-    } else if (paymentMethod === "ccavenue") {
-      handleCCAvenueCheckout(data);
     } else {
       codCheckoutMutation.mutate(data);
     }
-  }, [paymentMethod, handleRazorpayCheckout, handleCCAvenueCheckout, codCheckoutMutation]);
+  }, [paymentMethod, handleRazorpayCheckout, codCheckoutMutation]);
 
   const onSubmit = (data: CheckoutInput) => {
     if (!customer) {
@@ -333,28 +290,6 @@ export default function CheckoutPage() {
           </div>
           <Skeleton className="h-64" />
         </div>
-      </div>
-    );
-  }
-
-  if (ccaFormData || (isProcessingPayment && paymentMethod === "ccavenue")) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
-        <SEO title="Redirecting to Payment" noindex={true} path="/checkout" />
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-        <h1 className="text-xl font-semibold" data-testid="text-redirecting">Redirecting to CCAvenue...</h1>
-        <p className="text-sm text-muted-foreground">Please wait while we redirect you to the payment page.</p>
-        {ccaFormData && (
-          <form
-            ref={ccaFormRef}
-            method="POST"
-            action={ccaFormData.ccavenueUrl}
-            style={{ display: "none" }}
-          >
-            <input type="hidden" name="encRequest" value={ccaFormData.encryptedData} />
-            <input type="hidden" name="access_code" value={ccaFormData.accessCode} />
-          </form>
-        )}
       </div>
     );
   }
@@ -509,24 +444,6 @@ export default function CheckoutPage() {
                       </div>
                     </button>
                   )}
-                  {ccavenueConfig?.available && (
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("ccavenue")}
-                      className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
-                        paymentMethod === "ccavenue"
-                          ? "border-primary bg-primary/5 dark:bg-primary/10"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
-                      data-testid="button-payment-ccavenue"
-                    >
-                      <Globe className={`w-5 h-5 shrink-0 ${paymentMethod === "ccavenue" ? "text-primary" : "text-muted-foreground"}`} />
-                      <div>
-                        <p className="text-sm font-medium">CCAvenue</p>
-                        <p className="text-xs text-muted-foreground">Cards, Net Banking, UPI, Wallets</p>
-                      </div>
-                    </button>
-                  )}
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cod")}
@@ -544,7 +461,7 @@ export default function CheckoutPage() {
                     </div>
                   </button>
                 </div>
-                {(paymentMethod === "razorpay" || paymentMethod === "ccavenue") && (
+                {paymentMethod === "razorpay" && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Shield className="w-3.5 h-3.5" />
                     <span>Secured payment. Your payment details are encrypted.</span>
@@ -577,7 +494,7 @@ export default function CheckoutPage() {
               >
                 {isPending
                   ? "Processing..."
-                  : paymentMethod === "razorpay" || paymentMethod === "ccavenue"
+                  : paymentMethod === "razorpay"
                     ? `Pay ₹${finalTotal.toLocaleString("en-IN")}`
                     : `Place Order - ₹${finalTotal.toLocaleString("en-IN")}`}
               </Button>
