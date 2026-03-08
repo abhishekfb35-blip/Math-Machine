@@ -96,6 +96,7 @@ export interface IStorage {
 
   createCustomerConsent(data: InsertCustomerConsent): Promise<CustomerConsent>;
   getCustomerConsentByEmail(email: string, consentType: string): Promise<CustomerConsent | undefined>;
+  getCustomerConsentByPhone(phone: string, consentType: string): Promise<CustomerConsent | undefined>;
   getCustomerConsentByDiscountCode(code: string): Promise<CustomerConsent | undefined>;
   getCustomerConsents(filters?: { limit?: number; offset?: number }): Promise<CustomerConsent[]>;
   getCustomerConsentsCount(): Promise<number>;
@@ -590,6 +591,17 @@ export class DatabaseStorage implements IStorage {
     const [consent] = await db.select().from(customerConsents)
       .where(and(
         eq(customerConsents.email, email),
+        eq(customerConsents.consentType, consentType),
+        eq(customerConsents.consentGiven, true),
+        sql`${customerConsents.revokedAt} IS NULL`
+      ));
+    return consent;
+  }
+
+  async getCustomerConsentByPhone(phone: string, consentType: string): Promise<CustomerConsent | undefined> {
+    const [consent] = await db.select().from(customerConsents)
+      .where(and(
+        eq(customerConsents.phone, phone),
         eq(customerConsents.consentType, consentType),
         eq(customerConsents.consentGiven, true),
         sql`${customerConsents.revokedAt} IS NULL`

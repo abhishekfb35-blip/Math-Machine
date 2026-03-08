@@ -22,20 +22,59 @@ export function registerConsentRoutes(app: Express) {
 
       const { firstName, lastName, email, phone, consentType, consentGiven, pageUrl, consentText } = req.body;
 
-      if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !consentType) {
+      if (!consentType) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        return res.status(400).json({ message: "Invalid email address" });
+      const normalizedEmail = email?.trim()?.toLowerCase() || null;
+      const normalizedPhone = phone?.trim() || null;
+
+      if (normalizedEmail) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(normalizedEmail)) {
+          return res.status(400).json({ message: "Invalid email address" });
+        }
+
+        const existingByEmail = await storage.getCustomerConsentByEmail(normalizedEmail, consentType);
+        if (existingByEmail) {
+          res.cookie("consent_given", normalizedEmail, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+            sameSite: "lax",
+            path: "/",
+          });
+          return res.json({
+            alreadyExists: true,
+            discountCode: existingByEmail.discountUsed ? null : existingByEmail.discountCode,
+            discountUsed: !!existingByEmail.discountUsed,
+            message: existingByEmail.discountUsed
+              ? "This email has already been submitted and the coupon has been utilized."
+              : "This email has already been submitted for the offer.",
+          });
+        }
       }
 
-      const normalizedEmail = email.trim().toLowerCase();
-
-      const existing = await storage.getCustomerConsentByEmail(normalizedEmail, consentType);
-      if (existing) {
-        return res.json({ alreadyConsented: true });
+      if (normalizedPhone) {
+        const existingByPhone = await storage.getCustomerConsentByPhone(normalizedPhone, consentType);
+        if (existingByPhone) {
+          const cookieVal = normalizedEmail || `phone:${normalizedPhone}`;
+          res.cookie("consent_given", cookieVal, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+            sameSite: "lax",
+            path: "/",
+          });
+          return res.json({
+            alreadyExists: true,
+            discountCode: existingByPhone.discountUsed ? null : existingByPhone.discountCode,
+            discountUsed: !!existingByPhone.discountUsed,
+            message: existingByPhone.discountUsed
+              ? "This phone number has already been submitted and the coupon has been utilized."
+              : "This phone number has already been submitted for the offer.",
+          });
+        }
       }
 
       const customer = await getAuthenticatedCustomer(req);
@@ -43,10 +82,10 @@ export function registerConsentRoutes(app: Express) {
 
       const consent = await storage.createCustomerConsent({
         customerId: customer?.id || null,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: normalizedEmail,
-        phone: phone?.trim() || null,
+        firstName: (firstName?.trim()) || ".",
+        lastName: (lastName?.trim()) || ".",
+        email: normalizedEmail || "unknown",
+        phone: normalizedPhone,
         consentType,
         consentGiven: !!consentGiven,
         discountCode,
@@ -56,6 +95,17 @@ export function registerConsentRoutes(app: Express) {
         consentMethod: "popup_form",
         consentText: consentText || null,
       });
+
+      const cookieVal = normalizedEmail || (normalizedPhone ? `phone:${normalizedPhone}` : null);
+      if (cookieVal) {
+        res.cookie("consent_given", cookieVal, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 365 * 24 * 60 * 60 * 1000,
+          sameSite: "lax",
+          path: "/",
+        });
+      }
 
       res.json({ success: true, discountCode: consent.discountCode });
     } catch (err) {
@@ -102,6 +152,17 @@ export function registerConsentRoutes(app: Express) {
       const customer = await getAuthenticatedCustomer(req);
       if (customer) {
         const consent = await storage.getCustomerConsentByEmail(customer.email, consentType);
+        return res.json({ consented: !!consent });
+      }
+
+      const consentCookie = req.cookies?.consent_given;
+      if (consentCookie) {
+        if (consentCookie.startsWith("phone:")) {
+          const phone = consentCookie.slice(6);
+          const consent = await storage.getCustomerConsentByPhone(phone, consentType);
+          return res.json({ consented: !!consent });
+        }
+        const consent = await storage.getCustomerConsentByEmail(consentCookie, consentType);
         return res.json({ consented: !!consent });
       }
 

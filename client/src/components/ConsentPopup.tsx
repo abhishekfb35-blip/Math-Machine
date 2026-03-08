@@ -3,11 +3,11 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { X, Gift, Loader2 } from "lucide-react";
+import { X, Gift, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const STORAGE_KEY = "consent_popup_completed";
+const SESSION_KEY = "consent_popup_dismissed";
 const CONSENT_TYPE = "whatsapp_marketing";
 
 const DEFAULT_HEADLINE = "Get 10% Off Your First Order";
@@ -50,6 +50,7 @@ export default function ConsentPopup() {
   const [visible, setVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<{ message: string; discountCode: string | null; discountUsed: boolean } | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({
     firstName: "", lastName: "", email: "", phone: "",
   });
@@ -94,7 +95,7 @@ export default function ConsentPopup() {
   }, []);
 
   const shouldShow = useCallback(() => {
-    if (localStorage.getItem(STORAGE_KEY)) return false;
+    if (sessionStorage.getItem(SESSION_KEY)) return false;
     if (EXCLUDED_PREFIXES.some(p => location.startsWith(p))) return false;
     if (settings && !settings.enabled) return false;
     return true;
@@ -109,7 +110,7 @@ export default function ConsentPopup() {
       const res = await fetch(`/api/consent/check?${params}`);
       const data = await res.json();
       if (data.consented) {
-        localStorage.setItem(STORAGE_KEY, "1");
+        sessionStorage.setItem(SESSION_KEY, "consented");
         return true;
       }
     } catch {}
@@ -165,7 +166,7 @@ export default function ConsentPopup() {
 
   const handleDismiss = () => {
     setVisible(false);
-    localStorage.setItem(STORAGE_KEY, "1");
+    sessionStorage.setItem(SESSION_KEY, "dismissed");
   };
 
   const fields = settings?.fields || DEFAULT_FIELDS;
@@ -210,8 +211,18 @@ export default function ConsentPopup() {
         consentText,
       });
       const data = await res.json();
-      localStorage.setItem(STORAGE_KEY, "1");
-      setDiscountCode(data.discountCode || null);
+
+      sessionStorage.setItem(SESSION_KEY, "consented");
+
+      if (data.alreadyExists) {
+        setDuplicateInfo({
+          message: data.message,
+          discountCode: data.discountCode || null,
+          discountUsed: !!data.discountUsed,
+        });
+      } else {
+        setDiscountCode(data.discountCode || null);
+      }
     } catch (err: any) {
       toast({ title: "Something went wrong", description: err.message, variant: "destructive" });
     } finally {
@@ -224,6 +235,50 @@ export default function ConsentPopup() {
   };
 
   if (!visible) return null;
+
+  if (duplicateInfo) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" data-testid="consent-duplicate-overlay">
+        <div className="absolute inset-0 bg-black/40" onClick={handleDismiss} />
+        <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6 shadow-xl animate-in slide-in-from-bottom duration-300" data-testid="consent-duplicate-dialog">
+          <button onClick={handleDismiss} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" data-testid="consent-close">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="text-center space-y-4">
+            <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
+              duplicateInfo.discountUsed
+                ? "bg-gray-100 dark:bg-gray-800"
+                : "bg-green-100 dark:bg-green-900/30"
+            }`}>
+              {duplicateInfo.discountUsed ? (
+                <AlertCircle className="w-8 h-8 text-gray-500 dark:text-gray-400" />
+              ) : (
+                <Gift className="w-8 h-8 text-green-600 dark:text-green-400" />
+              )}
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              {duplicateInfo.discountUsed ? "Already Claimed" : "Welcome Back!"}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">{duplicateInfo.message}</p>
+            {duplicateInfo.discountCode && !duplicateInfo.discountUsed && (
+              <>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">Here's your existing discount code:</p>
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 font-mono text-lg font-bold text-green-700 dark:text-green-400 select-all" data-testid="discount-code-existing">
+                  {duplicateInfo.discountCode}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Apply this code at checkout. Valid for your first order only.
+                </p>
+              </>
+            )}
+            <Button onClick={handleDismiss} className="w-full" data-testid="consent-close-button">
+              {duplicateInfo.discountUsed ? "Close" : "Start Shopping"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (discountCode) {
     return (
