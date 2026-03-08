@@ -439,8 +439,8 @@ export class ResendNotificationService implements INotificationService {
 <body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
     <div style="background: #ffffff; border-radius: 12px; overflow: hidden;">
-      <div style="background: #1a1a1a; padding: 16px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">TurtleLittle</h1>
+      <div style="background: #ffffff; padding: 16px; text-align: center; border-bottom: 1px solid #eee;">
+        <img src="https://turtlelittle.com/images/email-logo.png" alt="TurtleLittle" style="height: 48px; width: auto;" />
       </div>
       <div style="padding: 20px 24px; text-align: center;">
         <h2 style="color: #1a1a1a; margin: 0 0 4px; font-size: 20px;">Welcome, ${displayName}! 🎉</h2>
