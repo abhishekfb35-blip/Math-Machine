@@ -44,7 +44,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - `index.ts` — Master router that imports and registers all route groups.
     - `products.ts` — Public product/category/review/image endpoints.
     - `cart.ts` — Cart CRUD endpoints using `CartService`.
-    - `checkout.ts` — Checkout, Razorpay, CCAvenue, order fetch, site-config endpoints.
+    - `checkout.ts` — Checkout, Razorpay, order fetch, site-config endpoints.
     - `auth.ts` — Customer auth (OTP, Google OAuth, profile, order history).
     - `seo.ts` — `robots.txt` and `sitemap.xml` generation.
     - `admin/catalog.ts` — Admin CRUD for categories, products, images, reviews, tags.
@@ -104,7 +104,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **ORM**: Drizzle ORM
 - **Validation**: Zod
 - **SEO**: react-helmet-async for per-page meta tags, JSON-LD structured data (Product, Organization, BreadcrumbList), dynamic sitemap.xml, robots.txt
-- **Payment Gateway**: CCAvenue (online payments, redirect-based flow) + Razorpay (online payments, modal-based) + CodPaymentProvider (Cash on Delivery). CCAvenue uses AES-128-CBC encryption with MD5-hashed working key. Configured via CCAVENUE_MERCHANT_ID, CCAVENUE_ACCESS_CODE, CCAVENUE_WORKING_KEY secrets. CCAVENUE_MODE env var controls test vs live (default: test). Both online payment options shown when configured; COD always available.
+- **Payment Gateway**: Razorpay (online payments, modal-based, HMAC-SHA256 verified) + CodPaymentProvider (Cash on Delivery). Razorpay order ID persisted in `razorpay_order_id` column. Test/live keys swappable via secrets. COD always available.
 - **File Storage**: LocalFileStorage (disk-based)
 - **Notifications**: ResendNotificationService (Resend API for transactional emails), falls back to ConsoleNotificationService if RESEND_API_KEY is not set
 - **Email Integration**: Resend (resend.com) — sends order confirmation to customers and new order alerts to admin. Configured via RESEND_API_KEY secret, EMAIL_FROM and ADMIN_EMAIL env vars. From address: orders@turtlelittle.com (requires domain verification in Resend). Admin alerts go to hello@turtlelittle.com.
