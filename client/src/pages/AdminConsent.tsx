@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,29 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CustomerConsent } from "@shared/types";
 
+export interface FormFieldConfig {
+  name: string;
+  label: string;
+  type: string;
+  placeholder: string;
+  enabled: boolean;
+  required: boolean;
+}
+
+const DEFAULT_FIELDS: FormFieldConfig[] = [
+  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true },
+  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true },
+  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true },
+  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false },
+];
+
 interface ConsentSettings {
   enabled: boolean;
   headline: string;
   description: string;
   consentText: string;
   discountPercent: number;
+  fields: FormFieldConfig[];
 }
 
 const DEFAULT_SETTINGS: ConsentSettings = {
@@ -25,6 +42,7 @@ const DEFAULT_SETTINGS: ConsentSettings = {
   description: "Sign up for updates and get an exclusive discount code",
   consentText: "I agree to receive order updates and promotional messages from TurtleLittle via WhatsApp and email.",
   discountPercent: 10,
+  fields: DEFAULT_FIELDS,
 };
 
 interface ConsentsResponse {
@@ -32,6 +50,25 @@ interface ConsentsResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+function Toggle({ value, onChange, testId }: { value: boolean; onChange: (v: boolean) => void; testId?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+        value ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
+      }`}
+      data-testid={testId}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+          value ? "translate-x-[18px]" : "translate-x-[3px]"
+        }`}
+      />
+    </button>
+  );
 }
 
 export default function AdminConsent() {
@@ -50,7 +87,12 @@ export default function AdminConsent() {
 
   useEffect(() => {
     if (configData?.value) {
-      setSettings({ ...DEFAULT_SETTINGS, ...configData.value });
+      const saved = configData.value;
+      const mergedFields = DEFAULT_FIELDS.map(df => {
+        const sf = saved.fields?.find((f: FormFieldConfig) => f.name === df.name);
+        return sf ? { ...df, ...sf } : df;
+      });
+      setSettings({ ...DEFAULT_SETTINGS, ...saved, fields: mergedFields });
     }
   }, [configData]);
 
@@ -77,6 +119,20 @@ export default function AdminConsent() {
 
   const handleSave = () => {
     saveMutation.mutate(settings);
+  };
+
+  const updateField = (index: number, key: keyof FormFieldConfig, value: boolean | string) => {
+    setSettings(s => ({
+      ...s,
+      fields: s.fields.map((f, i) => {
+        if (i !== index) return f;
+        const updated = { ...f, [key]: value };
+        if (key === "enabled" && value === false) {
+          updated.required = false;
+        }
+        return updated;
+      }),
+    }));
   };
 
   return (
@@ -111,20 +167,11 @@ export default function AdminConsent() {
             <>
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
-                <button
-                  type="button"
-                  onClick={() => setSettings(s => ({ ...s, enabled: !s.enabled }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
-                  }`}
-                  data-testid="toggle-popup-enabled"
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.enabled ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
+                <Toggle
+                  value={settings.enabled}
+                  onChange={v => setSettings(s => ({ ...s, enabled: v }))}
+                  testId="toggle-popup-enabled"
+                />
                 <span className="text-sm text-muted-foreground">
                   {settings.enabled ? "Popup is active" : "Popup is hidden"}
                 </span>
@@ -170,6 +217,67 @@ export default function AdminConsent() {
                     className="w-32"
                     data-testid="input-popup-discount"
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <ListChecks className="w-4 h-4" /> Form Fields
+                </h3>
+                <p className="text-xs text-muted-foreground">Choose which fields appear in the popup and whether they are required.</p>
+
+                <div className="rounded-md border">
+                  <table className="w-full text-sm" data-testid="table-form-fields">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="px-3 py-2 text-left font-medium">Field</th>
+                        <th className="px-3 py-2 text-center font-medium w-20">Show</th>
+                        <th className="px-3 py-2 text-center font-medium w-24">Required</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {settings.fields.map((field, i) => {
+                        const isEmailField = field.name === "email";
+                        return (
+                          <tr key={field.name} className="border-b last:border-0" data-testid={`field-row-${field.name}`}>
+                            <td className="px-3 py-2.5">
+                              <span className="font-medium">{field.label}</span>
+                              <span className="text-xs text-muted-foreground ml-2">({field.type})</span>
+                              {isEmailField && (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(always on)</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              {isEmailField ? (
+                                <span className="text-xs text-muted-foreground">Locked</span>
+                              ) : (
+                                <Toggle
+                                  value={field.enabled}
+                                  onChange={v => updateField(i, "enabled", v)}
+                                  testId={`toggle-field-enabled-${field.name}`}
+                                />
+                              )}
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              {isEmailField ? (
+                                <span className="text-xs text-muted-foreground">Locked</span>
+                              ) : (
+                                <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
+                                  <Toggle
+                                    value={field.required}
+                                    onChange={v => updateField(i, "required", v)}
+                                    testId={`toggle-field-required-${field.name}`}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 

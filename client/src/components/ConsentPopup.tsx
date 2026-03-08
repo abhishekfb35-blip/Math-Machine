@@ -17,12 +17,29 @@ const DEFAULT_DISCOUNT_PERCENT = 10;
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 
+interface FormFieldConfig {
+  name: string;
+  label: string;
+  type: string;
+  placeholder: string;
+  enabled: boolean;
+  required: boolean;
+}
+
+const DEFAULT_FIELDS: FormFieldConfig[] = [
+  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true },
+  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true },
+  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true },
+  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false },
+];
+
 interface PopupSettings {
   enabled: boolean;
   headline: string;
   description: string;
   consentText: string;
   discountPercent: number;
+  fields: FormFieldConfig[];
 }
 
 export default function ConsentPopup() {
@@ -32,10 +49,9 @@ export default function ConsentPopup() {
   const [visible, setVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [formValues, setFormValues] = useState<Record<string, string>>({
+    firstName: "", lastName: "", email: "", phone: "",
+  });
   const [settings, setSettings] = useState<PopupSettings | null>(null);
   const settingsLoaded = useRef(false);
   const triggered = useRef(false);
@@ -50,12 +66,23 @@ export default function ConsentPopup() {
         return r.json();
       })
       .then(d => {
+        const savedFields = d.value?.fields;
+        const mergedFields = DEFAULT_FIELDS.map(df => {
+          const sf = savedFields?.find((f: FormFieldConfig) => f.name === df.name);
+          const merged = sf ? { ...df, ...sf } : df;
+          if (merged.name === "email") {
+            merged.enabled = true;
+            merged.required = true;
+          }
+          return merged;
+        });
         setSettings({
           enabled: d.value?.enabled ?? true,
           headline: d.value?.headline || DEFAULT_HEADLINE,
           description: d.value?.description || DEFAULT_DESCRIPTION,
           consentText: d.value?.consentText || DEFAULT_CONSENT_TEXT,
           discountPercent: d.value?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT,
+          fields: mergedFields,
         });
       })
       .catch(() => {
@@ -65,6 +92,7 @@ export default function ConsentPopup() {
           description: DEFAULT_DESCRIPTION,
           consentText: DEFAULT_CONSENT_TEXT,
           discountPercent: DEFAULT_DISCOUNT_PERCENT,
+          fields: DEFAULT_FIELDS,
         });
       });
   }, []);
@@ -102,10 +130,13 @@ export default function ConsentPopup() {
 
     if (isAuthenticated && customer) {
       const nameParts = (customer.name || "").split(" ");
-      setFirstName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(" ") || "");
-      setEmail(customer.email);
-      setPhone(customer.phone || "");
+      setFormValues(prev => ({
+        ...prev,
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: customer.email || "",
+        phone: customer.phone || "",
+      }));
     }
 
     setVisible(true);
@@ -141,6 +172,8 @@ export default function ConsentPopup() {
     localStorage.setItem(STORAGE_KEY, "1");
   };
 
+  const fields = settings?.fields || DEFAULT_FIELDS;
+  const enabledFields = fields.filter(f => f.enabled);
   const consentText = settings?.consentText || DEFAULT_CONSENT_TEXT;
   const headline = settings?.headline || DEFAULT_HEADLINE;
   const description = settings?.description || DEFAULT_DESCRIPTION;
@@ -148,20 +181,31 @@ export default function ConsentPopup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fn = firstName.trim() || (isAuthenticated && customer?.name?.split(" ")[0]) || "";
-    const ln = lastName.trim() || (isAuthenticated && customer?.name?.split(" ").slice(1).join(" ")) || "";
-    const em = email.trim() || (isAuthenticated && customer?.email) || "";
-    if (!fn || !em) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+
+    for (const field of enabledFields) {
+      if (field.required && !formValues[field.name]?.trim()) {
+        toast({ title: `${field.label} is required`, variant: "destructive" });
+        return;
+      }
+    }
+
+    const isFieldEnabled = (name: string) => enabledFields.some(f => f.name === name);
+    const fn = formValues.firstName?.trim() || (isAuthenticated && customer?.name?.split(" ")[0]) || "";
+    const ln = formValues.lastName?.trim() || (isAuthenticated && customer?.name?.split(" ").slice(1).join(" ")) || "";
+    const em = formValues.email?.trim() || (isAuthenticated && customer?.email) || "";
+
+    if (!em) {
+      toast({ title: "Email is required", variant: "destructive" });
       return;
     }
+
     setSubmitting(true);
     try {
       const res = await apiRequest("POST", "/api/consent", {
-        firstName: fn,
-        lastName: ln || ".",
+        firstName: isFieldEnabled("firstName") ? (fn || ".") : ".",
+        lastName: isFieldEnabled("lastName") ? (ln || ".") : ".",
         email: em,
-        phone: phone.trim() || null,
+        phone: isFieldEnabled("phone") ? (formValues.phone?.trim() || null) : null,
         consentType: CONSENT_TYPE,
         consentGiven: true,
         pageUrl: location,
@@ -175,6 +219,10 @@ export default function ConsentPopup() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const updateFormValue = (name: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
   if (!visible) return null;
@@ -208,6 +256,9 @@ export default function ConsentPopup() {
     );
   }
 
+  const nameFields = enabledFields.filter(f => f.name === "firstName" || f.name === "lastName");
+  const otherFields = enabledFields.filter(f => f.name !== "firstName" && f.name !== "lastName");
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" data-testid="consent-overlay">
       <div className="absolute inset-0 bg-black/40" onClick={handleDismiss} />
@@ -226,41 +277,32 @@ export default function ConsentPopup() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            {!isAuthenticated && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
+            {nameFields.length > 0 && (
+              <div className={nameFields.length === 2 ? "grid grid-cols-2 gap-3" : ""}>
+                {nameFields.map(field => (
                   <Input
-                    placeholder="First name *"
-                    value={firstName}
-                    onChange={e => setFirstName(e.target.value)}
-                    required
-                    data-testid="consent-first-name"
+                    key={field.name}
+                    type={field.type}
+                    placeholder={`${field.placeholder}${field.required ? " *" : ""}`}
+                    value={formValues[field.name] || ""}
+                    onChange={e => updateFormValue(field.name, e.target.value)}
+                    required={field.required}
+                    data-testid={`consent-${field.name}`}
                   />
-                  <Input
-                    placeholder="Last name *"
-                    value={lastName}
-                    onChange={e => setLastName(e.target.value)}
-                    required
-                    data-testid="consent-last-name"
-                  />
-                </div>
-                <Input
-                  type="email"
-                  placeholder="Email address *"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  data-testid="consent-email"
-                />
-              </>
+                ))}
+              </div>
             )}
-            <Input
-              type="tel"
-              placeholder="Phone number (optional)"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              data-testid="consent-phone"
-            />
+            {otherFields.map(field => (
+              <Input
+                key={field.name}
+                type={field.type}
+                placeholder={`${field.placeholder}${field.required ? " *" : ""}`}
+                value={formValues[field.name] || ""}
+                onChange={e => updateFormValue(field.name, e.target.value)}
+                required={field.required}
+                data-testid={`consent-${field.name}`}
+              />
+            ))}
 
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               {consentText}
