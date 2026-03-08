@@ -39,6 +39,7 @@ interface PopupSettings {
   headline: string;
   description: string;
   consentText: string;
+  buttonText: string;
   discountPercent: number;
   fields: FormFieldConfig[];
 }
@@ -50,6 +51,7 @@ export default function ConsentPopup() {
   const [visible, setVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [consentChecked, setConsentChecked] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<{ message: string; discountCode: string | null; discountUsed: boolean } | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -79,6 +81,7 @@ export default function ConsentPopup() {
           headline: d.value?.headline || DEFAULT_HEADLINE,
           description: d.value?.description || DEFAULT_DESCRIPTION,
           consentText: d.value?.consentText || DEFAULT_CONSENT_TEXT,
+          buttonText: d.value?.buttonText || "",
           discountPercent: d.value?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT,
           fields: mergedFields,
         });
@@ -89,6 +92,7 @@ export default function ConsentPopup() {
           headline: DEFAULT_HEADLINE,
           description: DEFAULT_DESCRIPTION,
           consentText: DEFAULT_CONSENT_TEXT,
+          buttonText: "",
           discountPercent: DEFAULT_DISCOUNT_PERCENT,
           fields: DEFAULT_FIELDS,
         });
@@ -180,9 +184,15 @@ export default function ConsentPopup() {
   const headline = settings?.headline || DEFAULT_HEADLINE;
   const description = settings?.description || DEFAULT_DESCRIPTION;
   const discountPercent = settings?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT;
+  const buttonText = settings?.buttonText || `Get My ${discountPercent}% Discount`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!consentChecked) {
+      toast({ title: "Please agree to the terms to continue", variant: "destructive" });
+      return;
+    }
 
     for (const field of visibleFields) {
       if (field.required && !formValues[field.name]?.trim()) {
@@ -361,18 +371,27 @@ export default function ConsentPopup() {
               />
             ))}
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              {consentText}
-            </p>
+            <label className="flex items-start gap-2 cursor-pointer" data-testid="consent-checkbox-label">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={e => setConsentChecked(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
+                data-testid="consent-checkbox"
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                {consentText}
+              </span>
+            </label>
 
             <Button
               type="submit"
               className="w-full"
-              disabled={submitting}
+              disabled={submitting || !consentChecked}
               data-testid="consent-submit"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {submitting ? "Signing up..." : `Get My ${discountPercent}% Discount`}
+              {submitting ? "Signing up..." : buttonText}
             </Button>
 
             <button

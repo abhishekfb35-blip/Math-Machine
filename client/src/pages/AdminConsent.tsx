@@ -33,6 +33,7 @@ interface ConsentSettings {
   headline: string;
   description: string;
   consentText: string;
+  buttonText: string;
   discountPercent: number;
   fields: FormFieldConfig[];
 }
@@ -42,6 +43,7 @@ const DEFAULT_SETTINGS: ConsentSettings = {
   headline: "Get 10% Off Your First Order",
   description: "Sign up for updates and get an exclusive discount code",
   consentText: "I agree to receive order updates and promotional messages from TurtleLittle via WhatsApp and email.",
+  buttonText: "",
   discountPercent: 10,
   fields: DEFAULT_FIELDS,
 };
@@ -219,6 +221,18 @@ export default function AdminConsent() {
                     className="w-32"
                     data-testid="input-popup-discount"
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Button Text</label>
+                  <Input
+                    value={settings.buttonText}
+                    onChange={e => setSettings(s => ({ ...s, buttonText: e.target.value }))}
+                    placeholder={`e.g. Get My ${settings.discountPercent}% Discount`}
+                    data-testid="input-popup-button-text"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leave empty to use default: "Get My {discountPercent}% Discount"
+                  </p>
                 </div>
               </div>
 
