@@ -432,31 +432,18 @@ export class ResendNotificationService implements INotificationService {
         from: this.fromEmail,
         to: email,
         subject: `Welcome to TurtleLittle! Here's Your ${discountPercent}% Discount 🎉`,
-        html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
-    <div style="background: #ffffff; border-radius: 12px; overflow: hidden;">
-      <div style="background: #ffffff; padding: 16px; text-align: center; border-bottom: 1px solid #eee;">
-        <img src="https://turtlelittle.com/images/email-logo.png" alt="TurtleLittle" style="height: 48px; width: auto;" />
-      </div>
-      <div style="padding: 20px 24px; text-align: center;">
-        <h2 style="color: #1a1a1a; margin: 0 0 4px; font-size: 20px;">Welcome, ${displayName}! 🎉</h2>
-        <p style="color: #666; font-size: 14px; margin: 0 0 16px;">We're so happy to have you in the TurtleLittle family.</p>
-        <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 10px; padding: 20px; margin: 0 0 16px;">
-          <p style="color: #ccc; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 6px;">Your Exclusive Discount Code</p>
-          <p style="color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: 3px; margin: 0 0 6px; font-family: monospace;">${discountCode}</p>
-          <p style="color: #e0c97f; font-size: 14px; font-weight: 600; margin: 0;">${discountPercent}% OFF your next order</p>
-        </div>
-        <a href="https://turtlelittle.com/shop" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">Shop Now</a>
-        <p style="font-size: 12px; color: #888; margin: 12px 0 0; line-height: 1.5;">Enter your code at checkout. One-time use, applies to your entire cart. Questions? <a href="https://wa.me/919990079722" style="color: #1a1a1a;">WhatsApp us</a></p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`,
+        html: `<div style="max-width:560px;margin:0 auto;font-family:Arial,sans-serif;color:#333">
+<p style="text-align:center;margin:0 0 10px"><img src="https://turtlelittle.com/images/email-logo.png" alt="TurtleLittle" height="40" style="height:40px"></p>
+<p style="text-align:center;font-size:18px;font-weight:700;margin:0 0 4px">Welcome, ${displayName}! 🎉</p>
+<p style="text-align:center;font-size:13px;color:#666;margin:0 0 14px">We're so happy to have you in the TurtleLittle family.</p>
+<div style="background:#1a1a1a;border-radius:8px;padding:16px;text-align:center;margin:0 0 14px">
+<p style="color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Your Discount Code</p>
+<p style="color:#fff;font-size:22px;font-weight:700;letter-spacing:2px;margin:0 0 4px;font-family:monospace">${discountCode}</p>
+<p style="color:#e0c97f;font-size:13px;font-weight:600;margin:0">${discountPercent}% OFF your next order</p>
+</div>
+<p style="text-align:center;margin:0 0 10px"><a href="https://turtlelittle.com/shop" style="background:#1a1a1a;color:#fff;text-decoration:none;padding:10px 28px;border-radius:6px;font-weight:600;font-size:13px;display:inline-block">Shop Now</a></p>
+<p style="text-align:center;font-size:11px;color:#999;margin:0">Enter code at checkout. One-time use. Questions? <a href="https://wa.me/919990079722" style="color:#333">WhatsApp us</a></p>
+</div>`,
       });
       return { success: true, channel: "resend" };
     } catch (err) {
