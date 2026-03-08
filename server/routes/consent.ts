@@ -118,8 +118,12 @@ export function registerConsentRoutes(app: Express) {
           }
         } catch {}
         const name = (firstName?.trim()) || customer?.name?.split(" ")[0] || "";
+        console.log(`[consent] Sending welcome coupon email to ${recipientEmail} with code ${consent.discountCode}`);
         notificationService.sendWelcomeCoupon(recipientEmail, name, consent.discountCode, discountPercent)
-          .catch(err => console.error("Failed to send welcome coupon email:", err));
+          .then(result => console.log(`[consent] Welcome coupon email result:`, JSON.stringify(result)))
+          .catch(err => console.error("[consent] Failed to send welcome coupon email:", err));
+      } else {
+        console.log(`[consent] No email to send welcome coupon to. recipientEmail=${recipientEmail}, discountCode=${consent.discountCode}`);
       }
 
       res.json({ success: true, discountCode: consent.discountCode });
