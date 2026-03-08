@@ -22,8 +22,8 @@ export interface FormFieldConfig {
 }
 
 const DEFAULT_FIELDS: FormFieldConfig[] = [
-  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true, hideWhenLoggedIn: false },
-  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true, hideWhenLoggedIn: false },
+  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true, hideWhenLoggedIn: true },
+  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true, hideWhenLoggedIn: true },
   { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true, hideWhenLoggedIn: true },
   { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
 ];
