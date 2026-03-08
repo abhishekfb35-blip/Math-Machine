@@ -437,32 +437,22 @@ export class ResendNotificationService implements INotificationService {
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
-    </div>
-    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <p style="font-size: 28px; margin: 0;">🎉</p>
-        <h2 style="color: #1a1a1a; margin: 8px 0 4px; font-size: 22px;">Welcome, ${displayName}!</h2>
-        <p style="color: #666; font-size: 15px; margin: 0; line-height: 1.5;">We're so happy to have you in the TurtleLittle family.</p>
+  <div style="max-width: 600px; margin: 0 auto; padding: 16px;">
+    <div style="background: #ffffff; border-radius: 12px; overflow: hidden;">
+      <div style="background: #1a1a1a; padding: 16px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">TurtleLittle</h1>
       </div>
-      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 12px; padding: 28px; text-align: center; margin: 20px 0;">
-        <p style="color: #ccc; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 8px;">Your Exclusive Discount Code</p>
-        <p style="color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 3px; margin: 0 0 8px; font-family: monospace;">${discountCode}</p>
-        <p style="color: #e0c97f; font-size: 16px; font-weight: 600; margin: 0;">${discountPercent}% OFF your next order</p>
+      <div style="padding: 20px 24px; text-align: center;">
+        <h2 style="color: #1a1a1a; margin: 0 0 4px; font-size: 20px;">Welcome, ${displayName}! 🎉</h2>
+        <p style="color: #666; font-size: 14px; margin: 0 0 16px;">We're so happy to have you in the TurtleLittle family.</p>
+        <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 10px; padding: 20px; margin: 0 0 16px;">
+          <p style="color: #ccc; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 6px;">Your Exclusive Discount Code</p>
+          <p style="color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: 3px; margin: 0 0 6px; font-family: monospace;">${discountCode}</p>
+          <p style="color: #e0c97f; font-size: 14px; font-weight: 600; margin: 0;">${discountPercent}% OFF your next order</p>
+        </div>
+        <a href="https://turtlelittle.com/shop" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">Shop Now</a>
+        <p style="font-size: 12px; color: #888; margin: 12px 0 0; line-height: 1.5;">Enter your code at checkout. One-time use, applies to your entire cart. Questions? <a href="https://wa.me/919990079722" style="color: #1a1a1a;">WhatsApp us</a></p>
       </div>
-      <div style="text-align: center; margin: 24px 0;">
-        <a href="https://turtlelittle.com/shop" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-weight: 600; font-size: 15px;">Shop Now</a>
-      </div>
-      <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
-        <p style="font-size: 13px; color: #666; margin: 0; line-height: 1.6; text-align: center;">
-          Simply enter your code at checkout to enjoy your discount. This code can be used once and applies to your entire cart.
-        </p>
-      </div>
-      <p style="color: #999; font-size: 12px; margin-top: 24px; text-align: center;">
-        Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
-      </p>
     </div>
   </div>
 </body>
