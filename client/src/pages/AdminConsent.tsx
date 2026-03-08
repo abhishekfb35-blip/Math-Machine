@@ -231,7 +231,7 @@ export default function AdminConsent() {
                     data-testid="input-popup-button-text"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Leave empty to use default: "Get My {discountPercent}% Discount"
+                    Leave empty to use default: "Get My {settings.discountPercent}% Discount"
                   </p>
                 </div>
               </div>
