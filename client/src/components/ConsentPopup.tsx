@@ -99,6 +99,14 @@ export default function ConsentPopup() {
       });
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      dismissed.current = false;
+      triggered.current = false;
+      scrollCount.current = 0;
+    }
+  }, [isAuthenticated]);
+
   const shouldShow = useCallback(() => {
     if (dismissed.current) return false;
     if (sessionStorage.getItem(SESSION_KEY)) return false;
