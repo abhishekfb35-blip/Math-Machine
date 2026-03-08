@@ -57,6 +57,7 @@ export default function ConsentPopup() {
   const [settings, setSettings] = useState<PopupSettings | null>(null);
   const settingsLoaded = useRef(false);
   const triggered = useRef(false);
+  const dismissed = useRef(false);
   const scrollCount = useRef(0);
 
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function ConsentPopup() {
   }, []);
 
   const shouldShow = useCallback(() => {
+    if (dismissed.current) return false;
     if (sessionStorage.getItem(SESSION_KEY)) return false;
     if (EXCLUDED_PREFIXES.some(p => location.startsWith(p))) return false;
     if (settings && !settings.enabled) return false;
@@ -166,7 +168,9 @@ export default function ConsentPopup() {
 
   const handleDismiss = () => {
     setVisible(false);
-    sessionStorage.setItem(SESSION_KEY, "dismissed");
+    dismissed.current = true;
+    triggered.current = false;
+    scrollCount.current = 0;
   };
 
   const fields = settings?.fields || DEFAULT_FIELDS;
