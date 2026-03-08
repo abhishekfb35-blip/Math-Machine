@@ -227,7 +227,7 @@ export default function CheckoutPage() {
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
       setIsProcessingPayment(false);
     }
-  }, [razorpayConfig, toast, navigate]);
+  }, [razorpayConfig, toast, navigate, appliedDiscount]);
 
   const handleCCAvenueCheckout = useCallback(async (formData: CheckoutInput) => {
     setIsProcessingPayment(true);
@@ -251,7 +251,7 @@ export default function CheckoutPage() {
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
       setIsProcessingPayment(false);
     }
-  }, [toast]);
+  }, [toast, appliedDiscount]);
 
   useEffect(() => {
     if (ccaFormData && ccaFormRef.current) {
