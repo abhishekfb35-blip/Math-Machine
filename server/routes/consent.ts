@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import crypto from "crypto";
 import { storage } from "../storage";
 import { getAuthenticatedCustomer } from "./helpers";
+import { notificationService } from "../providers/notification";
 
 function generateDiscountCode(): string {
   return "TL10-" + crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -105,6 +106,20 @@ export function registerConsentRoutes(app: Express) {
           sameSite: "lax",
           path: "/",
         });
+      }
+
+      const recipientEmail = normalizedEmail || customer?.email;
+      if (recipientEmail && consent.discountCode) {
+        let discountPercent = 10;
+        try {
+          const config = await storage.getSiteConfig("consent-popup");
+          if (config?.value?.discountPercent) {
+            discountPercent = config.value.discountPercent;
+          }
+        } catch {}
+        const name = (firstName?.trim()) || customer?.name?.split(" ")[0] || "";
+        notificationService.sendWelcomeCoupon(recipientEmail, name, consent.discountCode, discountPercent)
+          .catch(err => console.error("Failed to send welcome coupon email:", err));
       }
 
       res.json({ success: true, discountCode: consent.discountCode });

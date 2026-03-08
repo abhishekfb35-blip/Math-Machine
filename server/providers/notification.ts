@@ -36,6 +36,7 @@ export interface INotificationService {
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
+  sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -290,6 +291,11 @@ export class ConsoleNotificationService implements INotificationService {
     console.log(`[OTP] Code ${otp} sent to ${email}`);
     return { success: true, channel: "console" };
   }
+
+  async sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult> {
+    console.log(`[Welcome Coupon] ${discountCode} (${discountPercent}% off) sent to ${firstName} <${email}>`);
+    return { success: true, channel: "console" };
+  }
 }
 
 export class ResendNotificationService implements INotificationService {
@@ -415,6 +421,56 @@ export class ResendNotificationService implements INotificationService {
       return { success: true, channel: "resend" };
     } catch (err) {
       console.error("Resend OTP error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult> {
+    try {
+      const displayName = firstName && firstName !== "." ? firstName : "there";
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: `Welcome to TurtleLittle! Here's Your ${discountPercent}% Discount 🎉`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
+    </div>
+    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <p style="font-size: 28px; margin: 0;">🎉</p>
+        <h2 style="color: #1a1a1a; margin: 8px 0 4px; font-size: 22px;">Welcome, ${displayName}!</h2>
+        <p style="color: #666; font-size: 15px; margin: 0; line-height: 1.5;">We're so happy to have you in the TurtleLittle family.</p>
+      </div>
+      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); border-radius: 12px; padding: 28px; text-align: center; margin: 20px 0;">
+        <p style="color: #ccc; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 8px;">Your Exclusive Discount Code</p>
+        <p style="color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 3px; margin: 0 0 8px; font-family: monospace;">${discountCode}</p>
+        <p style="color: #e0c97f; font-size: 16px; font-weight: 600; margin: 0;">${discountPercent}% OFF your next order</p>
+      </div>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="https://turtlelittle.com/shop" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-weight: 600; font-size: 15px;">Shop Now</a>
+      </div>
+      <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <p style="font-size: 13px; color: #666; margin: 0; line-height: 1.6; text-align: center;">
+          Simply enter your code at checkout to enjoy your discount. This code can be used once and applies to your entire cart.
+        </p>
+      </div>
+      <p style="color: #999; font-size: 12px; margin-top: 24px; text-align: center;">
+        Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend welcome coupon error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }
