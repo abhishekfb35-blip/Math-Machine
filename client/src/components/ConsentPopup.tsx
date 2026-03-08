@@ -24,13 +24,14 @@ interface FormFieldConfig {
   placeholder: string;
   enabled: boolean;
   required: boolean;
+  hideWhenLoggedIn: boolean;
 }
 
 const DEFAULT_FIELDS: FormFieldConfig[] = [
-  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true },
-  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true },
-  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true },
-  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false },
+  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true, hideWhenLoggedIn: false },
+  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true, hideWhenLoggedIn: false },
+  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true, hideWhenLoggedIn: true },
+  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
 ];
 
 interface PopupSettings {
@@ -69,12 +70,7 @@ export default function ConsentPopup() {
         const savedFields = d.value?.fields;
         const mergedFields = DEFAULT_FIELDS.map(df => {
           const sf = savedFields?.find((f: FormFieldConfig) => f.name === df.name);
-          const merged = sf ? { ...df, ...sf } : df;
-          if (merged.name === "email") {
-            merged.enabled = true;
-            merged.required = true;
-          }
-          return merged;
+          return sf ? { ...df, ...sf } : df;
         });
         setSettings({
           enabled: d.value?.enabled ?? true,
@@ -174,6 +170,7 @@ export default function ConsentPopup() {
 
   const fields = settings?.fields || DEFAULT_FIELDS;
   const enabledFields = fields.filter(f => f.enabled);
+  const visibleFields = enabledFields.filter(f => !(f.hideWhenLoggedIn && isAuthenticated));
   const consentText = settings?.consentText || DEFAULT_CONSENT_TEXT;
   const headline = settings?.headline || DEFAULT_HEADLINE;
   const description = settings?.description || DEFAULT_DESCRIPTION;
@@ -182,19 +179,20 @@ export default function ConsentPopup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    for (const field of enabledFields) {
+    for (const field of visibleFields) {
       if (field.required && !formValues[field.name]?.trim()) {
         toast({ title: `${field.label} is required`, variant: "destructive" });
         return;
       }
     }
 
-    const isFieldEnabled = (name: string) => enabledFields.some(f => f.name === name);
     const fn = formValues.firstName?.trim() || (isAuthenticated && customer?.name?.split(" ")[0]) || "";
     const ln = formValues.lastName?.trim() || (isAuthenticated && customer?.name?.split(" ").slice(1).join(" ")) || "";
     const em = formValues.email?.trim() || (isAuthenticated && customer?.email) || "";
+    const emailField = enabledFields.find(f => f.name === "email");
+    const emailRequired = emailField ? emailField.required : false;
 
-    if (!em) {
+    if (emailRequired && !em) {
       toast({ title: "Email is required", variant: "destructive" });
       return;
     }
@@ -202,10 +200,10 @@ export default function ConsentPopup() {
     setSubmitting(true);
     try {
       const res = await apiRequest("POST", "/api/consent", {
-        firstName: isFieldEnabled("firstName") ? (fn || ".") : ".",
-        lastName: isFieldEnabled("lastName") ? (ln || ".") : ".",
-        email: em,
-        phone: isFieldEnabled("phone") ? (formValues.phone?.trim() || null) : null,
+        firstName: fn || ".",
+        lastName: ln || ".",
+        email: em || null,
+        phone: formValues.phone?.trim() || null,
         consentType: CONSENT_TYPE,
         consentGiven: true,
         pageUrl: location,
@@ -256,8 +254,8 @@ export default function ConsentPopup() {
     );
   }
 
-  const nameFields = enabledFields.filter(f => f.name === "firstName" || f.name === "lastName");
-  const otherFields = enabledFields.filter(f => f.name !== "firstName" && f.name !== "lastName");
+  const nameFields = visibleFields.filter(f => f.name === "firstName" || f.name === "lastName");
+  const otherFields = visibleFields.filter(f => f.name !== "firstName" && f.name !== "lastName");
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" data-testid="consent-overlay">

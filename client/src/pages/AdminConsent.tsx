@@ -18,13 +18,14 @@ export interface FormFieldConfig {
   placeholder: string;
   enabled: boolean;
   required: boolean;
+  hideWhenLoggedIn: boolean;
 }
 
 const DEFAULT_FIELDS: FormFieldConfig[] = [
-  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true },
-  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true },
-  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true },
-  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false },
+  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true, hideWhenLoggedIn: false },
+  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true, hideWhenLoggedIn: false },
+  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true, hideWhenLoggedIn: true },
+  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
 ];
 
 interface ConsentSettings {
@@ -129,6 +130,7 @@ export default function AdminConsent() {
         const updated = { ...f, [key]: value };
         if (key === "enabled" && value === false) {
           updated.required = false;
+          updated.hideWhenLoggedIn = false;
         }
         return updated;
       }),
@@ -228,54 +230,50 @@ export default function AdminConsent() {
                 </h3>
                 <p className="text-xs text-muted-foreground">Choose which fields appear in the popup and whether they are required.</p>
 
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <table className="w-full text-sm" data-testid="table-form-fields">
                     <thead>
                       <tr className="border-b bg-muted/50">
                         <th className="px-3 py-2 text-left font-medium">Field</th>
                         <th className="px-3 py-2 text-center font-medium w-20">Show</th>
                         <th className="px-3 py-2 text-center font-medium w-24">Required</th>
+                        <th className="px-3 py-2 text-center font-medium w-32">Hide if logged in</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {settings.fields.map((field, i) => {
-                        const isEmailField = field.name === "email";
-                        return (
-                          <tr key={field.name} className="border-b last:border-0" data-testid={`field-row-${field.name}`}>
-                            <td className="px-3 py-2.5">
-                              <span className="font-medium">{field.label}</span>
-                              <span className="text-xs text-muted-foreground ml-2">({field.type})</span>
-                              {isEmailField && (
-                                <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(always on)</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 text-center">
-                              {isEmailField ? (
-                                <span className="text-xs text-muted-foreground">Locked</span>
-                              ) : (
-                                <Toggle
-                                  value={field.enabled}
-                                  onChange={v => updateField(i, "enabled", v)}
-                                  testId={`toggle-field-enabled-${field.name}`}
-                                />
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 text-center">
-                              {isEmailField ? (
-                                <span className="text-xs text-muted-foreground">Locked</span>
-                              ) : (
-                                <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
-                                  <Toggle
-                                    value={field.required}
-                                    onChange={v => updateField(i, "required", v)}
-                                    testId={`toggle-field-required-${field.name}`}
-                                  />
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {settings.fields.map((field, i) => (
+                        <tr key={field.name} className="border-b last:border-0" data-testid={`field-row-${field.name}`}>
+                          <td className="px-3 py-2.5">
+                            <span className="font-medium">{field.label}</span>
+                            <span className="text-xs text-muted-foreground ml-2">({field.type})</span>
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            <Toggle
+                              value={field.enabled}
+                              onChange={v => updateField(i, "enabled", v)}
+                              testId={`toggle-field-enabled-${field.name}`}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
+                              <Toggle
+                                value={field.required}
+                                onChange={v => updateField(i, "required", v)}
+                                testId={`toggle-field-required-${field.name}`}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
+                              <Toggle
+                                value={field.hideWhenLoggedIn}
+                                onChange={v => updateField(i, "hideWhenLoggedIn", v)}
+                                testId={`toggle-field-hide-logged-in-${field.name}`}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
