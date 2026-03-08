@@ -154,7 +154,12 @@ export function registerConsentRoutes(app: Express) {
       }
 
       if (consent.discountUsed) {
-        return res.json({ valid: false, message: "This discount code has already been used" });
+        const orderWithCode = await storage.getOrderByDiscountCode(consent.discountCode!);
+        if (!orderWithCode || (orderWithCode.paymentStatus !== "paid" && orderWithCode.status === "cancelled")) {
+          await storage.resetConsentDiscountUsed(consent.id);
+        } else {
+          return res.json({ valid: false, message: "This discount code has already been used" });
+        }
       }
 
       return res.json({ valid: true, discountPercent: 10, code: consent.discountCode });

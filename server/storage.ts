@@ -101,6 +101,8 @@ export interface IStorage {
   getCustomerConsents(filters?: { limit?: number; offset?: number }): Promise<CustomerConsent[]>;
   getCustomerConsentsCount(): Promise<number>;
   markConsentDiscountUsed(id: string): Promise<void>;
+  resetConsentDiscountUsed(id: string): Promise<void>;
+  getOrderByDiscountCode(code: string): Promise<Order | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -633,6 +635,15 @@ export class DatabaseStorage implements IStorage {
 
   async markConsentDiscountUsed(id: string): Promise<void> {
     await db.update(customerConsents).set({ discountUsed: true }).where(eq(customerConsents.id, id));
+  }
+
+  async resetConsentDiscountUsed(id: string): Promise<void> {
+    await db.update(customerConsents).set({ discountUsed: false }).where(eq(customerConsents.id, id));
+  }
+
+  async getOrderByDiscountCode(code: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.discountCode, code));
+    return order;
   }
 }
 

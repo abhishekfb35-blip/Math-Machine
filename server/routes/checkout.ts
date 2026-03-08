@@ -147,9 +147,8 @@ export function registerCheckoutRoutes(app: Express) {
         paymentStatus: "pending",
         notes: checkoutData.notes || null,
         paymentId: null,
+        discountCode: discountCode?.trim().toUpperCase() || null,
       });
-
-      if (consentId) await storage.markConsentDiscountUsed(consentId);
 
       const expandedItems = itemsWithProducts.filter(i => i.product);
       for (const item of expandedItems) {
@@ -252,6 +251,13 @@ export function registerCheckoutRoutes(app: Express) {
 
       if (orderStatus === "Success") {
         await storage.updateOrderPayment(orderId, trackingId, "paid");
+
+        if (order.discountCode) {
+          const consent = await storage.getCustomerConsentByDiscountCode(order.discountCode);
+          if (consent && !consent.discountUsed) {
+            await storage.markConsentDiscountUsed(consent.id);
+          }
+        }
 
         const orderItems = await storage.getOrderItems(orderId);
         const itemDetails = orderItems.map(item => ({
