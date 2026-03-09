@@ -1045,8 +1045,8 @@ export function registerAdminHealthRoutes(app: Express) {
         maxBuffer: 50 * 1024 * 1024,
       });
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      res.setHeader("Content-Type", "application/sql");
-      res.setHeader("Content-Disposition", `attachment; filename="turtlelittle_backup_${timestamp}.sql"`);
+      res.setHeader("Content-Type", "text/plain");
+      res.setHeader("Content-Disposition", `attachment; filename="turtlelittle_backup_${timestamp}.txt"`);
       res.send(`-- TurtleLittle Full Database Backup\n-- Generated: ${new Date().toISOString()}\n\n${dump}`);
     } catch (err) {
       console.error("SQL export error:", err);
