@@ -3,6 +3,7 @@ import { storage } from "../../storage";
 import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@shared/schema";
 import { z } from "zod";
 import { requireAdmin, getAdminUsername } from "../../adminAuth";
+import { generateSku } from "../../utils/sku";
 
 export function registerAdminCatalogRoutes(app: Express) {
 
@@ -83,6 +84,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
       const data = insertProductSchema.parse(req.body);
+      if (!data.sku) data.sku = generateSku();
       const prod = await storage.createProduct(data);
       await storage.createAuditLog({
         entityType: "product", entityId: prod.id, entityName: prod.name,

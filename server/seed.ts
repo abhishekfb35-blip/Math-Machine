@@ -188,6 +188,7 @@ export async function seedDatabase() {
     }
 
     const prodEntries = data.products.filter((p: any) => catSlugToId[p.categorySlug || p.category_slug]).map((p: any) => ({
+      sku: p.sku || null,
       name: p.name,
       slug: p.slug,
       description: p.description,
