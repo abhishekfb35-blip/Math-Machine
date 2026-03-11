@@ -18,6 +18,8 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview } from "@shared/types";
 
+const REVIEWS_PER_PAGE = 10;
+
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const [, navigate] = useLocation();
@@ -28,6 +30,7 @@ export default function ProductPage() {
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
+  const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
 
   const { data: product, isLoading: productLoading } = useQuery<Product>({
     queryKey: ["/api/products", slug],
@@ -490,7 +493,7 @@ export default function ProductPage() {
           </div>
 
           <div className="space-y-4">
-            {productReviews.map((review) => (
+            {productReviews.slice(0, visibleReviews).map((review) => (
               <Card key={review.id} className="p-4" data-testid={`card-review-${review.id}`}>
                 <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                   <div className="flex items-center gap-2">
@@ -527,6 +530,17 @@ export default function ProductPage() {
               </Card>
             ))}
           </div>
+          {visibleReviews < productReviews.length && (
+            <div className="mt-4 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleReviews((v) => v + REVIEWS_PER_PAGE)}
+                data-testid="button-show-more-reviews"
+              >
+                Show more reviews ({productReviews.length - visibleReviews} remaining)
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
