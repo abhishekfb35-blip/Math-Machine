@@ -84,7 +84,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
       const data = insertProductSchema.parse(req.body);
-      if (!data.sku) data.sku = generateSku();
+      data.sku = generateSku();
       const prod = await storage.createProduct(data);
       await storage.createAuditLog({
         entityType: "product", entityId: prod.id, entityName: prod.name,
