@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Plus } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,22 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
             {product.name}
           </h3>
         </Link>
+        {product.averageRating != null && product.reviewCount != null && (
+          <div
+            className="flex items-center gap-1"
+            data-testid={`rating-${product.id}`}
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`w-3 h-3 ${i < Math.round(product.averageRating!) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted"}`}
+              />
+            ))}
+            <span className="text-[10px] text-muted-foreground ml-0.5" data-testid={`review-count-${product.id}`}>
+              ({product.reviewCount})
+            </span>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-bold" data-testid={`text-product-price-${product.id}`}>
             ₹{product.price.toLocaleString("en-IN")}

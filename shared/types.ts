@@ -41,6 +41,8 @@ export interface Product {
   sortOrder: number | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export interface InsertProduct {

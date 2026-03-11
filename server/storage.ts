@@ -16,7 +16,7 @@ import type {
   CustomerConsent, InsertCustomerConsent,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc, gt } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -138,8 +138,26 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
+  private async withReviewStats(prods: Product[]): Promise<Product[]> {
+    if (prods.length === 0) return prods;
+    const ids = prods.map(p => p.id);
+    const stats = await db.select({
+      productId: productReviews.productId,
+      reviewCount: sql<number>`count(*)::int`,
+      averageRating: sql<number>`round(avg(${productReviews.rating})::numeric, 1)`,
+    }).from(productReviews)
+      .where(inArray(productReviews.productId, ids))
+      .groupBy(productReviews.productId);
+    const statsMap = new Map(stats.map(s => [s.productId, s]));
+    return prods.map(p => {
+      const s = statsMap.get(p.id);
+      return s ? { ...p, reviewCount: Number(s.reviewCount), averageRating: Number(s.averageRating) } : p;
+    });
+  }
+
   async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.active, true)).orderBy(products.sortOrder, products.name);
+    const prods = await db.select().from(products).where(eq(products.active, true)).orderBy(products.sortOrder, products.name);
+    return this.withReviewStats(prods);
   }
 
   async getAllProducts(): Promise<Product[]> {
@@ -147,9 +165,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
-    return await db.select().from(products)
+    const prods = await db.select().from(products)
       .where(and(eq(products.categoryId, categoryId), eq(products.active, true)))
       .orderBy(products.sortOrder, products.name);
+    return this.withReviewStats(prods);
   }
 
   async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
