@@ -1144,7 +1144,7 @@ export default function AdminCatalog() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="font-medium text-sm truncate" data-testid={`text-product-name-${prod.id}`}>{prod.name}</p>
+                      <a href={`/product/${prod.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sm truncate hover:underline text-foreground" data-testid={`text-product-name-${prod.id}`}>{prod.name}</a>
                       {!prod.active && (
                         <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
                           <EyeOff className="w-2.5 h-2.5 mr-0.5" /> Hidden
