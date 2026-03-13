@@ -161,7 +161,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products).orderBy(products.sortOrder, products.name);
+    const prods = await db.select().from(products).orderBy(products.sortOrder, products.name);
+    return this.withReviewStats(prods);
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
@@ -172,9 +173,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
-    return await db.select().from(products)
+    const prods = await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder, products.name);
+    return this.withReviewStats(prods);
   }
 
   async searchProducts(query: string): Promise<Product[]> {

@@ -1159,6 +1159,7 @@ export default function AdminCatalog() {
                       )}
                       {prod.material && <span className="ml-2">{prod.material}</span>}
                       {prod.gsm && <span className="ml-1">{prod.gsm} GSM</span>}
+                      {prod.reviewCount != null && <span className="ml-2 font-medium text-amber-600">{prod.reviewCount} reviews</span>}
                     </p>
                     <div className="mt-1">
                       <ProductTagSelector productId={prod.id} allTags={allTags || []} />
