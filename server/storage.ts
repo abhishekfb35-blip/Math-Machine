@@ -66,6 +66,7 @@ export interface IStorage {
 
   getProductReviews(productId: string): Promise<ProductReview[]>;
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
+  updateProductReview(id: string, data: Partial<InsertProductReview>): Promise<ProductReview>;
   deleteProductReview(id: string): Promise<void>;
 
   getTags(): Promise<Tag[]>;
@@ -410,6 +411,11 @@ export class DatabaseStorage implements IStorage {
   async createProductReview(review: InsertProductReview): Promise<ProductReview> {
     const [created] = await db.insert(productReviews).values(review).returning();
     return created;
+  }
+
+  async updateProductReview(id: string, data: Partial<InsertProductReview>): Promise<ProductReview> {
+    const [updated] = await db.update(productReviews).set(data).where(eq(productReviews.id, id)).returning();
+    return updated;
   }
 
   async deleteProductReview(id: string): Promise<void> {

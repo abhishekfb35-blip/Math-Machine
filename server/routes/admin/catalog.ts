@@ -194,6 +194,18 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  app.put("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
+    const reviewId = req.params.reviewId as string;
+    if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });
+    try {
+      const review = await storage.updateProductReview(reviewId, req.body);
+      res.json(review);
+    } catch (err) {
+      console.error("Update review error:", err);
+      res.status(500).json({ message: "Failed to update review" });
+    }
+  });
+
   app.delete("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
     const reviewId = req.params.reviewId as string;
     if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });

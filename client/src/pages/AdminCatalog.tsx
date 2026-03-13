@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -408,6 +410,11 @@ export default function AdminCatalog() {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
+  const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
+  const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
+  const [showAddReviewForm, setShowAddReviewForm] = useState(false);
+  const emptyReviewForm = { reviewerName: "", rating: 5, title: "", body: "", amzReviewDate: "" };
+  const [reviewForm, setReviewForm] = useState(emptyReviewForm);
 
   const { data: categories, isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["/api/admin/categories"],
@@ -465,6 +472,54 @@ export default function AdminCatalog() {
       return res.json();
     },
     enabled: !!editingProduct?.id && view === "edit-product",
+  });
+
+  const { data: dialogReviews, isLoading: dialogReviewsLoading } = useQuery<ProductReview[]>({
+    queryKey: ["/api/products", reviewDialogProduct?.id, "reviews"],
+    queryFn: async () => {
+      if (!reviewDialogProduct?.id) return [];
+      const res = await fetch(`/api/products/${reviewDialogProduct.id}/reviews`);
+      return res.json();
+    },
+    enabled: !!reviewDialogProduct?.id,
+  });
+
+  const addDialogReviewMutation = useMutation({
+    mutationFn: (data: typeof emptyReviewForm) =>
+      apiRequest("POST", `/api/admin/products/${reviewDialogProduct?.id}/reviews`, { ...data, verifiedPurchase: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", reviewDialogProduct?.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      setShowAddReviewForm(false);
+      setReviewForm(emptyReviewForm);
+      toast({ title: "Review added" });
+    },
+  });
+
+  const updateDialogReviewMutation = useMutation({
+    mutationFn: (data: typeof emptyReviewForm) =>
+      apiRequest("PUT", `/api/admin/products/${reviewDialogProduct?.id}/reviews/${editingReview?.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", reviewDialogProduct?.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      setEditingReview(null);
+      setShowAddReviewForm(false);
+      setReviewForm(emptyReviewForm);
+      toast({ title: "Review updated" });
+    },
+  });
+
+  const deleteDialogReviewMutation = useMutation({
+    mutationFn: (reviewId: string) =>
+      apiRequest("DELETE", `/api/admin/products/${reviewDialogProduct?.id}/reviews/${reviewId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", reviewDialogProduct?.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      toast({ title: "Review deleted" });
+    },
   });
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
@@ -1010,6 +1065,7 @@ export default function AdminCatalog() {
     const someSelected = selectedProductIds.size > 0;
 
     return (
+      <>
       <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
         <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("categories"); setSelectedCategory(null); setSelectedProductIds(new Set()); }} data-testid="button-back-categories-from-products">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Categories
@@ -1160,12 +1216,18 @@ export default function AdminCatalog() {
                       {prod.material && <span className="ml-2">{prod.material}</span>}
                       {prod.gsm && <span className="ml-1">{prod.gsm} GSM</span>}
                       {prod.reviewCount != null && prod.averageRating != null && (
-                        <span className="ml-2 inline-flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          className="ml-2 inline-flex items-center gap-0.5 hover:opacity-70 transition-opacity cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); setReviewDialogProduct(prod as Product); setShowAddReviewForm(false); setEditingReview(null); setReviewForm(emptyReviewForm); }}
+                          data-testid={`button-reviews-${prod.id}`}
+                          title="Manage reviews"
+                        >
                           {[1,2,3,4,5].map(s => (
                             <Star key={s} className={`w-3 h-3 ${s <= Math.round(prod.averageRating!) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
                           ))}
                           <span className="text-amber-600 font-medium ml-0.5">{prod.averageRating} ({prod.reviewCount})</span>
-                        </span>
+                        </button>
                       )}
                     </p>
                     <div className="mt-1">
@@ -1280,6 +1342,174 @@ export default function AdminCatalog() {
           </div>
         )}
       </div>
+
+      {/* Review Management Dialog */}
+      <Dialog open={!!reviewDialogProduct} onOpenChange={(open) => { if (!open) { setReviewDialogProduct(null); setEditingReview(null); setShowAddReviewForm(false); setReviewForm(emptyReviewForm); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-base">Reviews — {reviewDialogProduct?.name}</DialogTitle>
+            <DialogDescription className="text-xs">{dialogReviews?.length || 0} review{(dialogReviews?.length || 0) !== 1 ? "s" : ""}</DialogDescription>
+          </DialogHeader>
+
+          {/* Add / Edit Form */}
+          {(showAddReviewForm || editingReview) && (
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-3 shrink-0">
+              <p className="text-sm font-medium">{editingReview ? "Edit Review" : "Add Review"}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs mb-1 block">Reviewer Name *</Label>
+                  <Input
+                    value={reviewForm.reviewerName}
+                    onChange={(e) => setReviewForm(f => ({ ...f, reviewerName: e.target.value }))}
+                    placeholder="e.g. Priya S."
+                    className="h-8 text-sm"
+                    data-testid="input-review-name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Date</Label>
+                  <Input
+                    value={reviewForm.amzReviewDate}
+                    onChange={(e) => setReviewForm(f => ({ ...f, amzReviewDate: e.target.value }))}
+                    placeholder="e.g. 12 March 2025"
+                    className="h-8 text-sm"
+                    data-testid="input-review-date"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Rating</Label>
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} type="button" onClick={() => setReviewForm(f => ({ ...f, rating: s }))}>
+                      <Star className={`w-5 h-5 ${s <= reviewForm.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Title</Label>
+                <Input
+                  value={reviewForm.title}
+                  onChange={(e) => setReviewForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="Review headline"
+                  className="h-8 text-sm"
+                  data-testid="input-review-title"
+                />
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Review Text *</Label>
+                <Textarea
+                  value={reviewForm.body}
+                  onChange={(e) => setReviewForm(f => ({ ...f, body: e.target.value }))}
+                  placeholder="What did the customer say?"
+                  className="text-sm min-h-[70px]"
+                  data-testid="input-review-body"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!reviewForm.reviewerName.trim() || !reviewForm.body.trim()) {
+                      toast({ title: "Reviewer name and review text are required", variant: "destructive" });
+                      return;
+                    }
+                    if (editingReview) {
+                      updateDialogReviewMutation.mutate(reviewForm);
+                    } else {
+                      addDialogReviewMutation.mutate(reviewForm);
+                    }
+                  }}
+                  disabled={addDialogReviewMutation.isPending || updateDialogReviewMutation.isPending}
+                  data-testid="button-save-review"
+                >
+                  {(addDialogReviewMutation.isPending || updateDialogReviewMutation.isPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  <span className="ml-1">{editingReview ? "Update" : "Add"}</span>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowAddReviewForm(false); setEditingReview(null); setReviewForm(emptyReviewForm); }}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Reviews List */}
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="space-y-2 pr-3">
+              {dialogReviewsLoading && <p className="text-sm text-muted-foreground py-4 text-center">Loading...</p>}
+              {!dialogReviewsLoading && (!dialogReviews || dialogReviews.length === 0) && (
+                <p className="text-sm text-muted-foreground py-4 text-center">No reviews yet</p>
+              )}
+              {dialogReviews?.map((review) => (
+                <div key={review.id} className="border rounded-lg p-3 text-sm" data-testid={`card-dialog-review-${review.id}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{review.reviewerName}</span>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <Star key={s} className={`w-3 h-3 ${s <= review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+                          ))}
+                        </div>
+                        {review.amzReviewDate && <span className="text-xs text-muted-foreground">{review.amzReviewDate}</span>}
+                      </div>
+                      {review.title && <p className="text-xs font-medium mt-1">{review.title}</p>}
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-3">{review.body}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          setEditingReview(review);
+                          setShowAddReviewForm(false);
+                          setReviewForm({
+                            reviewerName: review.reviewerName,
+                            rating: review.rating,
+                            title: review.title || "",
+                            body: review.body,
+                            amzReviewDate: review.amzReviewDate || "",
+                          });
+                        }}
+                        data-testid={`button-edit-review-${review.id}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                        onClick={() => deleteDialogReviewMutation.mutate(review.id)}
+                        disabled={deleteDialogReviewMutation.isPending}
+                        data-testid={`button-delete-dialog-review-${review.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {/* Footer */}
+          {!showAddReviewForm && !editingReview && (
+            <div className="pt-3 border-t shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setShowAddReviewForm(true); setEditingReview(null); setReviewForm(emptyReviewForm); }}
+                data-testid="button-add-new-review"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Review
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      </>
     );
   }
 
