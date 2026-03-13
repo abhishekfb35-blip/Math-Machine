@@ -1159,7 +1159,14 @@ export default function AdminCatalog() {
                       )}
                       {prod.material && <span className="ml-2">{prod.material}</span>}
                       {prod.gsm && <span className="ml-1">{prod.gsm} GSM</span>}
-                      {prod.reviewCount != null && <span className="ml-2 font-medium text-amber-600">{prod.reviewCount} reviews</span>}
+                      {prod.reviewCount != null && prod.averageRating != null && (
+                        <span className="ml-2 inline-flex items-center gap-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <Star key={s} className={`w-3 h-3 ${s <= Math.round(prod.averageRating!) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+                          ))}
+                          <span className="text-amber-600 font-medium ml-0.5">{prod.averageRating} ({prod.reviewCount})</span>
+                        </span>
+                      )}
                     </p>
                     <div className="mt-1">
                       <ProductTagSelector productId={prod.id} allTags={allTags || []} />

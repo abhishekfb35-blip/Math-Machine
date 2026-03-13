@@ -45,17 +45,17 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
         </Link>
         {product.averageRating != null && product.reviewCount != null && (
           <div
-            className="flex items-center gap-1"
+            className="flex items-center gap-0.5"
             data-testid={`rating-${product.id}`}
           >
-            {Array.from({ length: 5 }).map((_, i) => (
+            {[1,2,3,4,5].map(s => (
               <Star
-                key={i}
-                className={`w-3 h-3 ${i < Math.round(product.averageRating!) ? "fill-amber-400 text-amber-400" : "fill-muted-foreground/20 text-muted-foreground/20"}`}
+                key={s}
+                className={`w-3 h-3 ${s <= Math.round(product.averageRating!) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
               />
             ))}
-            <span className="text-[10px] text-muted-foreground ml-0.5" data-testid={`review-count-${product.id}`}>
-              ({product.reviewCount})
+            <span className="text-[10px] text-muted-foreground ml-1" data-testid={`review-count-${product.id}`}>
+              {product.averageRating} ({product.reviewCount})
             </span>
           </div>
         )}
