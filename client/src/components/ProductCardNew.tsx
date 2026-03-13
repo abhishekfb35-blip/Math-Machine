@@ -51,7 +51,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`w-3 h-3 ${i < Math.round(product.averageRating!) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted"}`}
+                className={`w-3 h-3 ${i < Math.round(product.averageRating!) ? "fill-amber-400 text-amber-400" : "fill-muted-foreground/20 text-muted-foreground/20"}`}
               />
             ))}
             <span className="text-[10px] text-muted-foreground ml-0.5" data-testid={`review-count-${product.id}`}>

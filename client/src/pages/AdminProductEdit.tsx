@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   ChevronLeft, Image as ImageIcon, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, Plus, Trash2,
@@ -29,6 +29,7 @@ const mapLegacyAudience = (val: string | null | undefined): string => {
 export default function AdminProductEdit() {
   const { toast } = useToast();
   const [, params] = useRoute("/admin/catalog/product/:id");
+  const [, navigate] = useLocation();
   const productId = params?.id;
 
   const [product, setProduct] = useState<Partial<Product> | null>(null);
@@ -101,6 +102,7 @@ export default function AdminProductEdit() {
       toast({ title: "Product updated" });
       if (closeAfterSaveRef.current) {
         window.close();
+        navigate("/admin/catalog");
       }
       closeAfterSaveRef.current = false;
     },
@@ -206,7 +208,7 @@ export default function AdminProductEdit() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24" data-testid="page-admin-product-edit">
       <div className="flex items-center gap-2 mb-4">
-        <Button variant="ghost" size="sm" onClick={() => window.close()} data-testid="button-close-tab">
+        <Button variant="ghost" size="sm" onClick={() => { window.close(); navigate("/admin/catalog"); }} data-testid="button-close-tab">
           <ChevronLeft className="w-4 h-4 mr-1" /> Close
         </Button>
         <span className="text-xs text-muted-foreground">({product.sku || product.id})</span>
