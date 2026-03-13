@@ -1345,7 +1345,7 @@ export default function AdminCatalog() {
 
       {/* Review Management Dialog */}
       <Dialog open={!!reviewDialogProduct} onOpenChange={(open) => { if (!open) { setReviewDialogProduct(null); setEditingReview(null); setShowAddReviewForm(false); setReviewForm(emptyReviewForm); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-base">Reviews — {reviewDialogProduct?.name}</DialogTitle>
             <DialogDescription className="text-xs">{dialogReviews?.length || 0} review{(dialogReviews?.length || 0) !== 1 ? "s" : ""}</DialogDescription>
