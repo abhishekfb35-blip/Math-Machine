@@ -49,6 +49,29 @@ export async function seedDatabase() {
       productTags:    (data.productTags    || []) as any[],
     };
 
+    // ── 0. Validate all IDs are present — abort immediately if any are missing ─
+    const catalogTableNames = ["categories", "tags", "products", "productImages", "productReviews", "productTags"] as const;
+    let idErrors = 0;
+    for (const table of catalogTableNames) {
+      const rows: any[] = tableData[table];
+      rows.forEach((row, i) => {
+        if (!row.id) {
+          console.error(`[seed] ERROR: seed-data.json → ${table}[${i}] is missing an "id" field (name/slug: ${row.name || row.slug || row.productSlug || "?"})`);
+          idErrors++;
+        }
+      });
+    }
+    const configRows: any[] = (data.siteConfig || []);
+    configRows.forEach((row: any, i: number) => {
+      if (!row.id) {
+        console.error(`[seed] ERROR: seed-data.json → siteConfig[${i}] key="${row.key}" is missing an "id" field`);
+        idErrors++;
+      }
+    });
+    if (idErrors > 0) {
+      throw new Error(`[seed] Aborting: ${idErrors} row(s) in seed-data.json are missing "id". Re-run the export script to fix.`);
+    }
+
     // ── 1. Check per-table hashes ─────────────────────────────────────────────
     const changed = {
       categories:     computeHash(tableData.categories)     !== await getStoredHash("categories"),
@@ -254,7 +277,7 @@ export async function seedDatabase() {
     for (const sc of configEntries) {
       const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, sc.key));
       if (!existing) {
-        await db.insert(siteConfig).values({ id: sc.id || createId(), key: sc.key, value: sc.value });
+        await db.insert(siteConfig).values({ id: sc.id, key: sc.key, value: sc.value });
         configSynced++;
       } else if (existing.value !== sc.value) {
         await db.update(siteConfig).set({ value: sc.value }).where(eq(siteConfig.key, sc.key));
