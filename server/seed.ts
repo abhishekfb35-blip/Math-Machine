@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import { db } from "./db";
 import { categories, products, siteConfig, productImages, productReviews, tags, productTags, cartItems, carts } from "@shared/schema";
 import { sql } from "drizzle-orm";
@@ -32,7 +33,7 @@ export async function seedDatabase() {
             const existing = await db.select().from(siteConfig).where(sql`${siteConfig.key} = ${sc.key}`);
             if (existing.length === 0) {
               console.log(`  Inserting missing config: ${sc.key}`);
-              await db.insert(siteConfig).values({ key: sc.key, value: sc.value });
+              await db.insert(siteConfig).values({ id: createId(), key: sc.key, value: sc.value });
               configSynced++;
             } else if (existing[0].value !== sc.value) {
               await db.update(siteConfig).set({ value: sc.value }).where(sql`${siteConfig.key} = ${sc.key}`);
@@ -79,6 +80,7 @@ export async function seedDatabase() {
             return true;
           })
           .map((r: any) => ({
+            id: createId(),
             productId: slugToId[r.product_slug || r.productSlug],
             reviewerName: r.reviewer_name || r.reviewerName,
             rating: r.rating,
@@ -131,6 +133,7 @@ export async function seedDatabase() {
             return true;
           })
           .map((img: any) => ({
+            id: createId(),
             productId: slugToId[img.productSlug || img.product_slug],
             imageUrl: img.imageUrl || img.image_url,
             sortOrder: img.sortOrder ?? img.sort_order ?? 0,
@@ -167,6 +170,7 @@ export async function seedDatabase() {
 
     const insertedCats = await db.insert(categories).values(
       data.categories.map((c: any) => ({
+        id: c.id || createId(),
         name: c.name,
         slug: c.slug,
         description: c.description,
@@ -188,6 +192,7 @@ export async function seedDatabase() {
     }
 
     const prodEntries = data.products.filter((p: any) => catSlugToId[p.categorySlug || p.category_slug]).map((p: any) => ({
+      id: p.id || createId(),
       sku: p.sku || null,
       name: p.name,
       slug: p.slug,
@@ -229,6 +234,7 @@ export async function seedDatabase() {
       const imgEntries = data.productImages
         .filter((img: any) => prodSlugToId[img.productSlug || img.product_slug])
         .map((img: any) => ({
+          id: createId(),
           productId: prodSlugToId[img.productSlug || img.product_slug],
           imageUrl: img.imageUrl || img.image_url,
           sortOrder: img.sortOrder ?? img.sort_order ?? 0,
@@ -251,6 +257,7 @@ export async function seedDatabase() {
           return true;
         })
         .map((r: any) => ({
+          id: createId(),
           productId: prodSlugToId[r.productSlug || r.product_slug],
           reviewerName: r.reviewerName || r.reviewer_name,
           rating: r.rating,
@@ -287,6 +294,7 @@ export async function seedDatabase() {
     if (data.tags.length > 0) {
       const insertedTags = await db.insert(tags).values(
         data.tags.map((t: any) => ({
+          id: t.id || createId(),
           name: t.name,
           description: t.description,
         }))
@@ -306,6 +314,7 @@ export async function seedDatabase() {
             return prodSlugToId[pSlug] && tagNameToId[tName];
           })
           .map((pt: any) => ({
+            id: createId(),
             productId: prodSlugToId[pt.productSlug || pt.product_slug],
             tagId: tagNameToId[pt.tagName || pt.tag_name],
           }));
@@ -320,6 +329,7 @@ export async function seedDatabase() {
     if (data.siteConfig.length > 0) {
       await db.insert(siteConfig).values(
         data.siteConfig.map((sc: any) => ({
+          id: sc.id || createId(),
           key: sc.key,
           value: sc.value,
         }))

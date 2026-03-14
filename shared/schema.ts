@@ -1,9 +1,8 @@
 import { pgTable, text, timestamp, integer, boolean, varchar, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { createId } from "@paralleldrive/cuid2";
 
 export const categories = pgTable("categories", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
@@ -12,8 +11,8 @@ export const categories = pgTable("categories", {
 });
 
 export const products = pgTable("products", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
-  sku: text("sku").unique(),
+  id: text("id").primaryKey(),
+  sku: text("sku").notNull().unique(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
@@ -40,13 +39,13 @@ export const products = pgTable("products", {
 });
 
 export const carts = pgTable("carts", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   sessionId: varchar("session_id", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const cartItems = pgTable("cart_items", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   cartId: text("cart_id").notNull(),
   productId: text("product_id").notNull(),
   quantity: integer("quantity").notNull().default(1),
@@ -54,7 +53,7 @@ export const cartItems = pgTable("cart_items", {
 });
 
 export const orders = pgTable("orders", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   customerId: text("customer_id"),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
@@ -76,7 +75,7 @@ export const orders = pgTable("orders", {
 });
 
 export const orderItems = pgTable("order_items", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   orderId: text("order_id").notNull(),
   productId: text("product_id").notNull(),
   productName: text("product_name").notNull(),
@@ -87,13 +86,13 @@ export const orderItems = pgTable("order_items", {
 });
 
 export const siteConfig = pgTable("site_config", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   key: text("key").notNull().unique(),
   value: text("value").notNull(),
 });
 
 export const productImages = pgTable("product_images", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
   imageUrl: text("image_url").notNull(),
   sortOrder: integer("sort_order").default(0),
@@ -103,7 +102,7 @@ export const productImages = pgTable("product_images", {
 });
 
 export const productReviews = pgTable("product_reviews", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
   reviewerName: text("reviewer_name").notNull(),
   rating: integer("rating").notNull(),
@@ -115,13 +114,13 @@ export const productReviews = pgTable("product_reviews", {
 });
 
 export const tags = pgTable("tags", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
 });
 
 export const productTags = pgTable("product_tags", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
   tagId: text("tag_id").notNull(),
 });
@@ -131,7 +130,7 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true,
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 export const auditLogs = pgTable("audit_logs", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   entityType: text("entity_type").notNull(),
   entityId: text("entity_id").notNull(),
   entityName: text("entity_name"),
@@ -144,7 +143,7 @@ export const auditLogs = pgTable("audit_logs", {
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
 
 export const customers = pgTable("customers", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name"),
   phone: text("phone"),
@@ -159,7 +158,7 @@ export const customers = pgTable("customers", {
 });
 
 export const customerOtps = pgTable("customer_otps", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   email: text("email").notNull(),
   otp: text("otp").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -168,7 +167,7 @@ export const customerOtps = pgTable("customer_otps", {
 });
 
 export const customerSessions = pgTable("customer_sessions", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   customerId: text("customer_id").notNull(),
   token: text("token").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -176,7 +175,7 @@ export const customerSessions = pgTable("customer_sessions", {
 });
 
 export const customerConsents = pgTable("customer_consents", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
+  id: text("id").primaryKey(),
   customerId: text("customer_id"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),

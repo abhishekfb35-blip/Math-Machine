@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents } from "@shared/schema";
 import type {
   Category, InsertCategory,
@@ -122,7 +123,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(cat: InsertCategory): Promise<Category> {
-    const [created] = await db.insert(categories).values(cat).returning();
+    const [created] = await db.insert(categories).values({ id: createId(), ...cat }).returning();
     return created;
   }
 
@@ -218,7 +219,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {
-    const [created] = await db.insert(products).values(prod).returning();
+    const [created] = await db.insert(products).values({ id: createId(), ...prod }).returning();
     return created;
   }
 
@@ -238,7 +239,7 @@ export class DatabaseStorage implements IStorage {
   async getOrCreateCart(sessionId: string): Promise<Cart> {
     const [existing] = await db.select().from(carts).where(eq(carts.sessionId, sessionId));
     if (existing) return existing;
-    const [created] = await db.insert(carts).values({ sessionId }).returning();
+    const [created] = await db.insert(carts).values({ id: createId(), sessionId }).returning();
     return created;
   }
 
@@ -247,7 +248,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addCartItem(item: InsertCartItem): Promise<CartItem> {
-    const [created] = await db.insert(cartItems).values(item).returning();
+    const [created] = await db.insert(cartItems).values({ id: createId(), ...item }).returning();
     return created;
   }
 
@@ -269,12 +270,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
-    const [created] = await db.insert(orders).values(order).returning();
+    const [created] = await db.insert(orders).values({ id: createId(), ...order }).returning();
     return created;
   }
 
   async createOrderItem(item: InsertOrderItem): Promise<OrderItem> {
-    const [created] = await db.insert(orderItems).values(item).returning();
+    const [created] = await db.insert(orderItems).values({ id: createId(), ...item }).returning();
     return created;
   }
 
@@ -373,7 +374,7 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db.update(siteConfig).set({ value }).where(eq(siteConfig.key, key)).returning();
       return updated;
     }
-    const [created] = await db.insert(siteConfig).values({ key, value }).returning();
+    const [created] = await db.insert(siteConfig).values({ id: createId(), key, value }).returning();
     return created;
   }
 
@@ -384,7 +385,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProductImage(img: InsertProductImage): Promise<ProductImage> {
-    const [created] = await db.insert(productImages).values(img).returning();
+    const [created] = await db.insert(productImages).values({ id: createId(), ...img }).returning();
     return created;
   }
 
@@ -409,7 +410,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProductReview(review: InsertProductReview): Promise<ProductReview> {
-    const [created] = await db.insert(productReviews).values(review).returning();
+    const [created] = await db.insert(productReviews).values({ id: createId(), ...review }).returning();
     return created;
   }
 
@@ -427,7 +428,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTag(tag: InsertTag): Promise<Tag> {
-    const [created] = await db.insert(tags).values(tag).returning();
+    const [created] = await db.insert(tags).values({ id: createId(), ...tag }).returning();
     return created;
   }
 
@@ -453,12 +454,12 @@ export class DatabaseStorage implements IStorage {
   async setProductTags(productId: string, tagIds: string[]): Promise<void> {
     await db.delete(productTags).where(eq(productTags.productId, productId));
     if (tagIds.length > 0) {
-      await db.insert(productTags).values(tagIds.map(tagId => ({ productId, tagId })));
+      await db.insert(productTags).values(tagIds.map(tagId => ({ id: createId(), productId, tagId })));
     }
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
-    const [created] = await db.insert(auditLogs).values(log).returning();
+    const [created] = await db.insert(auditLogs).values({ id: createId(), ...log }).returning();
     const countResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(auditLogs)
@@ -554,7 +555,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(data: InsertCustomer): Promise<Customer> {
-    const [customer] = await db.insert(customers).values({ ...data, email: data.email.toLowerCase() }).returning();
+    const [customer] = await db.insert(customers).values({ id: createId(), ...data, email: data.email.toLowerCase() }).returning();
     return customer;
   }
 
@@ -567,7 +568,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOtp(email: string, otp: string, expiresAt: Date): Promise<void> {
-    await db.insert(customerOtps).values({ email: email.toLowerCase(), otp, expiresAt });
+    await db.insert(customerOtps).values({ id: createId(), email: email.toLowerCase(), otp, expiresAt });
   }
 
   async verifyOtp(email: string, otp: string): Promise<boolean> {
@@ -588,7 +589,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomerSession(customerId: string, token: string, expiresAt: Date): Promise<void> {
-    await db.insert(customerSessions).values({ customerId, token, expiresAt });
+    await db.insert(customerSessions).values({ id: createId(), customerId, token, expiresAt });
   }
 
   async getCustomerBySessionToken(token: string): Promise<Customer | undefined> {
@@ -612,7 +613,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomerConsent(data: InsertCustomerConsent): Promise<CustomerConsent> {
-    const [consent] = await db.insert(customerConsents).values(data).returning();
+    const [consent] = await db.insert(customerConsents).values({ id: createId(), ...data }).returning();
     return consent;
   }
 
