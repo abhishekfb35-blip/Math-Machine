@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { seedDatabase } from "./seed";
 import { ensurePolicyPages } from "./migrations/policy-pages";
+import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { createServer } from "http";
 
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
   await seedDatabase();
+  await ensureSkuNotNull();
   await ensurePolicyPages();
   await restoreBrandLogosFromDB();
 
