@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { createId } from "@paralleldrive/cuid2";
+import { generateSku } from "./utils/sku";
 import { db } from "./db";
 import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -158,7 +159,7 @@ export async function seedDatabase() {
           .filter((p: any) => catSlugToId[p.categorySlug])
           .map((p: any) => ({
             id: p.id,
-            sku: p.sku,
+            sku: generateSku(),
             name: p.name,
             slug: p.slug,
             description: p.description ?? null,
