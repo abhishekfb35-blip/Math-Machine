@@ -1,362 +1,270 @@
+import crypto from "crypto";
 import { createId } from "@paralleldrive/cuid2";
 import { db } from "./db";
-import { categories, products, siteConfig, productImages, productReviews, tags, productTags, cartItems, carts } from "@shared/schema";
-import { sql } from "drizzle-orm";
+import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
-interface SeedData {
-  categories: any[];
-  products: any[];
-  productImages: any[];
-  productReviews: any[];
-  tags: any[];
-  productTags: any[];
-  siteConfig: any[];
+const BATCH = 100;
+
+// ─── Hash helpers (stored in site_config as seed-hash-<table>) ───────────────
+
+function computeHash(data: any[]): string {
+  return crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
 }
+
+async function getStoredHash(tableName: string): Promise<string | null> {
+  const [row] = await db
+    .select({ value: siteConfig.value })
+    .from(siteConfig)
+    .where(eq(siteConfig.key, `seed-hash-${tableName}`));
+  return row?.value ?? null;
+}
+
+async function storeHash(tableName: string, hash: string): Promise<void> {
+  const key = `seed-hash-${tableName}`;
+  const [existing] = await db
+    .select({ id: siteConfig.id })
+    .from(siteConfig)
+    .where(eq(siteConfig.key, key));
+  if (existing) {
+    await db.update(siteConfig).set({ value: hash }).where(eq(siteConfig.key, key));
+  } else {
+    await db.insert(siteConfig).values({ id: createId(), key, value: hash });
+  }
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function seedDatabase() {
   try {
-    const [{ catCount }] = await db.select({ catCount: sql<number>`count(*)` }).from(categories);
-    const [{ prodCount }] = await db.select({ prodCount: sql<number>`count(*)` }).from(products);
-    const data = seedData as SeedData;
+    const data = seedData as any;
 
-    const expectedProducts = data.products.length;
-    const isFullySeeded = Number(catCount) > 0 && Number(prodCount) >= expectedProducts;
+    const tableData = {
+      categories:     (data.categories     || []) as any[],
+      tags:           (data.tags           || []) as any[],
+      products:       (data.products       || []) as any[],
+      productImages:  (data.productImages  || []) as any[],
+      productReviews: (data.productReviews || []) as any[],
+      productTags:    (data.productTags    || []) as any[],
+    };
 
-    if (isFullySeeded) {
-      // Always sync site_config (including policy pages) on every run
-      console.log(`Site config sync: seed data has ${data.siteConfig?.length || 0} entries`);
-      if (data.siteConfig && data.siteConfig.length > 0) {
-        let configSynced = 0;
-        for (const sc of data.siteConfig) {
-          try {
-            const existing = await db.select().from(siteConfig).where(sql`${siteConfig.key} = ${sc.key}`);
-            if (existing.length === 0) {
-              console.log(`  Inserting missing config: ${sc.key}`);
-              await db.insert(siteConfig).values({ id: createId(), key: sc.key, value: sc.value });
-              configSynced++;
-            } else if (existing[0].value !== sc.value) {
-              await db.update(siteConfig).set({ value: sc.value }).where(sql`${siteConfig.key} = ${sc.key}`);
-              configSynced++;
-            }
-          } catch (err: any) {
-            console.error(`  Error syncing config key "${sc.key}":`, err.message);
+    // ── 1. Check per-table hashes ─────────────────────────────────────────────
+    const changed = {
+      categories:     computeHash(tableData.categories)     !== await getStoredHash("categories"),
+      tags:           computeHash(tableData.tags)           !== await getStoredHash("tags"),
+      products:       computeHash(tableData.products)       !== await getStoredHash("products"),
+      productImages:  computeHash(tableData.productImages)  !== await getStoredHash("productImages"),
+      productReviews: computeHash(tableData.productReviews) !== await getStoredHash("productReviews"),
+      productTags:    computeHash(tableData.productTags)    !== await getStoredHash("productTags"),
+    };
+
+    // Cascade: if a parent changes, all its children must also be re-seeded
+    // (children were wiped when parent was wiped, so they need re-inserting)
+    const effective = {
+      categories:     changed.categories,
+      tags:           changed.tags,
+      products:       changed.products       || changed.categories,
+      productImages:  changed.productImages  || changed.products || changed.categories,
+      productReviews: changed.productReviews || changed.products || changed.categories,
+      productTags:    changed.productTags    || changed.tags     || changed.products || changed.categories,
+    };
+
+    const tableNames = Object.keys(effective) as (keyof typeof effective)[];
+    const anyChanged = tableNames.some(t => effective[t]);
+
+    for (const name of tableNames) {
+      if (effective[name]) {
+        const reason = changed[name] ? "hash changed" : "parent changed";
+        console.log(`[seed] ${name}: ${reason} → will re-seed`);
+      } else {
+        console.log(`[seed] ${name}: up to date`);
+      }
+    }
+
+    if (!anyChanged) {
+      console.log("[seed] All catalog tables up to date.");
+    } else {
+      // ── 2. Wipe in reverse dependency order ─────────────────────────────────
+      // Only wipe tables that will be re-inserted. Since children must be wiped
+      // before parents (no FK constraints, but logical order), go deepest first.
+      if (effective.productTags)    await db.delete(productTags);
+      if (effective.productImages)  await db.delete(productImages);
+      if (effective.productReviews) await db.delete(productReviews);
+      if (effective.products)       await db.delete(products);
+      if (effective.categories)     await db.delete(categories);
+      if (effective.tags)           await db.delete(tags);
+
+      // ── 3. Re-insert in dependency order ────────────────────────────────────
+
+      // Categories
+      if (effective.categories) {
+        if (tableData.categories.length > 0) {
+          await db.insert(categories).values(tableData.categories.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            description: c.description ?? null,
+            imageUrl: c.imageUrl ?? null,
+            sortOrder: c.sortOrder ?? 0,
+          })));
+          console.log(`[seed] categories: inserted ${tableData.categories.length}`);
+        }
+        await storeHash("categories", computeHash(tableData.categories));
+      }
+
+      // Tags
+      if (effective.tags) {
+        if (tableData.tags.length > 0) {
+          await db.insert(tags).values(tableData.tags.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            description: t.description ?? null,
+          })));
+          console.log(`[seed] tags: inserted ${tableData.tags.length}`);
+        }
+        await storeHash("tags", computeHash(tableData.tags));
+      }
+
+      // Products (lookup categoryId from live categories by slug)
+      if (effective.products) {
+        const allCats = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
+        const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
+
+        const prodEntries = tableData.products
+          .filter((p: any) => catSlugToId[p.categorySlug])
+          .map((p: any) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            slug: p.slug,
+            description: p.description ?? null,
+            price: p.price,
+            mrp: p.mrp ?? null,
+            imageUrl: p.imageUrl,
+            categoryId: catSlugToId[p.categorySlug],
+            amazonAsin: p.amazonAsin ?? null,
+            color: p.color ?? null,
+            material: p.material ?? null,
+            gsm: p.gsm ?? null,
+            dimensions: p.dimensions ?? null,
+            weightGrams: p.weightGrams ?? null,
+            itemsInSet: p.itemsInSet ?? 1,
+            specialFeatures: p.specialFeatures ?? null,
+            bulletPoints: p.bulletPoints ?? null,
+            searchKeywords: p.searchKeywords ?? null,
+            productType: p.productType ?? "towel",
+            audience: p.audience ?? "kids",
+            active: p.active !== false,
+            sortOrder: p.sortOrder ?? 0,
+          }));
+
+        const skipped = tableData.products.length - prodEntries.length;
+        if (skipped > 0) console.warn(`[seed] products: ${skipped} skipped (unknown categorySlug)`);
+
+        for (let i = 0; i < prodEntries.length; i += BATCH) {
+          await db.insert(products).values(prodEntries.slice(i, i + BATCH));
+        }
+        console.log(`[seed] products: inserted ${prodEntries.length}`);
+        await storeHash("products", computeHash(tableData.products));
+      }
+
+      // ProductImages (lookup productId by slug)
+      if (effective.productImages) {
+        if (tableData.productImages.length > 0) {
+          const allProds = await db.select({ id: products.id, slug: products.slug }).from(products);
+          const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
+
+          const imgEntries = tableData.productImages
+            .filter((img: any) => prodSlugToId[img.productSlug])
+            .map((img: any) => ({
+              id: img.id,
+              productId: prodSlugToId[img.productSlug],
+              imageUrl: img.imageUrl,
+              sortOrder: img.sortOrder ?? 0,
+              isPrimary: img.isPrimary ?? false,
+            }));
+
+          for (let i = 0; i < imgEntries.length; i += BATCH) {
+            await db.insert(productImages).values(imgEntries.slice(i, i + BATCH));
+          }
+          console.log(`[seed] productImages: inserted ${imgEntries.length}`);
+        }
+        await storeHash("productImages", computeHash(tableData.productImages));
+      }
+
+      // ProductReviews (lookup productId by slug)
+      if (effective.productReviews) {
+        if (tableData.productReviews.length > 0) {
+          const allProds = await db.select({ id: products.id, slug: products.slug }).from(products);
+          const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
+
+          const revEntries = tableData.productReviews
+            .filter((r: any) => prodSlugToId[r.productSlug])
+            .map((r: any) => ({
+              id: r.id,
+              productId: prodSlugToId[r.productSlug],
+              reviewerName: r.reviewerName,
+              rating: r.rating,
+              title: r.title ?? null,
+              body: r.body ?? null,
+              amzReviewDate: r.amzReviewDate ?? null,
+              verifiedPurchase: r.verifiedPurchase ?? false,
+            }));
+
+          const skipped = tableData.productReviews.length - revEntries.length;
+          if (skipped > 0) console.warn(`[seed] productReviews: ${skipped} skipped (unknown productSlug)`);
+
+          for (let i = 0; i < revEntries.length; i += BATCH) {
+            await db.insert(productReviews).values(revEntries.slice(i, i + BATCH));
+          }
+          console.log(`[seed] productReviews: inserted ${revEntries.length}`);
+        }
+        await storeHash("productReviews", computeHash(tableData.productReviews));
+      }
+
+      // ProductTags (lookup productId + tagId by slug/name)
+      if (effective.productTags) {
+        if (tableData.productTags.length > 0) {
+          const allProds = await db.select({ id: products.id, slug: products.slug }).from(products);
+          const allTagsList = await db.select({ id: tags.id, name: tags.name }).from(tags);
+          const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
+          const tagNameToId: Record<string, string> = Object.fromEntries(allTagsList.map(t => [t.name, t.id]));
+
+          const ptEntries = tableData.productTags
+            .filter((pt: any) => prodSlugToId[pt.productSlug] && tagNameToId[pt.tagName])
+            .map((pt: any) => ({
+              id: pt.id,
+              productId: prodSlugToId[pt.productSlug],
+              tagId: tagNameToId[pt.tagName],
+            }));
+
+          if (ptEntries.length > 0) {
+            await db.insert(productTags).values(ptEntries);
+            console.log(`[seed] productTags: inserted ${ptEntries.length}`);
           }
         }
-        if (configSynced > 0) {
-          console.log(`Synced ${configSynced} site config entries (including policy pages).`);
-        } else {
-          console.log(`Site config: all ${data.siteConfig.length} entries already up to date.`);
-        }
-      } else {
-        console.log("Site config sync: no siteConfig data found in seed data!");
-      }
-
-      const [{ reviewCount }] = await db.select({ reviewCount: sql<number>`count(*)` }).from(productReviews);
-      const expectedReviews = data.productReviews?.length || 0;
-
-      const [{ orphanCount }] = await db.select({ orphanCount: sql<number>`count(*)` }).from(productReviews)
-        .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
-        .where(sql`${products.id} IS NULL`);
-      const hasOrphans = Number(orphanCount) > 0;
-      const needsSync = (expectedReviews > 0 && Number(reviewCount) < expectedReviews) || hasOrphans;
-
-      if (needsSync) {
-        if (hasOrphans) {
-          console.log(`Found ${orphanCount} orphaned reviews (linked to non-existent products). Re-syncing all reviews...`);
-        } else {
-          console.log(`Syncing reviews: ${reviewCount} in DB, ${expectedReviews} in seed data. Adding missing reviews...`);
-        }
-        const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
-        const slugToId: Record<string, string> = {};
-        for (const p of allProducts) { slugToId[p.slug] = p.id; }
-        
-        await db.delete(productReviews);
-        const skippedSlugs: string[] = [];
-        const reviewValues = data.productReviews
-          .filter((r: any) => {
-            const slug = r.product_slug || r.productSlug;
-            if (!slugToId[slug]) { skippedSlugs.push(slug); return false; }
-            return true;
-          })
-          .map((r: any) => ({
-            id: createId(),
-            productId: slugToId[r.product_slug || r.productSlug],
-            reviewerName: r.reviewer_name || r.reviewerName,
-            rating: r.rating,
-            title: r.title || null,
-            body: r.body || null,
-            amzReviewDate: r.review_date || r.amz_review_date || r.reviewDate || r.amzReviewDate || null,
-            verifiedPurchase: r.verified_purchase ?? r.verifiedPurchase ?? true,
-          }));
-        if (skippedSlugs.length > 0) {
-          const unique = Array.from(new Set(skippedSlugs));
-          console.warn(`  WARNING: ${skippedSlugs.length} reviews skipped — product slugs not found: ${unique.join(', ')}`);
-        }
-        for (let i = 0; i < reviewValues.length; i += 100) {
-          await db.insert(productReviews).values(reviewValues.slice(i, i + 100));
-        }
-
-        const [{ actualCount }] = await db.select({ actualCount: sql<number>`count(*)` }).from(productReviews);
-        const [{ finalOrphanCount }] = await db.select({ finalOrphanCount: sql<number>`count(*)` }).from(productReviews)
-          .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
-          .where(sql`${products.id} IS NULL`);
-        
-        const inserted = Number(actualCount);
-        const finalOrphans = Number(finalOrphanCount);
-        if (inserted !== reviewValues.length) {
-          console.error(`  VERIFICATION FAILED: Expected ${reviewValues.length} reviews, but found ${inserted} in DB.`);
-        } else if (finalOrphans > 0) {
-          console.error(`  VERIFICATION FAILED: ${finalOrphans} reviews are linked to non-existent products.`);
-        } else {
-          console.log(`  VERIFIED: ${inserted} reviews synced, all linked to valid products. 0 orphans.`);
-        }
-      } else {
-        console.log("Database already seeded, skipping.");
-      }
-
-      const [{ imgCount }] = await db.select({ imgCount: sql<number>`count(*)` }).from(productImages);
-      const expectedImages = data.productImages?.length || 0;
-      if (expectedImages > 0 && Number(imgCount) < expectedImages) {
-        console.log(`Syncing product images: ${imgCount} in DB, ${expectedImages} in seed data. Adding missing images...`);
-        const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
-        const slugToId: Record<string, string> = {};
-        for (const p of allProducts) { slugToId[p.slug] = p.id; }
-
-        await db.delete(productImages);
-
-        const imgSkippedSlugs: string[] = [];
-        const imgEntries = data.productImages
-          .filter((img: any) => {
-            const slug = img.productSlug || img.product_slug;
-            if (!slugToId[slug]) { imgSkippedSlugs.push(slug); return false; }
-            return true;
-          })
-          .map((img: any) => ({
-            id: createId(),
-            productId: slugToId[img.productSlug || img.product_slug],
-            imageUrl: img.imageUrl || img.image_url,
-            sortOrder: img.sortOrder ?? img.sort_order ?? 0,
-            isPrimary: img.isPrimary ?? img.is_primary ?? false,
-          }));
-        if (imgSkippedSlugs.length > 0) {
-          const unique = Array.from(new Set(imgSkippedSlugs));
-          console.warn(`  WARNING: ${imgSkippedSlugs.length} images skipped — product slugs not found: ${unique.join(', ')}`);
-        }
-        for (let i = 0; i < imgEntries.length; i += 100) {
-          await db.insert(productImages).values(imgEntries.slice(i, i + 100));
-        }
-        const [{ finalImgCount }] = await db.select({ finalImgCount: sql<number>`count(*)` }).from(productImages);
-        console.log(`  VERIFIED: ${finalImgCount} product images synced.`);
-      }
-
-      return;
-    }
-
-    if (Number(catCount) > 0 || Number(prodCount) > 0) {
-      console.log(`Outdated or partial seed detected (${prodCount} products, expected ${expectedProducts}). Clearing for fresh seed...`);
-      await db.delete(cartItems);
-      await db.delete(carts);
-      await db.delete(productReviews);
-      await db.delete(productImages);
-      await db.delete(productTags);
-      await db.delete(products);
-      await db.delete(tags);
-      await db.delete(siteConfig);
-      await db.delete(categories);
-    }
-
-    console.log("Seeding database from seed-data.json...");
-
-    const insertedCats = await db.insert(categories).values(
-      data.categories.map((c: any) => ({
-        id: c.id || createId(),
-        name: c.name,
-        slug: c.slug,
-        description: c.description,
-        imageUrl: c.imageUrl || c.image_url,
-        sortOrder: c.sortOrder ?? c.sort_order ?? 0,
-      }))
-    ).returning();
-    console.log(`  Seeded ${insertedCats.length} categories`);
-
-    const catSlugToId: Record<string, string> = {};
-    for (const cat of insertedCats) {
-      catSlugToId[cat.slug] = cat.id;
-    }
-
-    const BATCH_SIZE = 50;
-    const skippedProducts = data.products.filter((p: any) => !catSlugToId[p.categorySlug || p.category_slug]);
-    if (skippedProducts.length > 0) {
-      console.warn(`  Warning: ${skippedProducts.length} products have unknown category slugs, skipping them.`);
-    }
-
-    const prodEntries = data.products.filter((p: any) => catSlugToId[p.categorySlug || p.category_slug]).map((p: any) => ({
-      id: p.id || createId(),
-      sku: p.sku || null,
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      price: p.price,
-      mrp: p.mrp,
-      imageUrl: p.imageUrl || p.image_url,
-      categoryId: catSlugToId[p.categorySlug || p.category_slug],
-      amazonAsin: p.amazonAsin || p.amazon_asin,
-      color: p.color,
-      material: p.material,
-      gsm: p.gsm,
-      dimensions: p.dimensions,
-      weightGrams: p.weightGrams || p.weight_grams,
-      itemsInSet: p.itemsInSet || p.items_in_set,
-      specialFeatures: p.specialFeatures || p.special_features,
-      bulletPoints: p.bulletPoints || p.bullet_points,
-      searchKeywords: p.searchKeywords || p.search_keywords,
-      productType: p.productType || p.product_type || "towel",
-      audience: p.audience || "kids",
-      active: p.active !== false,
-      sortOrder: p.sortOrder ?? p.sort_order ?? 0,
-    }));
-
-    const allInsertedProducts: any[] = [];
-    for (let i = 0; i < prodEntries.length; i += BATCH_SIZE) {
-      const batch = prodEntries.slice(i, i + BATCH_SIZE);
-      const inserted = await db.insert(products).values(batch).returning();
-      allInsertedProducts.push(...inserted);
-    }
-    console.log(`  Seeded ${allInsertedProducts.length} products`);
-
-    const prodSlugToId: Record<string, string> = {};
-    for (const prod of allInsertedProducts) {
-      prodSlugToId[prod.slug] = prod.id;
-    }
-
-    if (data.productImages.length > 0) {
-      const imgEntries = data.productImages
-        .filter((img: any) => prodSlugToId[img.productSlug || img.product_slug])
-        .map((img: any) => ({
-          id: createId(),
-          productId: prodSlugToId[img.productSlug || img.product_slug],
-          imageUrl: img.imageUrl || img.image_url,
-          sortOrder: img.sortOrder ?? img.sort_order ?? 0,
-          isPrimary: img.isPrimary ?? img.is_primary ?? false,
-        }));
-
-      for (let i = 0; i < imgEntries.length; i += BATCH_SIZE) {
-        const batch = imgEntries.slice(i, i + BATCH_SIZE);
-        await db.insert(productImages).values(batch);
-      }
-      console.log(`  Seeded ${imgEntries.length} product images`);
-    }
-
-    if (data.productReviews.length > 0) {
-      const skippedRevSlugs: string[] = [];
-      const revEntries = data.productReviews
-        .filter((r: any) => {
-          const slug = r.productSlug || r.product_slug;
-          if (!prodSlugToId[slug]) { skippedRevSlugs.push(slug); return false; }
-          return true;
-        })
-        .map((r: any) => ({
-          id: createId(),
-          productId: prodSlugToId[r.productSlug || r.product_slug],
-          reviewerName: r.reviewerName || r.reviewer_name,
-          rating: r.rating,
-          title: r.title,
-          body: r.body,
-          amzReviewDate: r.amzReviewDate || r.amz_review_date || r.reviewDate || r.review_date,
-          verifiedPurchase: r.verifiedPurchase ?? r.verified_purchase ?? false,
-        }));
-      if (skippedRevSlugs.length > 0) {
-        const unique = Array.from(new Set(skippedRevSlugs));
-        console.warn(`  WARNING: ${skippedRevSlugs.length} reviews skipped — product slugs not found: ${unique.join(', ')}`);
-      }
-
-      for (let i = 0; i < revEntries.length; i += BATCH_SIZE) {
-        const batch = revEntries.slice(i, i + BATCH_SIZE);
-        await db.insert(productReviews).values(batch);
-      }
-      
-      const [{ actualRevCount }] = await db.select({ actualRevCount: sql<number>`count(*)` }).from(productReviews);
-      const [{ orphanRevCount }] = await db.select({ orphanRevCount: sql<number>`count(*)` }).from(productReviews)
-        .leftJoin(products, sql`${productReviews.productId} = ${products.id}`)
-        .where(sql`${products.id} IS NULL`);
-      const revInserted = Number(actualRevCount);
-      const revOrphans = Number(orphanRevCount);
-      if (revInserted !== revEntries.length) {
-        console.error(`  REVIEW VERIFICATION FAILED: Expected ${revEntries.length}, found ${revInserted} in DB.`);
-      } else if (revOrphans > 0) {
-        console.error(`  REVIEW VERIFICATION FAILED: ${revOrphans} reviews linked to non-existent products.`);
-      } else {
-        console.log(`  VERIFIED: ${revInserted} reviews seeded, all linked to valid products. 0 orphans.`);
+        await storeHash("productTags", computeHash(tableData.productTags));
       }
     }
 
-    if (data.tags.length > 0) {
-      const insertedTags = await db.insert(tags).values(
-        data.tags.map((t: any) => ({
-          id: t.id || createId(),
-          name: t.name,
-          description: t.description,
-        }))
-      ).returning();
-      console.log(`  Seeded ${insertedTags.length} tags`);
-
-      const tagNameToId: Record<string, string> = {};
-      for (const tag of insertedTags) {
-        tagNameToId[tag.name] = tag.id;
-      }
-
-      if (data.productTags.length > 0) {
-        const ptEntries = data.productTags
-          .filter((pt: any) => {
-            const pSlug = pt.productSlug || pt.product_slug;
-            const tName = pt.tagName || pt.tag_name;
-            return prodSlugToId[pSlug] && tagNameToId[tName];
-          })
-          .map((pt: any) => ({
-            id: createId(),
-            productId: prodSlugToId[pt.productSlug || pt.product_slug],
-            tagId: tagNameToId[pt.tagName || pt.tag_name],
-          }));
-
-        if (ptEntries.length > 0) {
-          await db.insert(productTags).values(ptEntries);
-          console.log(`  Seeded ${ptEntries.length} product tags`);
-        }
+    // ── 4. siteConfig: row-level upsert, skip seed-hash-* keys ───────────────
+    const configEntries: any[] = (data.siteConfig || []).filter((sc: any) => !sc.key.startsWith("seed-hash-"));
+    let configSynced = 0;
+    for (const sc of configEntries) {
+      const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, sc.key));
+      if (!existing) {
+        await db.insert(siteConfig).values({ id: sc.id || createId(), key: sc.key, value: sc.value });
+        configSynced++;
+      } else if (existing.value !== sc.value) {
+        await db.update(siteConfig).set({ value: sc.value }).where(eq(siteConfig.key, sc.key));
+        configSynced++;
       }
     }
-
-    if (data.siteConfig.length > 0) {
-      await db.insert(siteConfig).values(
-        data.siteConfig.map((sc: any) => ({
-          id: sc.id || createId(),
-          key: sc.key,
-          value: sc.value,
-        }))
-      ).onConflictDoNothing();
-      console.log(`  Seeded ${data.siteConfig.length} site config entries`);
-    }
-
-    const [{ finalCats }] = await db.select({ finalCats: sql<number>`count(*)` }).from(categories);
-    const [{ finalProds }] = await db.select({ finalProds: sql<number>`count(*)` }).from(products);
-    const [{ finalImgs }] = await db.select({ finalImgs: sql<number>`count(*)` }).from(productImages);
-    const [{ finalRevs }] = await db.select({ finalRevs: sql<number>`count(*)` }).from(productReviews);
-    const [{ finalTags }] = await db.select({ finalTags: sql<number>`count(*)` }).from(tags);
-    console.log(`\n  === SEED VERIFICATION SUMMARY ===`);
-    console.log(`  Categories: ${finalCats} (expected ${data.categories.length})`);
-    console.log(`  Products:   ${finalProds} (expected ${data.products.length})`);
-    console.log(`  Images:     ${finalImgs} (expected ${data.productImages.length})`);
-    console.log(`  Reviews:    ${finalRevs} (expected ${data.productReviews.length})`);
-    console.log(`  Tags:       ${finalTags} (expected ${data.tags.length})`);
-    
-    const mismatches = [];
-    if (Number(finalCats) !== data.categories.length) mismatches.push('categories');
-    if (Number(finalProds) < data.products.length) mismatches.push('products');
-    if (Number(finalRevs) < data.productReviews.length) mismatches.push('reviews');
-    if (mismatches.length > 0) {
-      console.error(`  SEED WARNING: Mismatches in: ${mismatches.join(', ')}`);
+    if (configSynced > 0) {
+      console.log(`[seed] siteConfig: synced ${configSynced} entries`);
     } else {
-      console.log(`  ALL CHECKS PASSED — database seeding complete!`);
+      console.log(`[seed] siteConfig: all entries up to date`);
     }
 
   } catch (error) {
