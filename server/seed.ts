@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { createId } from "@paralleldrive/cuid2";
-import { generateSku } from "./utils/sku";
 import { db } from "./db";
 import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -62,6 +61,12 @@ export async function seedDatabase() {
         }
       });
     }
+    tableData.products.forEach((p: any, i: number) => {
+      if (!p.sku) {
+        console.error(`[seed] ERROR: seed-data.json → products[${i}] slug="${p.slug || "?"}" is missing a "sku" field`);
+        idErrors++;
+      }
+    });
     const configRows: any[] = (data.siteConfig || []);
     configRows.forEach((row: any, i: number) => {
       if (!row.id) {
@@ -70,7 +75,7 @@ export async function seedDatabase() {
       }
     });
     if (idErrors > 0) {
-      throw new Error(`[seed] Aborting: ${idErrors} row(s) in seed-data.json are missing "id". Re-run the export script to fix.`);
+      throw new Error(`[seed] Aborting: ${idErrors} row(s) in seed-data.json are missing "id" or "sku". Re-run the export script to fix.`);
     }
 
     // ── 1. Check per-table hashes ─────────────────────────────────────────────
@@ -159,7 +164,7 @@ export async function seedDatabase() {
           .filter((p: any) => catSlugToId[p.categorySlug])
           .map((p: any) => ({
             id: p.id,
-            sku: generateSku(),
+            sku: p.sku,
             name: p.name,
             slug: p.slug,
             description: p.description ?? null,

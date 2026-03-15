@@ -11,6 +11,7 @@ async function exportSeed() {
 
   const prods = await db.select({
     id: products.id,
+    sku: products.sku,
     name: products.name,
     slug: products.slug,
     description: products.description,
@@ -82,6 +83,7 @@ async function exportSeed() {
     })),
     products: prods.map(p => ({
       id: p.id,
+      sku: p.sku,
       name: p.name,
       slug: p.slug,
       description: p.description,
