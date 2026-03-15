@@ -86,8 +86,7 @@ export const orderItems = pgTable("order_items", {
 });
 
 export const siteConfig = pgTable("site_config", {
-  id: text("id").primaryKey(),
-  key: text("key").notNull().unique(),
+  key: text("key").primaryKey(),
   value: text("value").notNull(),
 });
 
@@ -200,7 +199,7 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({ id: tru
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
-export const insertSiteConfigSchema = createInsertSchema(siteConfig).omit({ id: true });
+export const insertSiteConfigSchema = createInsertSchema(siteConfig);
 export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true, createdAt: true });
 export const insertTagSchema = createInsertSchema(tags).omit({ id: true });

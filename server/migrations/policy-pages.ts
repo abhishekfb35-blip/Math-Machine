@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import { db } from "../db";
 import { siteConfig } from "@shared/schema";
 import { sql } from "drizzle-orm";
@@ -17,7 +16,7 @@ export async function ensurePolicyPages() {
     for (const page of POLICY_PAGES) {
       const existing = await db.select({ key: siteConfig.key }).from(siteConfig).where(sql`${siteConfig.key} = ${page.key}`);
       if (existing.length === 0) {
-        await db.insert(siteConfig).values({ id: createId(), key: page.key, value: page.value });
+        await db.insert(siteConfig).values({ key: page.key, value: page.value });
         inserted++;
         console.log(`Inserted policy page: ${page.key}`);
       }

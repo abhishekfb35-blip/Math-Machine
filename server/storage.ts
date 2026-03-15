@@ -374,7 +374,7 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db.update(siteConfig).set({ value }).where(eq(siteConfig.key, key)).returning();
       return updated;
     }
-    const [created] = await db.insert(siteConfig).values({ id: createId(), key, value }).returning();
+    const [created] = await db.insert(siteConfig).values({ key, value }).returning();
     return created;
   }
 

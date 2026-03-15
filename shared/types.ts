@@ -185,7 +185,6 @@ export interface InsertOrderItem {
 }
 
 export interface SiteConfig {
-  id: string;
   key: string;
   value: string;
 }

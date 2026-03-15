@@ -134,7 +134,6 @@ async function exportSeed() {
       tagName: pt.tagName,
     })),
     siteConfig: config.map(sc => ({
-      id: sc.id,
       key: sc.key,
       value: sc.value,
     })),

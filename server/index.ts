@@ -7,6 +7,7 @@ import { seedDatabase } from "./seed";
 import { ensurePolicyPages } from "./migrations/policy-pages";
 import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
+import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { createServer } from "http";
 
@@ -69,6 +70,7 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+  await migrateSiteConfigKeyPk();
   await seedDatabase();
   await ensureSkuNotNull();
   await syncImageReviewIds();

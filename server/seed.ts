@@ -24,13 +24,13 @@ async function getStoredHash(tableName: string): Promise<string | null> {
 async function storeHash(tableName: string, hash: string): Promise<void> {
   const key = `seed-hash-${tableName}`;
   const [existing] = await db
-    .select({ id: siteConfig.id })
+    .select({ key: siteConfig.key })
     .from(siteConfig)
     .where(eq(siteConfig.key, key));
   if (existing) {
     await db.update(siteConfig).set({ value: hash }).where(eq(siteConfig.key, key));
   } else {
-    await db.insert(siteConfig).values({ id: createId(), key, value: hash });
+    await db.insert(siteConfig).values({ key, value: hash });
   }
 }
 
@@ -64,13 +64,6 @@ export async function seedDatabase() {
     tableData.products.forEach((p: any, i: number) => {
       if (!p.sku) {
         console.error(`[seed] ERROR: seed-data.json → products[${i}] slug="${p.slug || "?"}" is missing a "sku" field`);
-        idErrors++;
-      }
-    });
-    const configRows: any[] = (data.siteConfig || []);
-    configRows.forEach((row: any, i: number) => {
-      if (!row.id) {
-        console.error(`[seed] ERROR: seed-data.json → siteConfig[${i}] key="${row.key}" is missing an "id" field`);
         idErrors++;
       }
     });
@@ -283,7 +276,7 @@ export async function seedDatabase() {
     for (const sc of configEntries) {
       const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, sc.key));
       if (!existing) {
-        await db.insert(siteConfig).values({ id: sc.id, key: sc.key, value: sc.value });
+        await db.insert(siteConfig).values({ key: sc.key, value: sc.value });
         configSynced++;
       } else if (existing.value !== sc.value) {
         await db.update(siteConfig).set({ value: sc.value }).where(eq(siteConfig.key, sc.key));
