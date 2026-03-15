@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 
-interface TableDiff {
+interface IdTableDiff {
   devCount: number;
   prodCount: number;
   onlyInDev: string[];
@@ -14,7 +14,14 @@ interface TableDiff {
   fieldMismatches: { id: string; field: string; dev: unknown; prod: unknown }[];
 }
 
-interface ProductDiff extends TableDiff {
+interface ContentTableDiff {
+  devCount: number;
+  prodCount: number;
+  onlyInDev: string[];
+  onlyInProd: string[];
+}
+
+interface ProductDiff extends IdTableDiff {
   onlySkuInDev: string[];
   onlySkuInProd: string[];
   skuNameMismatches: { sku: string; devName: string; prodName: string }[];
@@ -23,12 +30,12 @@ interface ProductDiff extends TableDiff {
 interface CompareResult {
   checkedAt: string;
   prodUrl: string;
-  categories: TableDiff;
+  categories: IdTableDiff;
   products: ProductDiff;
-  tags: TableDiff;
-  productTags: TableDiff;
-  productImages: TableDiff;
-  productReviews: TableDiff;
+  tags: IdTableDiff;
+  productTags: ContentTableDiff;
+  productImages: ContentTableDiff;
+  productReviews: ContentTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -37,29 +44,28 @@ function statusIcon(ok: boolean) {
     : <XCircle className="w-4 h-4 text-red-500 shrink-0" />;
 }
 
-function tableIsClean(diff: TableDiff) {
-  return diff.devCount === diff.prodCount &&
-    diff.onlyInDev.length === 0 &&
-    diff.onlyInProd.length === 0 &&
-    diff.fieldMismatches.length === 0;
+function isIdTableClean(d: IdTableDiff) {
+  return d.devCount === d.prodCount && d.onlyInDev.length === 0 && d.onlyInProd.length === 0 && d.fieldMismatches.length === 0;
 }
 
-function productIsClean(diff: ProductDiff) {
-  return tableIsClean(diff) &&
-    diff.onlySkuInDev.length === 0 &&
-    diff.onlySkuInProd.length === 0 &&
-    diff.skuNameMismatches.length === 0;
+function isContentTableClean(d: ContentTableDiff) {
+  return d.devCount === d.prodCount && d.onlyInDev.length === 0 && d.onlyInProd.length === 0;
+}
+
+function isProductClean(d: ProductDiff) {
+  return isIdTableClean(d) && d.onlySkuInDev.length === 0 && d.onlySkuInProd.length === 0 && d.skuNameMismatches.length === 0;
 }
 
 function CollapsibleList({ label, items, color }: { label: string; items: string[]; color: string }) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
+  const slug = label.replace(/\s+/g, "-").toLowerCase();
   return (
     <div className="mt-2">
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-        data-testid={`button-collapse-${label.replace(/\s+/g, "-").toLowerCase()}`}
+        data-testid={`button-collapse-${slug}`}
       >
         {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         {label} ({items.length})
@@ -73,9 +79,9 @@ function CollapsibleList({ label, items, color }: { label: string; items: string
   );
 }
 
-function FieldMismatches({ mismatches }: { mismatches: TableDiff["fieldMismatches"] }) {
+function FieldMismatches({ mismatches }: { mismatches: IdTableDiff["fieldMismatches"] }) {
   const [open, setOpen] = useState(false);
-  if (mismatches.length === 0) return null;
+  if (!mismatches || mismatches.length === 0) return null;
   return (
     <div className="mt-2">
       <button
@@ -153,19 +159,14 @@ function SkuNameMismatches({ mismatches }: { mismatches: ProductDiff["skuNameMis
   );
 }
 
-function TableSection({
-  title,
-  diff,
-  clean,
-  extra,
-}: {
-  title: string;
-  diff: TableDiff;
-  clean: boolean;
-  extra?: React.ReactNode;
+function SectionShell({ title, clean, devCount, prodCount, children }: {
+  title: string; clean: boolean; devCount: number; prodCount: number; children?: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-lg border p-4 ${clean ? "border-green-200 dark:border-green-900 bg-green-50/40 dark:bg-green-950/20" : "border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20"}`}
+    <div
+      className={`rounded-lg border p-4 ${clean
+        ? "border-green-200 dark:border-green-900 bg-green-50/40 dark:bg-green-950/20"
+        : "border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20"}`}
       data-testid={`section-table-${title.toLowerCase().replace(/\s+/g, "-")}`}
     >
       <div className="flex items-center justify-between">
@@ -174,30 +175,12 @@ function TableSection({
           <span className="font-semibold text-sm">{title}</span>
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="text-blue-700 dark:text-blue-400 font-mono">dev: {diff.devCount}</span>
-          <span className="text-orange-700 dark:text-orange-400 font-mono">prod: {diff.prodCount}</span>
-          {diff.devCount !== diff.prodCount && (
-            <Badge variant="destructive" className="text-xs">count mismatch</Badge>
-          )}
+          <span className="text-blue-700 dark:text-blue-400 font-mono">dev: {devCount}</span>
+          <span className="text-orange-700 dark:text-orange-400 font-mono">prod: {prodCount}</span>
+          {devCount !== prodCount && <Badge variant="destructive" className="text-xs">count mismatch</Badge>}
         </div>
       </div>
-
-      {!clean && (
-        <div className="mt-3 space-y-1">
-          <CollapsibleList
-            label="IDs only in dev"
-            items={diff.onlyInDev}
-            color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300"
-          />
-          <CollapsibleList
-            label="IDs only in prod"
-            items={diff.onlyInProd}
-            color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300"
-          />
-          <FieldMismatches mismatches={diff.fieldMismatches} />
-          {extra}
-        </div>
-      )}
+      {!clean && <div className="mt-3 space-y-1">{children}</div>}
     </div>
   );
 }
@@ -226,12 +209,12 @@ export default function AdminDbCompare() {
   }
 
   const allClean = result
-    ? productIsClean(result.products) &&
-      tableIsClean(result.categories) &&
-      tableIsClean(result.tags) &&
-      tableIsClean(result.productTags) &&
-      tableIsClean(result.productImages) &&
-      tableIsClean(result.productReviews)
+    ? isProductClean(result.products) &&
+      isIdTableClean(result.categories) &&
+      isIdTableClean(result.tags) &&
+      isContentTableClean(result.productTags) &&
+      isContentTableClean(result.productImages) &&
+      isContentTableClean(result.productReviews)
     : null;
 
   return (
@@ -286,56 +269,47 @@ export default function AdminDbCompare() {
             )}
           </div>
 
-          <TableSection
-            title="Categories"
-            diff={result.categories}
-            clean={tableIsClean(result.categories)}
-          />
+          {/* Categories — ID-based */}
+          <SectionShell title="Categories" clean={isIdTableClean(result.categories)} devCount={result.categories.devCount} prodCount={result.categories.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.categories.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="IDs only in prod" items={result.categories.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <FieldMismatches mismatches={result.categories.fieldMismatches} />
+          </SectionShell>
 
-          <TableSection
-            title="Products"
-            diff={result.products}
-            clean={productIsClean(result.products)}
-            extra={
-              <>
-                <CollapsibleList
-                  label="SKUs only in dev"
-                  items={result.products.onlySkuInDev}
-                  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300"
-                />
-                <CollapsibleList
-                  label="SKUs only in prod"
-                  items={result.products.onlySkuInProd}
-                  color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300"
-                />
-                <SkuNameMismatches mismatches={result.products.skuNameMismatches} />
-              </>
-            }
-          />
+          {/* Products — ID-based + SKU cross-check */}
+          <SectionShell title="Products" clean={isProductClean(result.products)} devCount={result.products.devCount} prodCount={result.products.prodCount}>
+            <CollapsibleList label="IDs only in dev"   items={result.products.onlyInDev}   color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="IDs only in prod"  items={result.products.onlyInProd}  color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <CollapsibleList label="SKUs only in dev"  items={result.products.onlySkuInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="SKUs only in prod" items={result.products.onlySkuInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <FieldMismatches mismatches={result.products.fieldMismatches} />
+            <SkuNameMismatches mismatches={result.products.skuNameMismatches} />
+          </SectionShell>
 
-          <TableSection
-            title="Tags"
-            diff={result.tags}
-            clean={tableIsClean(result.tags)}
-          />
+          {/* Tags — ID-based */}
+          <SectionShell title="Tags" clean={isIdTableClean(result.tags)} devCount={result.tags.devCount} prodCount={result.tags.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.tags.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="IDs only in prod" items={result.tags.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <FieldMismatches mismatches={result.tags.fieldMismatches} />
+          </SectionShell>
 
-          <TableSection
-            title="Product Tags"
-            diff={result.productTags}
-            clean={tableIsClean(result.productTags)}
-          />
+          {/* Product Tags — content-based (product_id + tag_id) */}
+          <SectionShell title="Product Tags" clean={isContentTableClean(result.productTags)} devCount={result.productTags.devCount} prodCount={result.productTags.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productTags.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="Links only in prod" items={result.productTags.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+          </SectionShell>
 
-          <TableSection
-            title="Product Images"
-            diff={result.productImages}
-            clean={tableIsClean(result.productImages)}
-          />
+          {/* Product Images — content-based (product_id + image_url + sort_order) */}
+          <SectionShell title="Product Images" clean={isContentTableClean(result.productImages)} devCount={result.productImages.devCount} prodCount={result.productImages.prodCount}>
+            <CollapsibleList label="Images only in dev"  items={result.productImages.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="Images only in prod" items={result.productImages.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+          </SectionShell>
 
-          <TableSection
-            title="Product Reviews"
-            diff={result.productReviews}
-            clean={tableIsClean(result.productReviews)}
-          />
+          {/* Product Reviews — content-based (product_id + reviewer_name + rating) */}
+          <SectionShell title="Product Reviews" clean={isContentTableClean(result.productReviews)} devCount={result.productReviews.devCount} prodCount={result.productReviews.prodCount}>
+            <CollapsibleList label="Reviews only in dev"  items={result.productReviews.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="Reviews only in prod" items={result.productReviews.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+          </SectionShell>
         </div>
       )}
     </div>

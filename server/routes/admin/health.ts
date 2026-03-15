@@ -1117,9 +1117,22 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
         pool.query(`SELECT id, name FROM tags ORDER BY name`),
-        pool.query(`SELECT id, product_id, tag_id FROM product_tags ORDER BY id`),
-        pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
-        pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+        pool.query(`
+          SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
+          FROM product_tags pt
+          LEFT JOIN products p ON pt.product_id = p.id
+          LEFT JOIN tags t ON pt.tag_id = t.id
+          ORDER BY p.slug, t.name`),
+        pool.query(`
+          SELECT pi.product_id, p.slug AS product_slug, pi.image_url, pi.sort_order
+          FROM product_images pi
+          LEFT JOIN products p ON pi.product_id = p.id
+          ORDER BY p.slug, pi.sort_order`),
+        pool.query(`
+          SELECT pr.product_id, p.slug AS product_slug, pr.reviewer_name, pr.rating
+          FROM product_reviews pr
+          LEFT JOIN products p ON pr.product_id = p.id
+          ORDER BY p.slug, pr.reviewer_name`),
       ]);
       res.json({
         categories:     cats.rows,
@@ -1149,9 +1162,22 @@ export function registerAdminHealthRoutes(app: Express) {
             pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
             pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
             pool.query(`SELECT id, name FROM tags ORDER BY name`),
-            pool.query(`SELECT id, product_id, tag_id FROM product_tags ORDER BY id`),
-            pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
-            pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+            pool.query(`
+              SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
+              FROM product_tags pt
+              LEFT JOIN products p ON pt.product_id = p.id
+              LEFT JOIN tags t ON pt.tag_id = t.id
+              ORDER BY p.slug, t.name`),
+            pool.query(`
+              SELECT pi.product_id, p.slug AS product_slug, pi.image_url, pi.sort_order
+              FROM product_images pi
+              LEFT JOIN products p ON pi.product_id = p.id
+              ORDER BY p.slug, pi.sort_order`),
+            pool.query(`
+              SELECT pr.product_id, p.slug AS product_slug, pr.reviewer_name, pr.rating
+              FROM product_reviews pr
+              LEFT JOIN products p ON pr.product_id = p.id
+              ORDER BY p.slug, pr.reviewer_name`),
           ]);
           return { categories: cats.rows, products: prods.rows, tags: tgs.rows, productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows };
         })(),
@@ -1166,7 +1192,8 @@ export function registerAdminHealthRoutes(app: Express) {
       }
       const prodSnap = await prodResp.json() as typeof localSnap;
 
-      function diffTable<T extends { id: string }>(devRows: T[], prodRows: T[], fields: (keyof T)[]) {
+      // ID-based diff for tables where ID is the canonical identity
+      function diffById<T extends { id: string }>(devRows: T[], prodRows: T[], fields: (keyof T)[]) {
         const devMap = new Map(devRows.map(r => [r.id, r]));
         const prodMap = new Map(prodRows.map(r => [r.id, r]));
         const onlyInDev = devRows.filter(r => !prodMap.has(r.id)).map(r => r.id);
@@ -1184,6 +1211,15 @@ export function registerAdminHealthRoutes(app: Express) {
         return { devCount: devRows.length, prodCount: prodRows.length, onlyInDev, onlyInProd, fieldMismatches };
       }
 
+      // Content-based diff for junction/dependent tables where row ID is irrelevant
+      function diffByContent(devRows: any[], prodRows: any[], keyFn: (r: any) => string, labelFn: (r: any) => string) {
+        const devKeys  = new Map(devRows.map(r  => [keyFn(r),  labelFn(r)]));
+        const prodKeys = new Map(prodRows.map(r => [keyFn(r), labelFn(r)]));
+        const onlyInDev  = devRows.filter(r  => !prodKeys.has(keyFn(r))).map(r  => labelFn(r));
+        const onlyInProd = prodRows.filter(r => !devKeys.has(keyFn(r))).map(r => labelFn(r));
+        return { devCount: devRows.length, prodCount: prodRows.length, onlyInDev, onlyInProd };
+      }
+
       const devProds  = localSnap.products  as any[];
       const prodProds = prodSnap.products   as any[];
       const devSkuMap  = new Map(devProds.map(p  => [p.sku,  p]));
@@ -1199,12 +1235,21 @@ export function registerAdminHealthRoutes(app: Express) {
       res.json({
         checkedAt: new Date().toISOString(),
         prodUrl,
-        categories:     diffTable(localSnap.categories    as any[], prodSnap.categories    as any[], ["name", "slug", "sort_order"]),
-        products:       { ...diffTable(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
-        tags:           diffTable(localSnap.tags           as any[], prodSnap.tags           as any[], ["name"]),
-        productTags:    diffTable(localSnap.productTags    as any[], prodSnap.productTags    as any[], ["product_id", "tag_id"]),
-        productImages:  diffTable(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
-        productReviews: diffTable(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
+        categories:     diffById(localSnap.categories as any[], prodSnap.categories as any[], ["name", "slug", "sort_order"]),
+        products:       { ...diffById(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
+        tags:           diffById(localSnap.tags as any[], prodSnap.tags as any[], ["name"]),
+        productTags:    diffByContent(
+                          localSnap.productTags  as any[], prodSnap.productTags  as any[],
+                          r => `${r.product_id}|${r.tag_id}`,
+                          r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
+        productImages:  diffByContent(
+                          localSnap.productImages  as any[], prodSnap.productImages  as any[],
+                          r => `${r.product_id}|${r.image_url}|${r.sort_order}`,
+                          r => `${r.product_slug || r.product_id}: ${r.image_url} (#${r.sort_order})`),
+        productReviews: diffByContent(
+                          localSnap.productReviews as any[], prodSnap.productReviews as any[],
+                          r => `${r.product_id}|${r.reviewer_name}|${r.rating}`,
+                          r => `${r.product_slug || r.product_id}: "${r.reviewer_name}" (${r.rating}★)`),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
