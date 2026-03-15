@@ -1123,16 +1123,8 @@ export function registerAdminHealthRoutes(app: Express) {
           LEFT JOIN products p ON pt.product_id = p.id
           LEFT JOIN tags t ON pt.tag_id = t.id
           ORDER BY p.slug, t.name`),
-        pool.query(`
-          SELECT pi.product_id, p.slug AS product_slug, pi.image_url, pi.sort_order
-          FROM product_images pi
-          LEFT JOIN products p ON pi.product_id = p.id
-          ORDER BY p.slug, pi.sort_order`),
-        pool.query(`
-          SELECT pr.product_id, p.slug AS product_slug, pr.reviewer_name, pr.rating
-          FROM product_reviews pr
-          LEFT JOIN products p ON pr.product_id = p.id
-          ORDER BY p.slug, pr.reviewer_name`),
+        pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
+        pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
       ]);
       res.json({
         categories:     cats.rows,
@@ -1168,16 +1160,8 @@ export function registerAdminHealthRoutes(app: Express) {
               LEFT JOIN products p ON pt.product_id = p.id
               LEFT JOIN tags t ON pt.tag_id = t.id
               ORDER BY p.slug, t.name`),
-            pool.query(`
-              SELECT pi.product_id, p.slug AS product_slug, pi.image_url, pi.sort_order
-              FROM product_images pi
-              LEFT JOIN products p ON pi.product_id = p.id
-              ORDER BY p.slug, pi.sort_order`),
-            pool.query(`
-              SELECT pr.product_id, p.slug AS product_slug, pr.reviewer_name, pr.rating
-              FROM product_reviews pr
-              LEFT JOIN products p ON pr.product_id = p.id
-              ORDER BY p.slug, pr.reviewer_name`),
+            pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
+            pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
           ]);
           return { categories: cats.rows, products: prods.rows, tags: tgs.rows, productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows };
         })(),
@@ -1242,14 +1226,8 @@ export function registerAdminHealthRoutes(app: Express) {
                           localSnap.productTags  as any[], prodSnap.productTags  as any[],
                           r => `${r.product_id}|${r.tag_id}`,
                           r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
-        productImages:  diffByContent(
-                          localSnap.productImages  as any[], prodSnap.productImages  as any[],
-                          r => `${r.product_id}|${r.image_url}|${r.sort_order}`,
-                          r => `${r.product_slug || r.product_id}: ${r.image_url} (#${r.sort_order})`),
-        productReviews: diffByContent(
-                          localSnap.productReviews as any[], prodSnap.productReviews as any[],
-                          r => `${r.product_id}|${r.reviewer_name}|${r.rating}`,
-                          r => `${r.product_slug || r.product_id}: "${r.reviewer_name}" (${r.rating}★)`),
+        productImages:  diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
+        productReviews: diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);

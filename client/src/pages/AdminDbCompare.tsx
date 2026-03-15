@@ -34,8 +34,8 @@ interface CompareResult {
   products: ProductDiff;
   tags: IdTableDiff;
   productTags: ContentTableDiff;
-  productImages: ContentTableDiff;
-  productReviews: ContentTableDiff;
+  productImages: IdTableDiff;
+  productReviews: IdTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -213,8 +213,8 @@ export default function AdminDbCompare() {
       isIdTableClean(result.categories) &&
       isIdTableClean(result.tags) &&
       isContentTableClean(result.productTags) &&
-      isContentTableClean(result.productImages) &&
-      isContentTableClean(result.productReviews)
+      isIdTableClean(result.productImages) &&
+      isIdTableClean(result.productReviews)
     : null;
 
   return (
@@ -299,16 +299,18 @@ export default function AdminDbCompare() {
             <CollapsibleList label="Links only in prod" items={result.productTags.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
           </SectionShell>
 
-          {/* Product Images — content-based (product_id + image_url + sort_order) */}
-          <SectionShell title="Product Images" clean={isContentTableClean(result.productImages)} devCount={result.productImages.devCount} prodCount={result.productImages.prodCount}>
-            <CollapsibleList label="Images only in dev"  items={result.productImages.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="Images only in prod" items={result.productImages.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+          {/* Product Images — ID-based (synced by migration) */}
+          <SectionShell title="Product Images" clean={isIdTableClean(result.productImages)} devCount={result.productImages.devCount} prodCount={result.productImages.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.productImages.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="IDs only in prod" items={result.productImages.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <FieldMismatches mismatches={result.productImages.fieldMismatches} />
           </SectionShell>
 
-          {/* Product Reviews — content-based (product_id + reviewer_name + rating) */}
-          <SectionShell title="Product Reviews" clean={isContentTableClean(result.productReviews)} devCount={result.productReviews.devCount} prodCount={result.productReviews.prodCount}>
-            <CollapsibleList label="Reviews only in dev"  items={result.productReviews.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="Reviews only in prod" items={result.productReviews.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+          {/* Product Reviews — ID-based (synced by migration) */}
+          <SectionShell title="Product Reviews" clean={isIdTableClean(result.productReviews)} devCount={result.productReviews.devCount} prodCount={result.productReviews.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.productReviews.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
+            <CollapsibleList label="IDs only in prod" items={result.productReviews.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <FieldMismatches mismatches={result.productReviews.fieldMismatches} />
           </SectionShell>
         </div>
       )}
