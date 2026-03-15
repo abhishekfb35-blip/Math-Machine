@@ -35,6 +35,7 @@ import AdminDeployCheck from "@/pages/AdminDeployCheck";
 import AdminSeoAudit from "@/pages/AdminSeoAudit";
 import AdminBrandAssets from "@/pages/AdminBrandAssets";
 import AdminConsent from "@/pages/AdminConsent";
+import AdminDbCompare from "@/pages/AdminDbCompare";
 import AdminGuard from "@/components/AdminGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/admin/checks" component={() => <AdminGuard><AdminChecks /></AdminGuard>} />
       <Route path="/admin/deploy-check" component={() => <AdminGuard><AdminDeployCheck /></AdminGuard>} />
       <Route path="/admin/data-check" component={() => <AdminGuard><AdminDataCheck /></AdminGuard>} />
+      <Route path="/admin/db-compare" component={() => <AdminGuard><AdminDbCompare /></AdminGuard>} />
       <Route path="/admin/seo-audit" component={() => <AdminGuard><AdminSeoAudit /></AdminGuard>} />
       <Route path="/admin/consent" component={() => <AdminGuard><AdminConsent /></AdminGuard>} />
       <Route path="/terms" component={TermsPage} />

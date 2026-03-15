@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
@@ -76,6 +76,14 @@ const sections = [
     icon: Download,
     color: "text-cyan-600 dark:text-cyan-400",
     bg: "bg-cyan-50 dark:bg-cyan-950/30",
+  },
+  {
+    title: "DB Compare",
+    description: "Compare dev vs prod catalog tables",
+    href: "/admin/db-compare",
+    icon: GitCompare,
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-50 dark:bg-violet-950/30",
   },
 ];
 

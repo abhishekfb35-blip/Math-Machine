@@ -122,3 +122,17 @@ export function getAdminUsername(req: Request): string {
 export async function generatePasswordHash(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
+
+export function requireAdminAny(req: Request, res: Response, next: NextFunction) {
+  const creds = getAdminCredentials();
+  if (!creds) return next();
+
+  const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+  const session = token ? activeSessions.get(token) : null;
+  if (session && session.expiresAt >= Date.now()) return next();
+
+  const headerPassword = req.headers["x-admin-password"] as string | undefined;
+  if (headerPassword && creds.plainPassword && headerPassword === creds.plainPassword) return next();
+
+  return res.status(401).json({ message: "Authentication required" });
+}

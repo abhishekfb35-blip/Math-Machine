@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 import { storage } from "../../storage";
-import { requireAdmin } from "../../adminAuth";
+import { requireAdmin, requireAdminAny } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 
@@ -1106,6 +1106,109 @@ export function registerAdminHealthRoutes(app: Express) {
     } catch (err) {
       console.error("Table list error:", err);
       res.status(500).json({ message: "Failed to get table info" });
+    }
+  });
+
+  // ── DB Snapshot (catalog tables only) ────────────────────────────────────
+  app.get("/api/admin/db-snapshot", requireAdminAny, async (_req, res) => {
+    try {
+      const { pool } = await import("../../db");
+      const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+        pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
+        pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
+        pool.query(`SELECT id, name FROM tags ORDER BY name`),
+        pool.query(`SELECT id, product_id, tag_id FROM product_tags ORDER BY id`),
+        pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
+        pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+      ]);
+      res.json({
+        categories:     cats.rows,
+        products:       prods.rows,
+        tags:           tgs.rows,
+        productTags:    ptags.rows,
+        productImages:  imgs.rows,
+        productReviews: revs.rows,
+      });
+    } catch (err: any) {
+      console.error("db-snapshot error:", err.message);
+      res.status(500).json({ message: "Failed to generate snapshot" });
+    }
+  });
+
+  // ── DB Compare (dev calls prod snapshot and diffs) ────────────────────────
+  app.post("/api/admin/db-compare", requireAdmin, async (req, res) => {
+    try {
+      const { prodUrl } = req.body as { prodUrl: string };
+      if (!prodUrl) return res.status(400).json({ message: "prodUrl is required" });
+
+      const adminPassword = process.env.ADMIN_PASSWORD || "";
+      const [localSnap, prodResp] = await Promise.all([
+        (async () => {
+          const { pool } = await import("../../db");
+          const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+            pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
+            pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
+            pool.query(`SELECT id, name FROM tags ORDER BY name`),
+            pool.query(`SELECT id, product_id, tag_id FROM product_tags ORDER BY id`),
+            pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
+            pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+          ]);
+          return { categories: cats.rows, products: prods.rows, tags: tgs.rows, productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows };
+        })(),
+        fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
+          headers: { "x-admin-password": adminPassword },
+        }),
+      ]);
+
+      if (!prodResp.ok) {
+        const text = await prodResp.text();
+        return res.status(502).json({ message: `Prod snapshot failed (${prodResp.status}): ${text.slice(0, 200)}` });
+      }
+      const prodSnap = await prodResp.json() as typeof localSnap;
+
+      function diffTable<T extends { id: string }>(devRows: T[], prodRows: T[], fields: (keyof T)[]) {
+        const devMap = new Map(devRows.map(r => [r.id, r]));
+        const prodMap = new Map(prodRows.map(r => [r.id, r]));
+        const onlyInDev = devRows.filter(r => !prodMap.has(r.id)).map(r => r.id);
+        const onlyInProd = prodRows.filter(r => !devMap.has(r.id)).map(r => r.id);
+        const fieldMismatches: { id: string; field: string; dev: unknown; prod: unknown }[] = [];
+        for (const [id, devRow] of devMap) {
+          const prodRow = prodMap.get(id);
+          if (!prodRow) continue;
+          for (const f of fields) {
+            const dv = String(devRow[f] ?? "");
+            const pv = String((prodRow as any)[f] ?? "");
+            if (dv !== pv) fieldMismatches.push({ id, field: String(f), dev: devRow[f], prod: (prodRow as any)[f] });
+          }
+        }
+        return { devCount: devRows.length, prodCount: prodRows.length, onlyInDev, onlyInProd, fieldMismatches };
+      }
+
+      const devProds  = localSnap.products  as any[];
+      const prodProds = prodSnap.products   as any[];
+      const devSkuMap  = new Map(devProds.map(p  => [p.sku,  p]));
+      const prodSkuMap = new Map(prodProds.map(p => [p.sku, p]));
+      const onlySkuInDev  = devProds.filter(p  => !prodSkuMap.has(p.sku)).map(p  => p.sku);
+      const onlySkuInProd = prodProds.filter(p => !devSkuMap.has(p.sku)).map(p => p.sku);
+      const skuNameMismatches: { sku: string; devName: string; prodName: string }[] = [];
+      for (const [sku, dp] of devSkuMap) {
+        const pp = prodSkuMap.get(sku);
+        if (pp && dp.name !== pp.name) skuNameMismatches.push({ sku, devName: dp.name, prodName: pp.name });
+      }
+
+      res.json({
+        checkedAt: new Date().toISOString(),
+        prodUrl,
+        categories:     diffTable(localSnap.categories    as any[], prodSnap.categories    as any[], ["name", "slug", "sort_order"]),
+        products:       { ...diffTable(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
+        tags:           diffTable(localSnap.tags           as any[], prodSnap.tags           as any[], ["name"]),
+        productTags:    diffTable(localSnap.productTags    as any[], prodSnap.productTags    as any[], ["product_id", "tag_id"]),
+        productImages:  diffTable(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
+        productReviews: diffTable(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
+      });
+    } catch (err: any) {
+      console.error("db-compare error:", err.message);
+      res.status(500).json({ message: err.message });
     }
   });
 
