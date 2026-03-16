@@ -322,9 +322,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         const existing = await storage.getCategoryVariantOptions(id);
         if (!existing) {
           const category = await storage.getCategoryById(id);
-          const isKids = category?.audience === "kids"
-            || (category?.name || "").toLowerCase().includes("kid")
-            || (category?.name || "").toLowerCase().includes("baby");
+          const isKids = category?.audience === "kids";
           sizes = isKids
             ? [
                 { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },

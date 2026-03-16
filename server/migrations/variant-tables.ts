@@ -51,8 +51,15 @@ export async function ensureVariantTables() {
     `);
     if (rows(cartColorCheck).length === 0) {
       await db.execute(sql`ALTER TABLE cart_items ADD COLUMN IF NOT EXISTS selected_color TEXT`);
+      console.log("[migration] variant-tables: added selected_color to cart_items");
+    }
+    const cartSizeCheck = await db.execute<{ column_name: string }>(sql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'cart_items' AND column_name = 'selected_size'
+    `);
+    if (rows(cartSizeCheck).length === 0) {
       await db.execute(sql`ALTER TABLE cart_items ADD COLUMN IF NOT EXISTS selected_size TEXT`);
-      console.log("[migration] variant-tables: added selected_color/selected_size to cart_items");
+      console.log("[migration] variant-tables: added selected_size to cart_items");
     }
 
     const orderColorCheck = await db.execute<{ column_name: string }>(sql`
@@ -61,8 +68,15 @@ export async function ensureVariantTables() {
     `);
     if (rows(orderColorCheck).length === 0) {
       await db.execute(sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS selected_color TEXT`);
+      console.log("[migration] variant-tables: added selected_color to order_items");
+    }
+    const orderSizeCheck = await db.execute<{ column_name: string }>(sql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'order_items' AND column_name = 'selected_size'
+    `);
+    if (rows(orderSizeCheck).length === 0) {
       await db.execute(sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS selected_size TEXT`);
-      console.log("[migration] variant-tables: added selected_color/selected_size to order_items");
+      console.log("[migration] variant-tables: added selected_size to order_items");
     }
 
     console.log("[migration] variant-tables: complete");
