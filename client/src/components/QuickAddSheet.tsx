@@ -189,7 +189,12 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                       onClick={() => {
                         if (selectable) {
                           setSelectedSize(size.value);
-                          setSelectedColor(getFirstAvailableColor(size.value));
+                          const availableColorsForNewSize = new Set(
+                            (productVariants || []).filter(v => v.size === size.value && v.available).map(v => v.color)
+                          );
+                          if (!selectedColor || !availableColorsForNewSize.has(selectedColor)) {
+                            setSelectedColor(getFirstAvailableColor(size.value));
+                          }
                         }
                       }}
                       disabled={!selectable || isBlur}

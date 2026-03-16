@@ -317,7 +317,27 @@ export function registerAdminCatalogRoutes(app: Express) {
           hideFromFront: z.boolean().default(false),
         })),
       });
-      const { colors, sizes } = schema.parse(req.body);
+      let { colors, sizes } = schema.parse(req.body);
+      if (sizes.length === 0) {
+        const existing = await storage.getCategoryVariantOptions(id);
+        if (!existing) {
+          const category = await storage.getCategoryById(id);
+          const isKids = category?.audience === "kids"
+            || (category?.name || "").toLowerCase().includes("kid")
+            || (category?.name || "").toLowerCase().includes("baby");
+          sizes = isKids
+            ? [
+                { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+                { name: "Medium", value: "M", description: "90 × 45 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+                { name: "Large", value: "L", description: "120 × 60 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+              ]
+            : [
+                { name: "Medium", value: "M", description: "140 × 70 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+                { name: "Large", value: "L", description: "150 × 75 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+                { name: "XLarge", value: "XL", description: "160 × 80 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+              ];
+        }
+      }
       await storage.upsertCategoryVariantOptions(id, colors, sizes);
       res.json({ success: true });
     } catch (err) {

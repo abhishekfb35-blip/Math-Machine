@@ -149,7 +149,14 @@ export default function ProductPage() {
 
   const handleSizeSelect = (sizeValue: string) => {
     setSelectedSize(sizeValue);
-    setSelectedColor(getFirstAvailableColor(sizeValue));
+    const availableColorsForNewSize = new Set(
+      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+    );
+    if (selectedColor && availableColorsForNewSize.has(selectedColor)) {
+      // keep current color – it's still available for the new size
+    } else {
+      setSelectedColor(getFirstAvailableColor(sizeValue));
+    }
   };
 
   const addToCartMutation = useMutation({
