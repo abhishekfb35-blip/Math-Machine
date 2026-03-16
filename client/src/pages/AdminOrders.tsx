@@ -189,6 +189,11 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
             <div key={item.id || idx} className="flex items-center justify-between py-3 gap-2" data-testid={`row-order-item-${idx}`}>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate" data-testid={`text-item-name-${idx}`}>{item.productName}</p>
+                {(item.selectedSize || item.selectedColor) && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {item.personalizationName && (
                   <p className="text-xs text-muted-foreground mt-0.5">Personalisation: <strong>{item.personalizationName}</strong></p>
                 )}

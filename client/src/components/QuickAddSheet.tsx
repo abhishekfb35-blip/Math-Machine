@@ -45,13 +45,17 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   });
 
   useEffect(() => {
-    if (!variantOptions || selectedSize) return;
-    const visible = variantOptions.sizes.filter(s => !s.hideFromFront);
-    if (visible.length > 0) {
-      const def = visible.find(s => s.isDefault) || visible[0];
+    if (!showVariantSelectors || !variantOptions || !productVariants || selectedSize) return;
+    const visible = variantOptions.sizes.filter(s => !s.hideFromFront && !s.blurOnFront);
+    const available = visible.filter(s =>
+      (productVariants || []).some(v => v.size === s.value && v.available)
+    );
+    if (available.length > 0) {
+      const def = available.find(s => s.isDefault) || available[0];
       setSelectedSize(def.value);
+      setSelectedColor(getFirstAvailableColor(def.value));
     }
-  }, [variantOptions]);
+  }, [showVariantSelectors, variantOptions, productVariants]);
 
   useEffect(() => {
     if (!open) {
@@ -64,19 +68,47 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     }
   }, [open]);
 
-  const visibleSizes = variantOptions?.sizes.filter(s => !s.hideFromFront) || [];
-  const visibleColors = variantOptions?.colors.filter(c => !c.hideFromFront) || [];
+  const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
+  const hasCategoryPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
+    || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
+  const showVariantSelectors = hasCategoryPalette && hasProductVariants;
 
-  const isColorAvailable = (colorName: string, sizeValue: string | null): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    if (!sizeValue) return false;
-    const variant = productVariants.find(v => v.color === colorName && v.size === sizeValue);
+  const visibleSizes = showVariantSelectors
+    ? (variantOptions?.sizes || []).filter(s => !s.hideFromFront)
+    : [];
+
+  const colorsForSelectedSize = (() => {
+    if (!showVariantSelectors || !selectedSize) return [];
+    const productColorNamesForSize = new Set(
+      (productVariants || []).filter(v => v.size === selectedSize).map(v => v.color)
+    );
+    return (variantOptions?.colors || []).filter(
+      c => !c.hideFromFront && productColorNamesForSize.has(c.name)
+    );
+  })();
+
+  const isSizeSelectable = (sizeValue: string): boolean => {
+    const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
+    if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
+    return (productVariants || []).some(v => v.size === sizeValue && v.available);
+  };
+
+  const isColorSelectable = (colorName: string): boolean => {
+    const colorInPalette = variantOptions?.colors.find(c => c.name === colorName);
+    if (!colorInPalette || colorInPalette.blurOnFront) return false;
+    if (!selectedSize) return false;
+    const variant = (productVariants || []).find(v => v.color === colorName && v.size === selectedSize);
     return variant ? variant.available : false;
   };
 
-  const isSizeAvailable = (sizeValue: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeValue && v.available);
+  const getFirstAvailableColor = (sizeValue: string): string | null => {
+    const productColorNamesForSize = new Set(
+      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+    );
+    const first = (variantOptions?.colors || []).find(
+      c => !c.hideFromFront && !c.blurOnFront && productColorNamesForSize.has(c.name)
+    );
+    return first ? first.name : null;
   };
 
   const addToCartMutation = useMutation({
@@ -144,26 +176,29 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <span>Buy 2 Get 1 Free - discount applied at checkout</span>
           </div>
 
-          {visibleSizes.length > 0 && (
+          {showVariantSelectors && visibleSizes.length > 0 && (
             <div className="space-y-1.5" data-testid="section-quickadd-sizes">
               <Label className="text-sm font-medium">Size</Label>
               <div className="flex flex-wrap gap-2">
                 {visibleSizes.map((size) => {
-                  const available = isSizeAvailable(size.value);
+                  const selectable = isSizeSelectable(size.value);
                   const isSelected = selectedSize === size.value;
+                  const isBlur = size.blurOnFront;
                   return (
                     <button
                       key={size.value}
                       onClick={() => {
-                        setSelectedSize(size.value);
-                        setSelectedColor(null);
+                        if (selectable) {
+                          setSelectedSize(size.value);
+                          setSelectedColor(getFirstAvailableColor(size.value));
+                        }
                       }}
-                      disabled={!available && !size.blurOnFront}
+                      disabled={!selectable || isBlur}
                       className={`px-3 py-1 text-xs rounded border transition-all ${
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : size.blurOnFront || !available
-                          ? "border-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          : isBlur || !selectable
+                          ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                       }`}
                       data-testid={`button-quickadd-size-${size.value}`}
@@ -176,27 +211,26 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           )}
 
-          {visibleColors.length > 0 && (
+          {showVariantSelectors && colorsForSelectedSize.length > 0 && (
             <div className="space-y-1.5" data-testid="section-quickadd-colors">
               <Label className="text-sm font-medium">
                 Colour{selectedColor ? `: ${selectedColor}` : ""}
               </Label>
               <div className="flex flex-wrap gap-2">
-                {visibleColors.map((color) => {
-                  const available = isColorAvailable(color.name, selectedSize);
+                {colorsForSelectedSize.map((color) => {
+                  const selectable = isColorSelectable(color.name);
                   const isSelected = selectedColor === color.name;
+                  const isBlur = color.blurOnFront;
                   return (
                     <button
                       key={color.name}
-                      onClick={() => {
-                        if (!available && !color.blurOnFront) return;
-                        setSelectedColor(color.name);
-                      }}
+                      onClick={() => { if (selectable) setSelectedColor(color.name); }}
+                      disabled={!selectable || isBlur}
                       title={color.name}
                       className={`w-7 h-7 rounded-full border-2 transition-all ${
                         isSelected
                           ? "border-primary scale-110 shadow-md"
-                          : color.blurOnFront || !available
+                          : isBlur || !selectable
                           ? "border-muted opacity-40 cursor-not-allowed"
                           : "border-transparent hover:border-primary/50"
                       }`}

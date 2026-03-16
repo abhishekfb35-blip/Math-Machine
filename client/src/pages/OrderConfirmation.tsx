@@ -60,6 +60,9 @@ export default function OrderConfirmation() {
               <div key={item.id} className="flex justify-between gap-4 text-sm" data-testid={`order-item-${item.id}`}>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium">{item.productName}</p>
+                  {(item.selectedSize || item.selectedColor) && (
+                    <p className="text-xs text-muted-foreground">{[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}</p>
+                  )}
                   {item.personalizationName && (
                     <p className="text-xs text-muted-foreground">Name: {item.personalizationName}</p>
                   )}

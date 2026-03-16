@@ -129,7 +129,7 @@ export const productTags = pgTable("product_tags", {
 });
 
 export const categoryVariantOptions = pgTable("category_variant_options", {
-  categoryId: text("category_id").primaryKey(),
+  categoryId: text("category_id").primaryKey().references(() => categories.id, { onDelete: "cascade" }),
   colors: text("colors").notNull().default("[]"),
   sizes: text("sizes").notNull().default("[]"),
 });

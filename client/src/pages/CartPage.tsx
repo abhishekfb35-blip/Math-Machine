@@ -48,6 +48,11 @@ function CartItemRow({ item, onRemove, onUpdateQty }: {
             {item.product.name}
           </h3>
         </Link>
+        {(item.selectedSize || item.selectedColor) && (
+          <p className="text-xs text-muted-foreground" data-testid={`text-variant-${item.id}`}>
+            {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+          </p>
+        )}
         {item.personalizationName && (
           <p className="text-xs text-muted-foreground" data-testid={`text-personalization-${item.id}`}>
             Embroidered: {item.personalizationName}

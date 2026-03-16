@@ -687,8 +687,8 @@ export class DatabaseStorage implements IStorage {
     if (!row) return null;
     let colors: ColorOption[] = [];
     let sizes: SizeOption[] = [];
-    try { colors = JSON.parse(row.colors); } catch {}
-    try { sizes = JSON.parse(row.sizes); } catch {}
+    try { colors = JSON.parse(row.colors as string); } catch {}
+    try { sizes = JSON.parse(row.sizes as string); } catch {}
     return { categoryId: row.categoryId, colors, sizes };
   }
 

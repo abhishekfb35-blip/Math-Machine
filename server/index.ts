@@ -8,6 +8,7 @@ import { ensurePolicyPages } from "./migrations/policy-pages";
 import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
 import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
+import { ensureVariantTables } from "./migrations/variant-tables";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { createServer } from "http";
 
@@ -108,6 +109,7 @@ app.get("/health", (_req, res) => {
       (async () => {
         try {
           await migrateSiteConfigKeyPk();
+          await ensureVariantTables();
           await seedDatabase();
           await ensureSkuNotNull();
           await syncImageReviewIds();

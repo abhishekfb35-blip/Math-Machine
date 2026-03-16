@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  MoveLeft, MoveRight, Loader2, Undo2, Save
+  MoveLeft, MoveRight, Loader2, Undo2, Save, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -497,12 +497,32 @@ export default function AdminCatalog() {
   const [variantSizes, setVariantSizes] = useState<SizeOption[]>([]);
 
   useEffect(() => {
-    if (categoryVariantOptions) {
-      setVariantColors(categoryVariantOptions.colors || []);
-      setVariantSizes(categoryVariantOptions.sizes || []);
-    } else {
+    if (!categoryVariantOptions) {
       setVariantColors([]);
       setVariantSizes([]);
+      return;
+    }
+    const colors = categoryVariantOptions.colors || [];
+    const sizes = categoryVariantOptions.sizes || [];
+    setVariantColors(colors);
+    if (sizes.length === 0 && editingCategory) {
+      const catName = (editingCategory.name || "").toLowerCase();
+      const isKids = catName.includes("kid") || catName.includes("baby") || catName.includes("child") || catName.includes("junior");
+      if (isKids) {
+        setVariantSizes([
+          { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Medium", value: "M", description: "90 × 45 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Large", value: "L", description: "120 × 60 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+        ]);
+      } else {
+        setVariantSizes([
+          { name: "Medium", value: "M", description: "140 × 70 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Large", value: "L", description: "150 × 75 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+          { name: "XLarge", value: "XL", description: "160 × 80 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+        ]);
+      }
+    } else {
+      setVariantSizes(sizes);
     }
   }, [categoryVariantOptions]);
 
@@ -962,6 +982,23 @@ export default function AdminCatalog() {
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs px-2 h-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsNew(false);
+                        setEditingCategory({ ...cat });
+                        setView("edit-category");
+                        setTimeout(() => {
+                          document.getElementById("section-category-variants")?.scrollIntoView({ behavior: "smooth" });
+                        }, 200);
+                      }}
+                      data-testid={`button-variants-config-${cat.id}`}
+                    >
+                      <Palette className="w-3 h-3 mr-1" /> Variants
+                    </Button>
+                    <Button
                       size="icon"
                       variant="ghost"
                       onClick={(e) => {
@@ -1085,7 +1122,7 @@ export default function AdminCatalog() {
           </Button>
 
           {!isNew && editingCategory.id && (
-            <div className="border rounded-lg p-4 space-y-4 mt-4" data-testid="section-category-variants">
+            <div id="section-category-variants" className="border rounded-lg p-4 space-y-4 mt-4" data-testid="section-category-variants">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Variant Options (Colours & Sizes)</h3>
                 <Button
@@ -1173,53 +1210,94 @@ export default function AdminCatalog() {
                   <p className="text-xs text-muted-foreground">No sizes configured.</p>
                 )}
                 {variantSizes.map((size, idx) => (
-                  <div key={idx} className="flex items-center gap-2 flex-wrap" data-testid={`size-row-${idx}`}>
+                  <div key={idx} className="border rounded-md p-3 space-y-2" data-testid={`size-row-${idx}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5"
+                          disabled={idx === 0}
+                          onClick={() => setVariantSizes(prev => {
+                            const next = [...prev];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            return next;
+                          })}
+                          data-testid={`button-size-up-${idx}`}
+                        >
+                          <MoveLeft className="w-3 h-3 rotate-90" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5"
+                          disabled={idx === variantSizes.length - 1}
+                          onClick={() => setVariantSizes(prev => {
+                            const next = [...prev];
+                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                            return next;
+                          })}
+                          data-testid={`button-size-down-${idx}`}
+                        >
+                          <MoveRight className="w-3 h-3 rotate-90" />
+                        </Button>
+                      </div>
+                      <Input
+                        value={size.name}
+                        onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, name: e.target.value } : s))}
+                        placeholder="Display name (e.g. Small)"
+                        className="flex-1 min-w-[90px]"
+                        data-testid={`input-size-name-${idx}`}
+                      />
+                      <Input
+                        value={size.value}
+                        onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, value: e.target.value } : s))}
+                        placeholder="Value (e.g. S)"
+                        className="w-20"
+                        data-testid={`input-size-value-${idx}`}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setVariantSizes(prev => prev.filter((_, i) => i !== idx))}
+                        data-testid={`button-delete-size-${idx}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                     <Input
-                      value={size.name}
-                      onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, name: e.target.value } : s))}
-                      placeholder="Display name (e.g. Small)"
-                      className="flex-1 min-w-[90px]"
-                      data-testid={`input-size-name-${idx}`}
+                      value={size.description || ""}
+                      onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, description: e.target.value } : s))}
+                      placeholder="Description (e.g. 120 × 60 cm)"
+                      className="text-xs"
+                      data-testid={`input-size-description-${idx}`}
                     />
-                    <Input
-                      value={size.value}
-                      onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, value: e.target.value } : s))}
-                      placeholder="Value (e.g. S)"
-                      className="w-20"
-                      data-testid={`input-size-value-${idx}`}
-                    />
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.isDefault}
-                        onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, isDefault: !!v } : s))}
-                        data-testid={`checkbox-size-default-${idx}`}
-                      />
-                      Default
-                    </label>
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.blurOnFront}
-                        onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, blurOnFront: !!v } : s))}
-                        data-testid={`checkbox-size-blur-${idx}`}
-                      />
-                      Blur
-                    </label>
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.hideFromFront}
-                        onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, hideFromFront: !!v } : s))}
-                        data-testid={`checkbox-size-hide-${idx}`}
-                      />
-                      Hide
-                    </label>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setVariantSizes(prev => prev.filter((_, i) => i !== idx))}
-                      data-testid={`button-delete-size-${idx}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-1 text-xs cursor-pointer">
+                        <Checkbox
+                          checked={size.isDefault}
+                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, isDefault: !!v } : s))}
+                          data-testid={`checkbox-size-default-${idx}`}
+                        />
+                        Default
+                      </label>
+                      <label className="flex items-center gap-1 text-xs cursor-pointer">
+                        <Checkbox
+                          checked={size.blurOnFront}
+                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, blurOnFront: !!v } : s))}
+                          data-testid={`checkbox-size-blur-${idx}`}
+                        />
+                        Blur
+                      </label>
+                      <label className="flex items-center gap-1 text-xs cursor-pointer">
+                        <Checkbox
+                          checked={size.hideFromFront}
+                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, hideFromFront: !!v } : s))}
+                          data-testid={`checkbox-size-hide-${idx}`}
+                        />
+                        Hide
+                      </label>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -513,6 +513,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium line-clamp-1">{item.product!.name}</p>
+                    {(item.selectedSize || item.selectedColor) && (
+                      <p className="text-xs text-muted-foreground">{[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}</p>
+                    )}
                     {item.personalizationName && (
                       <p className="text-xs text-muted-foreground">Name: {item.personalizationName}</p>
                     )}

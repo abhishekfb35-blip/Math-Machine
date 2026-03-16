@@ -90,30 +90,67 @@ export default function ProductPage() {
     ?.filter((p) => p.categoryId === product?.categoryId && p.id !== product?.id)
     .slice(0, 4) || [];
 
-  const visibleSizes = variantOptions?.sizes.filter(s => !s.hideFromFront) || [];
-  const hasVariants = visibleSizes.length > 0 || (variantOptions?.colors.filter(c => !c.hideFromFront) || []).length > 0;
+  const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
+  const hasCategoryPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
+    || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
+  const showVariantSelectors = hasCategoryPalette && hasProductVariants;
 
-  useEffect(() => {
-    if (!variantOptions) return;
-    const visible = variantOptions.sizes.filter(s => !s.hideFromFront);
-    if (visible.length > 0 && !selectedSize) {
-      const def = visible.find(s => s.isDefault) || visible[0];
-      setSelectedSize(def.value);
-    }
-  }, [variantOptions]);
+  const visibleSizes = showVariantSelectors
+    ? (variantOptions?.sizes || []).filter(s => !s.hideFromFront)
+    : [];
 
-  const visibleColors = (variantOptions?.colors || []).filter(c => !c.hideFromFront);
+  const colorsForSelectedSize = (() => {
+    if (!showVariantSelectors || !selectedSize) return [];
+    const productColorNamesForSize = new Set(
+      (productVariants || [])
+        .filter(v => v.size === selectedSize)
+        .map(v => v.color)
+    );
+    return (variantOptions?.colors || []).filter(
+      c => !c.hideFromFront && productColorNamesForSize.has(c.name)
+    );
+  })();
 
-  const isColorAvailable = (colorName: string, sizeValue: string | null): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    if (!sizeValue) return false;
-    const variant = productVariants.find(v => v.color === colorName && v.size === sizeValue);
+  const isSizeSelectable = (sizeValue: string): boolean => {
+    const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
+    if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
+    return (productVariants || []).some(v => v.size === sizeValue && v.available);
+  };
+
+  const isColorSelectable = (colorName: string): boolean => {
+    const colorInPalette = variantOptions?.colors.find(c => c.name === colorName);
+    if (!colorInPalette || colorInPalette.blurOnFront) return false;
+    if (!selectedSize) return false;
+    const variant = (productVariants || []).find(v => v.color === colorName && v.size === selectedSize);
     return variant ? variant.available : false;
   };
 
-  const isSizeAvailable = (sizeValue: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeValue && v.available);
+  const getFirstAvailableColor = (sizeValue: string): string | null => {
+    const productColorNamesForSize = new Set(
+      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+    );
+    const first = (variantOptions?.colors || []).find(
+      c => !c.hideFromFront && !c.blurOnFront && productColorNamesForSize.has(c.name)
+    );
+    return first ? first.name : null;
+  };
+
+  useEffect(() => {
+    if (!showVariantSelectors || !variantOptions || !productVariants) return;
+    const visible = variantOptions.sizes.filter(s => !s.hideFromFront && !s.blurOnFront);
+    const available = visible.filter(s =>
+      (productVariants || []).some(v => v.size === s.value && v.available)
+    );
+    if (available.length > 0 && !selectedSize) {
+      const def = available.find(s => s.isDefault) || available[0];
+      setSelectedSize(def.value);
+      setSelectedColor(getFirstAvailableColor(def.value));
+    }
+  }, [showVariantSelectors, variantOptions, productVariants]);
+
+  const handleSizeSelect = (sizeValue: string) => {
+    setSelectedSize(sizeValue);
+    setSelectedColor(getFirstAvailableColor(sizeValue));
   };
 
   const addToCartMutation = useMutation({
@@ -366,32 +403,34 @@ export default function ProductPage() {
               </div>
             )}
 
-            {visibleSizes.length > 0 && (
+            {showVariantSelectors && visibleSizes.length > 0 && (
               <div className="space-y-2" data-testid="section-size-selector">
                 <Label className="text-sm font-semibold">Size</Label>
                 <div className="flex flex-wrap gap-2">
                   {visibleSizes.map((size) => {
-                    const available = isSizeAvailable(size.value);
+                    const selectable = isSizeSelectable(size.value);
                     const isSelected = selectedSize === size.value;
+                    const isBlur = size.blurOnFront;
                     return (
                       <button
                         key={size.value}
-                        onClick={() => {
-                          if (size.blurOnFront && !available) return;
-                          setSelectedSize(size.value);
-                          setSelectedColor(null);
-                        }}
-                        disabled={!available && !size.blurOnFront}
-                        className={`px-3 py-1.5 text-sm rounded-md border transition-all ${
+                        onClick={() => { if (selectable) handleSizeSelect(size.value); }}
+                        disabled={!selectable || isBlur}
+                        className={`px-3 py-1.5 text-sm rounded-md border transition-all flex flex-col items-center ${
                           isSelected
                             ? "border-primary bg-primary text-primary-foreground"
-                            : size.blurOnFront || !available
-                            ? "border-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                            : isBlur || !selectable
+                            ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                             : "border-border hover:border-primary"
                         }`}
                         data-testid={`button-size-${size.value}`}
                       >
-                        {size.name}
+                        <span>{size.name}</span>
+                        {size.description && (
+                          <span className={`text-[10px] leading-tight ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                            {size.description}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -399,43 +438,36 @@ export default function ProductPage() {
               </div>
             )}
 
-            {visibleColors.length > 0 && (
+            {showVariantSelectors && colorsForSelectedSize.length > 0 && (
               <div className="space-y-2" data-testid="section-color-selector">
                 <Label className="text-sm font-semibold">
                   Colour{selectedColor ? `: ${selectedColor}` : ""}
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {visibleColors.map((color) => {
-                    const available = isColorAvailable(color.name, selectedSize);
+                  {colorsForSelectedSize.map((color) => {
+                    const selectable = isColorSelectable(color.name);
                     const isSelected = selectedColor === color.name;
+                    const isBlur = color.blurOnFront;
                     return (
                       <button
                         key={color.name}
-                        onClick={() => {
-                          if (!available && !color.blurOnFront) return;
-                          setSelectedColor(color.name);
-                        }}
+                        onClick={() => { if (selectable) setSelectedColor(color.name); }}
+                        disabled={!selectable || isBlur}
                         title={color.name}
                         className={`w-8 h-8 rounded-full border-2 transition-all relative ${
                           isSelected
                             ? "border-primary scale-110 shadow-md"
-                            : color.blurOnFront || !available
+                            : isBlur || !selectable
                             ? "border-muted opacity-40 cursor-not-allowed"
                             : "border-transparent hover:border-primary/50 hover:scale-105"
                         }`}
                         style={{ backgroundColor: color.hexCode }}
                         data-testid={`button-color-${color.name}`}
-                      >
-                        {!available && !color.blurOnFront && (
-                          <span className="absolute inset-0 flex items-center justify-center">
-                            <span className="w-full h-px bg-muted-foreground rotate-45 block" />
-                          </span>
-                        )}
-                      </button>
+                      />
                     );
                   })}
                 </div>
-                {!selectedColor && visibleColors.length > 0 && (
+                {!selectedColor && colorsForSelectedSize.length > 0 && (
                   <p className="text-xs text-muted-foreground">Select a colour</p>
                 )}
               </div>

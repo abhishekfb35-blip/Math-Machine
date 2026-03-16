@@ -330,6 +330,7 @@ export interface ColorOption {
 export interface SizeOption {
   name: string;
   value: string;
+  description?: string;
   isDefault: boolean;
   blurOnFront: boolean;
   hideFromFront: boolean;
