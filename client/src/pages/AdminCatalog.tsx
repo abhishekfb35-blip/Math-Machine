@@ -497,32 +497,12 @@ export default function AdminCatalog() {
   const [variantSizes, setVariantSizes] = useState<SizeOption[]>([]);
 
   useEffect(() => {
-    if (!categoryVariantOptions) {
+    if (categoryVariantOptions) {
+      setVariantColors(categoryVariantOptions.colors || []);
+      setVariantSizes(categoryVariantOptions.sizes || []);
+    } else {
       setVariantColors([]);
       setVariantSizes([]);
-      return;
-    }
-    const colors = categoryVariantOptions.colors || [];
-    const sizes = categoryVariantOptions.sizes || [];
-    setVariantColors(colors);
-    if (sizes.length === 0 && editingCategory) {
-      const catName = (editingCategory.name || "").toLowerCase();
-      const isKids = catName.includes("kid") || catName.includes("baby") || catName.includes("child") || catName.includes("junior");
-      if (isKids) {
-        setVariantSizes([
-          { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-          { name: "Medium", value: "M", description: "90 × 45 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-          { name: "Large", value: "L", description: "120 × 60 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
-        ]);
-      } else {
-        setVariantSizes([
-          { name: "Medium", value: "M", description: "140 × 70 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-          { name: "Large", value: "L", description: "150 × 75 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
-          { name: "XLarge", value: "XL", description: "160 × 80 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-        ]);
-      }
-    } else {
-      setVariantSizes(sizes);
     }
   }, [categoryVariantOptions]);
 

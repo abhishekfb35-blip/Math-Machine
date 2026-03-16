@@ -293,7 +293,21 @@ export function registerAdminCatalogRoutes(app: Express) {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid category ID" });
     const opts = await storage.getCategoryVariantOptions(id);
-    res.json(opts || { categoryId: id, colors: [], sizes: [] });
+    if (opts) return res.json(opts);
+    const category = await storage.getCategoryById(id);
+    const isKids = category?.audience === "kids" || (category?.name || "").toLowerCase().includes("kid") || (category?.name || "").toLowerCase().includes("baby");
+    const defaultSizes = isKids
+      ? [
+          { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Medium", value: "M", description: "90 × 45 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Large", value: "L", description: "120 × 60 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+        ]
+      : [
+          { name: "Medium", value: "M", description: "140 × 70 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+          { name: "Large", value: "L", description: "150 × 75 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
+          { name: "XLarge", value: "XL", description: "160 × 80 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
+        ];
+    res.json({ categoryId: id, colors: [], sizes: defaultSizes });
   });
 
   app.put("/api/admin/categories/:id/variants", requireAdmin, async (req, res) => {

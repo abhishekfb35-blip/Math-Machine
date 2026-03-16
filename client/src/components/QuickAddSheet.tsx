@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
@@ -88,18 +89,15 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     );
   })();
 
+  const variantSelectionIncomplete = showVariantSelectors && (
+    (visibleSizes.length > 0 && !selectedSize) ||
+    (colorsForSelectedSize.length > 0 && !selectedColor)
+  );
+
   const isSizeSelectable = (sizeValue: string): boolean => {
     const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
     if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
     return (productVariants || []).some(v => v.size === sizeValue && v.available);
-  };
-
-  const isColorSelectable = (colorName: string): boolean => {
-    const colorInPalette = variantOptions?.colors.find(c => c.name === colorName);
-    if (!colorInPalette || colorInPalette.blurOnFront) return false;
-    if (!selectedSize) return false;
-    const variant = (productVariants || []).find(v => v.color === colorName && v.size === selectedSize);
-    return variant ? variant.available : false;
   };
 
   const getFirstAvailableColor = (sizeValue: string): string | null => {
@@ -214,33 +212,33 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
           {showVariantSelectors && colorsForSelectedSize.length > 0 && (
             <div className="space-y-1.5" data-testid="section-quickadd-colors">
-              <Label className="text-sm font-medium">
-                Colour{selectedColor ? `: ${selectedColor}` : ""}
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {colorsForSelectedSize.map((color) => {
-                  const selectable = isColorSelectable(color.name);
-                  const isSelected = selectedColor === color.name;
-                  const isBlur = color.blurOnFront;
-                  return (
-                    <button
-                      key={color.name}
-                      onClick={() => { if (selectable) setSelectedColor(color.name); }}
-                      disabled={!selectable || isBlur}
-                      title={color.name}
-                      className={`w-7 h-7 rounded-full border-2 transition-all ${
-                        isSelected
-                          ? "border-primary scale-110 shadow-md"
-                          : isBlur || !selectable
-                          ? "border-muted opacity-40 cursor-not-allowed"
-                          : "border-transparent hover:border-primary/50"
-                      }`}
-                      style={{ backgroundColor: color.hexCode }}
-                      data-testid={`button-quickadd-color-${color.name}`}
-                    />
-                  );
-                })}
-              </div>
+              <Label className="text-sm font-medium">Colour</Label>
+              <Select
+                value={selectedColor ?? ""}
+                onValueChange={(val) => setSelectedColor(val || null)}
+                data-testid="select-quickadd-color"
+              >
+                <SelectTrigger className="w-full" data-testid="trigger-quickadd-color">
+                  {selectedColor ? (
+                    <span className="flex items-center gap-2">
+                      <span className="inline-block w-4 h-4 rounded-full border border-border" style={{ backgroundColor: colorsForSelectedSize.find(c => c.name === selectedColor)?.hexCode }} />
+                      {selectedColor}
+                    </span>
+                  ) : (
+                    <SelectValue placeholder="Select a colour" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {colorsForSelectedSize.filter(c => !c.blurOnFront).map((color) => (
+                    <SelectItem key={color.name} value={color.name} data-testid={`option-quickadd-color-${color.name}`}>
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: color.hexCode }} />
+                        {color.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -311,11 +309,13 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             className="w-full"
             size="lg"
             onClick={() => addToCartMutation.mutate()}
-            disabled={addToCartMutation.isPending}
+            disabled={addToCartMutation.isPending || !!variantSelectionIncomplete}
             data-testid="button-quickadd-submit"
           >
             {addToCartMutation.isPending ? (
               "Adding..."
+            ) : variantSelectionIncomplete ? (
+              `Select ${!selectedSize ? "Size" : "Colour"} to Continue`
             ) : (
               <>
                 <ShoppingCart className="w-4 h-4 mr-2" />

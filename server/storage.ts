@@ -684,7 +684,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderByDiscountCode(code: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq((orders as any).discountCode, code));
+    const [order] = await db.select().from(orders).where(eq(orders.discountCode, code));
     return order;
   }
 

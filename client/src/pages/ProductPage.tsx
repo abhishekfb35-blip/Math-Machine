@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -112,18 +113,15 @@ export default function ProductPage() {
     );
   })();
 
+  const variantSelectionIncomplete = showVariantSelectors && (
+    (visibleSizes.length > 0 && !selectedSize) ||
+    (colorsForSelectedSize.length > 0 && !selectedColor)
+  );
+
   const isSizeSelectable = (sizeValue: string): boolean => {
     const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
     if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
     return (productVariants || []).some(v => v.size === sizeValue && v.available);
-  };
-
-  const isColorSelectable = (colorName: string): boolean => {
-    const colorInPalette = variantOptions?.colors.find(c => c.name === colorName);
-    if (!colorInPalette || colorInPalette.blurOnFront) return false;
-    if (!selectedSize) return false;
-    const variant = (productVariants || []).find(v => v.color === colorName && v.size === selectedSize);
-    return variant ? variant.available : false;
   };
 
   const getFirstAvailableColor = (sizeValue: string): string | null => {
@@ -441,36 +439,33 @@ export default function ProductPage() {
 
             {showVariantSelectors && colorsForSelectedSize.length > 0 && (
               <div className="space-y-2" data-testid="section-color-selector">
-                <Label className="text-sm font-semibold">
-                  Colour{selectedColor ? `: ${selectedColor}` : ""}
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {colorsForSelectedSize.map((color) => {
-                    const selectable = isColorSelectable(color.name);
-                    const isSelected = selectedColor === color.name;
-                    const isBlur = color.blurOnFront;
-                    return (
-                      <button
-                        key={color.name}
-                        onClick={() => { if (selectable) setSelectedColor(color.name); }}
-                        disabled={!selectable || isBlur}
-                        title={color.name}
-                        className={`w-8 h-8 rounded-full border-2 transition-all relative ${
-                          isSelected
-                            ? "border-primary scale-110 shadow-md"
-                            : isBlur || !selectable
-                            ? "border-muted opacity-40 cursor-not-allowed"
-                            : "border-transparent hover:border-primary/50 hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.hexCode }}
-                        data-testid={`button-color-${color.name}`}
-                      />
-                    );
-                  })}
-                </div>
-                {!selectedColor && colorsForSelectedSize.length > 0 && (
-                  <p className="text-xs text-muted-foreground">Select a colour</p>
-                )}
+                <Label className="text-sm font-semibold">Colour</Label>
+                <Select
+                  value={selectedColor ?? ""}
+                  onValueChange={(val) => setSelectedColor(val || null)}
+                  data-testid="select-color"
+                >
+                  <SelectTrigger className="w-full" data-testid="trigger-color">
+                    {selectedColor ? (
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block w-4 h-4 rounded-full border border-border" style={{ backgroundColor: colorsForSelectedSize.find(c => c.name === selectedColor)?.hexCode }} />
+                        {selectedColor}
+                      </span>
+                    ) : (
+                      <SelectValue placeholder="Select a colour" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colorsForSelectedSize.filter(c => !c.blurOnFront).map((color) => (
+                      <SelectItem key={color.name} value={color.name} data-testid={`option-color-${color.name}`}>
+                        <span className="flex items-center gap-2">
+                          <span className="inline-block w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: color.hexCode }} />
+                          {color.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -596,11 +591,13 @@ export default function ProductPage() {
               className="w-full"
               size="lg"
               onClick={() => addToCartMutation.mutate()}
-              disabled={addToCartMutation.isPending}
+              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete}
               data-testid="button-add-to-cart"
             >
               {addToCartMutation.isPending ? (
                 "Adding..."
+              ) : variantSelectionIncomplete ? (
+                `Select ${!selectedSize ? "Size" : "Colour"} to Continue`
               ) : (
                 <>
                   <ShoppingCart className="w-4 h-4 mr-2" />
