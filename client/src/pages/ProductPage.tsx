@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -16,7 +16,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, Category, ProductImage, ProductReview } from "@shared/types";
+import type { Product, Category, ProductImage, ProductReview, CategoryVariantOptions, ProductVariant } from "@shared/types";
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -31,6 +31,8 @@ export default function ProductPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const { data: product, isLoading: productLoading } = useQuery<Product>({
     queryKey: ["/api/products", slug],
@@ -64,11 +66,55 @@ export default function ProductPage() {
     enabled: !!product?.id,
   });
 
+  const { data: variantOptions } = useQuery<CategoryVariantOptions>({
+    queryKey: ["/api/categories", product?.categoryId, "variant-options"],
+    queryFn: async () => {
+      const res = await fetch(`/api/categories/${product!.categoryId}/variant-options`);
+      return res.json();
+    },
+    enabled: !!product?.categoryId,
+  });
+
+  const { data: productVariants } = useQuery<ProductVariant[]>({
+    queryKey: ["/api/products", product?.id, "variants"],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${product!.id}/variants`);
+      return res.json();
+    },
+    enabled: !!product?.id,
+  });
+
   const category = categories?.find((c) => c.id === product?.categoryId);
 
   const relatedProducts = allProducts
     ?.filter((p) => p.categoryId === product?.categoryId && p.id !== product?.id)
     .slice(0, 4) || [];
+
+  const visibleSizes = variantOptions?.sizes.filter(s => !s.hideFromFront) || [];
+  const hasVariants = visibleSizes.length > 0 || (variantOptions?.colors.filter(c => !c.hideFromFront) || []).length > 0;
+
+  useEffect(() => {
+    if (!variantOptions) return;
+    const visible = variantOptions.sizes.filter(s => !s.hideFromFront);
+    if (visible.length > 0 && !selectedSize) {
+      const def = visible.find(s => s.isDefault) || visible[0];
+      setSelectedSize(def.value);
+    }
+  }, [variantOptions]);
+
+  const visibleColors = (variantOptions?.colors || []).filter(c => !c.hideFromFront);
+
+  const isColorAvailable = (colorName: string, sizeValue: string | null): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    if (!sizeValue) return false;
+    const variant = productVariants.find(v => v.color === colorName && v.size === sizeValue);
+    return variant ? variant.available : false;
+  };
+
+  const isSizeAvailable = (sizeValue: string): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    return productVariants.some(v => v.size === sizeValue && v.available);
+  };
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -80,6 +126,8 @@ export default function ProductPage() {
             ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
             : undefined)
           : (personalizationName.trim() || undefined),
+        selectedColor: selectedColor || undefined,
+        selectedSize: selectedSize || undefined,
       });
       return res.json();
     },
@@ -318,6 +366,81 @@ export default function ProductPage() {
               </div>
             )}
 
+            {visibleSizes.length > 0 && (
+              <div className="space-y-2" data-testid="section-size-selector">
+                <Label className="text-sm font-semibold">Size</Label>
+                <div className="flex flex-wrap gap-2">
+                  {visibleSizes.map((size) => {
+                    const available = isSizeAvailable(size.value);
+                    const isSelected = selectedSize === size.value;
+                    return (
+                      <button
+                        key={size.value}
+                        onClick={() => {
+                          if (size.blurOnFront && !available) return;
+                          setSelectedSize(size.value);
+                          setSelectedColor(null);
+                        }}
+                        disabled={!available && !size.blurOnFront}
+                        className={`px-3 py-1.5 text-sm rounded-md border transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : size.blurOnFront || !available
+                            ? "border-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                            : "border-border hover:border-primary"
+                        }`}
+                        data-testid={`button-size-${size.value}`}
+                      >
+                        {size.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {visibleColors.length > 0 && (
+              <div className="space-y-2" data-testid="section-color-selector">
+                <Label className="text-sm font-semibold">
+                  Colour{selectedColor ? `: ${selectedColor}` : ""}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {visibleColors.map((color) => {
+                    const available = isColorAvailable(color.name, selectedSize);
+                    const isSelected = selectedColor === color.name;
+                    return (
+                      <button
+                        key={color.name}
+                        onClick={() => {
+                          if (!available && !color.blurOnFront) return;
+                          setSelectedColor(color.name);
+                        }}
+                        title={color.name}
+                        className={`w-8 h-8 rounded-full border-2 transition-all relative ${
+                          isSelected
+                            ? "border-primary scale-110 shadow-md"
+                            : color.blurOnFront || !available
+                            ? "border-muted opacity-40 cursor-not-allowed"
+                            : "border-transparent hover:border-primary/50 hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: color.hexCode }}
+                        data-testid={`button-color-${color.name}`}
+                      >
+                        {!available && !color.blurOnFront && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="w-full h-px bg-muted-foreground rotate-45 block" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {!selectedColor && visibleColors.length > 0 && (
+                  <p className="text-xs text-muted-foreground">Select a colour</p>
+                )}
+              </div>
+            )}
+
             {(product.material || product.gsm || product.dimensions || product.color) && (
               <div className="space-y-2" data-testid="section-specifications">
                 <h3 className="text-sm font-semibold">Specifications</h3>
@@ -501,55 +624,57 @@ export default function ProductPage() {
                       {review.reviewerName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium" data-testid={`text-reviewer-name-${review.id}`}>{review.reviewerName}</p>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-3 h-3 ${star <= review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
-                          />
-                        ))}
-                      </div>
+                      <p className="text-sm font-medium">{review.reviewerName}</p>
+                      {review.amzReviewDate && (
+                        <p className="text-xs text-muted-foreground">{review.amzReviewDate}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {review.verifiedPurchase && (
-                      <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-verified-${review.id}`}>
-                        Verified Purchase
-                      </Badge>
-                    )}
-                    {review.amzReviewDate && (
-                      <span className="text-xs text-muted-foreground" data-testid={`text-review-date-${review.id}`}>{review.amzReviewDate}</span>
-                    )}
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 ${star <= review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                      />
+                    ))}
                   </div>
                 </div>
                 {review.title && (
-                  <p className="text-sm font-semibold mb-1" data-testid={`text-review-title-${review.id}`}>{review.title}</p>
+                  <p className="text-sm font-semibold mb-1">{review.title}</p>
                 )}
-                <p className="text-sm text-muted-foreground" data-testid={`text-review-body-${review.id}`}>{review.body}</p>
+                <p className="text-sm text-muted-foreground">{review.body}</p>
+                {review.verifiedPurchase && (
+                  <Badge variant="secondary" className="mt-2 text-[10px] no-default-hover-elevate no-default-active-elevate">
+                    <Check className="w-2.5 h-2.5 mr-1" /> Verified Purchase
+                  </Badge>
+                )}
               </Card>
             ))}
           </div>
+
           {visibleReviews < productReviews.length && (
-            <div className="mt-4 text-center">
-              <Button
-                variant="outline"
-                onClick={() => setVisibleReviews((v) => v + REVIEWS_PER_PAGE)}
-                data-testid="button-show-more-reviews"
-              >
-                Show more reviews ({productReviews.length - visibleReviews} remaining)
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => setVisibleReviews(prev => prev + REVIEWS_PER_PAGE)}
+              data-testid="button-load-more-reviews"
+            >
+              Load More Reviews
+            </Button>
           )}
         </div>
       )}
 
       {relatedProducts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 py-6 border-t">
-          <h2 className="text-lg font-bold mb-3" data-testid="text-related-title">You May Also Like</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {relatedProducts.map((p) => (
-              <ProductCardNew key={p.id} product={p} onQuickAdd={setQuickAddProduct} />
+          <h2 className="text-lg font-bold mb-4">You might also like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {relatedProducts.map((relProd) => (
+              <ProductCardNew
+                key={relProd.id}
+                product={relProd}
+                onQuickAdd={(p) => setQuickAddProduct(p)}
+              />
             ))}
           </div>
         </div>
@@ -558,7 +683,7 @@ export default function ProductPage() {
       <QuickAddSheet
         product={quickAddProduct}
         open={!!quickAddProduct}
-        onOpenChange={(open) => !open && setQuickAddProduct(null)}
+        onOpenChange={(open) => { if (!open) setQuickAddProduct(null); }}
       />
     </div>
   );

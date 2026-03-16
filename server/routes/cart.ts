@@ -19,7 +19,12 @@ export function registerCartRoutes(app: Express) {
       const input = addToCartSchema.parse(req.body);
       const sessionId = getSessionId(req, res);
       const { item, isNew } = await cartService.addItem(
-        sessionId, input.productId, input.quantity, input.personalizationName || null
+        sessionId,
+        input.productId,
+        input.quantity,
+        input.personalizationName || null,
+        input.selectedColor || null,
+        input.selectedSize || null
       );
       res.status(isNew ? 201 : 200).json(item);
     } catch (err) {

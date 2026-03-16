@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, ProductImage, ProductReview, Tag } from "@shared/types";
+import type { Product, ProductImage, ProductReview, Tag, CategoryVariantOptions, ProductVariant } from "@shared/types";
 
 const mapLegacyAudience = (val: string | null | undefined): string => {
   if (!val) return "";
@@ -88,6 +88,37 @@ export default function AdminProductEdit() {
       setSelectedTagIds(productTagsList.map(t => t.id));
     }
   }, [productTagsList]);
+
+  const { data: variantOptions } = useQuery<CategoryVariantOptions>({
+    queryKey: ["/api/admin/categories", product?.categoryId, "variants"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/categories/${product!.categoryId}/variants`);
+      return res.json();
+    },
+    enabled: !!product?.categoryId,
+  });
+
+  const { data: productVariants, refetch: refetchVariants } = useQuery<ProductVariant[]>({
+    queryKey: ["/api/admin/products", productId, "variants"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/products/${productId}/variants`);
+      return res.json();
+    },
+    enabled: !!productId,
+  });
+
+  const saveVariantsMutation = useMutation({
+    mutationFn: async (variants: { color: string; size: string; available: boolean }[]) => {
+      await apiRequest("PUT", `/api/admin/products/${productId}/variants`, { variants });
+    },
+    onSuccess: () => {
+      refetchVariants();
+      toast({ title: "Variants saved" });
+    },
+    onError: () => {
+      toast({ title: "Error saving variants", variant: "destructive" });
+    },
+  });
 
   const saveProductMutation = useMutation({
     mutationFn: async (data: Partial<Product>) => {
@@ -562,6 +593,87 @@ export default function AdminProductEdit() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {variantOptions && (variantOptions.sizes.length > 0 || variantOptions.colors.length > 0) && (
+          <div className="border rounded-lg p-4 space-y-3" data-testid="section-product-variants">
+            <h3 className="text-sm font-semibold">Variant Availability (Color × Size)</h3>
+            {variantOptions.sizes.length === 0 || variantOptions.colors.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Configure both colours and sizes in the category settings to enable the variant grid.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Check combos available for this product. Unchecked = unavailable (shown greyed out to customers).
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="text-xs w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="text-left p-1 font-medium text-muted-foreground min-w-[80px]">Size \ Colour</th>
+                        {variantOptions.colors.map(c => (
+                          <th key={c.name} className="p-1 text-center font-medium min-w-[70px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <span
+                                className="w-5 h-5 rounded-full border border-border inline-block"
+                                style={{ backgroundColor: c.hexCode }}
+                                title={c.name}
+                              />
+                              <span className="text-[10px] text-muted-foreground leading-tight">{c.name}</span>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variantOptions.sizes.map(size => (
+                        <tr key={size.value} className="border-t border-border/50">
+                          <td className="p-1 font-medium">{size.name}</td>
+                          {variantOptions.colors.map(color => {
+                            const existing = productVariants?.find(
+                              v => v.color === color.name && v.size === size.value
+                            );
+                            const isAvailable = existing ? existing.available : false;
+                            return (
+                              <td key={color.name} className="p-1 text-center">
+                                <Checkbox
+                                  checked={isAvailable}
+                                  onCheckedChange={(checked) => {
+                                    const current = productVariants ? [...productVariants] : [];
+                                    const idx = current.findIndex(
+                                      v => v.color === color.name && v.size === size.value
+                                    );
+                                    const newVariant = {
+                                      id: existing?.id || `${productId}-${color.name}-${size.value}`,
+                                      productId: productId!,
+                                      color: color.name,
+                                      size: size.value,
+                                      available: !!checked,
+                                    };
+                                    let updated: ProductVariant[];
+                                    if (idx >= 0) {
+                                      updated = [...current.slice(0, idx), newVariant, ...current.slice(idx + 1)];
+                                    } else {
+                                      updated = [...current, newVariant];
+                                    }
+                                    saveVariantsMutation.mutate(
+                                      updated.map(v => ({ color: v.color, size: v.size, available: v.available }))
+                                    );
+                                  }}
+                                  data-testid={`variant-checkbox-${color.name}-${size.value}`}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
         )}
 

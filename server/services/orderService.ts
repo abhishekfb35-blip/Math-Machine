@@ -202,12 +202,17 @@ export class OrderService {
 
   private async createOrderItems(
     orderId: string,
-    itemsWithProducts: { quantity: number; personalizationName: string | null; product: any }[]
+    itemsWithProducts: { quantity: number; personalizationName: string | null; selectedColor?: string | null; selectedSize?: string | null; product: any }[]
   ): Promise<OrderItemDetail[]> {
-    const expanded: { product: any; personalizationName: string | null }[] = [];
+    const expanded: { product: any; personalizationName: string | null; selectedColor: string | null; selectedSize: string | null }[] = [];
     itemsWithProducts.forEach(item => {
       for (let i = 0; i < item.quantity; i++) {
-        expanded.push({ product: item.product, personalizationName: item.personalizationName });
+        expanded.push({
+          product: item.product,
+          personalizationName: item.personalizationName,
+          selectedColor: item.selectedColor || null,
+          selectedSize: item.selectedSize || null,
+        });
       }
     });
     expanded.sort((a, b) => (b.product?.price || 0) - (a.product?.price || 0));
@@ -227,6 +232,8 @@ export class OrderService {
         productPrice: item.product.price,
         quantity: 1,
         personalizationName: item.personalizationName,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
         isFree,
       });
       details.push({

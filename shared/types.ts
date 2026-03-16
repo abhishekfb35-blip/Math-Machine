@@ -86,6 +86,8 @@ export interface CartItem {
   productId: string;
   quantity: number;
   personalizationName: string | null;
+  selectedColor: string | null;
+  selectedSize: string | null;
 }
 
 export interface InsertCartItem {
@@ -93,6 +95,8 @@ export interface InsertCartItem {
   productId: string;
   quantity?: number;
   personalizationName?: string | null;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
 }
 
 export interface Customer {
@@ -171,6 +175,8 @@ export interface OrderItem {
   productPrice: number;
   quantity: number;
   personalizationName: string | null;
+  selectedColor: string | null;
+  selectedSize: string | null;
   isFree: boolean | null;
 }
 
@@ -181,6 +187,8 @@ export interface InsertOrderItem {
   productPrice: number;
   quantity?: number;
   personalizationName?: string | null;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
   isFree?: boolean | null;
 }
 
@@ -310,4 +318,40 @@ export interface InsertCustomerConsent {
   pageUrl?: string | null;
   consentMethod?: string | null;
   consentText?: string | null;
+}
+
+export interface ColorOption {
+  name: string;
+  hexCode: string;
+  blurOnFront: boolean;
+  hideFromFront: boolean;
+}
+
+export interface SizeOption {
+  name: string;
+  value: string;
+  isDefault: boolean;
+  blurOnFront: boolean;
+  hideFromFront: boolean;
+}
+
+export interface CategoryVariantOptions {
+  categoryId: string;
+  colors: ColorOption[];
+  sizes: SizeOption[];
+}
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  color: string;
+  size: string;
+  available: boolean;
+}
+
+export interface InsertProductVariant {
+  productId: string;
+  color: string;
+  size: string;
+  available?: boolean;
 }

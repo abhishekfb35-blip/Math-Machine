@@ -288,4 +288,68 @@ export function registerAdminCatalogRoutes(app: Express) {
       res.status(500).json({ message: "Failed to set product tags" });
     }
   });
+
+  app.get("/api/admin/categories/:id/variants", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid category ID" });
+    const opts = await storage.getCategoryVariantOptions(id);
+    res.json(opts || { categoryId: id, colors: [], sizes: [] });
+  });
+
+  app.put("/api/admin/categories/:id/variants", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid category ID" });
+    try {
+      const schema = z.object({
+        colors: z.array(z.object({
+          name: z.string(),
+          hexCode: z.string(),
+          blurOnFront: z.boolean().default(false),
+          hideFromFront: z.boolean().default(false),
+        })),
+        sizes: z.array(z.object({
+          name: z.string(),
+          value: z.string(),
+          isDefault: z.boolean().default(false),
+          blurOnFront: z.boolean().default(false),
+          hideFromFront: z.boolean().default(false),
+        })),
+      });
+      const { colors, sizes } = schema.parse(req.body);
+      await storage.upsertCategoryVariantOptions(id, colors, sizes);
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Upsert category variants error:", err);
+      res.status(500).json({ message: "Failed to save variant options" });
+    }
+  });
+
+  app.get("/api/admin/products/:id/variants", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
+    const variants = await storage.getProductVariants(id);
+    res.json(variants);
+  });
+
+  app.put("/api/admin/products/:id/variants", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const schema = z.object({
+        variants: z.array(z.object({
+          color: z.string(),
+          size: z.string(),
+          available: z.boolean(),
+        })),
+      });
+      const { variants } = schema.parse(req.body);
+      await storage.upsertProductVariants(id, variants);
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Upsert product variants error:", err);
+      res.status(500).json({ message: "Failed to save product variants" });
+    }
+  });
 }

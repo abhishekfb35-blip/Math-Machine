@@ -33,7 +33,14 @@ export class CartService {
     };
   }
 
-  async addItem(sessionId: string, productId: string, quantity: number, personalizationName: string | null): Promise<{ item: CartItem; isNew: boolean }> {
+  async addItem(
+    sessionId: string,
+    productId: string,
+    quantity: number,
+    personalizationName: string | null,
+    selectedColor?: string | null,
+    selectedSize?: string | null
+  ): Promise<{ item: CartItem; isNew: boolean }> {
     const product = await this.storage.getProductById(productId);
     if (!product) {
       throw new NotFoundError("Product not found");
@@ -42,7 +49,11 @@ export class CartService {
     const cart = await this.storage.getOrCreateCart(sessionId);
     const existingItems = await this.storage.getCartItems(cart.id);
     const existing = existingItems.find(
-      i => i.productId === productId && i.personalizationName === (personalizationName || null)
+      i =>
+        i.productId === productId &&
+        i.personalizationName === (personalizationName || null) &&
+        (i.selectedColor || null) === (selectedColor || null) &&
+        (i.selectedSize || null) === (selectedSize || null)
     );
 
     if (existing) {
@@ -55,6 +66,8 @@ export class CartService {
       productId,
       quantity,
       personalizationName: personalizationName || null,
+      selectedColor: selectedColor || null,
+      selectedSize: selectedSize || null,
     });
 
     return { item, isNew: true };

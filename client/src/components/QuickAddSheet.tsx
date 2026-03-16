@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product } from "@shared/types";
+import type { Product, CategoryVariantOptions, ProductVariant } from "@shared/types";
 
 interface QuickAddSheetProps {
   product: Product | null;
@@ -22,7 +22,62 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const isCoupleProduct = product?.audience === "couples";
+
+  const { data: variantOptions } = useQuery<CategoryVariantOptions>({
+    queryKey: ["/api/categories", product?.categoryId, "variant-options"],
+    queryFn: async () => {
+      const res = await fetch(`/api/categories/${product!.categoryId}/variant-options`);
+      return res.json();
+    },
+    enabled: !!product?.categoryId && open,
+  });
+
+  const { data: productVariants } = useQuery<ProductVariant[]>({
+    queryKey: ["/api/products", product?.id, "variants"],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${product!.id}/variants`);
+      return res.json();
+    },
+    enabled: !!product?.id && open,
+  });
+
+  useEffect(() => {
+    if (!variantOptions || selectedSize) return;
+    const visible = variantOptions.sizes.filter(s => !s.hideFromFront);
+    if (visible.length > 0) {
+      const def = visible.find(s => s.isDefault) || visible[0];
+      setSelectedSize(def.value);
+    }
+  }, [variantOptions]);
+
+  useEffect(() => {
+    if (!open) {
+      setPersonalizationName("");
+      setGentlemanName("");
+      setLadyName("");
+      setQuantity(1);
+      setSelectedSize(null);
+      setSelectedColor(null);
+    }
+  }, [open]);
+
+  const visibleSizes = variantOptions?.sizes.filter(s => !s.hideFromFront) || [];
+  const visibleColors = variantOptions?.colors.filter(c => !c.hideFromFront) || [];
+
+  const isColorAvailable = (colorName: string, sizeValue: string | null): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    if (!sizeValue) return false;
+    const variant = productVariants.find(v => v.color === colorName && v.size === sizeValue);
+    return variant ? variant.available : false;
+  };
+
+  const isSizeAvailable = (sizeValue: string): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    return productVariants.some(v => v.size === sizeValue && v.available);
+  };
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -34,6 +89,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
             : undefined)
           : (personalizationName.trim() || undefined),
+        selectedColor: selectedColor || undefined,
+        selectedSize: selectedSize || undefined,
       });
       return res.json();
     },
@@ -43,10 +100,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         title: "Added to cart",
         description: `${product!.name} has been added to your cart.`,
       });
-      setPersonalizationName("");
-      setGentlemanName("");
-      setLadyName("");
-      setQuantity(1);
       onOpenChange(false);
     },
     onError: () => {
@@ -90,6 +143,71 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <Gift className="w-4 h-4 shrink-0" />
             <span>Buy 2 Get 1 Free - discount applied at checkout</span>
           </div>
+
+          {visibleSizes.length > 0 && (
+            <div className="space-y-1.5" data-testid="section-quickadd-sizes">
+              <Label className="text-sm font-medium">Size</Label>
+              <div className="flex flex-wrap gap-2">
+                {visibleSizes.map((size) => {
+                  const available = isSizeAvailable(size.value);
+                  const isSelected = selectedSize === size.value;
+                  return (
+                    <button
+                      key={size.value}
+                      onClick={() => {
+                        setSelectedSize(size.value);
+                        setSelectedColor(null);
+                      }}
+                      disabled={!available && !size.blurOnFront}
+                      className={`px-3 py-1 text-xs rounded border transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : size.blurOnFront || !available
+                          ? "border-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                          : "border-border hover:border-primary"
+                      }`}
+                      data-testid={`button-quickadd-size-${size.value}`}
+                    >
+                      {size.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {visibleColors.length > 0 && (
+            <div className="space-y-1.5" data-testid="section-quickadd-colors">
+              <Label className="text-sm font-medium">
+                Colour{selectedColor ? `: ${selectedColor}` : ""}
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {visibleColors.map((color) => {
+                  const available = isColorAvailable(color.name, selectedSize);
+                  const isSelected = selectedColor === color.name;
+                  return (
+                    <button
+                      key={color.name}
+                      onClick={() => {
+                        if (!available && !color.blurOnFront) return;
+                        setSelectedColor(color.name);
+                      }}
+                      title={color.name}
+                      className={`w-7 h-7 rounded-full border-2 transition-all ${
+                        isSelected
+                          ? "border-primary scale-110 shadow-md"
+                          : color.blurOnFront || !available
+                          ? "border-muted opacity-40 cursor-not-allowed"
+                          : "border-transparent hover:border-primary/50"
+                      }`}
+                      style={{ backgroundColor: color.hexCode }}
+                      data-testid={`button-quickadd-color-${color.name}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {isCoupleProduct ? (
             <div className="space-y-2">

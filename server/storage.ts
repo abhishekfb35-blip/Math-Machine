@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, categoryVariantOptions, productVariants } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -15,6 +15,8 @@ import type {
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
+  CategoryVariantOptions, ColorOption, SizeOption,
+  ProductVariant, InsertProductVariant,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray } from "drizzle-orm";
@@ -105,6 +107,12 @@ export interface IStorage {
   markConsentDiscountUsed(id: string): Promise<void>;
   resetConsentDiscountUsed(id: string): Promise<void>;
   getOrderByDiscountCode(code: string): Promise<Order | undefined>;
+
+  getCategoryVariantOptions(categoryId: string): Promise<CategoryVariantOptions | null>;
+  upsertCategoryVariantOptions(categoryId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void>;
+  getProductVariants(productId: string): Promise<ProductVariant[]>;
+  upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void>;
+  deleteProductVariantsByProduct(productId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -670,8 +678,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderByDiscountCode(code: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.discountCode, code));
+    const [order] = await db.select().from(orders).where(eq((orders as any).discountCode, code));
     return order;
+  }
+
+  async getCategoryVariantOptions(categoryId: string): Promise<CategoryVariantOptions | null> {
+    const [row] = await db.select().from(categoryVariantOptions).where(eq(categoryVariantOptions.categoryId, categoryId));
+    if (!row) return null;
+    let colors: ColorOption[] = [];
+    let sizes: SizeOption[] = [];
+    try { colors = JSON.parse(row.colors); } catch {}
+    try { sizes = JSON.parse(row.sizes); } catch {}
+    return { categoryId: row.categoryId, colors, sizes };
+  }
+
+  async upsertCategoryVariantOptions(categoryId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void> {
+    const colorsJson = JSON.stringify(colors);
+    const sizesJson = JSON.stringify(sizes);
+    const [existing] = await db.select().from(categoryVariantOptions).where(eq(categoryVariantOptions.categoryId, categoryId));
+    if (existing) {
+      await db.update(categoryVariantOptions).set({ colors: colorsJson, sizes: sizesJson }).where(eq(categoryVariantOptions.categoryId, categoryId));
+    } else {
+      await db.insert(categoryVariantOptions).values({ categoryId, colors: colorsJson, sizes: sizesJson });
+    }
+  }
+
+  async getProductVariants(productId: string): Promise<ProductVariant[]> {
+    return await db.select().from(productVariants).where(eq(productVariants.productId, productId));
+  }
+
+  async upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void> {
+    await db.delete(productVariants).where(eq(productVariants.productId, productId));
+    if (variants.length > 0) {
+      await db.insert(productVariants).values(
+        variants.map(v => ({ id: createId(), productId, color: v.color, size: v.size, available: v.available }))
+      );
+    }
+  }
+
+  async deleteProductVariantsByProduct(productId: string): Promise<void> {
+    await db.delete(productVariants).where(eq(productVariants.productId, productId));
   }
 }
 

@@ -50,6 +50,8 @@ export const cartItems = pgTable("cart_items", {
   productId: text("product_id").notNull(),
   quantity: integer("quantity").notNull().default(1),
   personalizationName: text("personalization_name"),
+  selectedColor: text("selected_color"),
+  selectedSize: text("selected_size"),
 });
 
 export const orders = pgTable("orders", {
@@ -82,6 +84,8 @@ export const orderItems = pgTable("order_items", {
   productPrice: integer("product_price").notNull(),
   quantity: integer("quantity").notNull().default(1),
   personalizationName: text("personalization_name"),
+  selectedColor: text("selected_color"),
+  selectedSize: text("selected_size"),
   isFree: boolean("is_free").default(false),
 });
 
@@ -122,6 +126,20 @@ export const productTags = pgTable("product_tags", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
   tagId: text("tag_id").notNull(),
+});
+
+export const categoryVariantOptions = pgTable("category_variant_options", {
+  categoryId: text("category_id").primaryKey(),
+  colors: text("colors").notNull().default("[]"),
+  sizes: text("sizes").notNull().default("[]"),
+});
+
+export const productVariants = pgTable("product_variants", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull(),
+  color: text("color").notNull(),
+  size: text("size").notNull(),
+  available: boolean("available").notNull().default(true),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -204,6 +222,8 @@ export const insertProductImageSchema = createInsertSchema(productImages).omit({
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true, createdAt: true });
 export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
+export const insertCategoryVariantOptionsSchema = createInsertSchema(categoryVariantOptions);
+export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
 export type {
   Category, InsertCategory,
@@ -220,4 +240,6 @@ export type {
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
+  CategoryVariantOptions,
+  ProductVariant, InsertProductVariant,
 } from "./types";
