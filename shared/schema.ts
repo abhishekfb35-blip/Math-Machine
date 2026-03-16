@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, varchar, real, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, varchar, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const categories = pgTable("categories", {
@@ -72,7 +72,6 @@ export const orders = pgTable("orders", {
   razorpayOrderId: text("razorpay_order_id"),
   paymentStatus: text("payment_status").default("pending"),
   notes: text("notes"),
-  emailStatus: jsonb("email_status"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

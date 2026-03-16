@@ -3,8 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   ChevronLeft, Search, Package, Truck, CheckCircle, XCircle, Clock,
-  MapPin, Phone, Mail, User, StickyNote, ChevronRight, Loader2, RefreshCw,
-  MailCheck, MailX, AlertTriangle
+  MapPin, Phone, Mail, User, StickyNote, ChevronRight, Loader2, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -72,90 +71,6 @@ function StatusBadge({ status }: { status: string }) {
       <Icon className="w-3 h-3" />
       {config.label}
     </Badge>
-  );
-}
-
-interface EmailDeliveryDetail {
-  sent: boolean;
-  messageId?: string;
-  error?: string;
-}
-
-interface ParsedEmailStatus {
-  customerEmail?: EmailDeliveryDetail;
-  adminEmail?: EmailDeliveryDetail;
-  channel?: string;
-  sentAt?: string;
-}
-
-function EmailStatusBadge({ emailStatus }: { emailStatus: Record<string, unknown> | null }) {
-  if (!emailStatus) {
-    return (
-      <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-no-data">
-        <Mail className="w-3 h-3" />
-        No email data
-      </Badge>
-    );
-  }
-
-  let status: ParsedEmailStatus;
-  try {
-    status = (typeof emailStatus === 'string' ? JSON.parse(emailStatus) : emailStatus) as ParsedEmailStatus;
-  } catch {
-    return (
-      <Badge className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-invalid">
-        <AlertTriangle className="w-3 h-3" />
-        Invalid email data
-      </Badge>
-    );
-  }
-
-  const customerOk = status.customerEmail?.sent ?? false;
-  const adminOk = status.adminEmail?.sent ?? false;
-  const allOk = customerOk && adminOk;
-  const allFailed = !customerOk && !adminOk;
-
-  return (
-    <div className="space-y-1.5" data-testid="email-status-section">
-      <div className="flex items-center gap-1.5">
-        {allOk ? (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-all-ok">
-            <MailCheck className="w-3 h-3" />
-            All emails sent
-          </Badge>
-        ) : allFailed ? (
-          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-all-failed">
-            <MailX className="w-3 h-3" />
-            All emails failed
-          </Badge>
-        ) : (
-          <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-partial">
-            <AlertTriangle className="w-3 h-3" />
-            Partial delivery
-          </Badge>
-        )}
-      </div>
-      <div className="text-xs space-y-0.5 text-muted-foreground">
-        <div className="flex items-center gap-1" data-testid="email-customer-status">
-          {customerOk ? <MailCheck className="w-3 h-3 text-green-600" /> : <MailX className="w-3 h-3 text-red-500" />}
-          <span>Customer: {customerOk ? "Sent" : "Failed"}</span>
-          {!customerOk && status.customerEmail?.error && (
-            <span className="text-red-500 truncate max-w-[200px]" title={status.customerEmail.error}>
-              — {status.customerEmail.error}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1" data-testid="email-admin-status">
-          {adminOk ? <MailCheck className="w-3 h-3 text-green-600" /> : <MailX className="w-3 h-3 text-red-500" />}
-          <span>Admin: {adminOk ? "Sent" : "Failed"}</span>
-          {!adminOk && status.adminEmail?.error && (
-            <span className="text-red-500 truncate max-w-[200px]" title={status.adminEmail.error}>
-              — {status.adminEmail.error}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -390,28 +305,19 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 mt-4">
-        <Card className="p-4">
-          <h3 className="font-semibold text-sm mb-2">Payment Info</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Payment Status</span>
-            <span className="capitalize">{order.paymentStatus || "Pending"}</span>
-            {order.paymentId && (
-              <>
-                <span className="text-muted-foreground">Payment ID</span>
-                <span className="font-mono text-xs">{order.paymentId}</span>
-              </>
-            )}
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
-            <Mail className="w-4 h-4" /> Email Notifications
-          </h3>
-          <EmailStatusBadge emailStatus={order.emailStatus || null} />
-        </Card>
-      </div>
+      <Card className="p-4 mt-4">
+        <h3 className="font-semibold text-sm mb-2">Payment Info</h3>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <span className="text-muted-foreground">Payment Status</span>
+          <span className="capitalize">{order.paymentStatus || "Pending"}</span>
+          {order.paymentId && (
+            <>
+              <span className="text-muted-foreground">Payment ID</span>
+              <span className="font-mono text-xs">{order.paymentId}</span>
+            </>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
