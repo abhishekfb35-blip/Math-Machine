@@ -73,12 +73,12 @@ export class CartService {
     return { item, isNew: true };
   }
 
-  async updateItem(itemId: string, quantity: number, personalizationName?: string): Promise<{ deleted: true } | CartItem> {
+  async updateItem(itemId: string, quantity: number, personalizationName?: string, selectedColor?: string | null, selectedSize?: string | null): Promise<{ deleted: true } | CartItem> {
     if (quantity === 0) {
       await this.storage.removeCartItem(itemId);
       return { deleted: true };
     }
-    const updated = await this.storage.updateCartItem(itemId, quantity, personalizationName);
+    const updated = await this.storage.updateCartItem(itemId, quantity, personalizationName, selectedColor, selectedSize);
     if (!updated) {
       throw new NotFoundError("Item not found");
     }

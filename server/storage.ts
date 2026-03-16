@@ -44,7 +44,7 @@ export interface IStorage {
   getOrCreateCart(sessionId: string): Promise<Cart>;
   getCartItems(cartId: string): Promise<CartItem[]>;
   addCartItem(item: InsertCartItem): Promise<CartItem>;
-  updateCartItem(id: string, quantity: number, personalizationName?: string): Promise<CartItem | undefined>;
+  updateCartItem(id: string, quantity: number, personalizationName?: string, selectedColor?: string | null, selectedSize?: string | null): Promise<CartItem | undefined>;
   removeCartItem(id: string): Promise<void>;
   clearCart(cartId: string): Promise<void>;
 
@@ -260,10 +260,16 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateCartItem(id: string, quantity: number, personalizationName?: string): Promise<CartItem | undefined> {
+  async updateCartItem(id: string, quantity: number, personalizationName?: string, selectedColor?: string | null, selectedSize?: string | null): Promise<CartItem | undefined> {
     const updates: Partial<CartItem> = { quantity };
     if (personalizationName !== undefined) {
       updates.personalizationName = personalizationName;
+    }
+    if (selectedColor !== undefined) {
+      updates.selectedColor = selectedColor ?? null;
+    }
+    if (selectedSize !== undefined) {
+      updates.selectedSize = selectedSize ?? null;
     }
     const [updated] = await db.update(cartItems).set(updates).where(eq(cartItems.id, id)).returning();
     return updated;

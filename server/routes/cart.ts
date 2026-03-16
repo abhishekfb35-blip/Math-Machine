@@ -42,7 +42,7 @@ export function registerCartRoutes(app: Express) {
     try {
       const input = updateCartItemSchema.parse(req.body);
       const id = req.params.id as string;
-      const result = await cartService.updateItem(id, input.quantity, input.personalizationName);
+      const result = await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
       if ("deleted" in result) return res.status(204).send();
       res.json(result);
     } catch (err) {

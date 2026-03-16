@@ -304,12 +304,14 @@ export function registerAdminCatalogRoutes(app: Express) {
         colors: z.array(z.object({
           name: z.string(),
           hexCode: z.string(),
+          isDefault: z.boolean().default(false),
           blurOnFront: z.boolean().default(false),
           hideFromFront: z.boolean().default(false),
         })),
         sizes: z.array(z.object({
           name: z.string(),
           value: z.string(),
+          description: z.string().optional(),
           isDefault: z.boolean().default(false),
           blurOnFront: z.boolean().default(false),
           hideFromFront: z.boolean().default(false),
