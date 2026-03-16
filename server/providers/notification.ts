@@ -25,10 +25,18 @@ export interface OrderNotification {
   paymentStatus?: string;
 }
 
+export interface EmailDeliveryDetail {
+  sent: boolean;
+  messageId?: string;
+  error?: string;
+}
+
 export interface NotificationResult {
   success: boolean;
   channel: string;
   error?: string;
+  customerEmail?: EmailDeliveryDetail;
+  adminEmail?: EmailDeliveryDetail;
 }
 
 export interface INotificationService {
@@ -279,7 +287,12 @@ export class ConsoleNotificationService implements INotificationService {
       `[Order Confirmation] Order #${notification.orderId} for ${notification.customerName} ` +
       `(${notification.customerEmail}) — ${notification.itemCount} items, total ₹${notification.total}`
     );
-    return { success: true, channel: "console" };
+    return {
+      success: true,
+      channel: "console",
+      customerEmail: { sent: true, messageId: "console" },
+      adminEmail: { sent: true, messageId: "console" },
+    };
   }
 
   async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult> {
@@ -311,36 +324,65 @@ export class ResendNotificationService implements INotificationService {
   }
 
   async sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult> {
+    const shortId = notification.orderId.slice(-8).toUpperCase();
+    const customerDetail: EmailDeliveryDetail = { sent: false };
+    const adminDetail: EmailDeliveryDetail = { sent: false };
+
     try {
       const [customerResult, adminResult] = await Promise.allSettled([
         this.resend.emails.send({
           from: this.fromEmail,
           to: notification.customerEmail,
-          subject: `Order Confirmed — #${notification.orderId.slice(-8).toUpperCase()} | TurtleLittle`,
+          subject: `Order Confirmed — #${shortId} | TurtleLittle`,
           html: buildCustomerEmailHtml(notification),
         }),
         this.resend.emails.send({
           from: this.fromEmail,
           to: this.adminEmail,
-          subject: `New Order #${notification.orderId.slice(-8).toUpperCase()} — ${formatCurrency(notification.total)} from ${notification.customerName}`,
+          subject: `New Order #${shortId} — ${formatCurrency(notification.total)} from ${notification.customerName}`,
           html: buildAdminEmailHtml(notification),
         }),
       ]);
 
-      const customerOk = customerResult.status === "fulfilled";
-      const adminOk = adminResult.status === "fulfilled";
+      if (customerResult.status === "fulfilled") {
+        const data = customerResult.value?.data;
+        customerDetail.sent = true;
+        customerDetail.messageId = data?.id || undefined;
+        console.log(`[Email OK] Customer confirmation for #${shortId} → ${notification.customerEmail} (msgId: ${data?.id || "n/a"})`);
+      } else {
+        customerDetail.error = String(customerResult.reason);
+        console.error(`[Email FAIL] Customer confirmation for #${shortId} → ${notification.customerEmail}: ${customerResult.reason}`);
+      }
 
-      if (!customerOk) console.error("Failed to send customer email:", (customerResult as PromiseRejectedResult).reason);
-      if (!adminOk) console.error("Failed to send admin email:", (adminResult as PromiseRejectedResult).reason);
+      if (adminResult.status === "fulfilled") {
+        const data = adminResult.value?.data;
+        adminDetail.sent = true;
+        adminDetail.messageId = data?.id || undefined;
+        console.log(`[Email OK] Admin notification for #${shortId} → ${this.adminEmail} (msgId: ${data?.id || "n/a"})`);
+      } else {
+        adminDetail.error = String(adminResult.reason);
+        console.error(`[Email FAIL] Admin notification for #${shortId} → ${this.adminEmail}: ${adminResult.reason}`);
+      }
 
       return {
-        success: customerOk,
+        success: customerDetail.sent,
         channel: "resend",
-        error: !customerOk ? `Customer email failed: ${(customerResult as PromiseRejectedResult).reason}` : undefined,
+        error: !customerDetail.sent ? `Customer email failed: ${customerDetail.error}` : undefined,
+        customerEmail: customerDetail,
+        adminEmail: adminDetail,
       };
     } catch (err) {
-      console.error("Resend notification error:", err);
-      return { success: false, channel: "resend", error: String(err) };
+      const errStr = String(err);
+      console.error(`[Email FAIL] Order #${shortId} notification threw: ${errStr}`);
+      customerDetail.error = errStr;
+      adminDetail.error = errStr;
+      return {
+        success: false,
+        channel: "resend",
+        error: errStr,
+        customerEmail: customerDetail,
+        adminEmail: adminDetail,
+      };
     }
   }
 

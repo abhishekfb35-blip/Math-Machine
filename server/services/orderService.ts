@@ -1,7 +1,7 @@
 import type { IStorage } from "../storage";
 import type { Order } from "@shared/types";
 import type { IPaymentProvider } from "../providers/payment";
-import type { INotificationService, OrderItemDetail } from "../providers/notification";
+import type { INotificationService, OrderItemDetail, NotificationResult, OrderNotification } from "../providers/notification";
 import { calculateDiscount } from "./discountService";
 
 export interface CheckoutInput {
@@ -94,7 +94,7 @@ export class OrderService {
     const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
     await this.storage.clearCart(cart.id);
 
-    this.notificationService.sendOrderConfirmation({
+    this.sendAndSaveEmailStatus(order.id, {
       orderId: order.id,
       customerName: input.customerName,
       customerEmail: input.customerEmail,
@@ -109,7 +109,7 @@ export class OrderService {
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
       paymentStatus: payment.status,
-    }).catch(err => console.error("Notification error:", err));
+    });
 
     return {
       orderId: order.id,
@@ -167,7 +167,7 @@ export class OrderService {
     const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
     await this.storage.clearCart(cart.id);
 
-    this.notificationService.sendOrderConfirmation({
+    this.sendAndSaveEmailStatus(order.id, {
       orderId: order.id,
       customerName: input.customerName,
       customerEmail: input.customerEmail,
@@ -182,7 +182,7 @@ export class OrderService {
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
       paymentStatus: "paid",
-    }).catch(err => console.error("Notification error:", err));
+    });
 
     return {
       orderId: order.id,
@@ -191,6 +191,35 @@ export class OrderService {
       couponDiscount,
       total: finalTotal,
     };
+  }
+
+  private sendAndSaveEmailStatus(orderId: string, notification: OrderNotification): void {
+    this.notificationService.sendOrderConfirmation(notification)
+      .then(async (result) => {
+        const emailStatus = JSON.stringify({
+          customerEmail: result.customerEmail || { sent: result.success },
+          adminEmail: result.adminEmail || { sent: false, error: "unknown" },
+          channel: result.channel,
+          sentAt: new Date().toISOString(),
+        });
+        try {
+          await this.storage.updateOrderEmailStatus(orderId, emailStatus);
+        } catch (dbErr) {
+          console.error(`[Email Status] Failed to save email status for order ${orderId}:`, dbErr);
+        }
+      })
+      .catch((err) => {
+        console.error(`[Email Status] Notification error for order ${orderId}:`, err);
+        const emailStatus = JSON.stringify({
+          customerEmail: { sent: false, error: String(err) },
+          adminEmail: { sent: false, error: String(err) },
+          channel: "error",
+          sentAt: new Date().toISOString(),
+        });
+        this.storage.updateOrderEmailStatus(orderId, emailStatus).catch((dbErr2) => {
+          console.error(`[Email Status] Failed to save failure status for order ${orderId}:`, dbErr2);
+        });
+      });
   }
 
   async getOrder(orderId: string): Promise<(Order & { items: any[] }) | null> {
