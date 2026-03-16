@@ -32,6 +32,7 @@ export interface EmailDeliveryDetail {
 }
 
 export interface NotificationResult {
+  /** true only when at least the customer email was delivered successfully */
   success: boolean;
   channel: string;
   error?: string;
