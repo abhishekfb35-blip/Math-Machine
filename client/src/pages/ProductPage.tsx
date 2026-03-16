@@ -103,13 +103,13 @@ export default function ProductPage() {
 
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSize) return [];
-    const productColorNamesForSize = new Set(
+    const availableColorNamesForSize = new Set(
       (productVariants || [])
-        .filter(v => v.size === selectedSize)
+        .filter(v => v.size === selectedSize && v.available)
         .map(v => v.color)
     );
     return (variantOptions?.colors || []).filter(
-      c => !c.hideFromFront && productColorNamesForSize.has(c.name)
+      c => !c.hideFromFront && availableColorNamesForSize.has(c.name)
     );
   })();
 
@@ -456,9 +456,9 @@ export default function ProductPage() {
                     )}
                   </SelectTrigger>
                   <SelectContent>
-                    {colorsForSelectedSize.filter(c => !c.blurOnFront).map((color) => (
-                      <SelectItem key={color.name} value={color.name} data-testid={`option-color-${color.name}`}>
-                        <span className="flex items-center gap-2">
+                    {colorsForSelectedSize.map((color) => (
+                      <SelectItem key={color.name} value={color.name} disabled={color.blurOnFront} data-testid={`option-color-${color.name}`}>
+                        <span className={`flex items-center gap-2 ${color.blurOnFront ? "opacity-40" : ""}`}>
                           <span className="inline-block w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: color.hexCode }} />
                           {color.name}
                         </span>
