@@ -196,12 +196,12 @@ export class OrderService {
   private sendAndSaveEmailStatus(orderId: string, notification: OrderNotification): void {
     this.notificationService.sendOrderConfirmation(notification)
       .then(async (result) => {
-        const emailStatus = JSON.stringify({
+        const emailStatus: Record<string, unknown> = {
           customerEmail: result.customerEmail || { sent: result.success },
           adminEmail: result.adminEmail || { sent: false, error: "unknown" },
           channel: result.channel,
           sentAt: new Date().toISOString(),
-        });
+        };
         try {
           await this.storage.updateOrderEmailStatus(orderId, emailStatus);
         } catch (dbErr) {
@@ -210,12 +210,12 @@ export class OrderService {
       })
       .catch((err) => {
         console.error(`[Email Status] Notification error for order ${orderId}:`, err);
-        const emailStatus = JSON.stringify({
+        const emailStatus: Record<string, unknown> = {
           customerEmail: { sent: false, error: String(err) },
           adminEmail: { sent: false, error: String(err) },
           channel: "error",
           sentAt: new Date().toISOString(),
-        });
+        };
         this.storage.updateOrderEmailStatus(orderId, emailStatus).catch((dbErr2) => {
           console.error(`[Email Status] Failed to save failure status for order ${orderId}:`, dbErr2);
         });

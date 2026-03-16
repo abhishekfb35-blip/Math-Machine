@@ -88,8 +88,8 @@ interface ParsedEmailStatus {
   sentAt?: string;
 }
 
-function EmailStatusBadge({ emailStatusJson }: { emailStatusJson: string | null }) {
-  if (!emailStatusJson) {
+function EmailStatusBadge({ emailStatus }: { emailStatus: Record<string, unknown> | null }) {
+  if (!emailStatus) {
     return (
       <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-no-data">
         <Mail className="w-3 h-3" />
@@ -100,7 +100,7 @@ function EmailStatusBadge({ emailStatusJson }: { emailStatusJson: string | null 
 
   let status: ParsedEmailStatus;
   try {
-    status = JSON.parse(emailStatusJson);
+    status = (typeof emailStatus === 'string' ? JSON.parse(emailStatus) : emailStatus) as ParsedEmailStatus;
   } catch {
     return (
       <Badge className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 border-0 gap-1 text-xs no-default-hover-elevate no-default-active-elevate" data-testid="badge-email-invalid">
@@ -409,7 +409,7 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
           <h3 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
             <Mail className="w-4 h-4" /> Email Notifications
           </h3>
-          <EmailStatusBadge emailStatusJson={order.emailStatus || null} />
+          <EmailStatusBadge emailStatus={order.emailStatus || null} />
         </Card>
       </div>
     </div>

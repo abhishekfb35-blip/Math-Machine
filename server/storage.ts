@@ -57,7 +57,7 @@ export interface IStorage {
   getOrderCount(filters?: { status?: string; search?: string }): Promise<number>;
   updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>;
   updateOrderNotes(orderId: string, notes: string): Promise<Order | undefined>;
-  updateOrderEmailStatus(orderId: string, emailStatus: string): Promise<void>;
+  updateOrderEmailStatus(orderId: string, emailStatus: Record<string, unknown>): Promise<void>;
 
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
@@ -374,7 +374,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async updateOrderEmailStatus(orderId: string, emailStatus: string): Promise<void> {
+  async updateOrderEmailStatus(orderId: string, emailStatus: Record<string, unknown>): Promise<void> {
     await db.update(orders)
       .set({ emailStatus, updatedAt: new Date() })
       .where(eq(orders.id, orderId));

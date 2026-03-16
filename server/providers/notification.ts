@@ -345,20 +345,32 @@ export class ResendNotificationService implements INotificationService {
       ]);
 
       if (customerResult.status === "fulfilled") {
-        const data = customerResult.value?.data;
-        customerDetail.sent = true;
-        customerDetail.messageId = data?.id || undefined;
-        console.log(`[Email OK] Customer confirmation for #${shortId} → ${notification.customerEmail} (msgId: ${data?.id || "n/a"})`);
+        const val = customerResult.value as { data?: { id?: string } | null; error?: { message?: string; name?: string; statusCode?: number } | null };
+        if (val.data?.id && !val.error) {
+          customerDetail.sent = true;
+          customerDetail.messageId = val.data.id;
+          console.log(`[Email OK] Customer confirmation for #${shortId} → ${notification.customerEmail} (msgId: ${val.data.id})`);
+        } else {
+          const errMsg = val.error?.message || val.error?.name || "Resend returned error without data";
+          customerDetail.error = errMsg;
+          console.error(`[Email FAIL] Customer confirmation for #${shortId} → ${notification.customerEmail}: ${errMsg}`);
+        }
       } else {
         customerDetail.error = String(customerResult.reason);
         console.error(`[Email FAIL] Customer confirmation for #${shortId} → ${notification.customerEmail}: ${customerResult.reason}`);
       }
 
       if (adminResult.status === "fulfilled") {
-        const data = adminResult.value?.data;
-        adminDetail.sent = true;
-        adminDetail.messageId = data?.id || undefined;
-        console.log(`[Email OK] Admin notification for #${shortId} → ${this.adminEmail} (msgId: ${data?.id || "n/a"})`);
+        const val = adminResult.value as { data?: { id?: string } | null; error?: { message?: string; name?: string; statusCode?: number } | null };
+        if (val.data?.id && !val.error) {
+          adminDetail.sent = true;
+          adminDetail.messageId = val.data.id;
+          console.log(`[Email OK] Admin notification for #${shortId} → ${this.adminEmail} (msgId: ${val.data.id})`);
+        } else {
+          const errMsg = val.error?.message || val.error?.name || "Resend returned error without data";
+          adminDetail.error = errMsg;
+          console.error(`[Email FAIL] Admin notification for #${shortId} → ${this.adminEmail}: ${errMsg}`);
+        }
       } else {
         adminDetail.error = String(adminResult.reason);
         console.error(`[Email FAIL] Admin notification for #${shortId} → ${this.adminEmail}: ${adminResult.reason}`);

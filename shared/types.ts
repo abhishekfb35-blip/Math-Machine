@@ -144,7 +144,7 @@ export interface Order {
   razorpayOrderId: string | null;
   paymentStatus: string | null;
   notes: string | null;
-  emailStatus: string | null;
+  emailStatus: Record<string, unknown> | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -166,7 +166,7 @@ export interface InsertOrder {
   razorpayOrderId?: string | null;
   paymentStatus?: string | null;
   notes?: string | null;
-  emailStatus?: string | null;
+  emailStatus?: Record<string, unknown> | null;
 }
 
 export interface OrderItem {
