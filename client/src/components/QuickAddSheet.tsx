@@ -45,6 +45,22 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     enabled: !!product?.id && open,
   });
 
+  const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
+  const hasCategoryPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
+    || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
+  const isTowelProduct = product?.productType === "towel";
+  const showVariantSelectors = isTowelProduct && hasCategoryPalette && hasProductVariants;
+
+  const getFirstAvailableColor = (sizeValue: string): string | null => {
+    const productColorNamesForSize = new Set(
+      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+    );
+    const first = (variantOptions?.colors || []).find(
+      c => !c.hideFromFront && !c.blurOnFront && productColorNamesForSize.has(c.name)
+    );
+    return first ? first.name : null;
+  };
+
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions || !productVariants || selectedSize) return;
     const visible = variantOptions.sizes.filter(s => !s.hideFromFront && !s.blurOnFront);
@@ -69,12 +85,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     }
   }, [open]);
 
-  const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
-  const hasCategoryPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
-    || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
-  const isTowelProduct = product?.productType === "towel";
-  const showVariantSelectors = isTowelProduct && hasCategoryPalette && hasProductVariants;
-
   const visibleSizes = showVariantSelectors
     ? (variantOptions?.sizes || []).filter(s => !s.hideFromFront)
     : [];
@@ -98,16 +108,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
     if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
     return (productVariants || []).some(v => v.size === sizeValue && v.available);
-  };
-
-  const getFirstAvailableColor = (sizeValue: string): string | null => {
-    const productColorNamesForSize = new Set(
-      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
-    );
-    const first = (variantOptions?.colors || []).find(
-      c => !c.hideFromFront && !c.blurOnFront && productColorNamesForSize.has(c.name)
-    );
-    return first ? first.name : null;
   };
 
   const addToCartMutation = useMutation({
