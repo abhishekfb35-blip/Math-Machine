@@ -47,3 +47,7 @@ ADMIN_EMAIL = "hello@mail.turtlelittle.com"
 CCAVENUE_MODE = "live"
 RAZORPAY_KEY_ID = "rzp_live_SM5vjEHAo4QGaW"
 RAZORPAY_KEY_SECRET = "d7UhRagURy8GaWwibWwyeemk"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
