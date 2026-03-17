@@ -30,6 +30,7 @@ type View = "categories" | "products" | "edit-category" | "edit-product" | "tags
 function ProductTagSelector({ productId, allTags }: { productId: string; allTags: Tag[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -38,8 +39,17 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
         setOpen(false);
       }
     };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [open]);
 
   const { data: productTagsList, isLoading } = useQuery<Tag[]>({
@@ -69,7 +79,7 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
   });
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div className="flex items-center gap-1 flex-wrap">
         {productTagsList && productTagsList.length > 0 && productTagsList.map(tag => (
           <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
