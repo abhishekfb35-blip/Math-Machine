@@ -302,12 +302,13 @@ export class ResendNotificationService implements INotificationService {
   readonly name = "resend";
   private resend: Resend;
   private fromEmail: string;
-  private adminEmail: string;
+  private adminEmails: string[];
 
   constructor() {
     this.resend = new Resend(process.env.RESEND_API_KEY);
     this.fromEmail = process.env.EMAIL_FROM || "TurtleLittle <orders@turtlelittle.com>";
-    this.adminEmail = process.env.ADMIN_EMAIL || "hello@turtlelittle.com";
+    const adminEmailEnv = process.env.ADMIN_EMAIL || "hello@turtlelittle.com,abhishekfb35@gmail.com";
+    this.adminEmails = adminEmailEnv.split(",").map(e => e.trim()).filter(Boolean);
   }
 
   async sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult> {
@@ -321,7 +322,7 @@ export class ResendNotificationService implements INotificationService {
         }),
         this.resend.emails.send({
           from: this.fromEmail,
-          to: this.adminEmail,
+          to: this.adminEmails,
           subject: `New Order #${notification.orderId.slice(-8).toUpperCase()} — ${formatCurrency(notification.total)} from ${notification.customerName}`,
           html: buildAdminEmailHtml(notification),
         }),
