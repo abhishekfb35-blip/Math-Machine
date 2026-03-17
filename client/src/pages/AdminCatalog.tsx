@@ -31,6 +31,17 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter") {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
   const { data: productTagsList, isLoading } = useQuery<Tag[]>({
     queryKey: ["/api/admin/products", productId, "tags"],
     queryFn: async () => {
