@@ -14,13 +14,9 @@ import blanketsBanner from "@/assets/images/blankets-banner.png";
 import type { Category, Product } from "@shared/types";
 
 const categoryBanners: Record<string, string> = {
-  "kids-bath-towels": kidsBanner,
-  "adult-bath-towels": couplesBanner,
-  "couple-bathrobes": couplesBanner,
-  "kids-blankets": blanketsBanner,
-  "kids-bathrobes": kidsBanner,
-  "teen-bathrobes": kidsBanner,
-  "adult-bathrobes": couplesBanner,
+  "towels": kidsBanner,
+  "bathrobes": couplesBanner,
+  "blankets": blanketsBanner,
 };
 
 export default function CategoryPage() {

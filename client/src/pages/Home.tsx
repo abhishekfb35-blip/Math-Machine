@@ -93,25 +93,13 @@ export default function Home() {
 
   const isLoading = categoriesLoading || productsLoading;
 
-  const kidsProducts = products?.filter((p) => {
-    const cat = categories?.find((c) => c.id === p.categoryId);
-    return cat && cat.slug === "kids-bath-towels";
-  }) || [];
+  const kidsProducts = products?.filter((p) => p.audience === "kids" && p.productType === "towel") || [];
 
-  const adultProducts = products?.filter((p) => {
-    const cat = categories?.find((c) => c.id === p.categoryId);
-    return cat && cat.slug.includes("couple");
-  }) || [];
+  const adultProducts = products?.filter((p) => p.audience === "couples") || [];
 
-  const blanketProducts = products?.filter((p) => {
-    const cat = categories?.find((c) => c.id === p.categoryId);
-    return cat && cat.slug.includes("blanket");
-  }) || [];
+  const blanketProducts = products?.filter((p) => p.productType === "blanket") || [];
 
-  const bathrobeProducts = products?.filter((p) => {
-    const cat = categories?.find((c) => c.id === p.categoryId);
-    return cat && cat.slug.includes("bathrobe");
-  }) || [];
+  const bathrobeProducts = products?.filter((p) => p.productType === "bathrobe") || [];
 
   const featuredKids = kidsProducts.slice(0, 4);
   const featuredAdults = adultProducts.slice(0, 4);

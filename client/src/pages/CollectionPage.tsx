@@ -42,12 +42,6 @@ const productTypeConfigs: Record<string, ProductTypeConfig> = {
   bathrobe: { type: "bathrobe", label: "Bathrobes", image: bathrobesImg, description: "Plush terry cotton, spa-day comfort" },
 };
 
-function getAudienceFromSlug(slug: string): Audience | null {
-  if (slug.includes("couple")) return "couples";
-  if (slug.includes("kids") || slug.includes("teen")) return "kids";
-  if (slug.includes("adult")) return "adults";
-  return null;
-}
 
 const genderFilters: { label: string; value: GenderFilter }[] = [
   { label: "All", value: "all" },
@@ -234,44 +228,33 @@ export default function CollectionPage() {
 
   const isLoading = catLoading || prodLoading;
 
-  const audienceCategories = useMemo(() => {
-    if (!categories) return [];
-    return categories.filter((c) => getAudienceFromSlug(c.slug) === audience);
-  }, [categories, audience]);
-
   const audienceProducts = useMemo(() => {
-    if (!products || !audienceCategories.length) return [];
-    const catIds = new Set(audienceCategories.map((c) => c.id));
-    let filtered = products.filter((p) => catIds.has(p.categoryId));
+    if (!products) return [];
+    let filtered = products.filter((p) => (p.audience || "kids") === audience);
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => detectGender(p) === genderFilter);
     }
     return filtered;
-  }, [products, audienceCategories, genderFilter]);
+  }, [products, audience, genderFilter]);
 
   const productTypeSections = useMemo(() => {
     const typeMap = new Map<string, { categories: Category[]; products: Product[] }>();
 
-    for (const cat of audienceCategories) {
-      const slug = cat.slug.toLowerCase();
-      let productType = "towel";
-      if (slug.includes("blanket")) productType = "blanket";
-      else if (slug.includes("bathrobe") || slug.includes("robe")) productType = "bathrobe";
-
+    for (const product of audienceProducts) {
+      const productType = product.productType || "towel";
       if (!typeMap.has(productType)) {
         typeMap.set(productType, { categories: [], products: [] });
       }
-      typeMap.get(productType)!.categories.push(cat);
+      typeMap.get(productType)!.products.push(product);
     }
 
-    for (const product of audienceProducts) {
-      const cat = audienceCategories.find((c) => c.id === product.categoryId);
-      if (!cat) continue;
-      const slug = cat.slug.toLowerCase();
-      let productType = "towel";
-      if (slug.includes("blanket")) productType = "blanket";
-      else if (slug.includes("bathrobe") || slug.includes("robe")) productType = "bathrobe";
-      typeMap.get(productType)?.products.push(product);
+    if (categories) {
+      for (const [productType, entry] of typeMap.entries()) {
+        const cat = categories.find((c) => c.slug === productType + "s" || c.slug === productType);
+        if (cat && !entry.categories.find((c) => c.id === cat.id)) {
+          entry.categories.push(cat);
+        }
+      }
     }
 
     const typeOrder = ["towel", "blanket", "bathrobe"];
@@ -283,7 +266,7 @@ export default function CollectionPage() {
         categories: typeMap.get(t)!.categories,
         products: typeMap.get(t)!.products,
       }));
-  }, [audienceCategories, audienceProducts]);
+  }, [audienceProducts, categories]);
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 

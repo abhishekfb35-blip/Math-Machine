@@ -73,7 +73,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
 - **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, `audit_logs`, and `customer_consents`.
 - **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, site config, and order status changes. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
-- **Product Categories**: Flat structure with a tagging system for cross-cutting attributes.
+- **Product Categories**: Consolidated to 3 top-level categories: **Towels** (slug: `towels`), **Bathrobes** (slug: `bathrobes`), **Blankets** (slug: `blankets`). Audience filtering (kids/adults/couples) is done via `product.audience` field; product type filtering via `product.productType` field. Category-slug-based audience detection has been removed from all frontend pages.
 - **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.
 - **Discount Logic**: "Buy 2 Get 1 Free" applied automatically, making the cheapest `floor(N/2)` items free for carts with 3+ items.
 

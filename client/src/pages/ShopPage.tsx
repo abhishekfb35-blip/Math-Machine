@@ -17,21 +17,10 @@ import type { Category, Product } from "@shared/types";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
 
-function getAudience(slug: string): AudienceFilter {
-  if (slug.includes("couple")) return "couples";
-  if (slug.includes("kids") || slug.includes("teen")) return "kids";
-  if (slug.includes("adult")) return "adults";
-  return "kids";
-}
-
 const categoryBanners: Record<string, { image: string; label: string; description: string }> = {
-  "kids-bath-towels": { image: kidsBanner, label: "Kids Bath Towels", description: "Disney princesses, superheroes & beloved characters" },
-  "adult-bath-towels": { image: couplesBanner, label: "Adult Bath Towels", description: "Premium personalised towels for adults" },
-  "couple-bathrobes": { image: couplesBanner, label: "Couple Bathrobes", description: "Elegant matching bathrobes for couples" },
-  "kids-blankets": { image: blanketsBanner, label: "Kids Blankets", description: "Soft personalised AC blankets for kids" },
-  "kids-bathrobes": { image: kidsBanner, label: "Kids Bathrobes", description: "Cozy personalised bathrobes for little ones" },
-  "teen-bathrobes": { image: kidsBanner, label: "Teen Bathrobes", description: "Stylish personalised bathrobes for teens" },
-  "adult-bathrobes": { image: couplesBanner, label: "Adult Bathrobes", description: "Premium personalised bathrobes for adults" },
+  "towels": { image: kidsBanner, label: "Towels", description: "Personalised embroidered luxury towels for everyone" },
+  "bathrobes": { image: couplesBanner, label: "Bathrobes", description: "Plush personalised bathrobes for all ages" },
+  "blankets": { image: blanketsBanner, label: "Blankets", description: "Soft personalised AC blankets for kids" },
 };
 
 const filters: { label: string; value: AudienceFilter; collectionUrl?: string }[] = [
@@ -96,16 +85,18 @@ export default function ShopPage() {
 
   const isLoading = categoriesLoading || productsLoading;
 
-  const filteredCategories = useMemo(() => {
-    if (!categories) return [];
-    if (activeFilter === "all") return categories;
-    return categories.filter((c) => getAudience(c.slug) === activeFilter);
-  }, [categories, activeFilter]);
-
   const filteredProducts = useMemo(() => {
-    if (!products || !filteredCategories.length) return [];
-    const catIds = new Set(filteredCategories.map((c) => c.id));
-    let result = products.filter((p) => catIds.has(p.categoryId));
+    if (!products) return [];
+    let result = products;
+    if (activeFilter !== "all") {
+      const audienceMap: Record<string, string[]> = {
+        kids: ["kids"],
+        adults: ["adults"],
+        couples: ["couples"],
+      };
+      const audiences = audienceMap[activeFilter] || [];
+      result = result.filter((p) => audiences.includes(p.audience || "kids"));
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter((p) =>
@@ -115,14 +106,15 @@ export default function ShopPage() {
       );
     }
     return result;
-  }, [products, filteredCategories, searchQuery]);
+  }, [products, activeFilter, searchQuery]);
 
   const groupedByCategory = useMemo(() => {
-    return filteredCategories.map((cat) => ({
+    if (!categories) return [];
+    return categories.map((cat) => ({
       category: cat,
       products: filteredProducts.filter((p) => p.categoryId === cat.id),
     })).filter(g => g.products.length > 0);
-  }, [filteredCategories, filteredProducts]);
+  }, [categories, filteredProducts]);
 
   return (
     <div className="pb-20 md:pb-8">
