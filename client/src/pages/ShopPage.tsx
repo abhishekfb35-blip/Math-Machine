@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearch, useLocation } from "wouter";
+import { useSearch } from "wouter";
 import { SlidersHorizontal, Search, X } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,11 @@ const categoryBanners: Record<string, { image: string; label: string; descriptio
   "blankets": { image: blanketsBanner, label: "Blankets", description: "Soft personalised AC blankets for kids" },
 };
 
-const filters: { label: string; value: AudienceFilter; collectionUrl?: string }[] = [
+const filters: { label: string; value: AudienceFilter }[] = [
   { label: "All", value: "all" },
-  { label: "Kids", value: "kids", collectionUrl: "/collection/kids" },
-  { label: "Adults", value: "adults", collectionUrl: "/collection/adults" },
-  { label: "Couples", value: "couples", collectionUrl: "/collection/couples" },
+  { label: "Kids", value: "kids" },
+  { label: "Adults", value: "adults" },
+  { label: "Couples", value: "couples" },
 ];
 
 function ProductGridSkeleton() {
@@ -50,7 +50,6 @@ export default function ShopPage() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const initialFilter = (params.get("filter") as AudienceFilter) || "all";
-  const [, setLocation] = useLocation();
 
   const initialSearch = params.get("q") || "";
   const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
@@ -61,11 +60,6 @@ export default function ShopPage() {
     const p = new URLSearchParams(searchString);
     const f = p.get("filter") as AudienceFilter;
     if (f && filters.some(fl => fl.value === f)) {
-      const filter = filters.find(fl => fl.value === f);
-      if (filter?.collectionUrl) {
-        setLocation(filter.collectionUrl);
-        return;
-      }
       setActiveFilter(f);
     }
     const q = p.get("q");
@@ -73,7 +67,7 @@ export default function ShopPage() {
       setSearchQuery(q);
       setActiveFilter("all");
     }
-  }, [searchString, setLocation]);
+  }, [searchString]);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -147,13 +141,7 @@ export default function ShopPage() {
                 key={f.value}
                 variant={activeFilter === f.value ? "default" : "outline"}
                 size="sm"
-                onClick={() => {
-                  if (f.collectionUrl) {
-                    setLocation(f.collectionUrl);
-                  } else {
-                    setActiveFilter(f.value);
-                  }
-                }}
+                onClick={() => setActiveFilter(f.value)}
                 className="shrink-0"
                 data-testid={`filter-${f.value}`}
               >
