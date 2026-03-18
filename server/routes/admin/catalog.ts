@@ -268,6 +268,28 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.status(204).send();
   });
 
+  app.post("/api/admin/products/bulk-add-tags", requireAdmin, async (req, res) => {
+    try {
+      const { productIds, tagIds } = z.object({
+        productIds: z.array(z.string()).min(1),
+        tagIds: z.array(z.string()).min(1),
+      }).parse(req.body);
+      let updated = 0;
+      for (const productId of productIds) {
+        const existing = await storage.getProductTags(productId);
+        const existingIds = existing.map(t => t.id);
+        const merged = Array.from(new Set([...existingIds, ...tagIds]));
+        await storage.setProductTags(productId, merged);
+        updated++;
+      }
+      res.json({ updated });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk add tags error:", err);
+      res.status(500).json({ message: "Failed to bulk add tags" });
+    }
+  });
+
   app.get("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });

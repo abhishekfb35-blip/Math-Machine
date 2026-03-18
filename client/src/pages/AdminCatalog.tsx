@@ -429,6 +429,8 @@ export default function AdminCatalog() {
   const [adminSearchActive, setAdminSearchActive] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
+  const [bulkTagSelection, setBulkTagSelection] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
@@ -778,6 +780,21 @@ export default function AdminCatalog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products", editingProduct?.id, "reviews"] });
       toast({ title: "Review removed" });
+    },
+  });
+
+  const bulkAddTagsMutation = useMutation({
+    mutationFn: async ({ productIds, tagIds }: { productIds: string[]; tagIds: string[] }) => {
+      return apiRequest("POST", "/api/admin/products/bulk-add-tags", { productIds, tagIds });
+    },
+    onSuccess: async (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      setBulkTagDialogOpen(false);
+      setBulkTagSelection(new Set());
+      toast({ title: `Tags added to ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: () => {
+      toast({ title: "Failed to apply tags", variant: "destructive" });
     },
   });
 
@@ -1341,28 +1358,42 @@ export default function AdminCatalog() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {someSelected && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={selectedProductIds.size > 15}
-                onClick={() => {
-                  const ids = Array.from(selectedProductIds);
-                  ids.forEach((id) => {
-                    const a = document.createElement('a');
-                    a.href = `/admin/catalog/product/${id}`;
-                    a.target = '_blank';
-                    a.rel = 'noopener';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  });
-                  window.focus();
-                }}
-                data-testid="button-bulk-edit"
-              >
-                <Pencil className="w-4 h-4 mr-1" />
-                {selectedProductIds.size > 15 ? "Max 15" : `Edit ${selectedProductIds.size}`}
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setBulkTagSelection(new Set());
+                    setBulkTagDialogOpen(true);
+                  }}
+                  data-testid="button-bulk-tag"
+                >
+                  <TagIcon className="w-4 h-4 mr-1" />
+                  Tag {selectedProductIds.size}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={selectedProductIds.size > 15}
+                  onClick={() => {
+                    const ids = Array.from(selectedProductIds);
+                    ids.forEach((id) => {
+                      const a = document.createElement('a');
+                      a.href = `/admin/catalog/product/${id}`;
+                      a.target = '_blank';
+                      a.rel = 'noopener';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    });
+                    window.focus();
+                  }}
+                  data-testid="button-bulk-edit"
+                >
+                  <Pencil className="w-4 h-4 mr-1" />
+                  {selectedProductIds.size > 15 ? "Max 15" : `Edit ${selectedProductIds.size}`}
+                </Button>
+              </>
             )}
             <Button
               size="sm"
@@ -1601,6 +1632,67 @@ export default function AdminCatalog() {
           </div>
         )}
       </div>
+
+      {/* Bulk Tag Dialog */}
+      <Dialog open={bulkTagDialogOpen} onOpenChange={(open) => { if (!open) { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); } }}>
+        <DialogContent className="max-w-sm" data-testid="dialog-bulk-tag">
+          <DialogHeader>
+            <DialogTitle>Add Tags to {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
+            <DialogDescription>Selected tags will be added to all selected products. Existing tags will not be removed.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-3 text-sm">
+              <button
+                className="text-primary underline underline-offset-2"
+                onClick={() => setBulkTagSelection(new Set(allTags?.map(t => t.id) || []))}
+                data-testid="button-bulk-tag-select-all"
+              >
+                Select all
+              </button>
+              <button
+                className="text-muted-foreground underline underline-offset-2"
+                onClick={() => setBulkTagSelection(new Set())}
+                data-testid="button-bulk-tag-deselect-all"
+              >
+                Deselect all
+              </button>
+            </div>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {allTags && allTags.length > 0 ? allTags.map(tag => (
+                <label key={tag.id} className="flex items-center gap-2 cursor-pointer py-0.5" data-testid={`bulk-tag-option-${tag.id}`}>
+                  <Checkbox
+                    checked={bulkTagSelection.has(tag.id)}
+                    onCheckedChange={(checked) => {
+                      setBulkTagSelection(prev => {
+                        const next = new Set(prev);
+                        if (checked) next.add(tag.id);
+                        else next.delete(tag.id);
+                        return next;
+                      });
+                    }}
+                  />
+                  <span className="text-sm">{tag.name}</span>
+                </label>
+              )) : (
+                <p className="text-sm text-muted-foreground">No tags available. Create tags first.</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="outline" size="sm" onClick={() => { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); }} data-testid="button-bulk-tag-cancel">
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={bulkTagSelection.size === 0 || bulkAddTagsMutation.isPending}
+                onClick={() => bulkAddTagsMutation.mutate({ productIds: Array.from(selectedProductIds), tagIds: Array.from(bulkTagSelection) })}
+                data-testid="button-bulk-tag-apply"
+              >
+                {bulkAddTagsMutation.isPending ? "Applying…" : `Apply to ${selectedProductIds.size}`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Review Management Dialog */}
       <Dialog open={!!reviewDialogProduct} onOpenChange={(open) => { if (!open) { setReviewDialogProduct(null); setEditingReview(null); setShowAddReviewForm(false); setReviewForm(emptyReviewForm); } }}>
