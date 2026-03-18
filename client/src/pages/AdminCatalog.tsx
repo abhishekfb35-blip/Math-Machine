@@ -785,9 +785,10 @@ export default function AdminCatalog() {
 
   const bulkAddTagsMutation = useMutation({
     mutationFn: async ({ productIds, tagIds }: { productIds: string[]; tagIds: string[] }) => {
-      return apiRequest("POST", "/api/admin/products/bulk-add-tags", { productIds, tagIds });
+      const res = await apiRequest("POST", "/api/admin/products/bulk-add-tags", { productIds, tagIds });
+      return res.json() as Promise<{ updated: number }>;
     },
-    onSuccess: async (data: any) => {
+    onSuccess: (data: { updated: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       setBulkTagDialogOpen(false);
       setBulkTagSelection(new Set());
