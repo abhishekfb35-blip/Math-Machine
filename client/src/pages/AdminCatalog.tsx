@@ -1840,6 +1840,7 @@ export default function AdminCatalog() {
                 const isFullPre = bulkTagInitialFull.has(tag.id) && !isRemoving;
                 const isPartialPre = bulkTagInitialPartial.has(tag.id) && !isRemoving;
                 const isChecked = isFullPre || isPartialPre || isAdding;
+                const tagCount = Array.from(selectedProductIds).filter(pid => (productTagMap?.[pid] || []).includes(tag.id)).length;
 
                 const handleClick = () => {
                   if (isRemoving) {
@@ -1868,7 +1869,7 @@ export default function AdminCatalog() {
                       className="pointer-events-none"
                     />
                     <span className={`text-sm ${isRemoving ? "line-through text-red-500/70" : ""}`}>{tag.name}</span>
-                    {isPartialPre && <span className="text-xs text-muted-foreground ml-auto">mixed</span>}
+                    {isPartialPre && <span className="text-xs text-muted-foreground ml-auto">mixed ({tagCount}/{selectedProductIds.size})</span>}
                     {isRemoving && <span className="text-xs text-red-500/70 ml-auto">will remove</span>}
                   </label>
                 );
