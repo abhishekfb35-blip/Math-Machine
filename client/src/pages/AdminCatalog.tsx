@@ -1838,7 +1838,7 @@ export default function AdminCatalog() {
                 const isRemoving = bulkTagRemoving.has(tag.id);
                 const isAdding = bulkTagNewlyAdding.has(tag.id);
                 const isFullPre = bulkTagInitialFull.has(tag.id) && !isRemoving;
-                const isPartialPre = bulkTagInitialPartial.has(tag.id) && !isRemoving;
+                const isPartialPre = bulkTagInitialPartial.has(tag.id) && !isRemoving && !isAdding;
                 const isChecked = isFullPre || isPartialPre || isAdding;
                 const tagCount = Array.from(selectedProductIds).filter(pid => (productTagMap?.[pid] || []).includes(tag.id)).length;
 
