@@ -27,7 +27,7 @@ import type { Category, Product, ProductImage, ProductReview, Tag, CategoryVaria
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
-function ProductTagSelector({ productId, allTags }: { productId: string; allTags: Tag[] }) {
+function ProductTagSelector({ productId, categoryId, allTags }: { productId: string; categoryId: string; allTags: Tag[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -72,6 +72,7 @@ function ProductTagSelector({ productId, allTags }: { productId: string; allTags
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "product-tags"] });
     },
     onError: () => {
       toast({ title: "Failed to update tags", variant: "destructive" });
@@ -1630,7 +1631,7 @@ export default function AdminCatalog() {
                       )}
                     </p>
                     <div className="mt-1">
-                      <ProductTagSelector productId={prod.id} allTags={allTags || []} />
+                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
