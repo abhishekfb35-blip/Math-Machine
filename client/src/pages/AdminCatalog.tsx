@@ -438,6 +438,11 @@ export default function AdminCatalog() {
   const [bulkTagInitialPartial, setBulkTagInitialPartial] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setSelectedProductIds(new Set());
+  }, [currentPage, tagFilter, categoryFilter, pageSize]);
+
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
   const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
   const [showAddReviewForm, setShowAddReviewForm] = useState(false);
