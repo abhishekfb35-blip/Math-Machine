@@ -1559,6 +1559,34 @@ export default function AdminCatalog() {
           )}
         </div>
 
+        {pageSize > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-end gap-1 mb-2" data-testid="pagination-controls-top">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 p-0"
+              disabled={safePage <= 1}
+              onClick={() => setCurrentPage(safePage - 1)}
+              data-testid="button-prev-page-top"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground px-2" data-testid="text-page-info-top">
+              {safePage} / {totalPages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-8 p-0"
+              disabled={safePage >= totalPages}
+              onClick={() => setCurrentPage(safePage + 1)}
+              data-testid="button-next-page-top"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
         {prodsLoading ? (
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : (
