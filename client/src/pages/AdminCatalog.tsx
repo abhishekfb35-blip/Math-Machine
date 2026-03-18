@@ -432,6 +432,7 @@ export default function AdminCatalog() {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagSelection, setBulkTagSelection] = useState<Set<string>>(new Set());
+  const [bulkTagPartial, setBulkTagPartial] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
@@ -804,6 +805,7 @@ export default function AdminCatalog() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"] });
       setBulkTagDialogOpen(false);
       setBulkTagSelection(new Set());
+      setBulkTagPartial(new Set());
       toast({ title: `Tags added to ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
     },
     onError: () => {
@@ -1382,7 +1384,16 @@ export default function AdminCatalog() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setBulkTagSelection(new Set());
+                    const ids = Array.from(selectedProductIds);
+                    const fullSet = new Set<string>();
+                    const partialSet = new Set<string>();
+                    (allTags || []).forEach(tag => {
+                      const count = ids.filter(id => productTagMap?.[id]?.includes(tag.id)).length;
+                      if (count === ids.length) fullSet.add(tag.id);
+                      else if (count > 0) partialSet.add(tag.id);
+                    });
+                    setBulkTagSelection(fullSet);
+                    setBulkTagPartial(partialSet);
                     setBulkTagDialogOpen(true);
                   }}
                   data-testid="button-bulk-tag"
@@ -1675,7 +1686,7 @@ export default function AdminCatalog() {
       </div>
 
       {/* Bulk Tag Dialog */}
-      <Dialog open={bulkTagDialogOpen} onOpenChange={(open) => { if (!open) { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); } }}>
+      <Dialog open={bulkTagDialogOpen} onOpenChange={(open) => { if (!open) { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); } }}>
         <DialogContent className="max-w-sm" data-testid="dialog-bulk-tag">
           <DialogHeader>
             <DialogTitle>Add Tags to {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
@@ -1685,41 +1696,52 @@ export default function AdminCatalog() {
             <div className="flex gap-3 text-sm">
               <button
                 className="text-primary underline underline-offset-2"
-                onClick={() => setBulkTagSelection(new Set(allTags?.map(t => t.id) || []))}
+                onClick={() => { setBulkTagSelection(new Set(allTags?.map(t => t.id) || [])); setBulkTagPartial(new Set()); }}
                 data-testid="button-bulk-tag-select-all"
               >
                 Select all
               </button>
               <button
                 className="text-muted-foreground underline underline-offset-2"
-                onClick={() => setBulkTagSelection(new Set())}
+                onClick={() => { setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); }}
                 data-testid="button-bulk-tag-deselect-all"
               >
                 Deselect all
               </button>
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {allTags && allTags.length > 0 ? allTags.map(tag => (
-                <label key={tag.id} className="flex items-center gap-2 cursor-pointer py-0.5" data-testid={`bulk-tag-option-${tag.id}`}>
-                  <Checkbox
-                    checked={bulkTagSelection.has(tag.id)}
-                    onCheckedChange={(checked) => {
-                      setBulkTagSelection(prev => {
-                        const next = new Set(prev);
-                        if (checked) next.add(tag.id);
-                        else next.delete(tag.id);
-                        return next;
-                      });
-                    }}
-                  />
-                  <span className="text-sm">{tag.name}</span>
-                </label>
-              )) : (
+              {allTags && allTags.length > 0 ? allTags.map(tag => {
+                const isFullyChecked = bulkTagSelection.has(tag.id);
+                const isPartial = !isFullyChecked && bulkTagPartial.has(tag.id);
+                return (
+                  <label
+                    key={tag.id}
+                    className={`flex items-center gap-2 cursor-pointer py-0.5 ${isPartial ? "opacity-50" : ""}`}
+                    data-testid={`bulk-tag-option-${tag.id}`}
+                    title={isPartial ? "Present on some selected products" : undefined}
+                  >
+                    <Checkbox
+                      checked={isFullyChecked || isPartial}
+                      onCheckedChange={(checked) => {
+                        setBulkTagPartial(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
+                        setBulkTagSelection(prev => {
+                          const next = new Set(prev);
+                          if (checked) next.add(tag.id);
+                          else next.delete(tag.id);
+                          return next;
+                        });
+                      }}
+                    />
+                    <span className="text-sm">{tag.name}</span>
+                    {isPartial && <span className="text-xs text-muted-foreground ml-auto">mixed</span>}
+                  </label>
+                );
+              }) : (
                 <p className="text-sm text-muted-foreground">No tags available. Create tags first.</p>
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" size="sm" onClick={() => { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); }} data-testid="button-bulk-tag-cancel">
+              <Button variant="outline" size="sm" onClick={() => { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); }} data-testid="button-bulk-tag-cancel">
                 Cancel
               </Button>
               <Button
