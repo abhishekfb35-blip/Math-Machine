@@ -1438,7 +1438,7 @@ export default function AdminCatalog() {
                     setBulkTagSelection(fullSet);
                     setBulkTagPartial(partialSet);
                     setBulkTagRemoval(new Set());
-                    setBulkTagInitialFull(new Set(fullSet));
+                    setBulkTagInitialFull(new Set([...fullSet, ...partialSet]));
                     setBulkTagDialogOpen(true);
                   }}
                   data-testid="button-bulk-tag"
