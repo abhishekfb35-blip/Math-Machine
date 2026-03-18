@@ -816,7 +816,6 @@ export default function AdminCatalog() {
       return res.json() as Promise<{ updated: number }>;
     },
     onSuccess: () => { invalidateBulkTagQueries(); },
-    onError: () => { toast({ title: "Failed to add tags", variant: "destructive" }); },
   });
 
   const bulkRemoveTagsMutation = useMutation({
@@ -825,28 +824,36 @@ export default function AdminCatalog() {
       return res.json() as Promise<{ updated: number }>;
     },
     onSuccess: () => { invalidateBulkTagQueries(); },
-    onError: () => { toast({ title: "Failed to remove tags", variant: "destructive" }); },
   });
 
   const handleBulkApply = async () => {
     const productIds = Array.from(selectedProductIds);
-    try {
-      const [addResult, removeResult] = await Promise.all([
-        bulkTagSelection.size > 0
-          ? bulkAddTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagSelection) })
-          : null,
-        bulkTagRemoval.size > 0
-          ? bulkRemoveTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagRemoval) })
-          : null,
-      ]);
-      const parts: string[] = [];
-      if (addResult) parts.push(`${bulkTagSelection.size} tag${bulkTagSelection.size !== 1 ? "s" : ""} added`);
-      if (removeResult) parts.push(`${bulkTagRemoval.size} tag${bulkTagRemoval.size !== 1 ? "s" : ""} removed`);
-      toast({ title: `${parts.join(", ")} for ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}` });
-      resetBulkTagDialog();
-    } catch {
-      // individual mutation onError handles the toast
-    }
+    const [addSettled, removeSettled] = await Promise.allSettled([
+      bulkTagSelection.size > 0
+        ? bulkAddTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagSelection) })
+        : Promise.resolve(null),
+      bulkTagRemoval.size > 0
+        ? bulkRemoveTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagRemoval) })
+        : Promise.resolve(null),
+    ]);
+    const addOk = addSettled.status === "fulfilled" && addSettled.value !== null;
+    const removeOk = removeSettled.status === "fulfilled" && removeSettled.value !== null;
+    const addFailed = addSettled.status === "rejected" && bulkTagSelection.size > 0;
+    const removeFailed = removeSettled.status === "rejected" && bulkTagRemoval.size > 0;
+
+    const parts: string[] = [];
+    if (addOk) parts.push(`${bulkTagSelection.size} tag${bulkTagSelection.size !== 1 ? "s" : ""} added`);
+    if (removeOk) parts.push(`${bulkTagRemoval.size} tag${bulkTagRemoval.size !== 1 ? "s" : ""} removed`);
+    if (addFailed) parts.push("add failed");
+    if (removeFailed) parts.push("remove failed");
+
+    const hasError = addFailed || removeFailed;
+    toast({
+      title: `${parts.join(", ")} for ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`,
+      variant: hasError ? "destructive" : "default",
+    });
+
+    if (!hasError || addOk || removeOk) resetBulkTagDialog();
   };
 
   const handleImageUpload = async (files: FileList) => {
