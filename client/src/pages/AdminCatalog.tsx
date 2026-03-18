@@ -1726,7 +1726,8 @@ export default function AdminCatalog() {
                         setBulkTagPartial(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
                         setBulkTagSelection(prev => {
                           const next = new Set(prev);
-                          if (checked) next.add(tag.id);
+                          // If was partial, always promote to fully selected regardless of emitted value
+                          if (isPartial || checked) next.add(tag.id);
                           else next.delete(tag.id);
                           return next;
                         });
