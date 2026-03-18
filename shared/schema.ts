@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, varchar, real } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, varchar, real, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const categories = pgTable("categories", {
@@ -72,6 +72,7 @@ export const orders = pgTable("orders", {
   razorpayOrderId: text("razorpay_order_id"),
   paymentStatus: text("payment_status").default("pending"),
   notes: text("notes"),
+  emailStatus: jsonb("email_status"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -126,7 +127,7 @@ export const productTags = pgTable("product_tags", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
   tagId: text("tag_id").notNull(),
-});
+}, (t) => [uniqueIndex("product_tags_product_tag_uniq").on(t.productId, t.tagId)]);
 
 export const categoryVariantOptions = pgTable("category_variant_options", {
   categoryId: text("category_id").primaryKey().references(() => categories.id, { onDelete: "cascade" }),

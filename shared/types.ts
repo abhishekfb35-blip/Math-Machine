@@ -144,6 +144,7 @@ export interface Order {
   razorpayOrderId: string | null;
   paymentStatus: string | null;
   notes: string | null;
+  emailStatus: unknown | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
