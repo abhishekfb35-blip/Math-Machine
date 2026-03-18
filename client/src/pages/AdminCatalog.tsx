@@ -433,6 +433,8 @@ export default function AdminCatalog() {
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagSelection, setBulkTagSelection] = useState<Set<string>>(new Set());
   const [bulkTagPartial, setBulkTagPartial] = useState<Set<string>>(new Set());
+  const [bulkTagRemoval, setBulkTagRemoval] = useState<Set<string>>(new Set());
+  const [bulkTagInitialFull, setBulkTagInitialFull] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
@@ -795,23 +797,57 @@ export default function AdminCatalog() {
     },
   });
 
+  const invalidateBulkTagQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"] });
+  };
+
+  const resetBulkTagDialog = () => {
+    setBulkTagDialogOpen(false);
+    setBulkTagSelection(new Set());
+    setBulkTagPartial(new Set());
+    setBulkTagRemoval(new Set());
+    setBulkTagInitialFull(new Set());
+  };
+
   const bulkAddTagsMutation = useMutation({
     mutationFn: async ({ productIds, tagIds }: { productIds: string[]; tagIds: string[] }) => {
       const res = await apiRequest("POST", "/api/admin/products/bulk-add-tags", { productIds, tagIds });
       return res.json() as Promise<{ updated: number }>;
     },
-    onSuccess: (data: { updated: number }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"] });
-      setBulkTagDialogOpen(false);
-      setBulkTagSelection(new Set());
-      setBulkTagPartial(new Set());
-      toast({ title: `Tags added to ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
-    },
-    onError: () => {
-      toast({ title: "Failed to apply tags", variant: "destructive" });
-    },
+    onSuccess: () => { invalidateBulkTagQueries(); },
+    onError: () => { toast({ title: "Failed to add tags", variant: "destructive" }); },
   });
+
+  const bulkRemoveTagsMutation = useMutation({
+    mutationFn: async ({ productIds, tagIds }: { productIds: string[]; tagIds: string[] }) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-remove-tags", { productIds, tagIds });
+      return res.json() as Promise<{ updated: number }>;
+    },
+    onSuccess: () => { invalidateBulkTagQueries(); },
+    onError: () => { toast({ title: "Failed to remove tags", variant: "destructive" }); },
+  });
+
+  const handleBulkApply = async () => {
+    const productIds = Array.from(selectedProductIds);
+    try {
+      const [addResult, removeResult] = await Promise.all([
+        bulkTagSelection.size > 0
+          ? bulkAddTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagSelection) })
+          : null,
+        bulkTagRemoval.size > 0
+          ? bulkRemoveTagsMutation.mutateAsync({ productIds, tagIds: Array.from(bulkTagRemoval) })
+          : null,
+      ]);
+      const parts: string[] = [];
+      if (addResult) parts.push(`${bulkTagSelection.size} tag${bulkTagSelection.size !== 1 ? "s" : ""} added`);
+      if (removeResult) parts.push(`${bulkTagRemoval.size} tag${bulkTagRemoval.size !== 1 ? "s" : ""} removed`);
+      toast({ title: `${parts.join(", ")} for ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}` });
+      resetBulkTagDialog();
+    } catch {
+      // individual mutation onError handles the toast
+    }
+  };
 
   const handleImageUpload = async (files: FileList) => {
     if (!editingProduct?.id) return;
@@ -1394,6 +1430,8 @@ export default function AdminCatalog() {
                     });
                     setBulkTagSelection(fullSet);
                     setBulkTagPartial(partialSet);
+                    setBulkTagRemoval(new Set());
+                    setBulkTagInitialFull(new Set(fullSet));
                     setBulkTagDialogOpen(true);
                   }}
                   data-testid="button-bulk-tag"
@@ -1686,24 +1724,24 @@ export default function AdminCatalog() {
       </div>
 
       {/* Bulk Tag Dialog */}
-      <Dialog open={bulkTagDialogOpen} onOpenChange={(open) => { if (!open) { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); } }}>
+      <Dialog open={bulkTagDialogOpen} onOpenChange={(open) => { if (!open) resetBulkTagDialog(); }}>
         <DialogContent className="max-w-sm" data-testid="dialog-bulk-tag">
           <DialogHeader>
-            <DialogTitle>Add Tags to {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
-            <DialogDescription>Selected tags will be added to all selected products. Existing tags will not be removed.</DialogDescription>
+            <DialogTitle>Manage Tags for {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
+            <DialogDescription>Check tags to add them to all selected products. Uncheck pre-selected tags to remove them.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="flex gap-3 text-sm">
               <button
                 className="text-primary underline underline-offset-2"
-                onClick={() => { setBulkTagSelection(new Set(allTags?.map(t => t.id) || [])); setBulkTagPartial(new Set()); }}
+                onClick={() => { setBulkTagSelection(new Set(allTags?.map(t => t.id) || [])); setBulkTagPartial(new Set()); setBulkTagRemoval(new Set()); }}
                 data-testid="button-bulk-tag-select-all"
               >
                 Select all
               </button>
               <button
                 className="text-muted-foreground underline underline-offset-2"
-                onClick={() => { setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); }}
+                onClick={() => { setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); setBulkTagRemoval(new Set(bulkTagInitialFull)); }}
                 data-testid="button-bulk-tag-deselect-all"
               >
                 Deselect all
@@ -1713,28 +1751,34 @@ export default function AdminCatalog() {
               {allTags && allTags.length > 0 ? allTags.map(tag => {
                 const isFullyChecked = bulkTagSelection.has(tag.id);
                 const isPartial = !isFullyChecked && bulkTagPartial.has(tag.id);
+                const isRemoval = !isFullyChecked && !isPartial && bulkTagRemoval.has(tag.id);
                 return (
                   <label
                     key={tag.id}
                     className={`flex items-center gap-2 cursor-pointer py-0.5 ${isPartial ? "opacity-50" : ""}`}
                     data-testid={`bulk-tag-option-${tag.id}`}
-                    title={isPartial ? "Present on some selected products" : undefined}
+                    title={isPartial ? "Present on some selected products" : isRemoval ? "Will be removed from all selected products" : undefined}
                   >
                     <Checkbox
                       checked={isFullyChecked || isPartial}
                       onCheckedChange={(checked) => {
                         setBulkTagPartial(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
-                        setBulkTagSelection(prev => {
-                          const next = new Set(prev);
-                          // If was partial, always promote to fully selected regardless of emitted value
-                          if (isPartial || checked) next.add(tag.id);
-                          else next.delete(tag.id);
-                          return next;
-                        });
+                        if (isRemoval) {
+                          setBulkTagRemoval(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
+                          setBulkTagSelection(prev => { const next = new Set(prev); next.add(tag.id); return next; });
+                        } else if (isPartial || checked) {
+                          setBulkTagSelection(prev => { const next = new Set(prev); next.add(tag.id); return next; });
+                        } else {
+                          setBulkTagSelection(prev => { const next = new Set(prev); next.delete(tag.id); return next; });
+                          if (bulkTagInitialFull.has(tag.id)) {
+                            setBulkTagRemoval(prev => { const s = new Set(prev); s.add(tag.id); return s; });
+                          }
+                        }
                       }}
                     />
-                    <span className="text-sm">{tag.name}</span>
+                    <span className={`text-sm ${isRemoval ? "line-through text-red-500/70" : ""}`}>{tag.name}</span>
                     {isPartial && <span className="text-xs text-muted-foreground ml-auto">mixed</span>}
+                    {isRemoval && <span className="text-xs text-red-500/70 ml-auto">will remove</span>}
                   </label>
                 );
               }) : (
@@ -1742,16 +1786,16 @@ export default function AdminCatalog() {
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" size="sm" onClick={() => { setBulkTagDialogOpen(false); setBulkTagSelection(new Set()); setBulkTagPartial(new Set()); }} data-testid="button-bulk-tag-cancel">
+              <Button variant="outline" size="sm" onClick={resetBulkTagDialog} data-testid="button-bulk-tag-cancel">
                 Cancel
               </Button>
               <Button
                 size="sm"
-                disabled={bulkTagSelection.size === 0 || bulkAddTagsMutation.isPending}
-                onClick={() => bulkAddTagsMutation.mutate({ productIds: Array.from(selectedProductIds), tagIds: Array.from(bulkTagSelection) })}
+                disabled={(bulkTagSelection.size === 0 && bulkTagRemoval.size === 0) || bulkAddTagsMutation.isPending || bulkRemoveTagsMutation.isPending}
+                onClick={handleBulkApply}
                 data-testid="button-bulk-tag-apply"
               >
-                {bulkAddTagsMutation.isPending ? "Applying…" : `Apply to ${selectedProductIds.size}`}
+                {(bulkAddTagsMutation.isPending || bulkRemoveTagsMutation.isPending) ? "Applying…" : `Apply to ${selectedProductIds.size}`}
               </Button>
             </div>
           </div>
