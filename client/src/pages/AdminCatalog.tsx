@@ -1806,7 +1806,7 @@ export default function AdminCatalog() {
         <DialogContent className="max-w-sm" data-testid="dialog-bulk-tag">
           <DialogHeader>
             <DialogTitle>Manage Tags for {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
-            <DialogDescription>Click a tag to toggle it. Pre-populated tags are checked — click once to mark for removal.</DialogDescription>
+            <DialogDescription>Click a tag to toggle it. Mixed tags (some products have it) go to adding on first click. Fully-present tags go to removing on first click.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="flex gap-3 text-sm">
