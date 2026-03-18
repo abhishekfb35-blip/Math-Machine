@@ -428,6 +428,7 @@ export default function AdminCatalog() {
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSearchActive, setAdminSearchActive] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagSelection, setBulkTagSelection] = useState<Set<string>>(new Set());
@@ -462,6 +463,16 @@ export default function AdminCatalog() {
     queryFn: async () => {
       if (!selectedCategory) return [];
       const res = await fetch(`/api/admin/products/category/${selectedCategory.id}`);
+      return res.json();
+    },
+    enabled: !!selectedCategory,
+  });
+
+  const { data: productTagMap } = useQuery<Record<string, string[]>>({
+    queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"],
+    queryFn: async () => {
+      if (!selectedCategory) return {};
+      const res = await fetch(`/api/admin/categories/${selectedCategory.id}/product-tags`);
       return res.json();
     },
     enabled: !!selectedCategory,
@@ -790,6 +801,7 @@ export default function AdminCatalog() {
     },
     onSuccess: (data: { updated: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"] });
       setBulkTagDialogOpen(false);
       setBulkTagSelection(new Set());
       toast({ title: `Tags added to ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
@@ -1330,9 +1342,15 @@ export default function AdminCatalog() {
   // ── Products List View ──
   if (view === "products" && selectedCategory) {
     const filteredProducts = products?.filter((p) => {
-      if (!categoryFilter.trim()) return true;
-      const q = categoryFilter.trim().toLowerCase();
-      return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
+      if (categoryFilter.trim()) {
+        const q = categoryFilter.trim().toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
+      }
+      if (tagFilter !== "all") {
+        const productTagIds = productTagMap?.[p.id] || [];
+        if (!productTagIds.includes(tagFilter)) return false;
+      }
+      return true;
     }) || [];
     const totalFiltered = filteredProducts.length;
     const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
@@ -1344,7 +1362,7 @@ export default function AdminCatalog() {
     return (
       <>
       <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("categories"); setSelectedCategory(null); setSelectedProductIds(new Set()); }} data-testid="button-back-categories-from-products">
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("categories"); setSelectedCategory(null); setSelectedProductIds(new Set()); setCategoryFilter(""); setTagFilter("all"); }} data-testid="button-back-categories-from-products">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Categories
         </Button>
 
@@ -1425,23 +1443,45 @@ export default function AdminCatalog() {
           </div>
         </div>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Filter products in this category..."
-            value={categoryFilter}
-            onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
-            className="pl-9 pr-9"
-            data-testid="input-category-filter"
-          />
-          {categoryFilter && (
-            <button
-              onClick={() => setCategoryFilter("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              data-testid="button-clear-category-filter"
+        <div className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter products in this category..."
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+              className="pl-9 pr-9"
+              data-testid="input-category-filter"
+            />
+            {categoryFilter && (
+              <button
+                onClick={() => setCategoryFilter("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                data-testid="button-clear-category-filter"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {allTags && allTags.length > 0 && (
+            <Select
+              value={tagFilter}
+              onValueChange={(val) => { setTagFilter(val); setCurrentPage(1); }}
+              data-testid="select-tag-filter"
             >
-              <X className="w-4 h-4" />
-            </button>
+              <SelectTrigger className="w-44 shrink-0" data-testid="trigger-tag-filter">
+                <TagIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="All tags" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tags</SelectItem>
+                {allTags.map(tag => (
+                  <SelectItem key={tag.id} value={tag.id} data-testid={`tag-filter-option-${tag.id}`}>
+                    {tag.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
 

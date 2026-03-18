@@ -79,6 +79,7 @@ export interface IStorage {
 
   getProductTags(productId: string): Promise<Tag[]>;
   setProductTags(productId: string, tagIds: string[]): Promise<void>;
+  getProductTagIdsByCategory(categoryId: string): Promise<Record<string, string[]>>;
 
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(filters?: { entityType?: string; entityId?: string; limit?: number; offset?: number }): Promise<AuditLog[]>;
@@ -470,6 +471,20 @@ export class DatabaseStorage implements IStorage {
     if (tagIds.length > 0) {
       await db.insert(productTags).values(tagIds.map(tagId => ({ id: createId(), productId, tagId })));
     }
+  }
+
+  async getProductTagIdsByCategory(categoryId: string): Promise<Record<string, string[]>> {
+    const rows = await db
+      .select({ productId: productTags.productId, tagId: productTags.tagId })
+      .from(productTags)
+      .innerJoin(products, eq(productTags.productId, products.id))
+      .where(eq(products.categoryId, categoryId));
+    const map: Record<string, string[]> = {};
+    for (const row of rows) {
+      if (!map[row.productId]) map[row.productId] = [];
+      map[row.productId].push(row.tagId);
+    }
+    return map;
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {

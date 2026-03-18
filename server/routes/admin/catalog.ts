@@ -268,6 +268,13 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.status(204).send();
   });
 
+  app.get("/api/admin/categories/:id/product-tags", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid category ID" });
+    const map = await storage.getProductTagIdsByCategory(id);
+    res.json(map);
+  });
+
   app.post("/api/admin/products/bulk-add-tags", requireAdmin, async (req, res) => {
     try {
       const { productIds, tagIds } = z.object({
