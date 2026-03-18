@@ -1719,7 +1719,32 @@ export default function AdminCatalog() {
             )}
 
             {totalFiltered > 0 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4" data-testid="pagination-controls">
+              <div className="flex items-center gap-2 px-1 py-1 pt-4 border-t mt-4">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedProductIds(prev => {
+                        const next = new Set(prev);
+                        paginatedProducts.forEach(p => next.add(p.id));
+                        return next;
+                      });
+                    } else {
+                      setSelectedProductIds(prev => {
+                        const next = new Set(prev);
+                        paginatedProducts.forEach(p => next.delete(p.id));
+                        return next;
+                      });
+                    }
+                  }}
+                  data-testid="checkbox-select-all-bottom"
+                />
+                <span className="text-xs text-muted-foreground">Select all on this page</span>
+              </div>
+            )}
+
+            {totalFiltered > 0 && (
+              <div className="flex items-center justify-between pt-2" data-testid="pagination-controls">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Show</span>
                   <Select
