@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Order, OrderItem } from "@shared/types";
 
 interface OrderWithItems extends Order {
@@ -186,9 +187,22 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
         </h3>
         <div className="divide-y">
           {order.items.map((item, idx) => (
-            <div key={item.id || idx} className="flex items-center justify-between py-3 gap-2" data-testid={`row-order-item-${idx}`}>
+            <div key={item.id || idx} className="flex items-center gap-3 py-3" data-testid={`row-order-item-${idx}`}>
+              {item.imageUrl && (
+                <div className="w-12 h-12 rounded-md overflow-hidden bg-muted shrink-0">
+                  <img
+                    src={getProductImageUrl(item.imageUrl, "small")}
+                    alt={item.productName}
+                    className="w-full h-full object-contain"
+                    data-testid={`img-order-item-${idx}`}
+                  />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate" data-testid={`text-item-name-${idx}`}>{item.productName}</p>
+                {item.sku && (
+                  <p className="text-xs text-muted-foreground font-mono" data-testid={`text-item-sku-${idx}`}>SKU: {item.sku}</p>
+                )}
                 {(item.selectedSize || item.selectedColor) && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}

@@ -178,6 +178,8 @@ export interface OrderItem {
   selectedColor: string | null;
   selectedSize: string | null;
   isFree: boolean | null;
+  imageUrl?: string | null;
+  sku?: string | null;
 }
 
 export interface InsertOrderItem {
