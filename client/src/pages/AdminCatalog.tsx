@@ -1844,6 +1844,7 @@ export default function AdminCatalog() {
                 const handleClick = () => {
                   if (isRemoving) {
                     setBulkTagRemoving(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
+                    setBulkTagNewlyAdding(prev => { const s = new Set(prev); s.add(tag.id); return s; });
                   } else if (isFullPre || isPartialPre) {
                     setBulkTagRemoving(prev => { const s = new Set(prev); s.add(tag.id); return s; });
                   } else if (isAdding) {
