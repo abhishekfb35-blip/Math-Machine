@@ -1843,13 +1843,12 @@ export default function AdminCatalog() {
                 const tagCount = Array.from(selectedProductIds).filter(pid => (productTagMap?.[pid] || []).includes(tag.id)).length;
 
                 const handleClick = () => {
-                  if (isRemoving) {
-                    setBulkTagRemoving(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
-                    setBulkTagNewlyAdding(prev => { const s = new Set(prev); s.add(tag.id); return s; });
-                  } else if (isFullPre || isPartialPre) {
-                    setBulkTagRemoving(prev => { const s = new Set(prev); s.add(tag.id); return s; });
-                  } else if (isAdding) {
+                  if (isAdding) {
                     setBulkTagNewlyAdding(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
+                  } else if (isRemoving) {
+                    setBulkTagRemoving(prev => { const s = new Set(prev); s.delete(tag.id); return s; });
+                  } else if (isFullPre) {
+                    setBulkTagRemoving(prev => { const s = new Set(prev); s.add(tag.id); return s; });
                   } else {
                     setBulkTagNewlyAdding(prev => { const s = new Set(prev); s.add(tag.id); return s; });
                   }
@@ -1870,6 +1869,7 @@ export default function AdminCatalog() {
                     />
                     <span className={`text-sm ${isRemoving ? "line-through text-red-500/70" : ""}`}>{tag.name}</span>
                     {isPartialPre && <span className="text-xs text-muted-foreground ml-auto">mixed ({tagCount}/{selectedProductIds.size})</span>}
+                    {isAdding && <span className="text-xs text-green-600/80 ml-auto">{selectedProductIds.size} selected</span>}
                     {isRemoving && <span className="text-xs text-red-500/70 ml-auto">will remove</span>}
                   </label>
                 );
