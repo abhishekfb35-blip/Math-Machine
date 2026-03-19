@@ -30,12 +30,25 @@ interface CurrencyContextValue {
   isLoading: boolean;
 }
 
+const COOKIE_NAME = "tl_currency";
+const COOKIE_DAYS = 7;
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function setCookieValue(name: string, value: string, days: number): void {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: "INR",
   symbol: "₹",
   setCurrency: () => {},
   convertPrice: (x) => x,
-  formatPrice: (x) => `₹${x.toLocaleString("en-IN")}`,
+  formatPrice: (x) => `₹${Math.round(x).toLocaleString("en-IN")}`,
   availableCurrencies: [],
   isLoading: true,
 });
@@ -45,22 +58,19 @@ function applyRounding(amount: number, rule: string): number {
     return Math.ceil(amount + 0.01) - 0.01;
   }
   if (rule === "up") return Math.ceil(amount);
-  return Math.round(amount * 100) / 100;
+  return Math.round(amount);
 }
 
 function formatAmount(amount: number, currencyCode: string, sym: string): string {
   if (currencyCode === "INR") {
     return `₹${Math.round(amount).toLocaleString("en-IN")}`;
   }
-  const formatted = amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2);
-  return `${sym}${Number(formatted).toLocaleString("en-US")}`;
+  return `${sym}${amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-const STORAGE_KEY = "tl_currency";
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEY) || "INR";
+    return getCookie(COOKIE_NAME) || "INR";
   });
 
   const { data: config, isLoading: configLoading } = useQuery<CurrencyConfig>({
@@ -71,20 +81,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { data: geo } = useQuery<GeoData>({
     queryKey: ["/api/geo"],
     staleTime: 60 * 60 * 1000,
-    enabled: !localStorage.getItem(STORAGE_KEY),
+    enabled: !getCookie(COOKIE_NAME),
   });
 
   useEffect(() => {
-    if (geo && !localStorage.getItem(STORAGE_KEY) && config) {
+    if (geo && !getCookie(COOKIE_NAME) && config) {
       const enabledCodes = config.rules.filter(r => r.enabled).map(r => r.currency);
       if (geo.currency === "INR" || enabledCodes.includes(geo.currency)) {
         setCurrencyState(geo.currency);
+        setCookieValue(COOKIE_NAME, geo.currency, COOKIE_DAYS);
       }
     }
   }, [geo, config]);
 
   const setCurrency = useCallback((code: string) => {
-    localStorage.setItem(STORAGE_KEY, code);
+    setCookieValue(COOKIE_NAME, code, COOKIE_DAYS);
     setCurrencyState(code);
   }, []);
 

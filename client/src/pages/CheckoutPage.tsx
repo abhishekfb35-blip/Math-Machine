@@ -225,7 +225,7 @@ export default function CheckoutPage() {
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
       setIsProcessingPayment(false);
     }
-  }, [razorpayConfig, toast, navigate, appliedDiscount]);
+  }, [razorpayConfig, toast, navigate, appliedDiscount, currency]);
 
 
   const handleApplyDiscount = async () => {
@@ -607,7 +607,7 @@ export default function CheckoutPage() {
                 <span data-testid="text-checkout-total">{formatPrice(finalTotal)}</span>
               </div>
               {currency !== "INR" && (
-                <p className="text-xs text-muted-foreground text-right">* Indicative price. Charged in INR.</p>
+                <p className="text-xs text-muted-foreground text-right">Charged in {currency} at current exchange rate.</p>
               )}
             </div>
           </Card>

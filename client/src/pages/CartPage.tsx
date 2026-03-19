@@ -209,7 +209,7 @@ export default function CartPage() {
               <span data-testid="text-total">{cart ? formatPrice(cart.total) : "—"}</span>
             </div>
             {currency !== "INR" && (
-              <p className="text-xs text-muted-foreground text-right">* Indicative price. Charged in INR at checkout.</p>
+              <p className="text-xs text-muted-foreground text-right">Charged in {currency} at current exchange rate.</p>
             )}
           </div>
 
