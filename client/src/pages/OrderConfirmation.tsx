@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrency } from "@/context/CurrencyContext";
 import type { Order, OrderItem } from "@shared/types";
 
 interface OrderWithItems extends Order {
@@ -13,6 +14,7 @@ interface OrderWithItems extends Order {
 
 export default function OrderConfirmation() {
   const { id } = useParams<{ id: string }>();
+  const { formatPrice } = useCurrency();
 
   const { data: order, isLoading } = useQuery<OrderWithItems>({
     queryKey: ["/api/orders", id],
@@ -71,7 +73,7 @@ export default function OrderConfirmation() {
                   )}
                 </div>
                 <p className={`shrink-0 ${item.isFree ? "line-through text-muted-foreground" : ""}`}>
-                  ₹{item.productPrice.toLocaleString("en-IN")}
+                  {formatPrice(item.productPrice)}
                 </p>
               </div>
             ))}
@@ -80,12 +82,12 @@ export default function OrderConfirmation() {
           <div className="space-y-1 text-sm">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>₹{order.subtotal.toLocaleString("en-IN")}</span>
+              <span>{formatPrice(order.subtotal)}</span>
             </div>
             {order.discount > 0 && (
               <div className="flex justify-between gap-4 text-primary">
                 <span>Discount</span>
-                <span>-₹{order.discount.toLocaleString("en-IN")}</span>
+                <span>-{formatPrice(order.discount)}</span>
               </div>
             )}
             <div className="flex justify-between gap-4 text-muted-foreground">
@@ -95,8 +97,11 @@ export default function OrderConfirmation() {
             <Separator />
             <div className="flex justify-between gap-4 font-semibold text-base">
               <span>Total</span>
-              <span data-testid="text-order-total">₹{order.total.toLocaleString("en-IN")}</span>
+              <span data-testid="text-order-total">{formatPrice(order.total)}</span>
             </div>
+            {order.currency && order.currency !== "INR" && (
+              <p className="text-xs text-muted-foreground text-right">Charged in {order.currency} at time of order</p>
+            )}
           </div>
         </Card>
 

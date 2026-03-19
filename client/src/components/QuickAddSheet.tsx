@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ interface QuickAddSheetProps {
 
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
@@ -165,7 +167,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 {product.name}
               </h3>
               <p className="text-lg font-bold text-primary mt-1" data-testid="text-quickadd-price">
-                ₹{product.price.toLocaleString("en-IN")}
+                {formatPrice(product.price)}
               </p>
             </div>
           </div>
@@ -324,7 +326,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             ) : (
               <>
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                Add to Cart - ₹{(product.price * quantity).toLocaleString("en-IN")}
+                Add to Cart - {formatPrice(product.price * quantity)}
               </>
             )}
           </Button>

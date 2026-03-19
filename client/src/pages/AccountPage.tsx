@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrency } from "@/context/CurrencyContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, OrderItem } from "@shared/types";
@@ -22,6 +23,7 @@ export default function AccountPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { customer, isLoading, isAuthenticated, logout } = useAuth();
+  const { formatPrice } = useCurrency();
   const [tab, setTab] = useState<"profile" | "orders">("profile");
 
   const [name, setName] = useState("");
@@ -196,7 +198,7 @@ export default function AccountPage() {
                   </div>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{order.items.length} item{order.items.length !== 1 ? "s" : ""}</span>
-                    <span className="font-medium text-foreground">₹{order.total.toLocaleString("en-IN")}</span>
+                    <span className="font-medium text-foreground">{formatPrice(order.total)}</span>
                   </div>
                   {order.createdAt && (
                     <p className="text-xs text-muted-foreground mt-1">
