@@ -3,6 +3,7 @@ import { storage } from "../storage";
 const FRANKFURTER_API = "https://api.frankfurter.app/latest";
 const FRANKFURTER_CURRENCIES = ["GBP", "USD", "EUR", "SGD", "AUD", "CAD"];
 const AED_USD_PEG = 3.6725;
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 const DEFAULT_PRICING_RULES = [
   { currency: "GBP", symbol: "£", displayName: "British Pound", markupPercent: 0, roundingRule: "nearest", enabled: true },
@@ -98,8 +99,7 @@ export async function initializeExchangeRateService(): Promise<void> {
   await maybeRefreshDaily();
 
   if (!refreshTimer) {
-    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
-    refreshTimer = setInterval(maybeRefreshDaily, TWELVE_HOURS);
+    refreshTimer = setInterval(maybeRefreshDaily, TWENTY_FOUR_HOURS);
   }
 }
 
@@ -111,7 +111,7 @@ export function getRateServiceStatus(): {
   nextRefreshAt: string | null;
 } {
   const nextRefreshAt = lastFetchAt
-    ? new Date(lastFetchAt.getTime() + 12 * 60 * 60 * 1000).toISOString()
+    ? new Date(lastFetchAt.getTime() + TWENTY_FOUR_HOURS).toISOString()
     : null;
   return {
     fetchedToday: isFetchedToday(),
@@ -123,7 +123,10 @@ export function getRateServiceStatus(): {
 }
 
 export function applyRounding(amount: number, rule: string): number {
-  if (rule === "up99") return Math.floor(amount) + 0.99;
+  if (rule === "up99") {
+    const intPart = Math.ceil(amount);
+    return intPart - 0.01;
+  }
   if (rule === "up") return Math.ceil(amount);
   return Math.round(amount * 100) / 100;
 }

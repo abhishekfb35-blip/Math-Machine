@@ -28,8 +28,10 @@ export function registerAdminPricingRoutes(app: Express) {
       const ratesMap: Record<string, number> = {};
       for (const r of rates) ratesMap[r.currency] = r.rateFromInr;
 
+      const enabledRules = rules.filter(r => r.enabled);
+
       res.json({
-        rules: rules.map(r => ({
+        rules: enabledRules.map(r => ({
           code: r.currency,
           symbol: r.symbol,
           displayName: r.displayName,
@@ -68,12 +70,29 @@ export function registerAdminPricingRoutes(app: Express) {
 
   app.get("/api/admin/currency-status", requireAdmin, async (_req, res) => {
     try {
-      const rates = await storage.getCurrencyRates();
+      const [rules, rates] = await Promise.all([
+        storage.getPricingRules(),
+        storage.getCurrencyRates(),
+      ]);
       const status = getRateServiceStatus();
+      const rateMap: Record<string, number> = {};
+      for (const r of rates) rateMap[r.currency] = r.rateFromInr;
+
+      const totalEnabled = rules.filter(r => r.enabled).length;
+      const totalDisabled = rules.filter(r => !r.enabled).length;
+
       res.json({
         ...status,
+        totalEnabled,
+        totalDisabled,
         rateCount: rates.length,
-        currencies: rates.map(r => ({ currency: r.currency, rate: r.rateFromInr, updatedAt: r.updatedAt })),
+        currencies: rules.map(r => ({
+          currency: r.currency,
+          symbol: r.symbol,
+          displayName: r.displayName,
+          enabled: r.enabled,
+          rate: rateMap[r.currency] ?? null,
+        })),
       });
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch currency status" });

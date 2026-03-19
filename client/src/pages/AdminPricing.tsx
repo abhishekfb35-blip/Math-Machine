@@ -185,40 +185,57 @@ export default function AdminPricing() {
               <AlertCircle className="w-4 h-4" /> Failed to load status
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
-                <div className="flex items-center gap-1.5">
-                  {status?.fetchedToday ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  )}
-                  <span className={status?.fetchedToday ? "text-green-600 dark:text-green-400" : "text-amber-600"}>
-                    {status?.fetchedToday ? "Fetched" : "Stale"}
-                  </span>
+            <div className="space-y-3">
+              {status?.lastFetchError && (
+                <div className="flex items-start gap-2 p-2.5 rounded-md bg-destructive/10 text-destructive text-xs">
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>Last error: {status.lastFetchError}</span>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Rate Date</div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="font-mono text-xs">{status?.lastFetchDateStr ?? "—"}</span>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
+                  <div className="flex items-center gap-1.5">
+                    {status?.lastFetchAt == null ? (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-muted-foreground">Never fetched</span>
+                      </>
+                    ) : status?.fetchedToday ? (
+                      <>
+                        <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                        <span className="text-green-600 dark:text-green-400">Fetched</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="text-amber-600">Stale</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Last Fetched</div>
-                <span className="text-xs">{formatTs(status?.lastFetchAt ?? null)}</span>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Status</div>
-                {status?.lastFetchError ? (
-                  <Badge variant="destructive" className="text-xs">{status.lastFetchError}</Badge>
-                ) : (
-                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
-                    OK
-                  </Badge>
-                )}
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Rate Date</div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="font-mono text-xs">{status?.lastFetchDateStr ?? "—"}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Next Refresh</div>
+                  <span className="text-xs">{formatTs(status?.nextRefreshAt ?? null)}</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Currencies</div>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">
+                      {data?.rules?.filter(r => r.enabled).length ?? 0} on
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {data?.rules?.filter(r => !r.enabled).length ?? 0} off
+                    </Badge>
+                  </div>
+                </div>
               </div>
             </div>
           )}
