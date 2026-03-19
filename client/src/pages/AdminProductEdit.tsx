@@ -775,7 +775,7 @@ export default function AdminProductEdit() {
           </div>
         )}
 
-        {variantOptions && (variantOptions.sizes.length > 0 || variantOptions.colors.length > 0) && (
+        {product.productType === "towel" && variantOptions && (variantOptions.sizes.length > 0 || variantOptions.colors.length > 0) && (
           <div className="border rounded-lg p-4 space-y-3" data-testid="section-product-variants">
             <h3 className="text-sm font-semibold">Variant Availability (Color × Size)</h3>
             {variantOptions.sizes.length === 0 || variantOptions.colors.length === 0 ? (

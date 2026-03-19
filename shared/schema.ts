@@ -34,6 +34,8 @@ export const products = pgTable("products", {
   audience: text("audience").default("kids"),
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
+  variantColors: text("variant_colors").default("[]").notNull(),
+  variantSizes: text("variant_sizes").default("[]").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
