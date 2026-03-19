@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
+import { useCurrency } from "@/context/CurrencyContext";
 import type { Product, CartItem } from "@shared/types";
 
 interface CartItemWithProduct extends CartItem {
@@ -23,10 +24,11 @@ interface CartData {
   total: number;
 }
 
-function CartItemRow({ item, onRemove, onUpdateQty }: {
+function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
   item: CartItemWithProduct;
   onRemove: () => void;
   onUpdateQty: (qty: number) => void;
+  formatPrice: (n: number) => string;
 }) {
   if (!item.product) return null;
 
@@ -59,7 +61,7 @@ function CartItemRow({ item, onRemove, onUpdateQty }: {
           </p>
         )}
         <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
-          ₹{item.product.price.toLocaleString("en-IN")}
+          {formatPrice(item.product.price)}
         </p>
         <div className="flex items-center gap-2 pt-1">
           <Button
@@ -95,6 +97,7 @@ function CartItemRow({ item, onRemove, onUpdateQty }: {
 }
 
 export default function CartPage() {
+  const { formatPrice, currency } = useCurrency();
   const { data: cart, isLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
   });
@@ -168,6 +171,7 @@ export default function CartPage() {
               item={item}
               onRemove={() => removeMutation.mutate(item.id)}
               onUpdateQty={(qty) => updateMutation.mutate({ id: item.id, quantity: qty })}
+              formatPrice={formatPrice}
             />
           ))}
         </Card>
@@ -177,7 +181,7 @@ export default function CartPage() {
             <div className="flex items-center gap-2">
               <Gift className="w-5 h-5 text-primary shrink-0" />
               <p className="text-sm font-medium" data-testid="text-discount-applied">
-                You saved ₹{cart.discount.toLocaleString("en-IN")}!
+                You saved {formatPrice(cart.discount)}!
               </p>
             </div>
           </Card>
@@ -187,12 +191,12 @@ export default function CartPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Subtotal</span>
-              <span data-testid="text-subtotal">₹{cart?.subtotal.toLocaleString("en-IN")}</span>
+              <span data-testid="text-subtotal">{cart ? formatPrice(cart.subtotal) : "—"}</span>
             </div>
             {cart && cart.discount > 0 && (
               <div className="flex justify-between gap-4 text-primary">
                 <span>Discount</span>
-                <span data-testid="text-discount">-₹{cart.discount.toLocaleString("en-IN")}</span>
+                <span data-testid="text-discount">-{formatPrice(cart.discount)}</span>
               </div>
             )}
             <div className="flex justify-between gap-4 text-muted-foreground">
@@ -202,8 +206,11 @@ export default function CartPage() {
             <Separator />
             <div className="flex justify-between gap-4 font-semibold text-lg">
               <span>Total</span>
-              <span data-testid="text-total">₹{cart?.total.toLocaleString("en-IN")}</span>
+              <span data-testid="text-total">{cart ? formatPrice(cart.total) : "—"}</span>
             </div>
+            {currency !== "INR" && (
+              <p className="text-xs text-muted-foreground text-right">* Indicative price. Charged in INR at checkout.</p>
+            )}
           </div>
 
           <Link href="/checkout">

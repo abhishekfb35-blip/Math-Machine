@@ -17,6 +17,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
 import SignInModal from "@/components/SignInModal";
+import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 interface CartData {
@@ -57,6 +58,7 @@ export default function CheckoutPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { customer } = useAuth();
+  const { formatPrice, currency } = useCurrency();
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -151,6 +153,7 @@ export default function CheckoutPage() {
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         discountCode: appliedDiscount?.code || null,
+        currency: currency !== "INR" ? currency : undefined,
       });
       const orderData = await orderRes.json();
 
@@ -495,8 +498,8 @@ export default function CheckoutPage() {
                 {isPending
                   ? "Processing..."
                   : paymentMethod === "razorpay"
-                    ? `Pay ₹${finalTotal.toLocaleString("en-IN")}`
-                    : `Place Order - ₹${finalTotal.toLocaleString("en-IN")}`}
+                    ? `Pay ${formatPrice(finalTotal)}`
+                    : `Place Order - ${formatPrice(finalTotal)}`}
               </Button>
             </form>
           </Form>
@@ -519,7 +522,7 @@ export default function CheckoutPage() {
                     {item.personalizationName && (
                       <p className="text-xs text-muted-foreground">Name: {item.personalizationName}</p>
                     )}
-                    <p className="text-xs text-muted-foreground">Qty: {item.quantity} x ₹{item.product!.price.toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">Qty: {item.quantity} x {formatPrice(item.product!.price)}</p>
                   </div>
                 </div>
               ))}
@@ -571,18 +574,18 @@ export default function CheckoutPage() {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>₹{cart.subtotal.toLocaleString("en-IN")}</span>
+                <span>{formatPrice(cart.subtotal)}</span>
               </div>
               {cart.discount > 0 && (
                 <div className="flex justify-between gap-4 text-primary">
                   <span>Buy 2 Get 1 Free</span>
-                  <span>-₹{cart.discount.toLocaleString("en-IN")}</span>
+                  <span>-{formatPrice(cart.discount)}</span>
                 </div>
               )}
               {couponDiscount > 0 && (
                 <div className="flex justify-between gap-4 text-green-600 dark:text-green-400">
                   <span>Coupon ({appliedDiscount!.code})</span>
-                  <span>-₹{couponDiscount.toLocaleString("en-IN")}</span>
+                  <span>-{formatPrice(couponDiscount)}</span>
                 </div>
               )}
               <div className="flex justify-between gap-4 text-muted-foreground">
@@ -592,8 +595,11 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between gap-4 font-semibold text-base">
                 <span>Total</span>
-                <span data-testid="text-checkout-total">₹{finalTotal.toLocaleString("en-IN")}</span>
+                <span data-testid="text-checkout-total">{formatPrice(finalTotal)}</span>
               </div>
+              {currency !== "INR" && (
+                <p className="text-xs text-muted-foreground text-right">* Indicative price. Charged in INR.</p>
+              )}
             </div>
           </Card>
 
@@ -601,7 +607,7 @@ export default function CheckoutPage() {
             <Card className="p-3 bg-primary/5 dark:bg-primary/10 border-primary/20">
               <div className="flex items-center gap-2">
                 <Gift className="w-4 h-4 text-primary shrink-0" />
-                <p className="text-xs font-medium">You saved ₹{(cart.discount + couponDiscount).toLocaleString("en-IN")} on this order!</p>
+                <p className="text-xs font-medium">You saved {formatPrice(cart.discount + couponDiscount)} on this order!</p>
               </div>
             </Card>
           )}

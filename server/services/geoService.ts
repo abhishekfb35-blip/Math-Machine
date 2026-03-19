@@ -1,6 +1,14 @@
 const GEO_API = "http://ip-api.com/json";
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
-const IP_TO_CURRENCY: Record<string, string> = {
+interface GeoResult {
+  country: string;
+  currency: string;
+}
+
+const ipCache = new Map<string, { result: GeoResult; expiresAt: number }>();
+
+const COUNTRY_TO_CURRENCY: Record<string, string> = {
   GB: "GBP",
   US: "USD",
   CA: "CAD",
@@ -32,27 +40,42 @@ const IP_TO_CURRENCY: Record<string, string> = {
 
 const SUPPORTED_CURRENCIES = new Set(["GBP", "USD", "EUR", "AED", "SGD", "AUD", "CAD"]);
 
-export async function getCurrencyForIp(ip: string): Promise<string> {
+export async function detectCurrency(
+  ip: string,
+  enabledCurrencies?: Set<string>
+): Promise<GeoResult> {
+  const allowed = enabledCurrencies ?? SUPPORTED_CURRENCIES;
+  const cleanIp = ip.replace(/^::ffff:/, "").trim();
+
+  if (!cleanIp || cleanIp === "127.0.0.1" || cleanIp === "::1" || cleanIp === "localhost") {
+    return { country: "IN", currency: "INR" };
+  }
+
+  const cached = ipCache.get(cleanIp);
+  if (cached && cached.expiresAt > Date.now()) {
+    const currency = allowed.has(cached.result.currency) ? cached.result.currency : "INR";
+    return { ...cached.result, currency };
+  }
+
   try {
-    const cleanIp = ip.replace(/^::ffff:/, "");
-    if (!cleanIp || cleanIp === "127.0.0.1" || cleanIp === "::1" || cleanIp === "localhost") {
-      return "INR";
-    }
     const res = await fetch(`${GEO_API}/${cleanIp}?fields=countryCode,currency`, {
       signal: AbortSignal.timeout(3000),
     });
-    if (!res.ok) return "INR";
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json() as { countryCode?: string; currency?: string; status?: string };
-    if (data.status === "fail") return "INR";
-    const apiCurrency = data.currency?.toUpperCase();
-    if (apiCurrency && SUPPORTED_CURRENCIES.has(apiCurrency)) return apiCurrency;
-    const countryCode = data.countryCode?.toUpperCase();
-    if (countryCode) {
-      const mapped = IP_TO_CURRENCY[countryCode];
-      if (mapped && SUPPORTED_CURRENCIES.has(mapped)) return mapped;
+    if (data.status === "fail") throw new Error("geo failed");
+
+    const country = data.countryCode?.toUpperCase() ?? "IN";
+    let currency = data.currency?.toUpperCase() ?? "INR";
+    if (!allowed.has(currency)) {
+      currency = COUNTRY_TO_CURRENCY[country] ?? "INR";
+      if (!allowed.has(currency)) currency = "INR";
     }
-    return "INR";
+
+    const result: GeoResult = { country, currency };
+    ipCache.set(cleanIp, { result, expiresAt: Date.now() + CACHE_TTL_MS });
+    return result;
   } catch {
-    return "INR";
+    return { country: "IN", currency: "INR" };
   }
 }

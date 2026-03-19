@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +24,9 @@ interface PricingRuleRow {
 }
 
 interface RateStatus {
+  fetchedToday: boolean;
   lastFetchAt: string | null;
+  lastFetchDateStr: string | null;
   lastFetchError: string | null;
   nextRefreshAt: string | null;
 }
@@ -72,7 +73,7 @@ function RuleRow({ rule, onSaved }: { rule: PricingRuleRow; onSaved: () => void 
       <td className="py-3 pr-4 text-sm">
         {rule.rate != null ? (
           <div>
-            <div className="font-mono">{rule.rate.toFixed(6)}</div>
+            <div className="font-mono text-xs">{rule.rate.toFixed(6)}</div>
             <div className="text-xs text-muted-foreground">{formatTs(rule.rateUpdatedAt)}</div>
           </div>
         ) : (
@@ -84,8 +85,8 @@ function RuleRow({ rule, onSaved }: { rule: PricingRuleRow; onSaved: () => void 
           <Input
             type="number"
             min="0"
-            max="50"
-            step="0.5"
+            max="99"
+            step="0.01"
             value={markup}
             onChange={e => change(() => setMarkup(e.target.value))}
             className="w-20 h-8 text-sm"
@@ -101,10 +102,8 @@ function RuleRow({ rule, onSaved }: { rule: PricingRuleRow; onSaved: () => void 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="nearest">Nearest (0.01)</SelectItem>
-            <SelectItem value="floor">Floor</SelectItem>
-            <SelectItem value="ceil">Ceiling</SelectItem>
-            <SelectItem value="nearest_5">Nearest 5</SelectItem>
-            <SelectItem value="nearest_10">Nearest 10</SelectItem>
+            <SelectItem value="up99">Charm (.99)</SelectItem>
+            <SelectItem value="up">Ceiling</SelectItem>
           </SelectContent>
         </Select>
       </td>
@@ -140,7 +139,7 @@ export default function AdminPricing() {
   const refreshMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/admin/pricing-rules/refresh-rates", {}),
     onSuccess: () => {
-      toast({ title: "Rates refreshed", description: "Exchange rates updated from API." });
+      toast({ title: "Rates refreshed", description: "Exchange rates updated from frankfurter.app." });
       qc.invalidateQueries({ queryKey: ["/api/admin/pricing-rules"] });
     },
     onError: () => toast({ title: "Refresh failed", description: "Could not fetch latest rates.", variant: "destructive" }),
@@ -186,24 +185,30 @@ export default function AdminPricing() {
               <AlertCircle className="w-4 h-4" /> Failed to load status
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
               <div>
-                <div className="text-xs text-muted-foreground mb-1">Last Updated</div>
+                <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
                 <div className="flex items-center gap-1.5">
-                  {status?.lastFetchAt ? (
+                  {status?.fetchedToday ? (
                     <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
                   ) : (
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   )}
-                  <span>{formatTs(status?.lastFetchAt ?? null)}</span>
+                  <span className={status?.fetchedToday ? "text-green-600 dark:text-green-400" : "text-amber-600"}>
+                    {status?.fetchedToday ? "Fetched" : "Stale"}
+                  </span>
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground mb-1">Next Refresh</div>
+                <div className="text-xs text-muted-foreground mb-1">Rate Date</div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span>{formatTs(status?.nextRefreshAt ?? null)}</span>
+                  <span className="font-mono text-xs">{status?.lastFetchDateStr ?? "—"}</span>
                 </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Last Fetched</div>
+                <span className="text-xs">{formatTs(status?.lastFetchAt ?? null)}</span>
               </div>
               <div>
                 <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -224,7 +229,7 @@ export default function AdminPricing() {
         <CardHeader>
           <CardTitle className="text-base">Currency Pricing Rules</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Set per-currency markup % and rounding rules. Markup applies on top of live rates.
+            Set per-currency markup % and rounding. Rates auto-refresh daily from frankfurter.app (AED pegged to USD).
           </p>
         </CardHeader>
         <CardContent>

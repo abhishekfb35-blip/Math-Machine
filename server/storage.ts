@@ -769,45 +769,58 @@ export class DatabaseStorage implements IStorage {
     await db.delete(productVariants).where(eq(productVariants.productId, productId));
   }
 
+  private coerceCurrencyRate(r: any): CurrencyRate {
+    return { ...r, rateFromInr: Number(r.rateFromInr) };
+  }
+
+  private coercePricingRule(r: any): PricingRule {
+    return { ...r, markupPercent: Number(r.markupPercent) };
+  }
+
   async getCurrencyRates(): Promise<CurrencyRate[]> {
-    return await db.select().from(currencyRates).orderBy(currencyRates.currency);
+    const rows = await db.select().from(currencyRates).orderBy(currencyRates.currency);
+    return rows.map(r => this.coerceCurrencyRate(r));
   }
 
   async upsertCurrencyRate(currency: string, rateFromInr: number): Promise<CurrencyRate> {
     const [existing] = await db.select().from(currencyRates).where(eq(currencyRates.currency, currency));
     if (existing) {
       const [updated] = await db.update(currencyRates)
-        .set({ rateFromInr, updatedAt: new Date() })
+        .set({ rateFromInr: String(rateFromInr), updatedAt: new Date() })
         .where(eq(currencyRates.currency, currency))
         .returning();
-      return updated;
+      return this.coerceCurrencyRate(updated);
     }
-    const [created] = await db.insert(currencyRates).values({ id: createId(), currency, rateFromInr }).returning();
-    return created;
+    const [created] = await db.insert(currencyRates).values({ id: createId(), currency, rateFromInr: String(rateFromInr) }).returning();
+    return this.coerceCurrencyRate(created);
   }
 
   async getPricingRules(): Promise<PricingRule[]> {
-    return await db.select().from(pricingRules).orderBy(pricingRules.currency);
+    const rows = await db.select().from(pricingRules).orderBy(pricingRules.currency);
+    return rows.map(r => this.coercePricingRule(r));
   }
 
   async getPricingRuleByCurrency(currency: string): Promise<PricingRule | undefined> {
     const [rule] = await db.select().from(pricingRules).where(eq(pricingRules.currency, currency));
-    return rule;
+    return rule ? this.coercePricingRule(rule) : undefined;
   }
 
   async upsertPricingRule(data: InsertPricingRule): Promise<PricingRule> {
+    const dbData = { ...data, markupPercent: String(data.markupPercent ?? 0) };
     const [existing] = await db.select().from(pricingRules).where(eq(pricingRules.currency, data.currency));
     if (existing) {
-      const [updated] = await db.update(pricingRules).set(data).where(eq(pricingRules.currency, data.currency)).returning();
-      return updated;
+      const [updated] = await db.update(pricingRules).set(dbData).where(eq(pricingRules.currency, data.currency)).returning();
+      return this.coercePricingRule(updated);
     }
-    const [created] = await db.insert(pricingRules).values({ id: createId(), ...data }).returning();
-    return created;
+    const [created] = await db.insert(pricingRules).values({ id: createId(), ...dbData }).returning();
+    return this.coercePricingRule(created);
   }
 
   async updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined> {
-    const [updated] = await db.update(pricingRules).set(data).where(eq(pricingRules.currency, currency)).returning();
-    return updated;
+    const dbData: any = { ...data };
+    if (data.markupPercent !== undefined) dbData.markupPercent = String(data.markupPercent);
+    const [updated] = await db.update(pricingRules).set(dbData).where(eq(pricingRules.currency, currency)).returning();
+    return updated ? this.coercePricingRule(updated) : undefined;
   }
 }
 

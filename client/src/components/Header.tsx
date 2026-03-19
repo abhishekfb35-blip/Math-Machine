@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, type HeaderConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
+import CurrencySelector from "@/components/CurrencySelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,6 +107,8 @@ export default function Header() {
                 <Search className="w-4 h-4" />
               </Button>
             )}
+
+            <CurrencySelector />
 
             <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}

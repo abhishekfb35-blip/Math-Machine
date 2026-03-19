@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductImageUrl } from "@/lib/imageUtils";
+import { useCurrency } from "@/context/CurrencyContext";
 import type { Product } from "@shared/types";
 
 interface ProductCardNewProps {
@@ -12,6 +13,7 @@ interface ProductCardNewProps {
 }
 
 export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewProps) {
+  const { formatPrice } = useCurrency();
   return (
     <Card
       className="group overflow-visible relative"
@@ -61,7 +63,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
         )}
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-bold" data-testid={`text-product-price-${product.id}`}>
-            ₹{product.price.toLocaleString("en-IN")}
+            {formatPrice(product.price)}
           </p>
           <Button
             size="icon"

@@ -18,6 +18,7 @@ import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview, CategoryVariantOptions, ProductVariant } from "@shared/types";
+import { useCurrency } from "@/context/CurrencyContext";
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -25,6 +26,7 @@ export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
@@ -360,11 +362,11 @@ export default function ProductPage() {
 
               <div className="flex items-baseline gap-2 mt-2">
                 <p className="text-2xl font-bold text-primary" data-testid="text-product-price">
-                  ₹{product.price.toLocaleString("en-IN")}
+                  {formatPrice(product.price)}
                 </p>
                 {product.mrp && product.mrp > product.price && (
                   <p className="text-base text-muted-foreground line-through" data-testid="text-product-mrp">
-                    ₹{product.mrp.toLocaleString("en-IN")}
+                    {formatPrice(product.mrp)}
                   </p>
                 )}
                 {discountPercent > 0 && (
@@ -608,7 +610,7 @@ export default function ProductPage() {
               ) : (
                 <>
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart - ₹{product.price.toLocaleString("en-IN")}
+                  Add to Cart - {formatPrice(product.price)}
                 </>
               )}
             </Button>

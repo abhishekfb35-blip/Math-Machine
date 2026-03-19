@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { storage } from "../../storage";
 import { requireAdmin } from "../../adminAuth";
-import { getCurrencyForIp } from "../../services/geoService";
+import { detectCurrency } from "../../services/geoService";
 import { fetchAndStoreRates, getRateServiceStatus } from "../../services/exchangeRateService";
 
 export function registerAdminPricingRoutes(app: Express) {
@@ -9,8 +9,14 @@ export function registerAdminPricingRoutes(app: Express) {
   app.get("/api/geo", async (req, res) => {
     const forwarded = req.headers["x-forwarded-for"];
     const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0]?.trim()) || req.socket.remoteAddress || "127.0.0.1";
-    const currency = await getCurrencyForIp(ip);
-    res.json({ currency, ip });
+    try {
+      const rules = await storage.getPricingRules();
+      const enabledCurrencies = new Set(rules.filter(r => r.enabled).map(r => r.currency));
+      const { country, currency } = await detectCurrency(ip, enabledCurrencies);
+      res.json({ currency, country });
+    } catch {
+      res.json({ currency: "INR", country: "IN" });
+    }
   });
 
   app.get("/api/currency/config", async (_req, res) => {
@@ -19,21 +25,22 @@ export function registerAdminPricingRoutes(app: Express) {
         storage.getPricingRules(),
         storage.getCurrencyRates(),
       ]);
-      const rateMap: Record<string, number> = {};
-      for (const r of rates) rateMap[r.currency] = r.rateFromInr;
-      const enabledRules = rules.filter(r => r.enabled);
+      const ratesMap: Record<string, number> = {};
+      for (const r of rates) ratesMap[r.currency] = r.rateFromInr;
+
       res.json({
-        currencies: enabledRules.map(r => ({
+        rules: rules.map(r => ({
           code: r.currency,
           symbol: r.symbol,
           displayName: r.displayName,
-          rate: rateMap[r.currency] ?? null,
           markupPercent: r.markupPercent,
           roundingRule: r.roundingRule,
+          enabled: r.enabled,
         })),
+        rates: ratesMap,
       });
-    } catch (err) {
-      res.json({ currencies: [] });
+    } catch {
+      res.json({ rules: [], rates: {} });
     }
   });
 
@@ -56,6 +63,20 @@ export function registerAdminPricingRoutes(app: Express) {
       });
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch pricing rules" });
+    }
+  });
+
+  app.get("/api/admin/currency-status", requireAdmin, async (_req, res) => {
+    try {
+      const rates = await storage.getCurrencyRates();
+      const status = getRateServiceStatus();
+      res.json({
+        ...status,
+        rateCount: rates.length,
+        currencies: rates.map(r => ({ currency: r.currency, rate: r.rateFromInr, updatedAt: r.updatedAt })),
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch currency status" });
     }
   });
 

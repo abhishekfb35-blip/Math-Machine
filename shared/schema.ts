@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, varchar, real, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, varchar, real, uniqueIndex, jsonb, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const categories = pgTable("categories", {
@@ -230,7 +230,7 @@ export const insertProductVariantSchema = createInsertSchema(productVariants).om
 export const currencyRates = pgTable("currency_rates", {
   id: text("id").primaryKey(),
   currency: varchar("currency", { length: 3 }).notNull().unique(),
-  rateFromInr: real("rate_from_inr").notNull(),
+  rateFromInr: numeric("rate_from_inr", { precision: 12, scale: 6 }).notNull(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -239,7 +239,7 @@ export const pricingRules = pgTable("pricing_rules", {
   currency: varchar("currency", { length: 3 }).notNull().unique(),
   symbol: varchar("symbol", { length: 5 }).notNull(),
   displayName: varchar("display_name", { length: 50 }),
-  markupPercent: real("markup_percent").notNull().default(0),
+  markupPercent: numeric("markup_percent", { precision: 5, scale: 2 }).notNull().default("0"),
   roundingRule: varchar("rounding_rule", { length: 20 }).notNull().default("nearest"),
   enabled: boolean("enabled").notNull().default(true),
 });

@@ -1,7 +1,8 @@
 import { storage } from "../storage";
 
-const RATE_API = "https://open.er-api.com/v6/latest/INR";
-const REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const FRANKFURTER_API = "https://api.frankfurter.app/latest";
+const FRANKFURTER_CURRENCIES = ["GBP", "USD", "EUR", "SGD", "AUD", "CAD"];
+const AED_USD_PEG = 3.6725;
 
 const DEFAULT_PRICING_RULES = [
   { currency: "GBP", symbol: "£", displayName: "British Pound", markupPercent: 0, roundingRule: "nearest", enabled: true },
@@ -13,29 +14,49 @@ const DEFAULT_PRICING_RULES = [
   { currency: "CAD", symbol: "C$", displayName: "Canadian Dollar", markupPercent: 0, roundingRule: "nearest", enabled: true },
 ];
 
-const SUPPORTED_CURRENCIES = DEFAULT_PRICING_RULES.map(r => r.currency);
-
-let refreshTimer: ReturnType<typeof setInterval> | null = null;
 let lastFetchAt: Date | null = null;
 let lastFetchError: string | null = null;
+let lastFetchDateStr: string | null = null;
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+function isFetchedToday(): boolean {
+  if (!lastFetchAt) return false;
+  const now = new Date();
+  const f = lastFetchAt;
+  return (
+    f.getUTCFullYear() === now.getUTCFullYear() &&
+    f.getUTCMonth() === now.getUTCMonth() &&
+    f.getUTCDate() === now.getUTCDate()
+  );
+}
 
 export async function fetchAndStoreRates(): Promise<void> {
   try {
-    const res = await fetch(RATE_API, { signal: AbortSignal.timeout(10000) });
+    const url = `${FRANKFURTER_API}?from=INR&to=${FRANKFURTER_CURRENCIES.join(",")}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json() as { result?: string; rates?: Record<string, number> };
-    if (data.result !== "success" || !data.rates) throw new Error("Invalid API response");
-    for (const currency of SUPPORTED_CURRENCIES) {
+    const data = await res.json() as { date?: string; rates?: Record<string, number> };
+    if (!data.rates) throw new Error("No rates in response");
+
+    for (const currency of FRANKFURTER_CURRENCIES) {
       const rate = data.rates[currency];
       if (rate && rate > 0) {
         await storage.upsertCurrencyRate(currency, rate);
       }
     }
+
+    const usdRate = data.rates["USD"];
+    if (usdRate && usdRate > 0) {
+      const aedRate = usdRate * AED_USD_PEG;
+      await storage.upsertCurrencyRate("AED", aedRate);
+    }
+
     lastFetchAt = new Date();
+    lastFetchDateStr = data.date ?? null;
     lastFetchError = null;
-    console.log("[ExchangeRate] Rates updated:", SUPPORTED_CURRENCIES.join(", "));
+    console.log("[ExchangeRate] Rates updated from frankfurter.app, date:", lastFetchDateStr);
   } catch (err: any) {
-    lastFetchError = err?.message || "Unknown error";
+    lastFetchError = err?.message ?? "Unknown error";
     console.error("[ExchangeRate] Failed to fetch rates:", lastFetchError);
   }
 }
@@ -54,42 +75,63 @@ async function seedDefaultPricingRules(): Promise<void> {
   }
 }
 
-export async function initializeExchangeRateService(): Promise<void> {
-  await seedDefaultPricingRules();
-  const existingRates = await storage.getCurrencyRates().catch(() => []);
-  if (existingRates.length === 0) {
+async function maybeRefreshDaily(): Promise<void> {
+  if (!isFetchedToday()) {
     await fetchAndStoreRates();
-  } else {
-    const oldest = existingRates.reduce((min, r) => r.updatedAt < min ? r.updatedAt : min, existingRates[0].updatedAt);
-    const ageMs = Date.now() - new Date(oldest).getTime();
-    if (ageMs > REFRESH_INTERVAL_MS) {
-      await fetchAndStoreRates();
-    } else {
-      lastFetchAt = new Date(oldest);
-    }
-  }
-  if (!refreshTimer) {
-    refreshTimer = setInterval(fetchAndStoreRates, REFRESH_INTERVAL_MS);
   }
 }
 
-export function getRateServiceStatus(): { lastFetchAt: Date | null; lastFetchError: string | null; nextRefreshAt: Date | null } {
+export async function initializeExchangeRateService(): Promise<void> {
+  await seedDefaultPricingRules();
+
+  try {
+    const existingRates = await storage.getCurrencyRates();
+    if (existingRates.length > 0) {
+      const newest = existingRates.reduce(
+        (max, r) => new Date(r.updatedAt) > max ? new Date(r.updatedAt) : max,
+        new Date(existingRates[0].updatedAt)
+      );
+      lastFetchAt = newest;
+    }
+  } catch {}
+
+  await maybeRefreshDaily();
+
+  if (!refreshTimer) {
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    refreshTimer = setInterval(maybeRefreshDaily, TWELVE_HOURS);
+  }
+}
+
+export function getRateServiceStatus(): {
+  fetchedToday: boolean;
+  lastFetchAt: string | null;
+  lastFetchDateStr: string | null;
+  lastFetchError: string | null;
+  nextRefreshAt: string | null;
+} {
+  const nextRefreshAt = lastFetchAt
+    ? new Date(lastFetchAt.getTime() + 12 * 60 * 60 * 1000).toISOString()
+    : null;
   return {
-    lastFetchAt,
+    fetchedToday: isFetchedToday(),
+    lastFetchAt: lastFetchAt?.toISOString() ?? null,
+    lastFetchDateStr,
     lastFetchError,
-    nextRefreshAt: lastFetchAt ? new Date(lastFetchAt.getTime() + REFRESH_INTERVAL_MS) : null,
+    nextRefreshAt,
   };
 }
 
 export function applyRounding(amount: number, rule: string): number {
-  if (rule === "floor") return Math.floor(amount);
-  if (rule === "ceil") return Math.ceil(amount);
-  if (rule === "nearest_5") return Math.round(amount / 5) * 5;
-  if (rule === "nearest_10") return Math.round(amount / 10) * 10;
+  if (rule === "up99") return Math.floor(amount) + 0.99;
+  if (rule === "up") return Math.ceil(amount);
   return Math.round(amount * 100) / 100;
 }
 
-export async function convertFromINR(inrAmount: number, toCurrency: string): Promise<{ amount: number; currency: string }> {
+export async function convertFromINR(
+  inrAmount: number,
+  toCurrency: string
+): Promise<{ amount: number; currency: string }> {
   if (toCurrency === "INR") return { amount: inrAmount, currency: "INR" };
   try {
     const rates = await storage.getCurrencyRates();
