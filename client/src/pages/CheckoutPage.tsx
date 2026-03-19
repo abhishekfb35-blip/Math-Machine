@@ -69,6 +69,12 @@ export default function CheckoutPage() {
   const [validatingDiscount, setValidatingDiscount] = useState(false);
 
   useEffect(() => {
+    if (currency !== "INR") {
+      setPaymentMethod("razorpay");
+    }
+  }, [currency]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (error) {
@@ -448,22 +454,24 @@ export default function CheckoutPage() {
                       </div>
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("cod")}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
-                      paymentMethod === "cod"
-                        ? "border-primary bg-primary/5 dark:bg-primary/10"
-                        : "border-border hover:border-muted-foreground/30"
-                    }`}
-                    data-testid="button-payment-cod"
-                  >
-                    <Banknote className={`w-5 h-5 shrink-0 ${paymentMethod === "cod" ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className="text-sm font-medium">Cash on Delivery</p>
-                      <p className="text-xs text-muted-foreground">Pay when you receive</p>
-                    </div>
-                  </button>
+                  {currency === "INR" && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cod")}
+                      className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                        paymentMethod === "cod"
+                          ? "border-primary bg-primary/5 dark:bg-primary/10"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                      data-testid="button-payment-cod"
+                    >
+                      <Banknote className={`w-5 h-5 shrink-0 ${paymentMethod === "cod" ? "text-primary" : "text-muted-foreground"}`} />
+                      <div>
+                        <p className="text-sm font-medium">Cash on Delivery</p>
+                        <p className="text-xs text-muted-foreground">Pay when you receive</p>
+                      </div>
+                    </button>
+                  )}
                 </div>
                 {paymentMethod === "razorpay" && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
