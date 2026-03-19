@@ -70,13 +70,13 @@ export function registerAdminPricingRoutes(app: Express) {
 
   app.get("/api/admin/currency-status", requireAdmin, async (_req, res) => {
     try {
-      const [rules, rates] = await Promise.all([
+      const [rules, rateRows] = await Promise.all([
         storage.getPricingRules(),
         storage.getCurrencyRates(),
       ]);
       const status = getRateServiceStatus();
-      const rateMap: Record<string, number> = {};
-      for (const r of rates) rateMap[r.currency] = r.rateFromInr;
+      const rateMap: Record<string, { rateFromInr: number; updatedAt: Date }> = {};
+      for (const r of rateRows) rateMap[r.currency] = { rateFromInr: r.rateFromInr, updatedAt: r.updatedAt };
 
       const totalEnabled = rules.filter(r => r.enabled).length;
       const totalDisabled = rules.filter(r => !r.enabled).length;
@@ -85,13 +85,13 @@ export function registerAdminPricingRoutes(app: Express) {
         ...status,
         totalEnabled,
         totalDisabled,
-        rateCount: rates.length,
-        currencies: rules.map(r => ({
+        rates: rules.map(r => ({
           currency: r.currency,
           symbol: r.symbol,
           displayName: r.displayName,
           enabled: r.enabled,
-          rate: rateMap[r.currency] ?? null,
+          rateFromInr: rateMap[r.currency]?.rateFromInr ?? null,
+          updatedAt: rateMap[r.currency]?.updatedAt ?? null,
         })),
       });
     } catch (err) {

@@ -9,6 +9,7 @@ import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
 import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
 import { ensureVariantTables } from "./migrations/variant-tables";
+import { ensureCurrencyTables } from "./migrations/currency-tables";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { createServer } from "http";
 
@@ -110,6 +111,7 @@ app.get("/health", (_req, res) => {
         try {
           await migrateSiteConfigKeyPk();
           await ensureVariantTables();
+          await ensureCurrencyTables();
           await seedDatabase();
           await ensureSkuNotNull();
           await syncImageReviewIds();

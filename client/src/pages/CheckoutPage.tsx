@@ -122,7 +122,7 @@ export default function CheckoutPage() {
 
   const codCheckoutMutation = useMutation({
     mutationFn: async (data: CheckoutInput) => {
-      const res = await apiRequest("POST", "/api/checkout", { ...data, paymentMethod: "cod", discountCode: appliedDiscount?.code || null });
+      const res = await apiRequest("POST", "/api/checkout", { ...data, paymentMethod: "cod", discountCode: appliedDiscount?.code || null, currency });
       return res.json();
     },
     onSuccess: (data) => {
@@ -187,6 +187,7 @@ export default function CheckoutPage() {
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
               razorpaySignature: response.razorpay_signature,
+              currency,
             });
             const result = await checkoutRes.json();
             queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
