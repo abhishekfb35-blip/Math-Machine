@@ -94,10 +94,10 @@ export default function ProductPage() {
     .slice(0, 4) || [];
 
   const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
-  const hasCategoryPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
+  const hasProductPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
     || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
   const isTowelProduct = product?.productType === "towel";
-  const showVariantSelectors = isTowelProduct && hasCategoryPalette && hasProductVariants;
+  const showVariantSelectors = isTowelProduct && hasProductPalette && hasProductVariants;
 
   const visibleSizes = showVariantSelectors
     ? (variantOptions?.sizes || []).filter(s => !s.hideFromFront)
