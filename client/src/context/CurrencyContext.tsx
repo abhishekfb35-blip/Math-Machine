@@ -48,7 +48,7 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   symbol: "₹",
   setCurrency: () => {},
   convertPrice: (x) => x,
-  formatPrice: (x) => `₹${Math.round(x).toLocaleString("en-IN")}`,
+  formatPrice: (x) => `₹${x.toLocaleString("en-IN")}`,
   availableCurrencies: [],
   isLoading: true,
 });
@@ -63,7 +63,7 @@ function applyRounding(amount: number, rule: string): number {
 
 function formatAmount(amount: number, currencyCode: string, sym: string): string {
   if (currencyCode === "INR") {
-    return `₹${Math.round(amount).toLocaleString("en-IN")}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   }
   return `${sym}${amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -87,10 +87,11 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (geo && !getCookie(COOKIE_NAME) && config) {
       const enabledCodes = config.rules.filter(r => r.enabled).map(r => r.currency);
-      if (geo.currency === "INR" || enabledCodes.includes(geo.currency)) {
-        setCurrencyState(geo.currency);
-        setCookieValue(COOKIE_NAME, geo.currency, COOKIE_DAYS);
-      }
+      const detected = (geo.currency === "INR" || enabledCodes.includes(geo.currency))
+        ? geo.currency
+        : "INR";
+      setCurrencyState(detected);
+      setCookieValue(COOKIE_NAME, detected, COOKIE_DAYS);
     }
   }, [geo, config]);
 
@@ -123,7 +124,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const formatPrice = useCallback((inrAmount: number): string => {
     if (currency === "INR") {
-      return `₹${Math.round(inrAmount).toLocaleString("en-IN")}`;
+      return `₹${inrAmount.toLocaleString("en-IN")}`;
     }
     const converted = convertPrice(inrAmount);
     return formatAmount(converted, currency, symbol);
