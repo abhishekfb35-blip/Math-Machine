@@ -159,7 +159,7 @@ export default function CheckoutPage() {
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         discountCode: appliedDiscount?.code || null,
-        currency: currency !== "INR" ? currency : undefined,
+        currency,
       });
       const orderData = await orderRes.json();
 
