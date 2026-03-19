@@ -32,7 +32,8 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - **Admin Deploy Check** (`/admin/deploy-check`): Code health report — verifies production bundle includes all routes, static files, and checks if rebuild is needed.
     - **Admin Data Check** (`/admin/data-check`): Database health report — compares table structures against expected schema, shows row counts, data integrity issues, and site config completeness. Open on both dev and production to compare side by side.
     - **Admin DB Compare** (`/admin/db-compare`): Compare dev vs prod catalog tables side-by-side. Enter the prod URL, the server fetches the prod snapshot using the admin password and diffs all 6 catalog tables (categories, products, tags, product_tags, product_images, product_reviews). Shows count mismatches, IDs only in dev/prod, SKU-level diffs, field-level mismatches. Uses `GET /api/admin/db-snapshot` (accepts session cookie or `X-Admin-Password` header) and `POST /api/admin/db-compare` (server-side proxy + diff logic).
-    - **Admin Consent** (`/admin/consent`): Manage consent popup settings (headline, description, consent text, discount %, enable/disable) and configurable form fields (First Name, Last Name, Email, Phone — each with Show/Required/Hide-if-logged-in toggles). View all collected signups with discount code usage status. Settings stored in `site_config` under key `consent-popup`.
+    - **Admin International Pricing** (`/admin/pricing`): Manage multi-currency exchange rates and per-currency pricing rules (markup %, rounding, enable/disable). Rates auto-refreshed every 6h from open.er-api.com. Manual refresh button. Supported currencies: GBP, USD, EUR, AED, SGD, AUD, CAD.
+- **Admin Consent** (`/admin/consent`): Manage consent popup settings (headline, description, consent text, discount %, enable/disable) and configurable form fields (First Name, Last Name, Email, Phone — each with Show/Required/Hide-if-logged-in toggles). View all collected signups with discount code usage status. Settings stored in `site_config` under key `consent-popup`.
 - **Core UI Components**: AnnouncementBar, Header, BottomNav (mobile), Footer, ProductCardNew with quick-add, QuickAddSheet for personalization, and a floating WhatsAppButton.
 
 ## Backend
@@ -52,6 +53,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
     - `admin/orders.ts` — Admin auth (login/logout/check) and order management.
     - `admin/consent.ts` — Admin consent list with pagination and total count.
     - `admin/health.ts` — Deploy check, data check, SEO audit, data export, audit logs, file upload.
+    - `admin/pricing.ts` — Multi-currency: GET/PUT pricing rules, POST refresh-rates, public GET /api/geo (IP-to-currency) and GET /api/currency/config (enabled currencies + live rates).
 - **Entry point**: `server/routes.ts` re-exports `registerRoutes` from `server/routes/index.ts` for backward compatibility.
 
 ## Shared Layer (`shared/`)
@@ -71,7 +73,7 @@ The project employs a **monorepo layout** with distinct `client/` (React fronten
 - **Environments**: Dev and production use **separate PostgreSQL databases**. The seed function (`server/seed.ts`) auto-syncs data (products, categories, reviews, images, tags, site config) on startup, but admin-created data (orders, uploaded images, etc.) is per-environment.
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
 - **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
-- **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, `audit_logs`, and `customer_consents`.
+- **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, and `pricing_rules`.
 - **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, site config, and order status changes. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
 - **Product Categories**: Consolidated to 3 top-level categories: **Towels** (slug: `towels`), **Bathrobes** (slug: `bathrobes`), **Blankets** (slug: `blankets`). Audience filtering (kids/adults/couples) is done via `product.audience` field; product type filtering via `product.productType` field. Category-slug-based audience detection has been removed from all frontend pages.
 - **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.

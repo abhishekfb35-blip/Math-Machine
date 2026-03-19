@@ -16,6 +16,7 @@ export interface CheckoutInput {
   notes?: string | null;
   discountCode?: string | null;
   couponDiscount?: number;
+  currency?: string | null;
 }
 
 export interface PaidCheckoutInput extends CheckoutInput {
@@ -89,6 +90,7 @@ export class OrderService {
       paymentStatus: payment.status,
       notes: input.notes || null,
       paymentId: payment.paymentId,
+      currency: input.currency || "INR",
     });
 
     const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
@@ -162,6 +164,7 @@ export class OrderService {
       notes: input.notes || null,
       paymentId: input.paymentId,
       razorpayOrderId: input.razorpayOrderId,
+      currency: input.currency || "INR",
     });
 
     const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);

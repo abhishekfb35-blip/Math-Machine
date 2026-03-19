@@ -143,6 +143,7 @@ export interface Order {
   paymentId: string | null;
   razorpayOrderId: string | null;
   paymentStatus: string | null;
+  currency: string | null;
   notes: string | null;
   emailStatus: unknown | null;
   createdAt: Date | null;
@@ -165,6 +166,7 @@ export interface InsertOrder {
   paymentId?: string | null;
   razorpayOrderId?: string | null;
   paymentStatus?: string | null;
+  currency?: string | null;
   notes?: string | null;
 }
 
@@ -358,4 +360,35 @@ export interface InsertProductVariant {
   color: string;
   size: string;
   available?: boolean;
+}
+
+export interface CurrencyRate {
+  id: string;
+  currency: string;
+  rateFromInr: number;
+  updatedAt: Date;
+}
+
+export interface InsertCurrencyRate {
+  currency: string;
+  rateFromInr: number;
+}
+
+export interface PricingRule {
+  id: string;
+  currency: string;
+  symbol: string;
+  displayName: string | null;
+  markupPercent: number;
+  roundingRule: string;
+  enabled: boolean;
+}
+
+export interface InsertPricingRule {
+  currency: string;
+  symbol: string;
+  displayName?: string | null;
+  markupPercent?: number;
+  roundingRule?: string;
+  enabled?: boolean;
 }

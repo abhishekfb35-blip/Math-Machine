@@ -7,6 +7,7 @@ import { codProvider, getRazorpayProvider } from "../providers/payment";
 import { notificationService } from "../providers/notification";
 import { OrderService, EmptyCartError } from "../services/orderService";
 import { requireAdmin, getAdminUsername } from "../adminAuth";
+import { convertFromINR } from "../services/exchangeRateService";
 
 const orderService = new OrderService(storage, codProvider, notificationService);
 
@@ -58,10 +59,13 @@ export function registerCheckoutRoutes(app: Express) {
       }
       const finalAmount = Math.max(0, pricing.total - couponDiscount);
 
+      const requestedCurrency = (req.body.currency as string)?.toUpperCase() || "INR";
+      const converted = await convertFromINR(finalAmount, requestedCurrency);
+
       const result = await razorpay.createPaymentOrder({
         orderId: `cart_${cart.id}`,
-        amount: finalAmount,
-        currency: "INR",
+        amount: converted.amount,
+        currency: converted.currency,
         customerName: req.body.customerName || "",
         customerEmail: req.body.customerEmail || "",
         customerPhone: req.body.customerPhone || "",
@@ -73,8 +77,8 @@ export function registerCheckoutRoutes(app: Express) {
 
       res.json({
         razorpayOrderId: result.razorpayOrderId,
-        amount: finalAmount,
-        currency: "INR",
+        amount: converted.amount,
+        currency: converted.currency,
       });
     } catch (err) {
       console.error("Razorpay create order error:", err);
@@ -84,7 +88,7 @@ export function registerCheckoutRoutes(app: Express) {
 
   app.post("/api/checkout", async (req, res) => {
     try {
-      const { paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature, discountCode, ...checkoutData } = req.body;
+      const { paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature, discountCode, currency: paymentCurrency, ...checkoutData } = req.body;
       const input = checkoutSchema.parse(checkoutData);
       const sessionId = getSessionId(req, res);
 
@@ -140,12 +144,13 @@ export function registerCheckoutRoutes(app: Express) {
           paymentId: razorpayPaymentId,
           razorpayOrderId,
           paymentStatus: "paid",
+          currency: paymentCurrency || "INR",
         });
         if (consentId) await storage.markConsentDiscountUsed(consentId);
         return res.status(201).json(result);
       }
 
-      const result = await orderService.checkout(sessionId, { ...input, customerId, discountCode: validatedDiscountCode, couponDiscount });
+      const result = await orderService.checkout(sessionId, { ...input, customerId, discountCode: validatedDiscountCode, couponDiscount, currency: paymentCurrency || "INR" });
       if (consentId) await storage.markConsentDiscountUsed(consentId);
       res.status(201).json(result);
     } catch (err) {

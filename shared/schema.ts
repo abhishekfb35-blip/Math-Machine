@@ -71,6 +71,7 @@ export const orders = pgTable("orders", {
   paymentId: text("payment_id"),
   razorpayOrderId: text("razorpay_order_id"),
   paymentStatus: text("payment_status").default("pending"),
+  currency: varchar("currency", { length: 3 }).default("INR"),
   notes: text("notes"),
   emailStatus: jsonb("email_status"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -226,6 +227,26 @@ export const insertProductTagSchema = createInsertSchema(productTags).omit({ id:
 export const insertCategoryVariantOptionsSchema = createInsertSchema(categoryVariantOptions);
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
+export const currencyRates = pgTable("currency_rates", {
+  id: text("id").primaryKey(),
+  currency: varchar("currency", { length: 3 }).notNull().unique(),
+  rateFromInr: real("rate_from_inr").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const pricingRules = pgTable("pricing_rules", {
+  id: text("id").primaryKey(),
+  currency: varchar("currency", { length: 3 }).notNull().unique(),
+  symbol: varchar("symbol", { length: 5 }).notNull(),
+  displayName: varchar("display_name", { length: 50 }),
+  markupPercent: real("markup_percent").notNull().default(0),
+  roundingRule: varchar("rounding_rule", { length: 20 }).notNull().default("nearest"),
+  enabled: boolean("enabled").notNull().default(true),
+});
+
+export const insertCurrencyRateSchema = createInsertSchema(currencyRates).omit({ id: true });
+export const insertPricingRuleSchema = createInsertSchema(pricingRules).omit({ id: true });
+
 export type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -243,4 +264,6 @@ export type {
   CustomerConsent, InsertCustomerConsent,
   CategoryVariantOptions,
   ProductVariant, InsertProductVariant,
+  CurrencyRate, InsertCurrencyRate,
+  PricingRule, InsertPricingRule,
 } from "./types";

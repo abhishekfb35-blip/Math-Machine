@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, categoryVariantOptions, productVariants } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, categoryVariantOptions, productVariants, currencyRates, pricingRules } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -17,6 +17,8 @@ import type {
   CustomerConsent, InsertCustomerConsent,
   CategoryVariantOptions, ColorOption, SizeOption,
   ProductVariant, InsertProductVariant,
+  CurrencyRate, InsertCurrencyRate,
+  PricingRule, InsertPricingRule,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray } from "drizzle-orm";
@@ -114,6 +116,14 @@ export interface IStorage {
   getProductVariants(productId: string): Promise<ProductVariant[]>;
   upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void>;
   deleteProductVariantsByProduct(productId: string): Promise<void>;
+
+  getCurrencyRates(): Promise<CurrencyRate[]>;
+  upsertCurrencyRate(currency: string, rateFromInr: number): Promise<CurrencyRate>;
+
+  getPricingRules(): Promise<PricingRule[]>;
+  getPricingRuleByCurrency(currency: string): Promise<PricingRule | undefined>;
+  upsertPricingRule(data: InsertPricingRule): Promise<PricingRule>;
+  updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -757,6 +767,47 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProductVariantsByProduct(productId: string): Promise<void> {
     await db.delete(productVariants).where(eq(productVariants.productId, productId));
+  }
+
+  async getCurrencyRates(): Promise<CurrencyRate[]> {
+    return await db.select().from(currencyRates).orderBy(currencyRates.currency);
+  }
+
+  async upsertCurrencyRate(currency: string, rateFromInr: number): Promise<CurrencyRate> {
+    const [existing] = await db.select().from(currencyRates).where(eq(currencyRates.currency, currency));
+    if (existing) {
+      const [updated] = await db.update(currencyRates)
+        .set({ rateFromInr, updatedAt: new Date() })
+        .where(eq(currencyRates.currency, currency))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(currencyRates).values({ id: createId(), currency, rateFromInr }).returning();
+    return created;
+  }
+
+  async getPricingRules(): Promise<PricingRule[]> {
+    return await db.select().from(pricingRules).orderBy(pricingRules.currency);
+  }
+
+  async getPricingRuleByCurrency(currency: string): Promise<PricingRule | undefined> {
+    const [rule] = await db.select().from(pricingRules).where(eq(pricingRules.currency, currency));
+    return rule;
+  }
+
+  async upsertPricingRule(data: InsertPricingRule): Promise<PricingRule> {
+    const [existing] = await db.select().from(pricingRules).where(eq(pricingRules.currency, data.currency));
+    if (existing) {
+      const [updated] = await db.update(pricingRules).set(data).where(eq(pricingRules.currency, data.currency)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(pricingRules).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined> {
+    const [updated] = await db.update(pricingRules).set(data).where(eq(pricingRules.currency, currency)).returning();
+    return updated;
   }
 }
 

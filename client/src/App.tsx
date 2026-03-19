@@ -36,6 +36,7 @@ import AdminSeoAudit from "@/pages/AdminSeoAudit";
 import AdminBrandAssets from "@/pages/AdminBrandAssets";
 import AdminConsent from "@/pages/AdminConsent";
 import AdminDbCompare from "@/pages/AdminDbCompare";
+import AdminPricing from "@/pages/AdminPricing";
 import AdminGuard from "@/components/AdminGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/admin/db-compare" component={() => <AdminGuard><AdminDbCompare /></AdminGuard>} />
       <Route path="/admin/seo-audit" component={() => <AdminGuard><AdminSeoAudit /></AdminGuard>} />
       <Route path="/admin/consent" component={() => <AdminGuard><AdminConsent /></AdminGuard>} />
+      <Route path="/admin/pricing" component={() => <AdminGuard><AdminPricing /></AdminGuard>} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
