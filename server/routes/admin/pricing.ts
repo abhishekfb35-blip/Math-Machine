@@ -8,7 +8,7 @@ export function registerAdminPricingRoutes(app: Express) {
 
   app.get("/api/geo", async (req, res) => {
     const forwarded = req.headers["x-forwarded-for"];
-    const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0]?.trim()) || req.socket.remoteAddress || "127.0.0.1";
+    const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0]?.trim()) || req.ip || "127.0.0.1";
     try {
       const rules = await storage.getPricingRules();
       const enabledCurrencies = new Set(rules.filter(r => r.enabled).map(r => r.currency));
