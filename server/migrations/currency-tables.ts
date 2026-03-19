@@ -5,7 +5,8 @@ export async function ensureCurrencyTables() {
   try {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS currency_rates (
-        currency VARCHAR(10) PRIMARY KEY,
+        id TEXT PRIMARY KEY,
+        currency VARCHAR(3) NOT NULL UNIQUE,
         rate_from_inr NUMERIC(12,6) NOT NULL,
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       )
@@ -15,14 +16,12 @@ export async function ensureCurrencyTables() {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS pricing_rules (
         id TEXT PRIMARY KEY,
-        currency VARCHAR(10) NOT NULL UNIQUE,
-        symbol VARCHAR(10) NOT NULL,
-        display_name TEXT,
+        currency VARCHAR(3) NOT NULL UNIQUE,
+        symbol VARCHAR(5) NOT NULL,
+        display_name VARCHAR(50),
         markup_percent NUMERIC(5,2) NOT NULL DEFAULT 0,
-        rounding_rule TEXT NOT NULL DEFAULT 'nearest',
-        enabled BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+        rounding_rule VARCHAR(20) NOT NULL DEFAULT 'nearest',
+        enabled BOOLEAN NOT NULL DEFAULT true
       )
     `);
     console.log("[migration] currency-tables: pricing_rules ensured");

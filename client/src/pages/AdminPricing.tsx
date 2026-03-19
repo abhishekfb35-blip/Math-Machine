@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,6 +131,8 @@ function RuleRow({ rule, onSaved }: { rule: PricingRuleRow; onSaved: () => void 
 export default function AdminPricing() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [showRates, setShowRates] = useState(false);
+  const [errorDismissed, setErrorDismissed] = useState(false);
 
   const { data, isLoading, error } = useQuery<PricingData>({
     queryKey: ["/api/admin/pricing-rules"],
@@ -141,11 +143,13 @@ export default function AdminPricing() {
     onSuccess: () => {
       toast({ title: "Rates refreshed", description: "Exchange rates updated from frankfurter.app." });
       qc.invalidateQueries({ queryKey: ["/api/admin/pricing-rules"] });
+      setErrorDismissed(false);
     },
     onError: () => toast({ title: "Refresh failed", description: "Could not fetch latest rates.", variant: "destructive" }),
   });
 
   const status = data?.status;
+  const showError = status?.lastFetchError && !errorDismissed;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-pricing">
@@ -186,12 +190,23 @@ export default function AdminPricing() {
             </div>
           ) : (
             <div className="space-y-3">
-              {status?.lastFetchError && (
-                <div className="flex items-start gap-2 p-2.5 rounded-md bg-destructive/10 text-destructive text-xs">
-                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                  <span>Last error: {status.lastFetchError}</span>
+              {showError && (
+                <div className="flex items-start justify-between gap-2 p-2.5 rounded-md bg-destructive/10 text-destructive text-xs" data-testid="banner-rate-error">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>Last error: {status!.lastFetchError}</span>
+                  </div>
+                  <button
+                    onClick={() => setErrorDismissed(true)}
+                    className="shrink-0 opacity-70 hover:opacity-100"
+                    data-testid="button-dismiss-error"
+                    aria-label="Dismiss error"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
+
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
@@ -237,6 +252,53 @@ export default function AdminPricing() {
                   </div>
                 </div>
               </div>
+
+              {data?.rules && data.rules.length > 0 && (
+                <div>
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                    onClick={() => setShowRates(v => !v)}
+                    data-testid="button-toggle-rates"
+                  >
+                    {showRates ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    {showRates ? "Hide rates" : "Show current rates"}
+                  </button>
+                  {showRates && (
+                    <div className="mt-2 overflow-x-auto rounded-md border" data-testid="table-current-rates">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b bg-muted/40 text-muted-foreground">
+                            <th className="py-2 px-3 text-left font-medium">Currency</th>
+                            <th className="py-2 px-3 text-left font-medium">Name</th>
+                            <th className="py-2 px-3 text-left font-medium">Rate from ₹1</th>
+                            <th className="py-2 px-3 text-left font-medium">Status</th>
+                            <th className="py-2 px-3 text-left font-medium">Updated</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.rules.map(r => (
+                            <tr key={r.currency} className="border-b last:border-0">
+                              <td className="py-2 px-3 font-mono font-semibold">{r.currency}</td>
+                              <td className="py-2 px-3 text-muted-foreground">{r.displayName ?? r.currency}</td>
+                              <td className="py-2 px-3 font-mono">
+                                {r.rate != null ? r.rate.toFixed(6) : <span className="text-muted-foreground">—</span>}
+                              </td>
+                              <td className="py-2 px-3">
+                                {r.enabled ? (
+                                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400">Enabled</Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs">Disabled</Badge>
+                                )}
+                              </td>
+                              <td className="py-2 px-3 text-muted-foreground">{formatTs(r.rateUpdatedAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
