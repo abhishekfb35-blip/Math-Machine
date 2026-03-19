@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, CategoryVariantOptions, ProductVariant } from "@shared/types";
+import type { Product, ProductVariantOptions, ProductVariant } from "@shared/types";
 
 interface QuickAddSheetProps {
   product: Product | null;
@@ -29,13 +29,13 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const isCoupleProduct = product?.audience === "couples";
 
-  const { data: variantOptions } = useQuery<CategoryVariantOptions>({
-    queryKey: ["/api/categories", product?.categoryId, "variant-options"],
+  const { data: variantOptions } = useQuery<ProductVariantOptions>({
+    queryKey: ["/api/products", product?.id, "variant-options"],
     queryFn: async () => {
-      const res = await fetch(`/api/categories/${product!.categoryId}/variant-options`);
+      const res = await fetch(`/api/products/${product!.id}/variant-options`);
       return res.json();
     },
-    enabled: !!product?.categoryId && open,
+    enabled: !!product?.id && open,
   });
 
   const { data: productVariants } = useQuery<ProductVariant[]>({

@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  MoveLeft, MoveRight, Loader2, Undo2, Save, Palette
+  Loader2, Undo2, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag, CategoryVariantOptions, ColorOption, SizeOption } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
@@ -527,43 +527,6 @@ export default function AdminCatalog() {
     enabled: !!reviewDialogProduct?.id,
   });
 
-  const { data: categoryVariantOptions, refetch: refetchCategoryVariants } = useQuery<CategoryVariantOptions>({
-    queryKey: ["/api/admin/categories", editingCategory?.id, "variants"],
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/categories/${editingCategory!.id}/variants`);
-      return res.json();
-    },
-    enabled: !!editingCategory?.id && view === "edit-category",
-  });
-
-  const [variantColors, setVariantColors] = useState<ColorOption[]>([]);
-  const [variantSizes, setVariantSizes] = useState<SizeOption[]>([]);
-
-  useEffect(() => {
-    if (categoryVariantOptions) {
-      setVariantColors(categoryVariantOptions.colors || []);
-      setVariantSizes(categoryVariantOptions.sizes || []);
-    } else {
-      setVariantColors([]);
-      setVariantSizes([]);
-    }
-  }, [categoryVariantOptions]);
-
-  const saveCategoryVariantsMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("PUT", `/api/admin/categories/${editingCategory!.id}/variants`, {
-        colors: variantColors,
-        sizes: variantSizes,
-      });
-    },
-    onSuccess: () => {
-      refetchCategoryVariants();
-      toast({ title: "Variant options saved" });
-    },
-    onError: () => {
-      toast({ title: "Error saving variants", variant: "destructive" });
-    },
-  });
 
   const addDialogReviewMutation = useMutation({
     mutationFn: (data: typeof emptyReviewForm) =>
@@ -1076,23 +1039,6 @@ export default function AdminCatalog() {
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs px-2 h-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsNew(false);
-                        setEditingCategory({ ...cat });
-                        setView("edit-category");
-                        setTimeout(() => {
-                          document.getElementById("section-category-variants")?.scrollIntoView({ behavior: "smooth" });
-                        }, 200);
-                      }}
-                      data-testid={`button-variants-config-${cat.id}`}
-                    >
-                      <Palette className="w-3 h-3 mr-1" /> Variants
-                    </Button>
-                    <Button
                       size="icon"
                       variant="ghost"
                       onClick={(e) => {
@@ -1215,188 +1161,6 @@ export default function AdminCatalog() {
             {saveCategoryMutation.isPending ? "Saving..." : isNew ? "Create Category" : "Save Changes"}
           </Button>
 
-          {!isNew && editingCategory.id && (
-            <div id="section-category-variants" className="border rounded-lg p-4 space-y-4 mt-4" data-testid="section-category-variants">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Variant Options (Colours & Sizes)</h3>
-                <Button
-                  size="sm"
-                  onClick={() => saveCategoryVariantsMutation.mutate()}
-                  disabled={saveCategoryVariantsMutation.isPending}
-                  data-testid="button-save-variants"
-                >
-                  {saveCategoryVariantsMutation.isPending ? "Saving..." : "Save Variants"}
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Colours</Label>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setVariantColors(prev => [...prev, { name: "", hexCode: "#ffffff", blurOnFront: false, hideFromFront: false }])}
-                    data-testid="button-add-color"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Colour
-                  </Button>
-                </div>
-                {variantColors.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No colours configured.</p>
-                )}
-                {variantColors.map((color, idx) => (
-                  <div key={idx} className="flex items-center gap-2 flex-wrap" data-testid={`color-row-${idx}`}>
-                    <input
-                      type="color"
-                      value={color.hexCode}
-                      onChange={(e) => setVariantColors(prev => prev.map((c, i) => i === idx ? { ...c, hexCode: e.target.value } : c))}
-                      className="w-8 h-8 rounded cursor-pointer border border-border p-0"
-                      data-testid={`input-color-hex-${idx}`}
-                    />
-                    <Input
-                      value={color.name}
-                      onChange={(e) => setVariantColors(prev => prev.map((c, i) => i === idx ? { ...c, name: e.target.value } : c))}
-                      placeholder="Colour name (e.g. White)"
-                      className="flex-1 min-w-[100px]"
-                      data-testid={`input-color-name-${idx}`}
-                    />
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={color.blurOnFront}
-                        onCheckedChange={(v) => setVariantColors(prev => prev.map((c, i) => i === idx ? { ...c, blurOnFront: !!v } : c))}
-                        data-testid={`checkbox-color-blur-${idx}`}
-                      />
-                      Blur
-                    </label>
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={color.hideFromFront}
-                        onCheckedChange={(v) => setVariantColors(prev => prev.map((c, i) => i === idx ? { ...c, hideFromFront: !!v } : c))}
-                        data-testid={`checkbox-color-hide-${idx}`}
-                      />
-                      Hide
-                    </label>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setVariantColors(prev => prev.filter((_, i) => i !== idx))}
-                      data-testid={`button-delete-color-${idx}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-3 border-t pt-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Sizes</Label>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setVariantSizes(prev => [...prev, { name: "", value: "", isDefault: false, blurOnFront: false, hideFromFront: false }])}
-                    data-testid="button-add-size"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Size
-                  </Button>
-                </div>
-                {variantSizes.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No sizes configured.</p>
-                )}
-                {variantSizes.map((size, idx) => (
-                  <div key={idx} className="border rounded-md p-3 space-y-2" data-testid={`size-row-${idx}`}>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-5 w-5"
-                          disabled={idx === 0}
-                          onClick={() => setVariantSizes(prev => {
-                            const next = [...prev];
-                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                            return next;
-                          })}
-                          data-testid={`button-size-up-${idx}`}
-                        >
-                          <MoveLeft className="w-3 h-3 rotate-90" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-5 w-5"
-                          disabled={idx === variantSizes.length - 1}
-                          onClick={() => setVariantSizes(prev => {
-                            const next = [...prev];
-                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-                            return next;
-                          })}
-                          data-testid={`button-size-down-${idx}`}
-                        >
-                          <MoveRight className="w-3 h-3 rotate-90" />
-                        </Button>
-                      </div>
-                      <Input
-                        value={size.name}
-                        onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, name: e.target.value } : s))}
-                        placeholder="Display name (e.g. Small)"
-                        className="flex-1 min-w-[90px]"
-                        data-testid={`input-size-name-${idx}`}
-                      />
-                      <Input
-                        value={size.value}
-                        onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, value: e.target.value } : s))}
-                        placeholder="Value (e.g. S)"
-                        className="w-20"
-                        data-testid={`input-size-value-${idx}`}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setVariantSizes(prev => prev.filter((_, i) => i !== idx))}
-                        data-testid={`button-delete-size-${idx}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    <Input
-                      value={size.description || ""}
-                      onChange={(e) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, description: e.target.value } : s))}
-                      placeholder="Description (e.g. 120 × 60 cm)"
-                      className="text-xs"
-                      data-testid={`input-size-description-${idx}`}
-                    />
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-1 text-xs cursor-pointer">
-                        <Checkbox
-                          checked={size.isDefault}
-                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, isDefault: !!v } : s))}
-                          data-testid={`checkbox-size-default-${idx}`}
-                        />
-                        Default
-                      </label>
-                      <label className="flex items-center gap-1 text-xs cursor-pointer">
-                        <Checkbox
-                          checked={size.blurOnFront}
-                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, blurOnFront: !!v } : s))}
-                          data-testid={`checkbox-size-blur-${idx}`}
-                        />
-                        Blur
-                      </label>
-                      <label className="flex items-center gap-1 text-xs cursor-pointer">
-                        <Checkbox
-                          checked={size.hideFromFront}
-                          onCheckedChange={(v) => setVariantSizes(prev => prev.map((s, i) => i === idx ? { ...s, hideFromFront: !!v } : s))}
-                          data-testid={`checkbox-size-hide-${idx}`}
-                        />
-                        Hide
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );

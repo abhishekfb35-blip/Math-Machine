@@ -17,7 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, Category, ProductImage, ProductReview, CategoryVariantOptions, ProductVariant } from "@shared/types";
+import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions, ProductVariant } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const REVIEWS_PER_PAGE = 10;
@@ -69,13 +69,13 @@ export default function ProductPage() {
     enabled: !!product?.id,
   });
 
-  const { data: variantOptions } = useQuery<CategoryVariantOptions>({
-    queryKey: ["/api/categories", product?.categoryId, "variant-options"],
+  const { data: variantOptions } = useQuery<ProductVariantOptions>({
+    queryKey: ["/api/products", product?.id, "variant-options"],
     queryFn: async () => {
-      const res = await fetch(`/api/categories/${product!.categoryId}/variant-options`);
+      const res = await fetch(`/api/products/${product!.id}/variant-options`);
       return res.json();
     },
-    enabled: !!product?.categoryId,
+    enabled: !!product?.id,
   });
 
   const { data: productVariants } = useQuery<ProductVariant[]>({

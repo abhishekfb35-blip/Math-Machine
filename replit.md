@@ -1,6 +1,6 @@
 # Overview
 
-This is the **Turtle Little** e-commerce web application, an online store selling personalised luxury embroidered towels and blankets. The platform enables customers to browse products, personalise items for embroidery, add them to a cart with automatic "Buy 2 Get 1 Free" discounts, and place orders with shipping details. The business vision is to provide a premium, app-style shopping experience with a focus on handcrafted quality and personalised products.
+**Turtle Little** is an e-commerce web application specializing in personalized luxury embroidered towels and blankets. The platform aims to deliver a premium, app-like shopping experience, allowing customers to browse, personalize products, manage a cart with automatic "Buy 2 Get 1 Free" discounts, and place orders. The core vision is to combine handcrafted quality with advanced personalization features, offering a unique market proposition in the personalized luxury goods sector.
 
 # User Preferences
 
@@ -8,107 +8,75 @@ Preferred communication style: Simple, everyday language.
 
 # System Architecture
 
-The project employs a **monorepo layout** with distinct `client/` (React frontend), `server/` (Express backend), and `shared/` (common code) directories.
+The project utilizes a **monorepo structure** comprising `client/` (React frontend), `server/` (Express backend), and `shared/` (common code) directories.
 
 ## Frontend
 
-- **Framework**: React with TypeScript, bundled by Vite.
-- **Routing**: Wouter for client-side routing.
-- **State/Data Fetching**: TanStack React Query.
-- **UI/Styling**: shadcn/ui built on Radix UI with Tailwind CSS, supporting light/dark modes.
-- **Key Pages**:
-    - **Home** (`/`): Dynamic hero banner, audience cards, featured products, promo cards.
-    - **Shop** (`/shop`): Unified browsing with filter chips by audience.
-    - **Product Detail** (`/product/:slug`): Image gallery, pricing, specifications, personalisation input, add-to-cart, related products.
-    - **Cart** (`/cart`): Item management, discount display, order summary.
-    - **Checkout** (`/checkout`): Address form and order summary.
-    - **Order Confirmation** (`/order/:id`): Order details.
-    - **Admin Dashboard** (`/admin`): Central entry point for all admin functions. Shows card grid linking to Catalog, Orders, Page Builder, Policy Pages, Health Checks, Audit Log, and Export Data. Login redirects here.
-    - **Admin Builder** (`/admin/builder`): Dynamic homepage layout and collection management.
-    - **Admin Catalog** (`/admin/catalog`): CMS for managing categories and products. Product list has checkboxes for bulk selection (up to 15) to open multiple products in new tabs for editing. Individual edit buttons also open in new tabs.
-    - **Admin Product Edit** (`/admin/catalog/product/:id`): Standalone product editor opened in a new tab. Has Save and Save & Close (closes tab) buttons.
-    - **Admin Orders** (`/admin/orders`): Order management with list view, status filters, search, order detail with items/address/payment, status updates (triggers customer email), and internal notes.
-    - **Admin Audit Log** (`/admin/audit-log`): Timeline of all admin changes with entity type filtering and pagination.
-    - **Admin Deploy Check** (`/admin/deploy-check`): Code health report — verifies production bundle includes all routes, static files, and checks if rebuild is needed.
-    - **Admin Data Check** (`/admin/data-check`): Database health report — compares table structures against expected schema, shows row counts, data integrity issues, and site config completeness. Open on both dev and production to compare side by side.
-    - **Admin DB Compare** (`/admin/db-compare`): Compare dev vs prod catalog tables side-by-side. Enter the prod URL, the server fetches the prod snapshot using the admin password and diffs all 6 catalog tables (categories, products, tags, product_tags, product_images, product_reviews). Shows count mismatches, IDs only in dev/prod, SKU-level diffs, field-level mismatches. Uses `GET /api/admin/db-snapshot` (accepts session cookie or `X-Admin-Password` header) and `POST /api/admin/db-compare` (server-side proxy + diff logic).
-    - **Admin International Pricing** (`/admin/pricing`): Manage multi-currency exchange rates and per-currency pricing rules (markup %, rounding, enable/disable). Rates auto-refreshed every 12h from frankfurter.app (AED derived via USD peg ×3.6725). Manual refresh button. Supported currencies: GBP, USD, EUR, AED, SGD, AUD, CAD.
-- **Admin Consent** (`/admin/consent`): Manage consent popup settings (headline, description, consent text, discount %, enable/disable) and configurable form fields (First Name, Last Name, Email, Phone — each with Show/Required/Hide-if-logged-in toggles). View all collected signups with discount code usage status. Settings stored in `site_config` under key `consent-popup`.
-- **Core UI Components**: AnnouncementBar, Header (includes CurrencySelector), BottomNav (mobile), Footer, ProductCardNew with quick-add, QuickAddSheet for personalization, and a floating WhatsAppButton.
-- **Multi-Currency Frontend**: `CurrencyContext` (`client/src/context/CurrencyContext.tsx`) wraps the entire app. Fetches `/api/currency/config` for rules+rates, `/api/geo` for IP-based currency detection. Persists selection in `localStorage` (`tl_currency`). `formatPrice(inrAmount)` converts and formats in any currency. `CurrencySelector` component in Header lets user switch currency. Price display updated in: ProductCardNew, ProductPage, CartPage, CheckoutPage. When non-INR selected, checkout shows an "indicative price, charged in INR" disclaimer. Razorpay create-order receives `currency` param for multi-currency Razorpay orders.
+-   **Technology Stack**: React with TypeScript, bundled by Vite.
+-   **UI/Styling**: shadcn/ui based on Radix UI and Tailwind CSS, supporting light/dark modes.
+-   **Routing**: Wouter for client-side navigation.
+-   **State Management/Data Fetching**: TanStack React Query.
+-   **Key User-facing Pages**: Home, Shop, Product Detail, Cart, Checkout, Order Confirmation.
+-   **Admin Dashboard**: A central interface for managing catalog, orders, page layouts, policy pages, health checks, audit logs, and data exports. Includes specialized tools like:
+    -   **Admin Builder**: Dynamic homepage layout and collection management.
+    -   **Admin Catalog**: CMS for product and category management with bulk editing capabilities.
+    -   **Admin Orders**: Order viewing, status updates, and internal notes.
+    -   **Admin Health Checks**: Deploy and data integrity verification tools.
+    -   **Admin DB Compare**: Tool to compare development and production database schemas and data for catalog tables.
+    -   **Admin International Pricing**: Manages multi-currency exchange rates and pricing rules.
+    -   **Admin Consent**: Configures and monitors consent popups and collected signups.
+-   **Core UI Components**: Reusable components such as AnnouncementBar, Header (with CurrencySelector), BottomNav, Footer, ProductCardNew, QuickAddSheet for personalization, and a floating WhatsAppButton.
+-   **Multi-Currency Support**: Frontend displays prices in multiple currencies based on user selection or IP detection, with conversion and formatting handled by `CurrencyContext`.
 
 ## Backend
 
-- **Framework**: Express 5 on Node.js with TypeScript.
-- **Cart Sessions**: Cookie-based for persistence.
-- **API Endpoints**: Comprehensive REST API for categories, products, cart management, checkout, orders, and site configuration.
-- **Route Structure** (`server/routes/`): Modular route files, each exporting a `register*Routes(app)` function:
-    - `helpers.ts` — Shared utilities: `getSessionId`, `getCustomerToken`, `getAuthenticatedCustomer`, `upload` (multer), `currentDir`.
-    - `index.ts` — Master router that imports and registers all route groups.
-    - `products.ts` — Public product/category/review/image endpoints.
-    - `cart.ts` — Cart CRUD endpoints using `CartService`.
-    - `checkout.ts` — Checkout, Razorpay, order fetch, site-config endpoints.
-    - `auth.ts` — Customer auth (OTP, Google OAuth, profile, order history).
-    - `seo.ts` — `robots.txt` and `sitemap.xml` generation.
-    - `admin/catalog.ts` — Admin CRUD for categories, products, images, reviews, tags.
-    - `admin/orders.ts` — Admin auth (login/logout/check) and order management.
-    - `admin/consent.ts` — Admin consent list with pagination and total count.
-    - `admin/health.ts` — Deploy check, data check, SEO audit, data export, audit logs, file upload.
-    - `admin/pricing.ts` — Multi-currency: GET/PUT pricing rules, POST refresh-rates, public GET /api/geo (IP-to-currency) and GET /api/currency/config (enabled currencies + live rates).
-- **Entry point**: `server/routes.ts` re-exports `registerRoutes` from `server/routes/index.ts` for backward compatibility.
+-   **Technology Stack**: Express 5 on Node.js with TypeScript.
+-   **API Endpoints**: A comprehensive REST API supporting categories, products, cart operations, checkout, orders, and site configuration.
+-   **Modular Routing**: Routes are organized into distinct files within `server/routes/`, covering public and admin functionalities.
+-   **Cart Management**: Cookie-based sessions for persistent cart data.
 
 ## Shared Layer (`shared/`)
 
-- **`types.ts`**: Database-agnostic TypeScript interfaces for all data models, insulating application logic from database specifics.
-- **`schema.ts`**: Drizzle ORM table definitions for PostgreSQL, used exclusively by the server's storage layer.
-- **`routes.ts`**: Zod validation schemas for API inputs.
+-   **`types.ts`**: Defines database-agnostic TypeScript interfaces for all data models.
+-   **`schema.ts`**: Contains Drizzle ORM table definitions for PostgreSQL.
+-   **`routes.ts`**: Zod validation schemas for API request inputs.
 
 ## Architecture Patterns
 
-- **Database Insulation**: Separation of database-specific code (`shared/schema.ts`, `server/storage.ts`) from application logic (`shared/types.ts`) via an `IStorage` interface, allowing for database changes without impacting core business logic.
-- **Provider Abstraction Layer (`server/providers/`)**: Swappable interfaces for Payment (`IPaymentProvider`), File Storage (`IFileStorage`), and Notifications (`INotificationService`), controlled by environment variables. Current implementations include `CodPaymentProvider` (Cash on Delivery), `LocalFileStorage`, and `ConsoleNotificationService`.
-- **Service Layer (`server/services/`)**: Business logic (e.g., `discountService.ts`, `cartService.ts`, `orderService.ts`) is encapsulated in service classes, decoupling it from HTTP route handlers.
+-   **Database Insulation**: Achieved by separating database-specific logic from application logic using an `IStorage` interface.
+-   **Provider Abstraction**: Utilizes swappable interfaces for Payment (`IPaymentProvider`), File Storage (`IFileStorage`), and Notifications (`INotificationService`), allowing for flexible integration of different services.
+-   **Service Layer**: Business logic is encapsulated in service classes (e.g., `discountService.ts`, `cartService.ts`, `orderService.ts`) to maintain separation of concerns from HTTP handlers.
 
 ## Database
 
-- **Environments**: Dev and production use **separate PostgreSQL databases**. The seed function (`server/seed.ts`) auto-syncs data (products, categories, reviews, images, tags, site config) on startup, but admin-created data (orders, uploaded images, etc.) is per-environment.
-- **ORM**: Drizzle ORM with PostgreSQL dialect.
-- **ID Strategy**: All tables use CUID2 string IDs (`@paralleldrive/cuid2`) instead of auto-increment integers. IDs are generated via `$defaultFn(() => createId())` in the schema.
-- **Tables**: Includes `categories`, `products`, `tags`, `product_tags` (many-to-many), `product_images`, `product_reviews`, `carts`, `cart_items`, `orders`, `order_items`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, and `pricing_rules`.
-- **Audit Log**: Tracks all admin changes (create/update/delete) for categories, products, tags, site config, and order status changes. Records entity type, entity ID/name, action, changed fields (JSON), username, and timestamp. Auto-prunes to keep only the 10 most recent entries per entity.
-- **Product Categories**: Consolidated to 3 top-level categories: **Towels** (slug: `towels`), **Bathrobes** (slug: `bathrobes`), **Blankets** (slug: `blankets`). Audience filtering (kids/adults/couples) is done via `product.audience` field; product type filtering via `product.productType` field. Category-slug-based audience detection has been removed from all frontend pages.
-- **Timestamps**: Products, product_images, and orders have `created_at`/`updated_at`. Product_reviews and carts have `created_at` only. Storage layer auto-sets `updatedAt` on product/order updates.
-- **Discount Logic**: "Buy 2 Get 1 Free" applied automatically, making the cheapest `floor(N/2)` items free for carts with 3+ items.
+-   **Type**: PostgreSQL, with separate databases for development and production environments.
+-   **ORM**: Drizzle ORM.
+-   **ID Strategy**: Uses CUID2 string IDs for all tables.
+-   **Key Tables**: `categories`, `products`, `tags`, `product_images`, `carts`, `orders`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, `pricing_rules`, `category_variant_options`, `product_variants`, `customers`, `customer_otps`, `customer_sessions`.
+-   **Audit Log**: Tracks all administrative changes with entity-specific details and auto-pruning.
+-   **Product Categorization**: Consolidated into 'Towels', 'Bathrobes', and 'Blankets' with audience and product type filtering.
+-   **Discount Logic**: Implements an automatic "Buy 2 Get 1 Free" discount on cart items.
 
 ## Key Features
 
-- Product personalisation (name embroidery).
-- Automatic "Buy 2 Get 1 Free" discount.
-- Floating WhatsApp contact button (99900 79722).
-- Dark/light theme toggle and mobile-responsive design.
-- Cookie-based cart persistence.
-- Progressive Web App (PWA) support.
-- Dynamic homepage content management.
-- Comprehensive product data and customer reviews.
-- Optimized product images for various sizes (Small, Medium, Large) served from `client/public/images/products/`.
-- **Customer Authentication**: Google OAuth login only. Customer sessions stored in `customer_sessions` table with httpOnly cookies. Customers can save profile/address (auto-fills checkout), view order history. Tables: `customers`, `customer_otps`, `customer_sessions`. Orders linked to customers via `customerId` field.
-- **Key Auth Routes**: `/api/auth/google`, `/api/auth/me`, `/api/auth/profile`, `/api/auth/logout`, `/api/auth/orders`.
-- **Auth Pages**: `/signin` (Google only), `/account` (profile + order history).
-- **SEO**: Per-page titles, meta descriptions, canonical URLs, Open Graph tags, Twitter cards via react-helmet-async. JSON-LD structured data (Product, Organization, BreadcrumbList). Dynamic `/sitemap.xml` with 470+ URLs. `robots.txt` blocking admin/cart/checkout. OG image at `/og-image.png`.
-- **Payments**: Dual payment system — Razorpay (online, HMAC-SHA256 verified) + COD. Razorpay order ID persisted in `razorpay_order_id` column. Test/live keys swappable via secrets.
-- **Customer Consent & Discount**: Popup appears after 2 scrolls or 5 seconds for non-consented users. Form fields are configurable from admin (Show/Required/Hide-if-logged-in toggles per field). Fields with "Hide if logged in" enabled auto-hide for authenticated users (data sourced from Google sign-in instead). Stores full compliance audit trail (IP, user agent, page URL, consent text, timestamp) in `customer_consents` table. Issues a one-time 10% discount code (TL10-XXXXXXXX) on opt-in. `discountCode` and `discountUsed` fields track redemption. Routes: `POST /api/consent`, `GET /api/consent/check`, `POST /api/discount/validate`. Component: `ConsentPopup.tsx`. Rate-limited (10s per IP). Discount code can be entered on checkout page — validated server-side, applied as 10% off cart total (after Buy 2 Get 1 Free), marked as used on order completion.
-- **Google One Tap**: Automatic Google sign-in prompt on public pages for unauthenticated users. Component: `GoogleOneTap.tsx`.
-- **Brand Assets**: Admin page (`/admin/brand`) for uploading 4 logo slots (desktop, mobile, favicon, footer). Logos stored as base64 in `site_config` DB and restored on server startup via `restoreBrandLogosFromDB()`. Favicon upload auto-generates PWA icons (32x32, 192x192, 512x512).
+-   **Product Personalization**: Supports name embroidery for products.
+-   **Customer Authentication**: Google OAuth login with customer profiles and order history.
+-   **SEO**: Dynamic sitemap, `robots.txt`, per-page metadata, canonical URLs, Open Graph, Twitter cards, and JSON-LD structured data.
+-   **Payments**: Integrated with Razorpay for online transactions and supports Cash on Delivery (COD).
+-   **Customer Consent & Discount**: Configurable consent popup with audit trail and a one-time 10% discount code for opt-ins.
+-   **Brand Assets Management**: Admin interface for uploading and managing brand logos and favicons, dynamically generating PWA icons.
+-   **PWA Support**: Progressive Web Application capabilities.
+-   **Dynamic Content Management**: Homepage content managed via an admin interface.
+-   **Optimized Images**: Product images served in various sizes.
 
 # External Dependencies
 
-- **Database**: PostgreSQL
-- **Frontend Libraries**: React, Vite, Wouter, TanStack React Query, shadcn/ui, Radix UI, Tailwind CSS
-- **Backend Libraries**: Express, cookie-parser, tsx
-- **ORM**: Drizzle ORM
-- **Validation**: Zod
-- **SEO**: react-helmet-async for per-page meta tags, JSON-LD structured data (Product, Organization, BreadcrumbList), dynamic sitemap.xml, robots.txt
-- **Payment Gateway**: Razorpay (online payments, modal-based, HMAC-SHA256 verified) + CodPaymentProvider (Cash on Delivery). Razorpay order ID persisted in `razorpay_order_id` column. Test/live keys swappable via secrets. COD always available.
-- **File Storage**: LocalFileStorage (disk-based)
-- **Notifications**: ResendNotificationService (Resend API for transactional emails), falls back to ConsoleNotificationService if RESEND_API_KEY is not set
-- **Email Integration**: Resend (resend.com) — sends order confirmation to customers and new order alerts to admin. Configured via RESEND_API_KEY secret, EMAIL_FROM and ADMIN_EMAIL env vars. From address: orders@turtlelittle.com (requires domain verification in Resend). Admin alerts go to hello@turtlelittle.com.
+-   **Database**: PostgreSQL
+-   **Frontend Libraries**: React, Vite, Wouter, TanStack React Query, shadcn/ui, Radix UI, Tailwind CSS
+-   **Backend Libraries**: Express, cookie-parser, tsx
+-   **ORM**: Drizzle ORM
+-   **Validation**: Zod
+-   **SEO Tools**: react-helmet-async, sitemap.xml, robots.txt, JSON-LD
+-   **Payment Gateway**: Razorpay (online payments)
+-   **File Storage**: LocalFileStorage (disk-based)
+-   **Email Service**: Resend (for transactional emails and admin alerts)

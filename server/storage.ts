@@ -16,6 +16,7 @@ import type {
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
   CategoryVariantOptions, ColorOption, SizeOption,
+  ProductVariantOptions,
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
@@ -113,6 +114,8 @@ export interface IStorage {
 
   getCategoryVariantOptions(categoryId: string): Promise<CategoryVariantOptions | null>;
   upsertCategoryVariantOptions(categoryId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void>;
+  getProductVariantOptions(productId: string): Promise<ProductVariantOptions>;
+  upsertProductVariantOptions(productId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void>;
   getProductVariants(productId: string): Promise<ProductVariant[]>;
   upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void>;
   deleteProductVariantsByProduct(productId: string): Promise<void>;
@@ -750,6 +753,25 @@ export class DatabaseStorage implements IStorage {
     } else {
       await db.insert(categoryVariantOptions).values({ categoryId, colors: colorsJson, sizes: sizesJson });
     }
+  }
+
+  async getProductVariantOptions(productId: string): Promise<ProductVariantOptions> {
+    const result = await db.execute(sql`SELECT variant_colors, variant_sizes FROM products WHERE id = ${productId}`);
+    const rowList = Array.isArray(result) ? result : ((result as any).rows ?? []);
+    const row = rowList[0] as { variant_colors?: string; variant_sizes?: string } | undefined;
+    if (!row) return { productId, colors: [], sizes: [] };
+    let colors: ColorOption[] = [];
+    let sizes: SizeOption[] = [];
+    try { colors = JSON.parse(row.variant_colors || "[]"); } catch {}
+    try { sizes = JSON.parse(row.variant_sizes || "[]"); } catch {}
+    return { productId, colors, sizes };
+  }
+
+  async upsertProductVariantOptions(productId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void> {
+    await db.execute(sql`
+      UPDATE products SET variant_colors = ${JSON.stringify(colors)}, variant_sizes = ${JSON.stringify(sizes)}
+      WHERE id = ${productId}
+    `);
   }
 
   async getProductVariants(productId: string): Promise<ProductVariant[]> {

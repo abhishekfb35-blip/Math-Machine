@@ -347,6 +347,12 @@ export interface CategoryVariantOptions {
   sizes: SizeOption[];
 }
 
+export interface ProductVariantOptions {
+  productId: string;
+  colors: ColorOption[];
+  sizes: SizeOption[];
+}
+
 export interface ProductVariant {
   id: string;
   productId: string;

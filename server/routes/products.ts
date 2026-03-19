@@ -65,4 +65,11 @@ export function registerProductRoutes(app: Express) {
     const variants = await storage.getProductVariants(id);
     res.json(variants);
   });
+
+  app.get("/api/products/:id/variant-options", async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
+    const opts = await storage.getProductVariantOptions(id);
+    res.json(opts);
+  });
 }

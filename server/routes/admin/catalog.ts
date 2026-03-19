@@ -423,4 +423,41 @@ export function registerAdminCatalogRoutes(app: Express) {
       res.status(500).json({ message: "Failed to save product variants" });
     }
   });
+
+  app.get("/api/admin/products/:id/variant-options", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
+    const opts = await storage.getProductVariantOptions(id);
+    res.json(opts);
+  });
+
+  app.put("/api/admin/products/:id/variant-options", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const schema = z.object({
+        colors: z.array(z.object({
+          name: z.string(),
+          hexCode: z.string(),
+          blurOnFront: z.boolean().default(false),
+          hideFromFront: z.boolean().default(false),
+        })),
+        sizes: z.array(z.object({
+          name: z.string(),
+          value: z.string(),
+          description: z.string().optional(),
+          isDefault: z.boolean().default(false),
+          blurOnFront: z.boolean().default(false),
+          hideFromFront: z.boolean().default(false),
+        })),
+      });
+      const { colors, sizes } = schema.parse(req.body);
+      await storage.upsertProductVariantOptions(id, colors, sizes);
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Upsert product variant options error:", err);
+      res.status(500).json({ message: "Failed to save product variant options" });
+    }
+  });
 }
