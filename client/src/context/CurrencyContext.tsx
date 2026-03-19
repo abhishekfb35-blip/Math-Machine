@@ -42,8 +42,7 @@ const CurrencyContext = createContext<CurrencyContextValue>({
 
 function applyRounding(amount: number, rule: string): number {
   if (rule === "up99") {
-    const intPart = Math.ceil(amount);
-    return intPart - 0.01;
+    return Math.ceil(amount + 0.01) - 0.01;
   }
   if (rule === "up") return Math.ceil(amount);
   return Math.round(amount * 100) / 100;
