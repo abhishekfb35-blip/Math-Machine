@@ -817,8 +817,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined> {
-    const dbData: any = { ...data };
-    if (data.markupPercent !== undefined) dbData.markupPercent = String(data.markupPercent);
+    const dbData: Partial<typeof pricingRules.$inferInsert> = {
+      ...data,
+      ...(data.markupPercent !== undefined && { markupPercent: String(data.markupPercent) }),
+    };
     const [updated] = await db.update(pricingRules).set(dbData).where(eq(pricingRules.currency, currency)).returning();
     return updated ? this.coercePricingRule(updated) : undefined;
   }

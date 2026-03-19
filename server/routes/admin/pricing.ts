@@ -32,7 +32,7 @@ export function registerAdminPricingRoutes(app: Express) {
 
       res.json({
         rules: enabledRules.map(r => ({
-          code: r.currency,
+          currency: r.currency,
           symbol: r.symbol,
           displayName: r.displayName,
           markupPercent: r.markupPercent,

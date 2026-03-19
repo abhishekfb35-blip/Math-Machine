@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useQuery } from "@tanstack/react-query";
 
 interface CurrencyRule {
-  code: string;
+  currency: string;
   symbol: string;
   displayName: string;
   markupPercent: number;
@@ -49,12 +49,12 @@ function applyRounding(amount: number, rule: string): number {
   return Math.round(amount * 100) / 100;
 }
 
-function formatAmount(amount: number, currency: string, symbol: string): string {
-  if (currency === "INR") {
+function formatAmount(amount: number, currencyCode: string, sym: string): string {
+  if (currencyCode === "INR") {
     return `₹${Math.round(amount).toLocaleString("en-IN")}`;
   }
   const formatted = amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2);
-  return `${symbol}${Number(formatted).toLocaleString("en-US")}`;
+  return `${sym}${Number(formatted).toLocaleString("en-US")}`;
 }
 
 const STORAGE_KEY = "tl_currency";
@@ -77,8 +77,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (geo && !localStorage.getItem(STORAGE_KEY) && config) {
-      const enabled = config.rules.filter(r => r.enabled).map(r => r.code);
-      if (geo.currency === "INR" || enabled.includes(geo.currency)) {
+      const enabledCodes = config.rules.filter(r => r.enabled).map(r => r.currency);
+      if (geo.currency === "INR" || enabledCodes.includes(geo.currency)) {
         setCurrencyState(geo.currency);
       }
     }
@@ -91,18 +91,18 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const enabledRules = config?.rules.filter(r => r.enabled) ?? [];
   const allCurrencies: CurrencyRule[] = [
-    { code: "INR", symbol: "₹", displayName: "Indian Rupee", markupPercent: 0, roundingRule: "nearest", enabled: true },
+    { currency: "INR", symbol: "₹", displayName: "Indian Rupee", markupPercent: 0, roundingRule: "nearest", enabled: true },
     ...enabledRules,
   ];
 
-  const currentRule = config?.rules.find(r => r.code === currency);
+  const currentRule = config?.rules.find(r => r.currency === currency);
 
   const convertPrice = useCallback((inrAmount: number): number => {
     if (currency === "INR") return inrAmount;
     if (!config) return inrAmount;
     const rate = config.rates[currency];
     if (!rate) return inrAmount;
-    const rule = config.rules.find(r => r.code === currency);
+    const rule = config.rules.find(r => r.currency === currency);
     if (!rule?.enabled) return inrAmount;
     const markupFactor = 1 + (rule.markupPercent || 0) / 100;
     const raw = inrAmount * rate * markupFactor;

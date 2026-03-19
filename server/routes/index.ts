@@ -13,7 +13,6 @@ import { registerAdminOrderRoutes } from "./admin/orders";
 import { registerAdminHealthRoutes } from "./admin/health";
 import { registerAdminConsentRoutes } from "./admin/consent";
 import { registerAdminPricingRoutes } from "./admin/pricing";
-import { initializeExchangeRateService } from "../services/exchangeRateService";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -38,8 +37,6 @@ export async function registerRoutes(
   registerAdminConsentRoutes(app);
   registerAdminCatalogRoutes(app);
   registerAdminPricingRoutes(app);
-
-  initializeExchangeRateService().catch(err => console.error("[ExchangeRate] Init error:", err));
 
   return httpServer;
 }

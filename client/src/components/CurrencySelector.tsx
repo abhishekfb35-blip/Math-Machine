@@ -18,8 +18,8 @@ export default function CurrencySelector() {
       </SelectTrigger>
       <SelectContent align="end" className="min-w-[130px]">
         {availableCurrencies.map(c => (
-          <SelectItem key={c.code} value={c.code} data-testid={`currency-option-${c.code}`}>
-            <span className="font-medium">{c.code}</span>
+          <SelectItem key={c.currency} value={c.currency} data-testid={`currency-option-${c.currency}`}>
+            <span className="font-medium">{c.currency}</span>
             <span className="text-muted-foreground ml-1 text-xs">{c.symbol}</span>
           </SelectItem>
         ))}

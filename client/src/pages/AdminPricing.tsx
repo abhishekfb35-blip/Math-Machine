@@ -25,7 +25,7 @@ interface PricingRuleRow {
 
 interface RateStatus {
   fetchedToday: boolean;
-  lastFetchAt: string | null;
+  lastFetchedAt: string | null;
   lastFetchDateStr: string | null;
   lastFetchError: string | null;
   nextRefreshAt: string | null;
@@ -211,7 +211,7 @@ export default function AdminPricing() {
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
                   <div className="flex items-center gap-1.5">
-                    {status?.lastFetchAt == null ? (
+                    {status?.lastFetchedAt == null ? (
                       <>
                         <AlertCircle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground">Never fetched</span>

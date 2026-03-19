@@ -105,7 +105,7 @@ export async function initializeExchangeRateService(): Promise<void> {
 
 export function getRateServiceStatus(): {
   fetchedToday: boolean;
-  lastFetchAt: string | null;
+  lastFetchedAt: string | null;
   lastFetchDateStr: string | null;
   lastFetchError: string | null;
   nextRefreshAt: string | null;
@@ -115,7 +115,7 @@ export function getRateServiceStatus(): {
     : null;
   return {
     fetchedToday: isFetchedToday(),
-    lastFetchAt: lastFetchAt?.toISOString() ?? null,
+    lastFetchedAt: lastFetchAt?.toISOString() ?? null,
     lastFetchDateStr,
     lastFetchError,
     nextRefreshAt,
