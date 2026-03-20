@@ -98,6 +98,12 @@ export interface StatsConfig {
   items: StatItem[];
 }
 
+export interface PwaInstallConfig {
+  text: string;
+  buttonText: string;
+  customUrl: string;
+}
+
 export interface FooterConfig {
   brandName: string;
   brandStory: string;
@@ -219,6 +225,12 @@ export const defaultStats: StatsConfig = {
     { value: "5", label: "Collections" },
     { value: "All India", label: "Free Delivery" },
   ],
+};
+
+export const defaultPwaInstall: PwaInstallConfig = {
+  text: "Add to your home screen for the best experience",
+  buttonText: "Get the App",
+  customUrl: "",
 };
 
 export const defaultFooter: FooterConfig = {

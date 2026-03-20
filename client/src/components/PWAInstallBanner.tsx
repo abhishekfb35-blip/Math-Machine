@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Download, X } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { defaultPwaInstall, type PwaInstallConfig } from "@/lib/siteConfigDefaults";
 
 const DISMISSED_KEY = "pwa_banner_dismissed";
 
 export default function PWAInstallBanner() {
   const { installable, promptInstall } = usePWAInstall();
+  const config = useSiteConfig<PwaInstallConfig>("pwa-install-banner", defaultPwaInstall);
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(DISMISSED_KEY) === "1"; } catch { return false; }
   });
@@ -15,7 +18,18 @@ export default function PWAInstallBanner() {
     try { localStorage.setItem(DISMISSED_KEY, "1"); } catch {}
   };
 
-  if (!installable || dismissed) return null;
+  const hasCustomUrl = !!config.customUrl?.trim();
+  const shouldShow = !dismissed && (installable || hasCustomUrl);
+
+  if (!shouldShow) return null;
+
+  const handleAction = () => {
+    if (hasCustomUrl) {
+      window.open(config.customUrl, "_blank", "noopener,noreferrer");
+    } else {
+      promptInstall();
+    }
+  };
 
   return (
     <div
@@ -24,14 +38,14 @@ export default function PWAInstallBanner() {
     >
       <Download className="w-4 h-4 shrink-0 text-muted-foreground" />
       <p className="flex-1 text-xs text-muted-foreground leading-snug">
-        Add to your home screen for the best experience
+        {config.text}
       </p>
       <button
-        onClick={promptInstall}
+        onClick={handleAction}
         className="shrink-0 text-xs font-semibold text-primary hover:underline"
         data-testid="button-banner-get-app"
       >
-        Get the App
+        {config.buttonText}
       </button>
       <button
         onClick={handleDismiss}

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useTheme } from "@/components/ThemeProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { defaultHeader, type HeaderConfig } from "@/lib/siteConfigDefaults";
+import { defaultHeader, defaultPwaInstall, type HeaderConfig, type PwaInstallConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
 import CurrencySelector from "@/components/CurrencySelector";
 import {
@@ -23,6 +23,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const [location, navigate] = useLocation();
   const config = useSiteConfig<HeaderConfig>("header", defaultHeader);
+  const pwaConfig = useSiteConfig<PwaInstallConfig>("pwa-install-banner", defaultPwaInstall);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const { customer, isAuthenticated, logout } = useAuth();
@@ -81,7 +82,7 @@ export default function Header() {
                 data-testid="button-pwa-install"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Get the App</span>
+                <span>{pwaConfig.buttonText}</span>
               </Button>
             )}
 

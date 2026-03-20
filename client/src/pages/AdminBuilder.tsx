@@ -17,18 +17,20 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut,
+  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut, Smartphone,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
   defaultStats, defaultFooter, defaultFeaturedSections, defaultHomepageCollections,
+  defaultPwaInstall,
   type AnnouncementConfig, type HeroConfig, type HeaderConfig,
   type PromiseConfig, type CollectionsConfig, type ProductTypesConfig,
   type PromoConfig, type TestimonialsConfig, type StatsConfig,
   type FooterConfig, type FeaturedSectionsConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
+  type PwaInstallConfig,
 } from "@/lib/siteConfigDefaults";
 
 import heroBanner from "@/assets/images/hero-banner.png";
@@ -757,6 +759,53 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   );
 }
 
+function InstallBannerSection({ data }: { data: PwaInstallConfig }) {
+  const [config, setConfig] = useState(data);
+  const save = useSaveConfig("pwa-install-banner");
+  useEffect(() => { setConfig(data); }, [data]);
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Banner Text</Label>
+        <Input
+          value={config.text}
+          onChange={(e) => setConfig({ ...config, text: e.target.value })}
+          placeholder="Add to your home screen for the best experience"
+          data-testid="input-pwa-text"
+        />
+        <p className="text-xs text-muted-foreground">The short description shown in the banner on mobile devices.</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Button Label</Label>
+        <Input
+          value={config.buttonText}
+          onChange={(e) => setConfig({ ...config, buttonText: e.target.value })}
+          placeholder="Get the App"
+          data-testid="input-pwa-button-text"
+        />
+        <p className="text-xs text-muted-foreground">The CTA button text on the mobile banner and in the desktop header.</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Custom Install URL <span className="text-muted-foreground font-normal">(optional)</span></Label>
+        <Input
+          value={config.customUrl}
+          onChange={(e) => setConfig({ ...config, customUrl: e.target.value })}
+          placeholder="https://play.google.com/store/apps/..."
+          data-testid="input-pwa-custom-url"
+        />
+        <p className="text-xs text-muted-foreground">
+          If set, the button opens this URL (e.g. Play Store, App Store, or a "how to install" page). Also makes the banner visible on iOS.
+          Leave empty to use the browser's native install prompt on Android/Chrome.
+        </p>
+      </div>
+      <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-pwa-banner">
+        <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Install Banner"}
+      </Button>
+    </div>
+  );
+}
+
 export default function AdminBuilder() {
   const { data: allConfig, isLoading } = useQuery<Record<string, any>>({
     queryKey: ["/api/site-config"],
@@ -847,6 +896,15 @@ export default function AdminBuilder() {
               </AccordionTrigger>
               <AccordionContent>
                 <AnnouncementSection data={getConfig("announcement", defaultAnnouncement)} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="pwa-install-banner" className="border rounded-md px-4">
+              <AccordionTrigger data-testid="accordion-pwa-install-banner">
+                <SectionHeader icon={Smartphone} title="Install Banner" />
+              </AccordionTrigger>
+              <AccordionContent>
+                <InstallBannerSection data={getConfig("pwa-install-banner", defaultPwaInstall)} />
               </AccordionContent>
             </AccordionItem>
 
