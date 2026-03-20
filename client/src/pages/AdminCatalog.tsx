@@ -431,7 +431,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
   open: boolean; onClose: () => void; categoryId: string; allTags: Tag[];
 }) {
   const { toast } = useToast();
-  const [activeConfigTagId, setActiveConfigTagId] = useState<string | "null">("null");
+  const [activeConfigTagId, setActiveConfigTagId] = useState<string>("");
   const [sizes, setSizes] = useState<LocalSize[]>([makeLocalSize()]);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
@@ -660,7 +660,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
         </ScrollArea>
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-variant-config">
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !activeConfigTagId} data-testid="button-save-variant-config">
             {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save Config</>}
           </Button>
         </div>

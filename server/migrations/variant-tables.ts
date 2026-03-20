@@ -7,18 +7,6 @@ function rows(res: unknown): unknown[] {
 
 export async function ensureVariantTables() {
   try {
-    const checkResult = await db.execute<{ exists: boolean }>(sql`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'category_variant_options'
-      ) as exists
-    `);
-    const tableRows = rows(checkResult);
-    if ((tableRows[0] as { exists?: boolean })?.exists) {
-      await db.execute(sql`DROP TABLE IF EXISTS category_variant_options`);
-      console.log("[migration] variant-tables: dropped legacy category_variant_options");
-    }
-
     const pvCheck = await db.execute<{ exists: boolean }>(sql`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
@@ -171,6 +159,18 @@ export async function ensureVariantTables() {
           END IF;
         END $$;
       `);
+    }
+
+    const legacyCheck = await db.execute<{ exists: boolean }>(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'category_variant_options'
+      ) as exists
+    `);
+    const legacyRows = rows(legacyCheck);
+    if ((legacyRows[0] as { exists?: boolean })?.exists) {
+      await db.execute(sql`DROP TABLE IF EXISTS category_variant_options`);
+      console.log("[migration] variant-tables: dropped legacy category_variant_options");
     }
 
     console.log("[migration] variant-tables: complete");
