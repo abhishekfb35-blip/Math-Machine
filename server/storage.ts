@@ -806,9 +806,9 @@ export class DatabaseStorage implements IStorage {
       ORDER BY pt.id
       LIMIT 1
     `);
-    const productRows = Array.isArray(productResult) ? productResult : ((productResult as any).rows ?? []);
+    const productRows = (Array.isArray(productResult) ? productResult : ((productResult as { rows?: unknown[] }).rows ?? [])) as { category_id: string; tag_id: string | null }[];
     if (productRows.length === 0) return { productId, sizes: [] };
-    const { category_id: categoryId, tag_id: tagId } = productRows[0] as { category_id: string; tag_id: string | null };
+    const { category_id: categoryId, tag_id: tagId } = productRows[0];
 
     let configId: string | null = null;
     if (tagId) {

@@ -92,10 +92,21 @@ export async function ensureVariantTables() {
           id TEXT PRIMARY KEY,
           category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
           tag_id TEXT,
-          sort_order INTEGER NOT NULL DEFAULT 0
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          CONSTRAINT uq_category_tag UNIQUE (category_id, tag_id)
         )
       `);
       console.log("[migration] variant-tables: created category_tag_variant_configs");
+    } else {
+      await db.execute(sql`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'uq_category_tag'
+          ) THEN
+            ALTER TABLE category_tag_variant_configs ADD CONSTRAINT uq_category_tag UNIQUE (category_id, tag_id);
+          END IF;
+        END $$;
+      `);
     }
 
     const vsCheck = await db.execute<{ exists: boolean }>(sql`

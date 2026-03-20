@@ -512,7 +512,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     setUploading(prev => ({ ...prev, [`${sizeLocalId}-${colorLocalId}`]: true }));
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Upload failed");
       const { url } = await res.json();

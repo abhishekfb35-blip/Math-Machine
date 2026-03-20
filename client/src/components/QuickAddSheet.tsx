@@ -47,37 +47,37 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   });
 
   const hasVariantConfig = (variantOptions?.sizes?.length ?? 0) > 0;
-  const hasProductVariants = (productVariants?.length ?? 0) > 0;
   const isTowelProduct = product?.productType === "towel";
-  const showVariantSelectors = isTowelProduct && hasVariantConfig && hasProductVariants;
+  const showVariantSelectors = isTowelProduct && hasVariantConfig;
 
   const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes.find(s => s.name === selectedSizeName);
 
-  const getFirstAvailableColor = (sizeName: string): string | null => {
+  const isSizeAvailable = (sizeName: string): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    return productVariants.some(v => v.size === sizeName && v.available);
+  };
+
+  const isColorAvailable = (sizeName: string, colorName: string): boolean => {
+    if (!productVariants || productVariants.length === 0) return true;
+    return productVariants.some(v => v.size === sizeName && v.color === colorName && v.available);
+  };
+
+  const getFirstSelectableColor = (sizeName: string): string | null => {
     const sizeObj = variantOptions?.sizes.find(s => s.name === sizeName);
     if (!sizeObj) return null;
-    const availableColorNamesForSize = new Set(
-      (productVariants || []).filter(v => v.size === sizeName && v.available).map(v => v.color)
-    );
-    const first = sizeObj.colors.find(c => !c.blurOnFront && availableColorNamesForSize.has(c.name));
+    const first = sizeObj.colors.find(c => !c.blurOnFront && isColorAvailable(sizeName, c.name));
     return first ? first.name : null;
   };
 
-  const isSizeSelectable = (sizeName: string): boolean => {
-    const sizeObj = variantOptions?.sizes.find(s => s.name === sizeName);
-    if (!sizeObj || sizeObj.blurOnFront) return false;
-    return (productVariants || []).some(v => v.size === sizeName && v.available);
-  };
-
   useEffect(() => {
-    if (!showVariantSelectors || !variantOptions || !productVariants || selectedSizeName) return;
-    const available = variantOptions.sizes.filter(s => !s.blurOnFront && isSizeSelectable(s.name));
-    if (available.length > 0) {
-      const def = available.find(s => s.isDefault) || available[0];
+    if (!showVariantSelectors || !variantOptions || selectedSizeName) return;
+    const visible = variantOptions.sizes.filter(s => !s.blurOnFront);
+    if (visible.length > 0) {
+      const def = visible.find(s => s.isDefault) || visible[0];
       setSelectedSizeName(def.name);
-      setSelectedColorName(getFirstAvailableColor(def.name));
+      setSelectedColorName(getFirstSelectableColor(def.name));
     }
-  }, [showVariantSelectors, variantOptions, productVariants]);
+  }, [showVariantSelectors, variantOptions]);
 
   useEffect(() => {
     if (!open) {
@@ -92,10 +92,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSizeName || !selectedSizeObj) return [];
-    const availableColorNamesForSize = new Set(
-      (productVariants || []).filter(v => v.size === selectedSizeName && v.available).map(v => v.color)
-    );
-    return selectedSizeObj.colors.filter(c => availableColorNamesForSize.has(c.name));
+    return selectedSizeObj.colors.filter(c => !c.blurOnFront);
   })();
 
   const variantSelectionIncomplete = showVariantSelectors && (
@@ -179,29 +176,26 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <div className="space-y-1.5" data-testid="section-quickadd-sizes">
               <Label className="text-sm font-medium">Size</Label>
               <div className="flex flex-wrap gap-2">
-                {variantOptions!.sizes.map((size) => {
-                  const selectable = isSizeSelectable(size.name);
+                {variantOptions!.sizes.filter(s => !s.blurOnFront).map((size) => {
+                  const available = isSizeAvailable(size.name);
                   const isSelected = selectedSizeName === size.name;
-                  const isBlur = size.blurOnFront;
                   return (
                     <button
                       key={size.name}
                       onClick={() => {
-                        if (selectable) {
+                        if (available) {
                           setSelectedSizeName(size.name);
-                          const availableColorsForNewSize = new Set(
-                            (productVariants || []).filter(v => v.size === size.name && v.available).map(v => v.color)
-                          );
-                          if (!selectedColorName || !availableColorsForNewSize.has(selectedColorName)) {
-                            setSelectedColorName(getFirstAvailableColor(size.name));
+                          const currentColorStillAvailable = selectedColorName && isColorAvailable(size.name, selectedColorName);
+                          if (!currentColorStillAvailable) {
+                            setSelectedColorName(getFirstSelectableColor(size.name));
                           }
                         }
                       }}
-                      disabled={!selectable || isBlur}
+                      disabled={!available}
                       className={`px-3 py-1 text-xs rounded border transition-all ${
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : isBlur || !selectable
+                          : !available
                           ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                       }`}
@@ -226,17 +220,17 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               <Label className="text-sm font-medium">Colour</Label>
               <div className="flex flex-wrap gap-2">
                 {colorsForSelectedSize.map((color) => {
+                  const available = isColorAvailable(selectedSizeName!, color.name);
                   const isSelected = selectedColorName === color.name;
-                  const isBlur = color.blurOnFront;
                   return (
                     <button
                       key={color.name}
-                      onClick={() => { if (!isBlur) setSelectedColorName(color.name); }}
-                      disabled={isBlur}
-                      className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded border transition-all ${
+                      onClick={() => { if (available) setSelectedColorName(color.name); }}
+                      disabled={!available}
+                      className={`flex items-center gap-1.5 p-1 text-xs rounded border transition-all ${
                         isSelected
-                          ? "border-primary bg-primary/10"
-                          : isBlur
+                          ? "border-primary ring-1 ring-primary"
+                          : !available
                           ? "border-muted opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                       }`}
@@ -247,12 +241,12 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                         <img
                           src={color.swatchUrl}
                           alt={color.name}
-                          className="w-5 h-5 rounded-full object-cover border border-border/50"
+                          className="w-8 h-8 rounded object-cover"
                         />
                       ) : (
-                        <span className="w-4 h-4 rounded-full bg-muted border border-border inline-block" />
+                        <span className="w-8 h-8 rounded bg-muted border border-border inline-block" />
                       )}
-                      <span>{color.name}</span>
+                      <span className="pr-1">{color.name}</span>
                     </button>
                   );
                 })}
