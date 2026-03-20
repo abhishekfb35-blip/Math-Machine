@@ -23,7 +23,7 @@ import type {
   PricingRule, InsertPricingRule,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -123,7 +123,7 @@ export interface IStorage {
 
   listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]>;
   getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null>;
-  upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+  upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
     name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string>;
@@ -787,20 +787,12 @@ export class DatabaseStorage implements IStorage {
     if (productRows.length === 0) return { productId, sizes: [] };
     const { category_id: categoryId, tag_id: tagId } = productRows[0];
 
-    let configId: string | null = null;
-    if (tagId) {
-      const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
-        and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
-      );
-      if (cfg) configId = cfg.id;
-    }
-    if (!configId) {
-      const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
-        and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
-      );
-      if (cfg) configId = cfg.id;
-    }
-    if (!configId) return { productId, sizes: [] };
+    if (!tagId) return { productId, sizes: [] };
+    const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
+      and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+    );
+    if (!cfg) return { productId, sizes: [] };
+    const configId = cfg.id;
 
     const dbSizes = await db.select().from(variantSizes).where(eq(variantSizes.configId, configId)).orderBy(variantSizes.sortOrder);
     const sizesWithColors: VariantSize[] = await Promise.all(dbSizes.map(async (size) => {
@@ -904,17 +896,13 @@ export class DatabaseStorage implements IStorage {
     return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
   }
 
-  async upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+  async upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
     name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string> {
-    const existing = tagId
-      ? await db.select().from(categoryTagVariantConfigs).where(
-          and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
-        ).then(r => r[0])
-      : await db.select().from(categoryTagVariantConfigs).where(
-          and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
-        ).then(r => r[0]);
+    const [existing] = await db.select().from(categoryTagVariantConfigs).where(
+      and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+    );
 
     let configId: string;
     if (existing) {
@@ -926,7 +914,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(variantSizes).where(eq(variantSizes.configId, configId));
     } else {
       configId = createId();
-      await db.insert(categoryTagVariantConfigs).values({ id: configId, categoryId, tagId: tagId ?? null, sortOrder: 0 });
+      await db.insert(categoryTagVariantConfigs).values({ id: configId, categoryId, tagId, sortOrder: 0 });
     }
 
     for (const size of sizes) {

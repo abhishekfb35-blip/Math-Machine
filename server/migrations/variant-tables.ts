@@ -114,7 +114,7 @@ export async function ensureVariantTables() {
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS variant_sizes (
           id TEXT PRIMARY KEY,
-          config_id TEXT NOT NULL,
+          config_id TEXT NOT NULL REFERENCES category_tag_variant_configs(id) ON DELETE CASCADE,
           name TEXT NOT NULL,
           description TEXT,
           price_add INTEGER NOT NULL DEFAULT 0,
@@ -124,6 +124,19 @@ export async function ensureVariantTables() {
         )
       `);
       console.log("[migration] variant-tables: created variant_sizes");
+    } else {
+      await db.execute(sql`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE constraint_name = 'variant_sizes_config_id_fkey'
+            AND table_name = 'variant_sizes'
+          ) THEN
+            ALTER TABLE variant_sizes ADD CONSTRAINT variant_sizes_config_id_fkey
+              FOREIGN KEY (config_id) REFERENCES category_tag_variant_configs(id) ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
     }
 
     const vcCheck = await db.execute<{ exists: boolean }>(sql`
@@ -137,7 +150,7 @@ export async function ensureVariantTables() {
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS variant_colors (
           id TEXT PRIMARY KEY,
-          size_id TEXT NOT NULL,
+          size_id TEXT NOT NULL REFERENCES variant_sizes(id) ON DELETE CASCADE,
           name TEXT NOT NULL,
           swatch_url TEXT,
           blur_on_front BOOLEAN NOT NULL DEFAULT false,
@@ -145,6 +158,19 @@ export async function ensureVariantTables() {
         )
       `);
       console.log("[migration] variant-tables: created variant_colors");
+    } else {
+      await db.execute(sql`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE constraint_name = 'variant_colors_size_id_fkey'
+            AND table_name = 'variant_colors'
+          ) THEN
+            ALTER TABLE variant_colors ADD CONSTRAINT variant_colors_size_id_fkey
+              FOREIGN KEY (size_id) REFERENCES variant_sizes(id) ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
     }
 
     console.log("[migration] variant-tables: complete");

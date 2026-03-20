@@ -444,7 +444,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     enabled: open && !!categoryId,
   });
 
-  const configForActiveTag = configs?.find(c => (c.tagId ?? "null") === activeConfigTagId) ?? null;
+  const configForActiveTag = configs?.find(c => c.tagId === activeConfigTagId) ?? null;
 
   useEffect(() => {
     if (configForActiveTag) {
@@ -472,7 +472,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
   const saveMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, {
-        tagId: activeConfigTagId === "null" ? null : activeConfigTagId,
+        tagId: activeConfigTagId || null,
         sizes: sizes.map((s, si) => ({
           name: s.name,
           description: s.description || undefined,
@@ -532,16 +532,15 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Variant Palettes</DialogTitle>
-          <DialogDescription>Configure size + colour options for this category (per tag or all products).</DialogDescription>
+          <DialogDescription>Configure size + colour options for this category per product tag.</DialogDescription>
         </DialogHeader>
         <div className="flex gap-2 items-center mb-2">
-          <Label className="text-xs shrink-0">Tag scope:</Label>
+          <Label className="text-xs shrink-0">Tag:</Label>
           <Select value={activeConfigTagId} onValueChange={setActiveConfigTagId}>
             <SelectTrigger className="h-8 text-xs" data-testid="select-variant-config-tag">
-              <SelectValue />
+              <SelectValue placeholder="Select a tag..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="null">All products (no tag)</SelectItem>
               {allTags.map(t => (
                 <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
               ))}

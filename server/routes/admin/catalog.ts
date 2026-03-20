@@ -432,7 +432,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         colors: z.array(colorSchema).default([]),
       });
       const bodySchema = z.object({
-        tagId: z.string().nullable().default(null),
+        tagId: z.string().min(1, "Tag is required"),
         sizes: z.array(sizeSchema).default([]),
       });
       const { tagId, sizes } = bodySchema.parse(req.body);

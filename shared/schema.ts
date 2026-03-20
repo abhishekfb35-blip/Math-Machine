@@ -150,7 +150,7 @@ export const categoryTagVariantConfigs = pgTable("category_tag_variant_configs",
 
 export const variantSizes = pgTable("variant_sizes", {
   id: text("id").primaryKey(),
-  configId: text("config_id").notNull(),
+  configId: text("config_id").notNull().references(() => categoryTagVariantConfigs.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   priceAdd: integer("price_add").notNull().default(0),
@@ -161,7 +161,7 @@ export const variantSizes = pgTable("variant_sizes", {
 
 export const variantColors = pgTable("variant_colors", {
   id: text("id").primaryKey(),
-  sizeId: text("size_id").notNull(),
+  sizeId: text("size_id").notNull().references(() => variantSizes.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   swatchUrl: text("swatch_url"),
   blurOnFront: boolean("blur_on_front").notNull().default(false),
