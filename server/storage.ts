@@ -22,7 +22,7 @@ import type {
   PricingRule, InsertPricingRule,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc, gt, inArray } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -90,6 +90,8 @@ export interface IStorage {
   getAuditLogTypeSummary(): Promise<{ entityType: string; count: number; lastChangeAt: Date | null }[]>;
   getAuditLogEntitySummary(entityType: string): Promise<{ entityId: string; entityName: string | null; count: number; lastChangeAt: Date | null; lastAction: string | null }[]>;
 
+  getAllCustomers(filters?: { search?: string; limit?: number; offset?: number }): Promise<Customer[]>;
+  getCustomersCount(filters?: { search?: string }): Promise<number>;
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
   getCustomerById(id: string): Promise<Customer | undefined>;
   getCustomerByGoogleId(googleId: string): Promise<Customer | undefined>;
@@ -597,6 +599,37 @@ export class DatabaseStorage implements IStorage {
       lastChangeAt: r.lastChangeAt,
       lastAction: r.lastAction,
     }));
+  }
+
+  async getAllCustomers(filters?: { search?: string; limit?: number; offset?: number }): Promise<Customer[]> {
+    const limit = filters?.limit ?? 20;
+    const offset = filters?.offset ?? 0;
+    const search = filters?.search?.trim();
+    const conditions = search
+      ? or(
+          ilike(customers.email, `%${search}%`),
+          ilike(customers.name, `%${search}%`),
+          ilike(customers.phone, `%${search}%`),
+        )
+      : undefined;
+    return db.select().from(customers)
+      .where(conditions)
+      .orderBy(desc(customers.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getCustomersCount(filters?: { search?: string }): Promise<number> {
+    const search = filters?.search?.trim();
+    const conditions = search
+      ? or(
+          ilike(customers.email, `%${search}%`),
+          ilike(customers.name, `%${search}%`),
+          ilike(customers.phone, `%${search}%`),
+        )
+      : undefined;
+    const [row] = await db.select({ count: count() }).from(customers).where(conditions);
+    return row?.count ?? 0;
   }
 
   async getCustomerByEmail(email: string): Promise<Customer | undefined> {

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
@@ -92,6 +92,14 @@ const sections = [
     icon: Globe,
     color: "text-teal-600 dark:text-teal-400",
     bg: "bg-teal-50 dark:bg-teal-950/30",
+  },
+  {
+    title: "Customers",
+    description: "View registered users and their buying history",
+    href: "/admin/customers",
+    icon: Users,
+    color: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-indigo-50 dark:bg-indigo-950/30",
   },
 ];
 
