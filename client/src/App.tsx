@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import ConsentPopup from "@/components/ConsentPopup";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
 import CategoryPage from "@/pages/CategoryPage";
@@ -108,6 +109,7 @@ function App() {
           <div className="min-h-screen flex flex-col">
             <AnnouncementBar />
             <Header />
+            <PWAInstallBanner />
             <ScrollToTop />
             <main className="flex-1">
               <Router />

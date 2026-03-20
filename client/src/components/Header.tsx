@@ -77,11 +77,11 @@ export default function Header() {
                 variant="outline"
                 size="sm"
                 onClick={promptInstall}
-                className="gap-1 text-xs"
+                className="hidden md:flex gap-1 text-xs"
                 data-testid="button-pwa-install"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Install</span>
+                <span>Get the App</span>
               </Button>
             )}
 
