@@ -59,7 +59,9 @@ export function registerCheckoutRoutes(app: Express) {
         if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiers = p; }
       } catch {}
 
-      const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
+      const requestedCurrency = (req.body.currency as string)?.toUpperCase() || "INR";
+      const isDomestic = requestedCurrency === "INR";
+      const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
 
       let couponDiscount = 0;
       const discountCode = req.body.discountCode;
@@ -71,7 +73,6 @@ export function registerCheckoutRoutes(app: Express) {
       }
       const finalAmount = Math.max(0, pricing.total - couponDiscount);
 
-      const requestedCurrency = (req.body.currency as string)?.toUpperCase() || "INR";
       const converted = await convertFromINR(finalAmount, requestedCurrency);
 
       const result = await razorpay.createPaymentOrder({
@@ -131,7 +132,8 @@ export function registerCheckoutRoutes(app: Express) {
           let deliveryTiersC = defaultDeliveryTiers;
           try { const oc = await storage.getSiteConfig("offer-tiers"); if (oc) { const p = JSON.parse(oc.value); if (Array.isArray(p) && p.length) offerTiersC = p; } } catch {}
           try { const dc = await storage.getSiteConfig("delivery-tiers"); if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiersC = p; } } catch {}
-          const pricing = calculateDiscount(priceItems, offerTiersC, deliveryTiersC);
+          const couponIsDomestic = !paymentCurrency || (paymentCurrency as string).toUpperCase() === "INR";
+          const pricing = calculateDiscount(priceItems, offerTiersC, deliveryTiersC, couponIsDomestic);
           couponDiscount = Math.round(pricing.total * 0.10);
         }
       }

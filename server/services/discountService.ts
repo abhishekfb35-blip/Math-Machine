@@ -30,35 +30,44 @@ export interface PricingResult {
   freeIndices: number[];
 }
 
+/**
+ * Optimal (DP/unbounded knapsack) algorithm to maximize free items.
+ * For each item count n, computes the maximum free items achievable using
+ * any combination of active offer tiers (applied as many times as possible).
+ */
 export function computeNumFree(totalItems: number, tiers: OfferTier[]): number {
-  const activeTiers = tiers
-    .filter(t => t.enabled && t.buyCount > 0 && t.freeCount > 0)
-    .sort((a, b) => (b.freeCount / (b.buyCount + b.freeCount)) - (a.freeCount / (a.buyCount + a.freeCount)));
+  const activeTiers = tiers.filter(
+    t => t.enabled && t.buyCount > 0 && t.freeCount > 0,
+  );
 
-  if (activeTiers.length === 0) return 0;
+  if (activeTiers.length === 0 || totalItems <= 0) return 0;
 
-  let remaining = totalItems;
-  let numFree = 0;
+  const dp = new Array<number>(totalItems + 1).fill(0);
 
-  while (remaining > 0) {
-    let appliedAny = false;
+  for (let n = 1; n <= totalItems; n++) {
     for (const tier of activeTiers) {
       const groupSize = tier.buyCount + tier.freeCount;
-      if (remaining >= groupSize) {
-        const groups = Math.floor(remaining / groupSize);
-        numFree += groups * tier.freeCount;
-        remaining -= groups * groupSize;
-        appliedAny = true;
-        break;
+      if (n >= groupSize) {
+        const candidate = dp[n - groupSize] + tier.freeCount;
+        if (candidate > dp[n]) dp[n] = candidate;
       }
     }
-    if (!appliedAny) break;
   }
 
-  return numFree;
+  return dp[totalItems];
 }
 
-export function calculateShippingFee(itemCount: number, tiers: DeliveryTier[]): number {
+/**
+ * Returns the domestic delivery fee (INR) for a given paid item count.
+ * Delivery is always free outside configured ranges (or if 0 tiers match).
+ * International orders should pass isDomestic=false to get 0.
+ */
+export function calculateShippingFee(
+  itemCount: number,
+  tiers: DeliveryTier[],
+  isDomestic: boolean,
+): number {
+  if (!isDomestic) return 0;
   for (const tier of tiers) {
     if (itemCount >= tier.minItems && itemCount <= tier.maxItems) {
       return tier.fee;
@@ -71,6 +80,7 @@ export function calculateDiscount(
   items: { price: number; quantity: number }[],
   offerTiers: OfferTier[] = defaultOfferTiers,
   deliveryTiers: DeliveryTier[] = defaultDeliveryTiers,
+  isDomestic: boolean = true,
 ): PricingResult {
   const expanded: { price: number; originalIndex: number }[] = [];
   items.forEach((item, idx) => {
@@ -82,7 +92,7 @@ export function calculateDiscount(
   const subtotal = expanded.reduce((sum, item) => sum + item.price, 0);
   const count = expanded.length;
 
-  const shippingFee = calculateShippingFee(count, deliveryTiers);
+  const shippingFee = calculateShippingFee(count, deliveryTiers, isDomestic);
 
   const minTrigger = offerTiers
     .filter(t => t.enabled && t.buyCount > 0 && t.freeCount > 0)

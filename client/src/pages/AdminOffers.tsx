@@ -37,27 +37,19 @@ function getConfig<T>(allConfig: Record<string, any> | undefined, key: string, f
 }
 
 function computeNumFree(totalItems: number, tiers: OfferTier[]): number {
-  const activeTiers = tiers
-    .filter(t => t.enabled && t.buyCount > 0 && t.freeCount > 0)
-    .sort((a, b) => (b.freeCount / (b.buyCount + b.freeCount)) - (a.freeCount / (a.buyCount + a.freeCount)));
-  if (activeTiers.length === 0) return 0;
-  let remaining = totalItems;
-  let numFree = 0;
-  while (remaining > 0) {
-    let appliedAny = false;
+  const activeTiers = tiers.filter(t => t.enabled && t.buyCount > 0 && t.freeCount > 0);
+  if (activeTiers.length === 0 || totalItems <= 0) return 0;
+  const dp = new Array<number>(totalItems + 1).fill(0);
+  for (let n = 1; n <= totalItems; n++) {
     for (const tier of activeTiers) {
       const groupSize = tier.buyCount + tier.freeCount;
-      if (remaining >= groupSize) {
-        const groups = Math.floor(remaining / groupSize);
-        numFree += groups * tier.freeCount;
-        remaining -= groups * groupSize;
-        appliedAny = true;
-        break;
+      if (n >= groupSize) {
+        const candidate = dp[n - groupSize] + tier.freeCount;
+        if (candidate > dp[n]) dp[n] = candidate;
       }
     }
-    if (!appliedAny) break;
   }
-  return numFree;
+  return dp[totalItems];
 }
 
 function computeDeliveryFee(itemCount: number, tiers: DeliveryTier[]): number {

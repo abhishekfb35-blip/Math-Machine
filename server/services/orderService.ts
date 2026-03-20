@@ -84,7 +84,8 @@ export class OrderService {
 
     const offerTiers = await this.loadOfferTiers();
     const deliveryTiers = await this.loadDeliveryTiers();
-    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
+    const isDomestic = !input.currency || input.currency.toUpperCase() === "INR";
+    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
 
     const couponDiscount = input.couponDiscount || 0;
     const finalTotal = Math.max(0, pricing.total - couponDiscount);
@@ -170,7 +171,8 @@ export class OrderService {
 
     const offerTiers = await this.loadOfferTiers();
     const deliveryTiers = await this.loadDeliveryTiers();
-    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
+    const isDomestic = !input.currency || input.currency.toUpperCase() === "INR";
+    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
 
     const couponDiscount = input.couponDiscount || 0;
     const finalTotal = Math.max(0, pricing.total - couponDiscount);

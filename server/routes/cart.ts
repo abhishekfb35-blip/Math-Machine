@@ -10,7 +10,9 @@ const cartService = new CartService(storage);
 export function registerCartRoutes(app: Express) {
   app.get("/api/cart", async (req, res) => {
     const sessionId = getSessionId(req, res);
-    const cartDetails = await cartService.getCartDetails(sessionId);
+    const currency: string = (req.cookies?.tl_currency as string) || "INR";
+    const isDomestic = currency.toUpperCase() === "INR";
+    const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
     res.json(cartDetails);
   });
 

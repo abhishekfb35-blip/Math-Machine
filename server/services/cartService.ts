@@ -20,14 +20,14 @@ export interface CartDetails {
 export class CartService {
   constructor(private storage: IStorage) {}
 
-  async getCartDetails(sessionId: string): Promise<CartDetails> {
+  async getCartDetails(sessionId: string, isDomestic: boolean = true): Promise<CartDetails> {
     const cart = await this.storage.getOrCreateCart(sessionId);
     const items = await this.storage.getCartItems(cart.id);
     const enrichedItems = await this.enrichItemsWithProducts(items);
 
     const offerTiers = await this.loadOfferTiers();
     const deliveryTiers = await this.loadDeliveryTiers();
-    const pricing = this.calculateCartPricing(enrichedItems, offerTiers, deliveryTiers);
+    const pricing = this.calculateCartPricing(enrichedItems, offerTiers, deliveryTiers, isDomestic);
 
     return {
       id: cart.id,
@@ -124,11 +124,11 @@ export class CartService {
     );
   }
 
-  private calculateCartPricing(items: EnrichedCartItem[], offerTiers: OfferTier[], deliveryTiers: DeliveryTier[]): PricingResult {
+  private calculateCartPricing(items: EnrichedCartItem[], offerTiers: OfferTier[], deliveryTiers: DeliveryTier[], isDomestic: boolean): PricingResult {
     const priceItems = items
       .filter(i => i.product)
       .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-    return calculateDiscount(priceItems, offerTiers, deliveryTiers);
+    return calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
   }
 }
 
