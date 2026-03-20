@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Gift } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Gift, Truck } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { defaultOfferTiers, defaultDeliveryTiers, type OfferTier, type DeliveryTier } from "@/lib/siteConfigDefaults";
 import type { Product, CartItem } from "@shared/types";
 
 interface CartItemWithProduct extends CartItem {
@@ -21,6 +23,7 @@ interface CartData {
   itemCount: number;
   subtotal: number;
   discount: number;
+  shippingFee: number;
   total: number;
 }
 
@@ -101,6 +104,8 @@ export default function CartPage() {
   const { data: cart, isLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
   });
+  const offerTiers = useSiteConfig<OfferTier[]>("offer-tiers", defaultOfferTiers);
+  const deliveryTiers = useSiteConfig<DeliveryTier[]>("delivery-tiers", defaultDeliveryTiers);
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
@@ -200,8 +205,12 @@ export default function CartPage() {
               </div>
             )}
             <div className="flex justify-between gap-4 text-muted-foreground">
-              <span>Shipping</span>
-              <span className="text-primary font-medium">Free</span>
+              <span>Delivery</span>
+              {cart && cart.shippingFee > 0 ? (
+                <span data-testid="text-shipping-fee">{formatPrice(cart.shippingFee)}</span>
+              ) : (
+                <span className="text-primary font-medium" data-testid="text-shipping-free">Free</span>
+              )}
             </div>
             <Separator />
             <div className="flex justify-between gap-4 font-semibold text-lg">
@@ -220,11 +229,19 @@ export default function CartPage() {
           </Link>
         </Card>
 
-        {cart && cart.itemCount < 3 && (
-          <Card className="p-3 text-sm text-muted-foreground">
-            <p>Add {3 - cart.itemCount} more item{3 - cart.itemCount > 1 ? "s" : ""} to unlock Buy 2 Get 1 Free!</p>
-          </Card>
-        )}
+        {cart && (() => {
+          const count = cart.itemCount;
+          const enabledTiers = offerTiers.filter(t => t.enabled && t.buyCount > 0 && t.freeCount > 0)
+            .sort((a, b) => (a.buyCount + a.freeCount) - (b.buyCount + b.freeCount));
+          const nextTier = enabledTiers.find(t => count < (t.buyCount + t.freeCount));
+          if (!nextTier) return null;
+          const needed = (nextTier.buyCount + nextTier.freeCount) - count;
+          return (
+            <Card className="p-3 text-sm text-muted-foreground" data-testid="card-offer-hint">
+              <p>Add {needed} more item{needed > 1 ? "s" : ""} to unlock <span className="font-medium text-foreground">{nextTier.label}</span>!</p>
+            </Card>
+          );
+        })()}
       </div>
     </div>
   );

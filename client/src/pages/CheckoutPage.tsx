@@ -26,6 +26,7 @@ interface CartData {
   itemCount: number;
   subtotal: number;
   discount: number;
+  shippingFee: number;
   total: number;
 }
 
@@ -257,6 +258,7 @@ export default function CheckoutPage() {
 
   const couponDiscount = appliedDiscount && cart ? Math.round(cart.total * appliedDiscount.percent / 100) : 0;
   const finalTotal = cart ? cart.total - couponDiscount : 0;
+  const shippingFee = cart?.shippingFee ?? 0;
 
   const processOrder = useCallback((data: CheckoutInput) => {
     if (paymentMethod === "razorpay") {
@@ -587,7 +589,7 @@ export default function CheckoutPage() {
               </div>
               {cart.discount > 0 && (
                 <div className="flex justify-between gap-4 text-primary">
-                  <span>Buy 2 Get 1 Free</span>
+                  <span>Offer Discount</span>
                   <span>-{formatPrice(cart.discount)}</span>
                 </div>
               )}
@@ -598,8 +600,12 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="flex justify-between gap-4 text-muted-foreground">
-                <span>Shipping</span>
-                <span className="text-primary font-medium">Free</span>
+                <span>Delivery</span>
+                {shippingFee > 0 ? (
+                  <span data-testid="text-checkout-shipping">{formatPrice(shippingFee)}</span>
+                ) : (
+                  <span className="text-primary font-medium">Free</span>
+                )}
               </div>
               <Separator />
               <div className="flex justify-between gap-4 font-semibold text-base">

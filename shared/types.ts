@@ -138,6 +138,7 @@ export interface Order {
   shippingPincode: string;
   subtotal: number;
   discount: number;
+  shippingFee: number;
   total: number;
   status: string;
   paymentId: string | null;
@@ -161,6 +162,7 @@ export interface InsertOrder {
   shippingPincode: string;
   subtotal: number;
   discount?: number;
+  shippingFee?: number;
   total: number;
   status?: string;
   paymentId?: string | null;

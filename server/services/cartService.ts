@@ -1,6 +1,6 @@
 import type { IStorage } from "../storage";
 import type { CartItem, Product } from "@shared/types";
-import { calculateDiscount, type PricingResult } from "./discountService";
+import { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers, type PricingResult, type OfferTier, type DeliveryTier } from "./discountService";
 
 export interface EnrichedCartItem extends CartItem {
   product: Product | undefined;
@@ -12,6 +12,7 @@ export interface CartDetails {
   itemCount: number;
   subtotal: number;
   discount: number;
+  shippingFee: number;
   total: number;
   freeIndices: number[];
 }
@@ -23,7 +24,10 @@ export class CartService {
     const cart = await this.storage.getOrCreateCart(sessionId);
     const items = await this.storage.getCartItems(cart.id);
     const enrichedItems = await this.enrichItemsWithProducts(items);
-    const pricing = this.calculateCartPricing(enrichedItems);
+
+    const offerTiers = await this.loadOfferTiers();
+    const deliveryTiers = await this.loadDeliveryTiers();
+    const pricing = this.calculateCartPricing(enrichedItems, offerTiers, deliveryTiers);
 
     return {
       id: cart.id,
@@ -89,6 +93,28 @@ export class CartService {
     await this.storage.removeCartItem(itemId);
   }
 
+  private async loadOfferTiers(): Promise<OfferTier[]> {
+    try {
+      const config = await this.storage.getSiteConfig("offer-tiers");
+      if (config) {
+        const parsed = JSON.parse(config.value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return defaultOfferTiers;
+  }
+
+  private async loadDeliveryTiers(): Promise<DeliveryTier[]> {
+    try {
+      const config = await this.storage.getSiteConfig("delivery-tiers");
+      if (config) {
+        const parsed = JSON.parse(config.value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return defaultDeliveryTiers;
+  }
+
   private async enrichItemsWithProducts(items: CartItem[]): Promise<EnrichedCartItem[]> {
     return Promise.all(
       items.map(async (item) => {
@@ -98,11 +124,11 @@ export class CartService {
     );
   }
 
-  private calculateCartPricing(items: EnrichedCartItem[]): PricingResult {
+  private calculateCartPricing(items: EnrichedCartItem[], offerTiers: OfferTier[], deliveryTiers: DeliveryTier[]): PricingResult {
     const priceItems = items
       .filter(i => i.product)
       .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-    return calculateDiscount(priceItems);
+    return calculateDiscount(priceItems, offerTiers, deliveryTiers);
   }
 }
 

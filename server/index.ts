@@ -11,6 +11,7 @@ import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
 import { ensureVariantTables } from "./migrations/variant-tables";
 import { ensureCurrencyTables } from "./migrations/currency-tables";
 import { ensureProductVariantColumns } from "./migrations/product-variant-options";
+import { ensureShippingFeeColumn } from "./migrations/add-shipping-fee";
 import { initializeExchangeRateService } from "./services/exchangeRateService";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { createServer } from "http";
@@ -115,6 +116,7 @@ app.get("/health", (_req, res) => {
           await ensureVariantTables();
           await ensureCurrencyTables();
           await ensureProductVariantColumns();
+          await ensureShippingFeeColumn();
           await seedDatabase();
           await initializeExchangeRateService();
           await ensureSkuNotNull();

@@ -43,11 +43,23 @@ export function registerCheckoutRoutes(app: Express) {
         })
       );
 
-      const { calculateDiscount } = await import("../services/discountService");
+      const { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers } = await import("../services/discountService");
       const priceItems = itemsWithProducts
         .filter(i => i.product)
         .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-      const pricing = calculateDiscount(priceItems);
+
+      let offerTiers = defaultOfferTiers;
+      let deliveryTiers = defaultDeliveryTiers;
+      try {
+        const oc = await storage.getSiteConfig("offer-tiers");
+        if (oc) { const p = JSON.parse(oc.value); if (Array.isArray(p) && p.length) offerTiers = p; }
+      } catch {}
+      try {
+        const dc = await storage.getSiteConfig("delivery-tiers");
+        if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiers = p; }
+      } catch {}
+
+      const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
 
       let couponDiscount = 0;
       const discountCode = req.body.discountCode;
@@ -114,8 +126,12 @@ export function registerCheckoutRoutes(app: Express) {
             })
           );
           const priceItems = itemsWithProducts.filter(i => i.product).map(i => ({ price: i.product!.price, quantity: i.quantity }));
-          const { calculateDiscount } = await import("../services/discountService");
-          const pricing = calculateDiscount(priceItems);
+          const { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers } = await import("../services/discountService");
+          let offerTiersC = defaultOfferTiers;
+          let deliveryTiersC = defaultDeliveryTiers;
+          try { const oc = await storage.getSiteConfig("offer-tiers"); if (oc) { const p = JSON.parse(oc.value); if (Array.isArray(p) && p.length) offerTiersC = p; } } catch {}
+          try { const dc = await storage.getSiteConfig("delivery-tiers"); if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiersC = p; } } catch {}
+          const pricing = calculateDiscount(priceItems, offerTiersC, deliveryTiersC);
           couponDiscount = Math.round(pricing.total * 0.10);
         }
       }

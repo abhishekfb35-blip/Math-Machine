@@ -68,6 +68,7 @@ export const orders = pgTable("orders", {
   shippingPincode: text("shipping_pincode").notNull(),
   subtotal: integer("subtotal").notNull(),
   discount: integer("discount").notNull().default(0),
+  shippingFee: integer("shipping_fee").notNull().default(0),
   total: integer("total").notNull(),
   status: text("status").notNull().default("pending"),
   paymentId: text("payment_id"),

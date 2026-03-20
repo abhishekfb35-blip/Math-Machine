@@ -68,6 +68,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
 -   **PWA Support**: Progressive Web Application capabilities.
 -   **Dynamic Content Management**: Homepage content managed via an admin interface.
 -   **Optimized Images**: Product images served in various sizes.
+-   **Configurable Offers & Delivery**: Admin-configurable buy-X-get-Y-free offer tiers using a greedy best-ratio algorithm, and domestic delivery fee tiers by item count. Both managed via `AdminOffers` page (`/admin/offers`). Backend in `discountService.ts` and `cartService.ts`; `orders` table has `shipping_fee` column.
 
 # External Dependencies
 

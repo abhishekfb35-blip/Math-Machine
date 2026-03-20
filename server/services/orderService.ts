@@ -2,7 +2,7 @@ import type { IStorage } from "../storage";
 import type { Order } from "@shared/types";
 import type { IPaymentProvider } from "../providers/payment";
 import type { INotificationService, OrderItemDetail } from "../providers/notification";
-import { calculateDiscount } from "./discountService";
+import { calculateDiscount, computeNumFree, defaultOfferTiers, defaultDeliveryTiers, type OfferTier, type DeliveryTier } from "./discountService";
 
 export interface CheckoutInput {
   customerId?: string | null;
@@ -29,6 +29,7 @@ export interface CheckoutResult {
   orderId: string;
   subtotal: number;
   discount: number;
+  shippingFee: number;
   couponDiscount: number;
   total: number;
 }
@@ -39,6 +40,28 @@ export class OrderService {
     private paymentProvider: IPaymentProvider,
     private notificationService: INotificationService,
   ) {}
+
+  private async loadOfferTiers(): Promise<OfferTier[]> {
+    try {
+      const config = await this.storage.getSiteConfig("offer-tiers");
+      if (config) {
+        const parsed = JSON.parse(config.value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return defaultOfferTiers;
+  }
+
+  private async loadDeliveryTiers(): Promise<DeliveryTier[]> {
+    try {
+      const config = await this.storage.getSiteConfig("delivery-tiers");
+      if (config) {
+        const parsed = JSON.parse(config.value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return defaultDeliveryTiers;
+  }
 
   async checkout(sessionId: string, input: CheckoutInput): Promise<CheckoutResult> {
     const cart = await this.storage.getOrCreateCart(sessionId);
@@ -59,7 +82,9 @@ export class OrderService {
       .filter(i => i.product)
       .map(i => ({ price: i.product!.price, quantity: i.quantity }));
 
-    const pricing = calculateDiscount(priceItems);
+    const offerTiers = await this.loadOfferTiers();
+    const deliveryTiers = await this.loadDeliveryTiers();
+    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
 
     const couponDiscount = input.couponDiscount || 0;
     const finalTotal = Math.max(0, pricing.total - couponDiscount);
@@ -85,6 +110,7 @@ export class OrderService {
       shippingPincode: input.shippingPincode,
       subtotal: pricing.subtotal,
       discount: totalDiscount,
+      shippingFee: pricing.shippingFee,
       total: finalTotal,
       status: payment.status === "cod" ? "confirmed" : "pending",
       paymentStatus: payment.status,
@@ -93,7 +119,7 @@ export class OrderService {
       currency: input.currency || "INR",
     });
 
-    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
+    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts, offerTiers);
     await this.storage.clearCart(cart.id);
 
     this.notificationService.sendOrderConfirmation({
@@ -117,6 +143,7 @@ export class OrderService {
       orderId: order.id,
       subtotal: pricing.subtotal,
       discount: totalDiscount,
+      shippingFee: pricing.shippingFee,
       couponDiscount,
       total: finalTotal,
     };
@@ -141,7 +168,9 @@ export class OrderService {
       .filter(i => i.product)
       .map(i => ({ price: i.product!.price, quantity: i.quantity }));
 
-    const pricing = calculateDiscount(priceItems);
+    const offerTiers = await this.loadOfferTiers();
+    const deliveryTiers = await this.loadDeliveryTiers();
+    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers);
 
     const couponDiscount = input.couponDiscount || 0;
     const finalTotal = Math.max(0, pricing.total - couponDiscount);
@@ -158,6 +187,7 @@ export class OrderService {
       shippingPincode: input.shippingPincode,
       subtotal: pricing.subtotal,
       discount: totalDiscount,
+      shippingFee: pricing.shippingFee,
       total: finalTotal,
       status: "confirmed",
       paymentStatus: "paid",
@@ -167,7 +197,7 @@ export class OrderService {
       currency: input.currency || "INR",
     });
 
-    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts);
+    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts, offerTiers);
     await this.storage.clearCart(cart.id);
 
     this.notificationService.sendOrderConfirmation({
@@ -191,6 +221,7 @@ export class OrderService {
       orderId: order.id,
       subtotal: pricing.subtotal,
       discount: totalDiscount,
+      shippingFee: pricing.shippingFee,
       couponDiscount,
       total: finalTotal,
     };
@@ -205,7 +236,8 @@ export class OrderService {
 
   private async createOrderItems(
     orderId: string,
-    itemsWithProducts: { quantity: number; personalizationName: string | null; selectedColor?: string | null; selectedSize?: string | null; product: any }[]
+    itemsWithProducts: { quantity: number; personalizationName: string | null; selectedColor?: string | null; selectedSize?: string | null; product: any }[],
+    offerTiers: OfferTier[],
   ): Promise<OrderItemDetail[]> {
     const expanded: { product: any; personalizationName: string | null; selectedColor: string | null; selectedSize: string | null }[] = [];
     itemsWithProducts.forEach(item => {
@@ -221,7 +253,7 @@ export class OrderService {
     expanded.sort((a, b) => (b.product?.price || 0) - (a.product?.price || 0));
 
     const totalCount = expanded.length;
-    const numFree = totalCount >= 3 ? Math.floor(totalCount / 2) : 0;
+    const numFree = computeNumFree(totalCount, offerTiers);
     const details: OrderItemDetail[] = [];
 
     for (let i = 0; i < expanded.length; i++) {

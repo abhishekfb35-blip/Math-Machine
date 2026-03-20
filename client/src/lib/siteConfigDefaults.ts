@@ -104,6 +104,19 @@ export interface PwaInstallConfig {
   customUrl: string;
 }
 
+export interface OfferTier {
+  label: string;
+  buyCount: number;
+  freeCount: number;
+  enabled: boolean;
+}
+
+export interface DeliveryTier {
+  minItems: number;
+  maxItems: number;
+  fee: number;
+}
+
 export interface FooterConfig {
   brandName: string;
   brandStory: string;
@@ -232,6 +245,17 @@ export const defaultPwaInstall: PwaInstallConfig = {
   buttonText: "Get the App",
   customUrl: "",
 };
+
+export const defaultOfferTiers: OfferTier[] = [
+  { label: "Buy 2 Get 1 Free", buyCount: 2, freeCount: 1, enabled: true },
+  { label: "Buy 3 Get 2 Free", buyCount: 3, freeCount: 2, enabled: true },
+];
+
+export const defaultDeliveryTiers: DeliveryTier[] = [
+  { minItems: 3, maxItems: 5, fee: 300 },
+  { minItems: 6, maxItems: 10, fee: 500 },
+  { minItems: 11, maxItems: 15, fee: 700 },
+];
 
 export const defaultFooter: FooterConfig = {
   brandName: "TurtleLittle",
