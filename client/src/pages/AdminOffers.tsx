@@ -276,7 +276,11 @@ export default function AdminOffers() {
 
           <div>
             <Button
-              onClick={() => saveDelivery.mutate(deliveryTiers)}
+              onClick={() => {
+                const sorted = [...deliveryTiers].sort((a, b) => a.minItems - b.minItems);
+                setDeliveryTiers(sorted);
+                saveDelivery.mutate(sorted);
+              }}
               disabled={saveDelivery.isPending}
               data-testid="button-save-delivery-tiers"
             >

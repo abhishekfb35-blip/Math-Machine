@@ -604,7 +604,7 @@ export default function CheckoutPage() {
                 {shippingFee > 0 ? (
                   <span data-testid="text-checkout-shipping">{formatPrice(shippingFee)}</span>
                 ) : (
-                  <span className="text-primary font-medium">Free</span>
+                  <span className="text-primary font-medium">Free Delivery</span>
                 )}
               </div>
               <Separator />

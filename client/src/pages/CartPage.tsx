@@ -209,7 +209,7 @@ export default function CartPage() {
               {cart && cart.shippingFee > 0 ? (
                 <span data-testid="text-shipping-fee">{formatPrice(cart.shippingFee)}</span>
               ) : (
-                <span className="text-primary font-medium" data-testid="text-shipping-free">Free</span>
+                <span className="text-primary font-medium" data-testid="text-shipping-free">Free Delivery</span>
               )}
             </div>
             <Separator />
