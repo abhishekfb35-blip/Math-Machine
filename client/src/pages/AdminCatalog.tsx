@@ -529,7 +529,11 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Variant Palettes</DialogTitle>
           <DialogDescription>Configure size + colour options for this category per product tag.</DialogDescription>
