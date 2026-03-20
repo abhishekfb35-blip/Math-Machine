@@ -560,7 +560,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
             </Button>
           )}
         </div>
-        <ScrollArea className="flex-1 pr-2">
+        <ScrollArea className="flex-1 min-h-0 pr-2">
           <div className="space-y-4">
             {sizes.map((size, si) => (
               <div key={size.localId} className="border rounded-md p-3 space-y-2 bg-muted/30">
