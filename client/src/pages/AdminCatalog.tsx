@@ -492,6 +492,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
       toast({ title: "Variant config saved" });
+      onClose();
     },
     onError: () => toast({ title: "Failed to save", variant: "destructive" }),
   });
