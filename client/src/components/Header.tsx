@@ -73,11 +73,17 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-1">
-            {installable && (
+            {(installable || pwaConfig.customUrl) && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={promptInstall}
+                onClick={() => {
+                  if (pwaConfig.customUrl?.trim()) {
+                    window.open(pwaConfig.customUrl.trim(), "_blank", "noopener,noreferrer");
+                  } else {
+                    promptInstall();
+                  }
+                }}
                 className="hidden md:flex gap-1 text-xs"
                 data-testid="button-pwa-install"
               >
