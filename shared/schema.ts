@@ -147,6 +147,33 @@ export const productVariants = pgTable("product_variants", {
   available: boolean("available").notNull().default(true),
 });
 
+export const categoryTagVariantConfigs = pgTable("category_tag_variant_configs", {
+  id: text("id").primaryKey(),
+  categoryId: text("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  tagId: text("tag_id"),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const variantSizes = pgTable("variant_sizes", {
+  id: text("id").primaryKey(),
+  configId: text("config_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  priceAdd: integer("price_add").notNull().default(0),
+  isDefault: boolean("is_default").notNull().default(false),
+  blurOnFront: boolean("blur_on_front").notNull().default(false),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const variantColors = pgTable("variant_colors", {
+  id: text("id").primaryKey(),
+  sizeId: text("size_id").notNull(),
+  name: text("name").notNull(),
+  swatchUrl: text("swatch_url"),
+  blurOnFront: boolean("blur_on_front").notNull().default(false),
+  sortOrder: integer("sort_order").default(0),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
@@ -266,6 +293,7 @@ export type {
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
   CategoryVariantOptions,
+  VariantColor, VariantSize, CategoryTagVariantConfig,
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,

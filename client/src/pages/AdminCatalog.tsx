@@ -1,11 +1,11 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  Loader2, Undo2, Save
+  Loader2, Undo2, Save, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag, CategoryTagVariantConfig, VariantSize, VariantColor } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
@@ -408,6 +408,268 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   );
 }
 
+type LocalSize = Omit<VariantSize, 'id'> & { localId: string; colors: LocalColor[] };
+type LocalColor = Omit<VariantColor, 'id'> & { localId: string };
+
+function makeLocalSize(overrides?: Partial<LocalSize>): LocalSize {
+  return {
+    localId: Math.random().toString(36).slice(2),
+    name: "", description: "", priceAdd: 0, isDefault: false, blurOnFront: false, sortOrder: 0,
+    colors: [],
+    ...overrides,
+  };
+}
+function makeLocalColor(overrides?: Partial<LocalColor>): LocalColor {
+  return {
+    localId: Math.random().toString(36).slice(2),
+    name: "", swatchUrl: undefined, blurOnFront: false, sortOrder: 0,
+    ...overrides,
+  };
+}
+
+function VariantConfigModal({ open, onClose, categoryId, allTags }: {
+  open: boolean; onClose: () => void; categoryId: string; allTags: Tag[];
+}) {
+  const { toast } = useToast();
+  const [activeConfigTagId, setActiveConfigTagId] = useState<string | "null">("null");
+  const [sizes, setSizes] = useState<LocalSize[]>([makeLocalSize()]);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+
+  const { data: configs, isLoading: configsLoading } = useQuery<CategoryTagVariantConfig[]>({
+    queryKey: ["/api/admin/categories", categoryId, "variant-configs"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/categories/${categoryId}/variant-configs`);
+      return res.json();
+    },
+    enabled: open && !!categoryId,
+  });
+
+  const configForActiveTag = configs?.find(c => (c.tagId ?? "null") === activeConfigTagId) ?? null;
+
+  useEffect(() => {
+    if (configForActiveTag) {
+      setSizes(configForActiveTag.sizes.map(s => ({
+        localId: s.id,
+        name: s.name,
+        description: s.description ?? "",
+        priceAdd: s.priceAdd,
+        isDefault: s.isDefault,
+        blurOnFront: s.blurOnFront,
+        sortOrder: s.sortOrder,
+        colors: s.colors.map(c => ({
+          localId: c.id,
+          name: c.name,
+          swatchUrl: c.swatchUrl,
+          blurOnFront: c.blurOnFront,
+          sortOrder: c.sortOrder,
+        })),
+      })));
+    } else {
+      setSizes([makeLocalSize()]);
+    }
+  }, [activeConfigTagId, open, configs?.length]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, {
+        tagId: activeConfigTagId === "null" ? null : activeConfigTagId,
+        sizes: sizes.map((s, si) => ({
+          name: s.name,
+          description: s.description || undefined,
+          priceAdd: s.priceAdd,
+          isDefault: s.isDefault,
+          blurOnFront: s.blurOnFront,
+          sortOrder: si,
+          colors: s.colors.map((c, ci) => ({
+            name: c.name,
+            swatchUrl: c.swatchUrl,
+            blurOnFront: c.blurOnFront,
+            sortOrder: ci,
+          })),
+        })),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
+      toast({ title: "Variant config saved" });
+    },
+    onError: () => toast({ title: "Failed to save", variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/variant-configs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
+      setSizes([makeLocalSize()]);
+      toast({ title: "Config deleted" });
+    },
+    onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
+  });
+
+  const uploadSwatch = useCallback(async (file: File, sizeLocalId: string, colorLocalId: string) => {
+    setUploading(prev => ({ ...prev, [`${sizeLocalId}-${colorLocalId}`]: true }));
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const { url } = await res.json();
+      setSizes(prev => prev.map(s => s.localId === sizeLocalId ? {
+        ...s,
+        colors: s.colors.map(c => c.localId === colorLocalId ? { ...c, swatchUrl: url } : c),
+      } : s));
+    } catch {
+      toast({ title: "Swatch upload failed", variant: "destructive" });
+    } finally {
+      setUploading(prev => ({ ...prev, [`${sizeLocalId}-${colorLocalId}`]: false }));
+    }
+  }, [toast]);
+
+  return (
+    <Dialog open={open} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Variant Palettes</DialogTitle>
+          <DialogDescription>Configure size + colour options for this category (per tag or all products).</DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2 items-center mb-2">
+          <Label className="text-xs shrink-0">Tag scope:</Label>
+          <Select value={activeConfigTagId} onValueChange={setActiveConfigTagId}>
+            <SelectTrigger className="h-8 text-xs" data-testid="select-variant-config-tag">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="null">All products (no tag)</SelectItem>
+              {allTags.map(t => (
+                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {configForActiveTag && (
+            <Button size="sm" variant="destructive" className="h-8 text-xs"
+              onClick={() => { if (confirm("Delete this config?")) deleteMutation.mutate(configForActiveTag.id); }}
+              disabled={deleteMutation.isPending}
+              data-testid="button-delete-variant-config"
+            >
+              <Trash2 className="w-3 h-3 mr-1" /> Delete
+            </Button>
+          )}
+        </div>
+        <ScrollArea className="flex-1 pr-2">
+          <div className="space-y-4">
+            {sizes.map((size, si) => (
+              <div key={size.localId} className="border rounded-md p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Size Name</Label>
+                      <Input value={size.name} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, name: e.target.value } : s))}
+                        placeholder="e.g. 50x70cm" className="h-7 text-xs mt-0.5" data-testid={`input-size-name-${si}`} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Price Add (INR)</Label>
+                      <Input type="number" value={size.priceAdd}
+                        onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, priceAdd: parseInt(e.target.value) || 0 } : s))}
+                        className="h-7 text-xs mt-0.5" data-testid={`input-size-price-${si}`} />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setSizes(prev => prev.filter((_, i) => i !== si))} data-testid={`button-remove-size-${si}`}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Description (optional)</Label>
+                  <Input value={size.description || ""} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, description: e.target.value } : s))}
+                    placeholder="Optional description" className="h-7 text-xs mt-0.5" />
+                </div>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <Checkbox checked={size.isDefault} onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? { ...s, isDefault: !!v } : s))} />
+                    Default
+                  </label>
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <Checkbox checked={size.blurOnFront} onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? { ...s, blurOnFront: !!v } : s))} />
+                    Hide (blurred in shop)
+                  </label>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs font-medium">Colours</Label>
+                    <Button size="sm" variant="outline" className="h-6 text-xs px-2"
+                      onClick={() => setSizes(prev => prev.map((s, i) => i === si ? { ...s, colors: [...s.colors, makeLocalColor()] } : s))}
+                      data-testid={`button-add-color-${si}`}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add
+                    </Button>
+                  </div>
+                  {size.colors.map((color, ci) => (
+                    <div key={color.localId} className="flex items-center gap-2 bg-background rounded p-1.5">
+                      <div className="flex-1 grid grid-cols-2 gap-1">
+                        <Input value={color.name}
+                          onChange={e => setSizes(prev => prev.map((s, i) => i === si ? {
+                            ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, name: e.target.value } : c)
+                          } : s))}
+                          placeholder="Colour name" className="h-6 text-xs" data-testid={`input-color-name-${si}-${ci}`} />
+                        <div className="flex items-center gap-1">
+                          {color.swatchUrl ? (
+                            <img src={color.swatchUrl} alt="" className="w-6 h-6 rounded-full object-cover border" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted border" />
+                          )}
+                          <label className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                            {uploading[`${size.localId}-${color.localId}`] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                            <input type="file" accept="image/*" className="hidden"
+                              onChange={e => e.target.files?.[0] && uploadSwatch(e.target.files[0], size.localId, color.localId)} />
+                          </label>
+                          {color.swatchUrl && (
+                            <button onClick={() => setSizes(prev => prev.map((s, i) => i === si ? {
+                              ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, swatchUrl: undefined } : c)
+                            } : s))} className="text-muted-foreground hover:text-destructive">
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
+                        <Checkbox checked={color.blurOnFront}
+                          onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? {
+                            ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, blurOnFront: !!v } : c)
+                          } : s))} />
+                        Hide
+                      </label>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0"
+                        onClick={() => setSizes(prev => prev.map((s, i) => i === si ? { ...s, colors: s.colors.filter((_, j) => j !== ci) } : s))}
+                        data-testid={`button-remove-color-${si}-${ci}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" size="sm" onClick={() => setSizes(prev => [...prev, makeLocalSize({ sortOrder: prev.length })])}
+              data-testid="button-add-size"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Size
+            </Button>
+          </div>
+        </ScrollArea>
+        <div className="flex justify-end gap-2 pt-2 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-variant-config">
+            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save Config</>}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function useAdminLogout() {
   const { toast } = useToast();
   return async () => {
@@ -443,6 +705,7 @@ export default function AdminCatalog() {
     setSelectedProductIds(new Set());
   }, [currentPage, tagFilter, categoryFilter, pageSize]);
 
+  const [variantConfigCategoryId, setVariantConfigCategoryId] = useState<string | null>(null);
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
   const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
   const [showAddReviewForm, setShowAddReviewForm] = useState(false);
@@ -1043,6 +1306,18 @@ export default function AdminCatalog() {
                       variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
+                        setVariantConfigCategoryId(cat.id);
+                      }}
+                      title="Variant Palettes"
+                      data-testid={`button-palettes-category-${cat.id}`}
+                    >
+                      <Palette className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setIsNew(false);
                         setEditingCategory({ ...cat });
                         setView("edit-category");
@@ -1076,6 +1351,14 @@ export default function AdminCatalog() {
               </div>
             )}
           </div>
+        )}
+        {variantConfigCategoryId && (
+          <VariantConfigModal
+            open={!!variantConfigCategoryId}
+            onClose={() => setVariantConfigCategoryId(null)}
+            categoryId={variantConfigCategoryId}
+            allTags={allTags ?? []}
+          />
         )}
       </div>
     );

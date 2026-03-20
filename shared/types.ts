@@ -349,10 +349,36 @@ export interface CategoryVariantOptions {
   sizes: SizeOption[];
 }
 
+export interface VariantColor {
+  id: string;
+  name: string;
+  swatchUrl?: string;
+  blurOnFront: boolean;
+  sortOrder: number;
+}
+
+export interface VariantSize {
+  id: string;
+  name: string;
+  description?: string;
+  priceAdd: number;
+  isDefault: boolean;
+  blurOnFront: boolean;
+  sortOrder: number;
+  colors: VariantColor[];
+}
+
+export interface CategoryTagVariantConfig {
+  id: string;
+  categoryId: string;
+  tagId: string | null;
+  sortOrder: number;
+  sizes: VariantSize[];
+}
+
 export interface ProductVariantOptions {
   productId: string;
-  colors: ColorOption[];
-  sizes: SizeOption[];
+  sizes: VariantSize[];
 }
 
 export interface ProductVariant {

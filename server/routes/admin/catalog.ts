@@ -460,4 +460,57 @@ export function registerAdminCatalogRoutes(app: Express) {
       res.status(500).json({ message: "Failed to save product variant options" });
     }
   });
+
+  app.get("/api/admin/categories/:id/variant-configs", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid category ID" });
+    const configs = await storage.listCategoryTagVariantConfigs(id);
+    res.json(configs);
+  });
+
+  app.put("/api/admin/categories/:id/variant-configs", requireAdmin, async (req, res) => {
+    const categoryId = req.params.id as string;
+    if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
+    try {
+      const colorSchema = z.object({
+        name: z.string().min(1),
+        swatchUrl: z.string().optional(),
+        blurOnFront: z.boolean().default(false),
+        sortOrder: z.number().int().default(0),
+      });
+      const sizeSchema = z.object({
+        name: z.string().min(1),
+        description: z.string().optional(),
+        priceAdd: z.number().int().default(0),
+        isDefault: z.boolean().default(false),
+        blurOnFront: z.boolean().default(false),
+        sortOrder: z.number().int().default(0),
+        colors: z.array(colorSchema).default([]),
+      });
+      const bodySchema = z.object({
+        tagId: z.string().nullable().default(null),
+        sizes: z.array(sizeSchema).default([]),
+      });
+      const { tagId, sizes } = bodySchema.parse(req.body);
+      const configId = await storage.upsertVariantConfig(categoryId, tagId, sizes);
+      const config = await storage.getVariantConfig(configId);
+      res.json(config);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Upsert variant config error:", err);
+      res.status(500).json({ message: "Failed to save variant config" });
+    }
+  });
+
+  app.delete("/api/admin/variant-configs/:id", requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid config ID" });
+    try {
+      await storage.deleteVariantConfig(id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete variant config error:", err);
+      res.status(500).json({ message: "Failed to delete variant config" });
+    }
+  });
 }

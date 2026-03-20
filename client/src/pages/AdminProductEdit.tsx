@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, ProductImage, ProductReview, Tag, ProductVariantOptions, ColorOption, SizeOption, ProductVariant } from "@shared/types";
+import type { Product, ProductImage, ProductReview, Tag, ProductVariantOptions, ProductVariant } from "@shared/types";
 
 const mapLegacyAudience = (val: string | null | undefined): string => {
   if (!val) return "";
@@ -34,8 +34,6 @@ export default function AdminProductEdit() {
 
   const [product, setProduct] = useState<Partial<Product> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [paletteColors, setPaletteColors] = useState<ColorOption[]>([]);
-  const [paletteSizes, setPaletteSizes] = useState<SizeOption[]>([]);
   const closeAfterSaveRef = useRef(false);
 
   const { data: fetchedProduct, isLoading } = useQuery<Product>({
@@ -91,37 +89,13 @@ export default function AdminProductEdit() {
     }
   }, [productTagsList]);
 
-  const { data: variantOptions, refetch: refetchVariantOptions } = useQuery<ProductVariantOptions>({
+  const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/admin/products", productId, "variant-options"],
     queryFn: async () => {
       const res = await fetch(`/api/admin/products/${productId}/variant-options`);
       return res.json();
     },
     enabled: !!productId,
-  });
-
-  useEffect(() => {
-    if (variantOptions) {
-      setPaletteColors(variantOptions.colors || []);
-      setPaletteSizes(variantOptions.sizes || []);
-    }
-  }, [variantOptions]);
-
-  const savePaletteMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("PUT", `/api/admin/products/${productId}/variant-options`, {
-        colors: paletteColors,
-        sizes: paletteSizes,
-      });
-    },
-    onSuccess: () => {
-      refetchVariantOptions();
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "variant-options"] });
-      toast({ title: "Palette saved" });
-    },
-    onError: () => {
-      toast({ title: "Error saving palette", variant: "destructive" });
-    },
   });
 
   const { data: productVariants, refetch: refetchVariants } = useQuery<ProductVariant[]>({
@@ -622,237 +596,82 @@ export default function AdminProductEdit() {
           </div>
         )}
 
-        {product.productType === "towel" && (
-          <div className="border rounded-lg p-4 space-y-4" data-testid="section-palette-editor">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Variant Palette (Colours &amp; Sizes)</h3>
-              <Button
-                size="sm"
-                onClick={() => savePaletteMutation.mutate()}
-                disabled={savePaletteMutation.isPending}
-                data-testid="button-save-palette"
-              >
-                {savePaletteMutation.isPending ? "Saving..." : "Save Palette"}
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Colours</Label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPaletteColors(prev => [...prev, { name: "", hexCode: "#ffffff", blurOnFront: false, hideFromFront: false }])}
-                  data-testid="button-add-palette-color"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Colour
-                </Button>
-              </div>
-              {paletteColors.length === 0 && (
-                <p className="text-xs text-muted-foreground">No colours configured.</p>
-              )}
-              {paletteColors.map((color, idx) => (
-                <div key={idx} className="flex items-center gap-2 flex-wrap" data-testid={`palette-color-row-${idx}`}>
-                  <input
-                    type="color"
-                    value={color.hexCode}
-                    onChange={(e) => setPaletteColors(prev => prev.map((c, i) => i === idx ? { ...c, hexCode: e.target.value } : c))}
-                    className="w-8 h-8 rounded cursor-pointer border border-border p-0"
-                    data-testid={`input-palette-color-hex-${idx}`}
-                  />
-                  <Input
-                    value={color.name}
-                    onChange={(e) => setPaletteColors(prev => prev.map((c, i) => i === idx ? { ...c, name: e.target.value } : c))}
-                    placeholder="Colour name (e.g. White)"
-                    className="flex-1 min-w-[100px]"
-                    data-testid={`input-palette-color-name-${idx}`}
-                  />
-                  <label className="flex items-center gap-1 text-xs cursor-pointer">
-                    <Checkbox
-                      checked={color.blurOnFront}
-                      onCheckedChange={(v) => setPaletteColors(prev => prev.map((c, i) => i === idx ? { ...c, blurOnFront: !!v } : c))}
-                      data-testid={`checkbox-palette-color-blur-${idx}`}
-                    />
-                    Blur
-                  </label>
-                  <label className="flex items-center gap-1 text-xs cursor-pointer">
-                    <Checkbox
-                      checked={color.hideFromFront}
-                      onCheckedChange={(v) => setPaletteColors(prev => prev.map((c, i) => i === idx ? { ...c, hideFromFront: !!v } : c))}
-                      data-testid={`checkbox-palette-color-hide-${idx}`}
-                    />
-                    Hide
-                  </label>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setPaletteColors(prev => prev.filter((_, i) => i !== idx))}
-                    data-testid={`button-delete-palette-color-${idx}`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-3 border-t pt-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Sizes</Label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPaletteSizes(prev => [...prev, { name: "", value: "", isDefault: false, blurOnFront: false, hideFromFront: false }])}
-                  data-testid="button-add-palette-size"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Size
-                </Button>
-              </div>
-              {paletteSizes.length === 0 && (
-                <p className="text-xs text-muted-foreground">No sizes configured.</p>
-              )}
-              {paletteSizes.map((size, idx) => (
-                <div key={idx} className="border rounded-md p-3 space-y-2" data-testid={`palette-size-row-${idx}`}>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Input
-                      value={size.name}
-                      onChange={(e) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, name: e.target.value } : s))}
-                      placeholder="Display name (e.g. Small)"
-                      className="flex-1 min-w-[90px]"
-                      data-testid={`input-palette-size-name-${idx}`}
-                    />
-                    <Input
-                      value={size.value}
-                      onChange={(e) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, value: e.target.value } : s))}
-                      placeholder="Value (e.g. S)"
-                      className="w-20"
-                      data-testid={`input-palette-size-value-${idx}`}
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setPaletteSizes(prev => prev.filter((_, i) => i !== idx))}
-                      data-testid={`button-delete-palette-size-${idx}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                  <Input
-                    value={size.description || ""}
-                    onChange={(e) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, description: e.target.value } : s))}
-                    placeholder="Description (e.g. 120 × 60 cm)"
-                    className="text-xs"
-                    data-testid={`input-palette-size-description-${idx}`}
-                  />
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.isDefault}
-                        onCheckedChange={(v) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, isDefault: !!v } : s))}
-                        data-testid={`checkbox-palette-size-default-${idx}`}
-                      />
-                      Default
-                    </label>
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.blurOnFront}
-                        onCheckedChange={(v) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, blurOnFront: !!v } : s))}
-                        data-testid={`checkbox-palette-size-blur-${idx}`}
-                      />
-                      Blur
-                    </label>
-                    <label className="flex items-center gap-1 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={size.hideFromFront}
-                        onCheckedChange={(v) => setPaletteSizes(prev => prev.map((s, i) => i === idx ? { ...s, hideFromFront: !!v } : s))}
-                        data-testid={`checkbox-palette-size-hide-${idx}`}
-                      />
-                      Hide
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {product.productType === "towel" && variantOptions && (variantOptions.sizes.length > 0 || variantOptions.colors.length > 0) && (
+        {product.productType === "towel" && variantOptions && variantOptions.sizes.length > 0 && (
           <div className="border rounded-lg p-4 space-y-3" data-testid="section-product-variants">
-            <h3 className="text-sm font-semibold">Variant Availability (Color × Size)</h3>
-            {variantOptions.sizes.length === 0 || variantOptions.colors.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Configure both colours and sizes for this product's palette above to enable the variant grid.
-              </p>
-            ) : (
-              <>
-                <p className="text-xs text-muted-foreground">
-                  Check combos available for this product. Unchecked = unavailable (shown greyed out to customers).
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="text-xs w-full border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="text-left p-1 font-medium text-muted-foreground min-w-[80px]">Size \ Colour</th>
-                        {variantOptions.colors.map(c => (
-                          <th key={c.name} className="p-1 text-center font-medium min-w-[70px]">
-                            <div className="flex flex-col items-center gap-1">
-                              <span
-                                className="w-5 h-5 rounded-full border border-border inline-block"
-                                style={{ backgroundColor: c.hexCode }}
-                                title={c.name}
-                              />
-                              <span className="text-[10px] text-muted-foreground leading-tight">{c.name}</span>
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {variantOptions.sizes.map(size => (
-                        <tr key={size.value} className="border-t border-border/50">
-                          <td className="p-1 font-medium">{size.name}</td>
-                          {variantOptions.colors.map(color => {
-                            const existing = productVariants?.find(
-                              v => v.color === color.name && v.size === size.value
-                            );
-                            const isAvailable = existing ? existing.available : false;
-                            return (
-                              <td key={color.name} className="p-1 text-center">
-                                <Checkbox
-                                  checked={isAvailable}
-                                  onCheckedChange={(checked) => {
-                                    const current = productVariants ? [...productVariants] : [];
-                                    const idx = current.findIndex(
-                                      v => v.color === color.name && v.size === size.value
-                                    );
-                                    const newVariant = {
-                                      id: existing?.id || `${productId}-${color.name}-${size.value}`,
-                                      productId: productId!,
-                                      color: color.name,
-                                      size: size.value,
-                                      available: !!checked,
-                                    };
-                                    let updated: ProductVariant[];
-                                    if (idx >= 0) {
-                                      updated = [...current.slice(0, idx), newVariant, ...current.slice(idx + 1)];
-                                    } else {
-                                      updated = [...current, newVariant];
-                                    }
-                                    saveVariantsMutation.mutate(
-                                      updated.map(v => ({ color: v.color, size: v.size, available: v.available }))
-                                    );
-                                  }}
-                                  data-testid={`variant-checkbox-${color.name}-${size.value}`}
-                                />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Variant Availability (Size × Colour)</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Check combos available for this product. Unchecked = unavailable (greyed out to customers).
+              Sizes and colours are configured at the category level via the Palettes button.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="text-xs w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left p-1 font-medium text-muted-foreground min-w-[100px]">Size</th>
+                    {variantOptions.sizes.flatMap(size =>
+                      size.colors.map(color => (
+                        <th key={`${size.name}-${color.name}`} className="p-1 text-center font-medium min-w-[70px]">
+                          <div className="flex flex-col items-center gap-0.5">
+                            {color.swatchUrl ? (
+                              <img src={color.swatchUrl} alt={color.name} className="w-5 h-5 rounded-full object-cover border border-border" />
+                            ) : (
+                              <span className="w-5 h-5 rounded-full border border-border inline-block bg-muted" />
+                            )}
+                            <span className="text-[10px] text-muted-foreground leading-tight">{size.name}</span>
+                            <span className="text-[9px] text-muted-foreground/70 leading-tight">{color.name}</span>
+                          </div>
+                        </th>
+                      ))
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-border/50">
+                    <td className="p-1 font-medium">Available?</td>
+                    {variantOptions.sizes.flatMap(size =>
+                      size.colors.map(color => {
+                        const existing = productVariants?.find(
+                          v => v.color === color.name && v.size === size.name
+                        );
+                        const isAvailable = existing ? existing.available : false;
+                        return (
+                          <td key={`${size.name}-${color.name}`} className="p-1 text-center">
+                            <Checkbox
+                              checked={isAvailable}
+                              onCheckedChange={(checked) => {
+                                const current = productVariants ? [...productVariants] : [];
+                                const idx = current.findIndex(
+                                  v => v.color === color.name && v.size === size.name
+                                );
+                                const newVariant = {
+                                  id: existing?.id || `${productId}-${color.name}-${size.name}`,
+                                  productId: productId!,
+                                  color: color.name,
+                                  size: size.name,
+                                  available: !!checked,
+                                };
+                                let updated: ProductVariant[];
+                                if (idx >= 0) {
+                                  updated = [...current.slice(0, idx), newVariant, ...current.slice(idx + 1)];
+                                } else {
+                                  updated = [...current, newVariant];
+                                }
+                                saveVariantsMutation.mutate(
+                                  updated.map(v => ({ color: v.color, size: v.size, available: v.available }))
+                                );
+                              }}
+                              data-testid={`variant-checkbox-${color.name}-${size.name}`}
+                            />
+                          </td>
+                        );
+                      })
+                    )}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

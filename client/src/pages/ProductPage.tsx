@@ -94,24 +94,25 @@ export default function ProductPage() {
     .slice(0, 4) || [];
 
   const hasProductVariants = productVariants !== undefined && productVariants.length > 0;
-  const hasProductPalette = (variantOptions?.sizes.filter(s => !s.hideFromFront).length ?? 0) > 0
-    || (variantOptions?.colors.filter(c => !c.hideFromFront).length ?? 0) > 0;
+  const hasProductPalette = (variantOptions?.sizes.length ?? 0) > 0;
   const isTowelProduct = product?.productType === "towel";
   const showVariantSelectors = isTowelProduct && hasProductPalette && hasProductVariants;
 
   const visibleSizes = showVariantSelectors
-    ? (variantOptions?.sizes || []).filter(s => !s.hideFromFront)
+    ? (variantOptions?.sizes || []).filter(s => !s.blurOnFront)
     : [];
 
+  const selectedSizeObj = variantOptions?.sizes.find(s => s.name === selectedSize);
+
   const colorsForSelectedSize = (() => {
-    if (!showVariantSelectors || !selectedSize) return [];
+    if (!showVariantSelectors || !selectedSize || !selectedSizeObj) return [];
     const availableColorNamesForSize = new Set(
       (productVariants || [])
         .filter(v => v.size === selectedSize && v.available)
         .map(v => v.color)
     );
-    return (variantOptions?.colors || []).filter(
-      c => !c.hideFromFront && availableColorNamesForSize.has(c.name)
+    return selectedSizeObj.colors.filter(
+      c => !c.blurOnFront && availableColorNamesForSize.has(c.name)
     );
   })();
 
@@ -120,44 +121,46 @@ export default function ProductPage() {
     (colorsForSelectedSize.length > 0 && !selectedColor)
   );
 
-  const isSizeSelectable = (sizeValue: string): boolean => {
-    const sizeInPalette = variantOptions?.sizes.find(s => s.value === sizeValue);
+  const isSizeSelectable = (sizeName: string): boolean => {
+    const sizeInPalette = variantOptions?.sizes.find(s => s.name === sizeName);
     if (!sizeInPalette || sizeInPalette.blurOnFront) return false;
-    return (productVariants || []).some(v => v.size === sizeValue && v.available);
+    return (productVariants || []).some(v => v.size === sizeName && v.available);
   };
 
-  const getFirstAvailableColor = (sizeValue: string): string | null => {
+  const getFirstAvailableColor = (sizeName: string): string | null => {
+    const sizeObj = variantOptions?.sizes.find(s => s.name === sizeName);
+    if (!sizeObj) return null;
     const productColorNamesForSize = new Set(
-      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+      (productVariants || []).filter(v => v.size === sizeName && v.available).map(v => v.color)
     );
-    const first = (variantOptions?.colors || []).find(
-      c => !c.hideFromFront && !c.blurOnFront && productColorNamesForSize.has(c.name)
+    const first = sizeObj.colors.find(
+      c => !c.blurOnFront && productColorNamesForSize.has(c.name)
     );
     return first ? first.name : null;
   };
 
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions || !productVariants) return;
-    const visible = variantOptions.sizes.filter(s => !s.hideFromFront && !s.blurOnFront);
+    const visible = variantOptions.sizes.filter(s => !s.blurOnFront);
     const available = visible.filter(s =>
-      (productVariants || []).some(v => v.size === s.value && v.available)
+      (productVariants || []).some(v => v.size === s.name && v.available)
     );
     if (available.length > 0 && !selectedSize) {
       const def = available.find(s => s.isDefault) || available[0];
-      setSelectedSize(def.value);
-      setSelectedColor(getFirstAvailableColor(def.value));
+      setSelectedSize(def.name);
+      setSelectedColor(getFirstAvailableColor(def.name));
     }
   }, [showVariantSelectors, variantOptions, productVariants]);
 
-  const handleSizeSelect = (sizeValue: string) => {
-    setSelectedSize(sizeValue);
+  const handleSizeSelect = (sizeName: string) => {
+    setSelectedSize(sizeName);
     const availableColorsForNewSize = new Set(
-      (productVariants || []).filter(v => v.size === sizeValue && v.available).map(v => v.color)
+      (productVariants || []).filter(v => v.size === sizeName && v.available).map(v => v.color)
     );
     if (selectedColor && availableColorsForNewSize.has(selectedColor)) {
       // keep current color – it's still available for the new size
     } else {
-      setSelectedColor(getFirstAvailableColor(sizeValue));
+      setSelectedColor(getFirstAvailableColor(sizeName));
     }
   };
 
@@ -362,7 +365,7 @@ export default function ProductPage() {
 
               <div className="flex items-baseline gap-2 mt-2">
                 <p className="text-2xl font-bold text-primary" data-testid="text-product-price">
-                  {formatPrice(product.price)}
+                  {formatPrice((product.price) + (selectedSizeObj?.priceAdd ?? 0))}
                 </p>
                 {product.mrp && product.mrp > product.price && (
                   <p className="text-base text-muted-foreground line-through" data-testid="text-product-mrp">
@@ -416,13 +419,13 @@ export default function ProductPage() {
                 <Label className="text-sm font-semibold">Size</Label>
                 <div className="flex flex-wrap gap-2">
                   {visibleSizes.map((size) => {
-                    const selectable = isSizeSelectable(size.value);
-                    const isSelected = selectedSize === size.value;
+                    const selectable = isSizeSelectable(size.name);
+                    const isSelected = selectedSize === size.name;
                     const isBlur = size.blurOnFront;
                     return (
                       <button
-                        key={size.value}
-                        onClick={() => { if (selectable) handleSizeSelect(size.value); }}
+                        key={size.name}
+                        onClick={() => { if (selectable) handleSizeSelect(size.name); }}
                         disabled={!selectable || isBlur}
                         className={`px-3 py-1.5 text-sm rounded-md border transition-all flex flex-col items-center ${
                           isSelected
@@ -431,12 +434,17 @@ export default function ProductPage() {
                             ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                             : "border-border hover:border-primary"
                         }`}
-                        data-testid={`button-size-${size.value}`}
+                        data-testid={`button-size-${size.name}`}
                       >
                         <span>{size.name}</span>
                         {size.description && (
                           <span className={`text-[10px] leading-tight ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                             {size.description}
+                          </span>
+                        )}
+                        {(size.priceAdd ?? 0) > 0 && (
+                          <span className={`text-[10px] leading-tight ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                            +{formatPrice(size.priceAdd)}
                           </span>
                         )}
                       </button>
@@ -449,32 +457,31 @@ export default function ProductPage() {
             {showVariantSelectors && colorsForSelectedSize.length > 0 && (
               <div className="space-y-2" data-testid="section-color-selector">
                 <Label className="text-sm font-semibold">Colour</Label>
-                <Select
-                  value={selectedColor ?? ""}
-                  onValueChange={(val) => setSelectedColor(val || null)}
-                  data-testid="select-color"
-                >
-                  <SelectTrigger className="w-full" data-testid="trigger-color">
-                    {selectedColor ? (
-                      <span className="flex items-center gap-2">
-                        <span className="inline-block w-4 h-4 rounded-full border border-border" style={{ backgroundColor: colorsForSelectedSize.find(c => c.name === selectedColor)?.hexCode }} />
-                        {selectedColor}
-                      </span>
-                    ) : (
-                      <SelectValue placeholder="Select a colour" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colorsForSelectedSize.map((color) => (
-                      <SelectItem key={color.name} value={color.name} disabled={color.blurOnFront} data-testid={`option-color-${color.name}`}>
-                        <span className={`flex items-center gap-2 ${color.blurOnFront ? "opacity-40" : ""}`}>
-                          <span className="inline-block w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: color.hexCode }} />
-                          {color.name}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-2">
+                  {colorsForSelectedSize.map((color) => {
+                    const isSelected = selectedColor === color.name;
+                    return (
+                      <button
+                        key={color.name}
+                        onClick={() => { if (!color.blurOnFront) setSelectedColor(color.name); }}
+                        disabled={color.blurOnFront}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-md border transition-all ${
+                          isSelected ? "border-primary bg-primary/10"
+                          : color.blurOnFront ? "border-muted opacity-40 cursor-not-allowed"
+                          : "border-border hover:border-primary"
+                        }`}
+                        data-testid={`button-color-${color.name}`}
+                      >
+                        {color.swatchUrl ? (
+                          <img src={color.swatchUrl} alt={color.name} className="w-5 h-5 rounded-full object-cover border border-border/50" />
+                        ) : (
+                          <span className="w-5 h-5 rounded-full border border-border bg-muted inline-block" />
+                        )}
+                        {color.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -610,7 +617,7 @@ export default function ProductPage() {
               ) : (
                 <>
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart - {formatPrice(product.price)}
+                  Add to Cart - {formatPrice(product.price + (selectedSizeObj?.priceAdd ?? 0))}
                 </>
               )}
             </Button>

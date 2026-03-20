@@ -79,6 +79,69 @@ export async function ensureVariantTables() {
       console.log("[migration] variant-tables: added selected_size to order_items");
     }
 
+    const ctvcCheck = await db.execute<{ exists: boolean }>(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'category_tag_variant_configs'
+      ) as exists
+    `);
+    const ctvcRows = rows(ctvcCheck);
+    if (!(ctvcRows[0] as { exists?: boolean })?.exists) {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS category_tag_variant_configs (
+          id TEXT PRIMARY KEY,
+          category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+          tag_id TEXT,
+          sort_order INTEGER NOT NULL DEFAULT 0
+        )
+      `);
+      console.log("[migration] variant-tables: created category_tag_variant_configs");
+    }
+
+    const vsCheck = await db.execute<{ exists: boolean }>(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'variant_sizes'
+      ) as exists
+    `);
+    const vsRows = rows(vsCheck);
+    if (!(vsRows[0] as { exists?: boolean })?.exists) {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS variant_sizes (
+          id TEXT PRIMARY KEY,
+          config_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          price_add INTEGER NOT NULL DEFAULT 0,
+          is_default BOOLEAN NOT NULL DEFAULT false,
+          blur_on_front BOOLEAN NOT NULL DEFAULT false,
+          sort_order INTEGER NOT NULL DEFAULT 0
+        )
+      `);
+      console.log("[migration] variant-tables: created variant_sizes");
+    }
+
+    const vcCheck = await db.execute<{ exists: boolean }>(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'variant_colors'
+      ) as exists
+    `);
+    const vcRows = rows(vcCheck);
+    if (!(vcRows[0] as { exists?: boolean })?.exists) {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS variant_colors (
+          id TEXT PRIMARY KEY,
+          size_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          swatch_url TEXT,
+          blur_on_front BOOLEAN NOT NULL DEFAULT false,
+          sort_order INTEGER NOT NULL DEFAULT 0
+        )
+      `);
+      console.log("[migration] variant-tables: created variant_colors");
+    }
+
     console.log("[migration] variant-tables: complete");
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, categoryVariantOptions, productVariants, currencyRates, pricingRules } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, categoryVariantOptions, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -16,13 +16,14 @@ import type {
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
   CategoryVariantOptions, ColorOption, SizeOption,
+  VariantColor, VariantSize, CategoryTagVariantConfig,
   ProductVariantOptions,
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -121,6 +122,14 @@ export interface IStorage {
   getProductVariants(productId: string): Promise<ProductVariant[]>;
   upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void>;
   deleteProductVariantsByProduct(productId: string): Promise<void>;
+
+  listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]>;
+  getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null>;
+  upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+    name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
+    colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
+  }>): Promise<string>;
+  deleteVariantConfig(id: string): Promise<void>;
 
   getCurrencyRates(): Promise<CurrencyRate[]>;
   upsertCurrencyRate(currency: string, rateFromInr: number): Promise<CurrencyRate>;
@@ -789,15 +798,54 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProductVariantOptions(productId: string): Promise<ProductVariantOptions> {
-    const result = await db.execute(sql`SELECT variant_colors, variant_sizes FROM products WHERE id = ${productId}`);
-    const rowList = Array.isArray(result) ? result : ((result as any).rows ?? []);
-    const row = rowList[0] as { variant_colors?: string; variant_sizes?: string } | undefined;
-    if (!row) return { productId, colors: [], sizes: [] };
-    let colors: ColorOption[] = [];
-    let sizes: SizeOption[] = [];
-    try { colors = JSON.parse(row.variant_colors || "[]"); } catch {}
-    try { sizes = JSON.parse(row.variant_sizes || "[]"); } catch {}
-    return { productId, colors, sizes };
+    const productResult = await db.execute(sql`
+      SELECT p.category_id, pt.tag_id
+      FROM products p
+      LEFT JOIN product_tags pt ON pt.product_id = p.id
+      WHERE p.id = ${productId}
+      ORDER BY pt.id
+      LIMIT 1
+    `);
+    const productRows = Array.isArray(productResult) ? productResult : ((productResult as any).rows ?? []);
+    if (productRows.length === 0) return { productId, sizes: [] };
+    const { category_id: categoryId, tag_id: tagId } = productRows[0] as { category_id: string; tag_id: string | null };
+
+    let configId: string | null = null;
+    if (tagId) {
+      const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
+        and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+      );
+      if (cfg) configId = cfg.id;
+    }
+    if (!configId) {
+      const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
+        and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
+      );
+      if (cfg) configId = cfg.id;
+    }
+    if (!configId) return { productId, sizes: [] };
+
+    const dbSizes = await db.select().from(variantSizes).where(eq(variantSizes.configId, configId)).orderBy(variantSizes.sortOrder);
+    const sizesWithColors: VariantSize[] = await Promise.all(dbSizes.map(async (size) => {
+      const dbColors = await db.select().from(variantColors).where(eq(variantColors.sizeId, size.id)).orderBy(variantColors.sortOrder);
+      return {
+        id: size.id,
+        name: size.name,
+        description: size.description ?? undefined,
+        priceAdd: size.priceAdd,
+        isDefault: size.isDefault,
+        blurOnFront: size.blurOnFront,
+        sortOrder: size.sortOrder ?? 0,
+        colors: dbColors.map(c => ({
+          id: c.id,
+          name: c.name,
+          swatchUrl: c.swatchUrl ?? undefined,
+          blurOnFront: c.blurOnFront,
+          sortOrder: c.sortOrder ?? 0,
+        })),
+      };
+    }));
+    return { productId, sizes: sizesWithColors };
   }
 
   async upsertProductVariantOptions(productId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void> {
@@ -822,6 +870,121 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProductVariantsByProduct(productId: string): Promise<void> {
     await db.delete(productVariants).where(eq(productVariants.productId, productId));
+  }
+
+  async listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]> {
+    const configs = await db.select().from(categoryTagVariantConfigs)
+      .where(eq(categoryTagVariantConfigs.categoryId, categoryId))
+      .orderBy(categoryTagVariantConfigs.sortOrder);
+    return Promise.all(configs.map(async (cfg) => {
+      const dbSizes = await db.select().from(variantSizes).where(eq(variantSizes.configId, cfg.id)).orderBy(variantSizes.sortOrder);
+      const sizes: VariantSize[] = await Promise.all(dbSizes.map(async (size) => {
+        const dbColors = await db.select().from(variantColors).where(eq(variantColors.sizeId, size.id)).orderBy(variantColors.sortOrder);
+        return {
+          id: size.id,
+          name: size.name,
+          description: size.description ?? undefined,
+          priceAdd: size.priceAdd,
+          isDefault: size.isDefault,
+          blurOnFront: size.blurOnFront,
+          sortOrder: size.sortOrder ?? 0,
+          colors: dbColors.map(c => ({
+            id: c.id,
+            name: c.name,
+            swatchUrl: c.swatchUrl ?? undefined,
+            blurOnFront: c.blurOnFront,
+            sortOrder: c.sortOrder ?? 0,
+          })),
+        };
+      }));
+      return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
+    }));
+  }
+
+  async getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null> {
+    const [cfg] = await db.select().from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, id));
+    if (!cfg) return null;
+    const dbSizes = await db.select().from(variantSizes).where(eq(variantSizes.configId, id)).orderBy(variantSizes.sortOrder);
+    const sizes: VariantSize[] = await Promise.all(dbSizes.map(async (size) => {
+      const dbColors = await db.select().from(variantColors).where(eq(variantColors.sizeId, size.id)).orderBy(variantColors.sortOrder);
+      return {
+        id: size.id,
+        name: size.name,
+        description: size.description ?? undefined,
+        priceAdd: size.priceAdd,
+        isDefault: size.isDefault,
+        blurOnFront: size.blurOnFront,
+        sortOrder: size.sortOrder ?? 0,
+        colors: dbColors.map(c => ({
+          id: c.id,
+          name: c.name,
+          swatchUrl: c.swatchUrl ?? undefined,
+          blurOnFront: c.blurOnFront,
+          sortOrder: c.sortOrder ?? 0,
+        })),
+      };
+    }));
+    return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
+  }
+
+  async upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+    name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
+    colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
+  }>): Promise<string> {
+    const existing = tagId
+      ? await db.select().from(categoryTagVariantConfigs).where(
+          and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+        ).then(r => r[0])
+      : await db.select().from(categoryTagVariantConfigs).where(
+          and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
+        ).then(r => r[0]);
+
+    let configId: string;
+    if (existing) {
+      configId = existing.id;
+      const existingSizeIds = (await db.select().from(variantSizes).where(eq(variantSizes.configId, configId))).map(s => s.id);
+      for (const sizeId of existingSizeIds) {
+        await db.delete(variantColors).where(eq(variantColors.sizeId, sizeId));
+      }
+      await db.delete(variantSizes).where(eq(variantSizes.configId, configId));
+    } else {
+      configId = createId();
+      await db.insert(categoryTagVariantConfigs).values({ id: configId, categoryId, tagId: tagId ?? null, sortOrder: 0 });
+    }
+
+    for (const size of sizes) {
+      const sizeId = createId();
+      await db.insert(variantSizes).values({
+        id: sizeId,
+        configId,
+        name: size.name,
+        description: size.description ?? null,
+        priceAdd: size.priceAdd,
+        isDefault: size.isDefault,
+        blurOnFront: size.blurOnFront,
+        sortOrder: size.sortOrder,
+      });
+      for (const color of size.colors) {
+        await db.insert(variantColors).values({
+          id: createId(),
+          sizeId,
+          name: color.name,
+          swatchUrl: color.swatchUrl ?? null,
+          blurOnFront: color.blurOnFront,
+          sortOrder: color.sortOrder,
+        });
+      }
+    }
+    return configId;
+  }
+
+  async deleteVariantConfig(id: string): Promise<void> {
+    const existingSizeIds = (await db.select().from(variantSizes).where(eq(variantSizes.configId, id))).map(s => s.id);
+    for (const sizeId of existingSizeIds) {
+      await db.delete(variantColors).where(eq(variantColors.sizeId, sizeId));
+    }
+    await db.delete(variantSizes).where(eq(variantSizes.configId, id));
+    await db.delete(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, id));
   }
 
   private coerceCurrencyRate(r: any): CurrencyRate {
