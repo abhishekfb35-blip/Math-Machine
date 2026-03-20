@@ -340,62 +340,6 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/categories/:id/variants", requireAdmin, async (req, res) => {
-    const id = req.params.id as string;
-    if (!id) return res.status(400).json({ message: "Invalid category ID" });
-    const opts = await storage.getCategoryVariantOptions(id);
-    res.json(opts || { categoryId: id, colors: [], sizes: [] });
-  });
-
-  app.put("/api/admin/categories/:id/variants", requireAdmin, async (req, res) => {
-    const id = req.params.id as string;
-    if (!id) return res.status(400).json({ message: "Invalid category ID" });
-    try {
-      const schema = z.object({
-        colors: z.array(z.object({
-          name: z.string(),
-          hexCode: z.string(),
-          isDefault: z.boolean().default(false),
-          blurOnFront: z.boolean().default(false),
-          hideFromFront: z.boolean().default(false),
-        })),
-        sizes: z.array(z.object({
-          name: z.string(),
-          value: z.string(),
-          description: z.string().optional(),
-          isDefault: z.boolean().default(false),
-          blurOnFront: z.boolean().default(false),
-          hideFromFront: z.boolean().default(false),
-        })),
-      });
-      let { colors, sizes } = schema.parse(req.body);
-      if (sizes.length === 0) {
-        const existing = await storage.getCategoryVariantOptions(id);
-        if (!existing) {
-          const category = await storage.getCategoryById(id);
-          const isKids = category?.audience === "kids";
-          sizes = isKids
-            ? [
-                { name: "Small", value: "S", description: "60 × 30 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-                { name: "Medium", value: "M", description: "90 × 45 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-                { name: "Large", value: "L", description: "120 × 60 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
-              ]
-            : [
-                { name: "Medium", value: "M", description: "140 × 70 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-                { name: "Large", value: "L", description: "150 × 75 cm", isDefault: true, blurOnFront: false, hideFromFront: false },
-                { name: "XLarge", value: "XL", description: "160 × 80 cm", isDefault: false, blurOnFront: false, hideFromFront: false },
-              ];
-        }
-      }
-      await storage.upsertCategoryVariantOptions(id, colors, sizes);
-      res.json({ success: true });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-      console.error("Upsert category variants error:", err);
-      res.status(500).json({ message: "Failed to save variant options" });
-    }
-  });
-
   app.get("/api/admin/products/:id/variants", requireAdmin, async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });

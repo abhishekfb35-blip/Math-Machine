@@ -133,12 +133,6 @@ export const productTags = pgTable("product_tags", {
   tagId: text("tag_id").notNull(),
 }, (t) => [uniqueIndex("product_tags_product_tag_uniq").on(t.productId, t.tagId)]);
 
-export const categoryVariantOptions = pgTable("category_variant_options", {
-  categoryId: text("category_id").primaryKey().references(() => categories.id, { onDelete: "cascade" }),
-  colors: text("colors").notNull().default("[]"),
-  sizes: text("sizes").notNull().default("[]"),
-});
-
 export const productVariants = pgTable("product_variants", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
@@ -254,7 +248,6 @@ export const insertProductImageSchema = createInsertSchema(productImages).omit({
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true, createdAt: true });
 export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
-export const insertCategoryVariantOptionsSchema = createInsertSchema(categoryVariantOptions);
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
 export const currencyRates = pgTable("currency_rates", {
@@ -292,7 +285,6 @@ export type {
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
-  CategoryVariantOptions,
   VariantColor, VariantSize, CategoryTagVariantConfig,
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,

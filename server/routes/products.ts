@@ -13,13 +13,6 @@ export function registerProductRoutes(app: Express) {
     res.json(cat);
   });
 
-  app.get("/api/categories/:id/variant-options", async (req, res) => {
-    const id = req.params.id as string;
-    if (!id) return res.status(400).json({ message: "Invalid category ID" });
-    const opts = await storage.getCategoryVariantOptions(id);
-    res.json(opts || { categoryId: id, colors: [], sizes: [] });
-  });
-
   app.get("/api/products", async (_req, res) => {
     const prods = await storage.getProducts();
     res.json(prods);

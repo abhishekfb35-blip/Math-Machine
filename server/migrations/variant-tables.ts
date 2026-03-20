@@ -14,15 +14,9 @@ export async function ensureVariantTables() {
       ) as exists
     `);
     const tableRows = rows(checkResult);
-    if (!(tableRows[0] as { exists?: boolean })?.exists) {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS category_variant_options (
-          category_id TEXT PRIMARY KEY REFERENCES categories(id) ON DELETE CASCADE,
-          colors TEXT NOT NULL DEFAULT '[]',
-          sizes TEXT NOT NULL DEFAULT '[]'
-        )
-      `);
-      console.log("[migration] variant-tables: created category_variant_options");
+    if ((tableRows[0] as { exists?: boolean })?.exists) {
+      await db.execute(sql`DROP TABLE IF EXISTS category_variant_options`);
+      console.log("[migration] variant-tables: dropped legacy category_variant_options");
     }
 
     const pvCheck = await db.execute<{ exists: boolean }>(sql`

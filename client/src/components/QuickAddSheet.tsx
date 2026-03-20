@@ -47,8 +47,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   });
 
   const hasVariantConfig = (variantOptions?.sizes?.length ?? 0) > 0;
-  const isTowelProduct = product?.productType === "towel";
-  const showVariantSelectors = isTowelProduct && hasVariantConfig;
+  const showVariantSelectors = hasVariantConfig;
 
   const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes.find(s => s.name === selectedSizeName);
 
@@ -71,9 +70,9 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions || selectedSizeName) return;
-    const visible = variantOptions.sizes.filter(s => !s.blurOnFront);
-    if (visible.length > 0) {
-      const def = visible.find(s => s.isDefault) || visible[0];
+    const sizes = variantOptions.sizes;
+    if (sizes.length > 0) {
+      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
       setSelectedSizeName(def.name);
       setSelectedColorName(getFirstSelectableColor(def.name));
     }
@@ -92,12 +91,12 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSizeName || !selectedSizeObj) return [];
-    return selectedSizeObj.colors.filter(c => !c.blurOnFront);
+    return selectedSizeObj.colors;
   })();
 
   const variantSelectionIncomplete = showVariantSelectors && (
     ((variantOptions?.sizes.length ?? 0) > 0 && !selectedSizeName) ||
-    (colorsForSelectedSize.length > 0 && !selectedColorName)
+    (colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !selectedColorName)
   );
 
   const effectivePrice = (product?.price ?? 0) + (selectedSizeObj?.priceAdd ?? 0);
@@ -176,8 +175,9 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <div className="space-y-1.5" data-testid="section-quickadd-sizes">
               <Label className="text-sm font-medium">Size</Label>
               <div className="flex flex-wrap gap-2">
-                {variantOptions!.sizes.filter(s => !s.blurOnFront).map((size) => {
-                  const available = isSizeAvailable(size.name);
+                {variantOptions!.sizes.map((size) => {
+                  const available = !size.blurOnFront && isSizeAvailable(size.name);
+                  const blurred = size.blurOnFront;
                   const isSelected = selectedSizeName === size.name;
                   return (
                     <button
@@ -195,7 +195,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                       className={`px-3 py-1 text-xs rounded border transition-all ${
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : !available
+                          : blurred || !isSizeAvailable(size.name)
                           ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                       }`}
@@ -220,7 +220,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               <Label className="text-sm font-medium">Colour</Label>
               <div className="flex flex-wrap gap-2">
                 {colorsForSelectedSize.map((color) => {
-                  const available = isColorAvailable(selectedSizeName!, color.name);
+                  const available = !color.blurOnFront && isColorAvailable(selectedSizeName!, color.name);
+                  const blurred = color.blurOnFront;
                   const isSelected = selectedColorName === color.name;
                   return (
                     <button
@@ -230,7 +231,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                       className={`flex items-center gap-1.5 p-1 text-xs rounded border transition-all ${
                         isSelected
                           ? "border-primary ring-1 ring-primary"
-                          : !available
+                          : blurred || !isColorAvailable(selectedSizeName!, color.name)
                           ? "border-muted opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                       }`}

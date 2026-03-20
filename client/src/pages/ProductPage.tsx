@@ -94,12 +94,7 @@ export default function ProductPage() {
     .slice(0, 4) || [];
 
   const hasVariantConfig = (variantOptions?.sizes.length ?? 0) > 0;
-  const isTowelProduct = product?.productType === "towel";
-  const showVariantSelectors = isTowelProduct && hasVariantConfig;
-
-  const visibleSizes = showVariantSelectors
-    ? (variantOptions?.sizes || []).filter(s => !s.blurOnFront)
-    : [];
+  const showVariantSelectors = hasVariantConfig;
 
   const selectedSizeObj = variantOptions?.sizes.find(s => s.name === selectedSize);
 
@@ -115,12 +110,12 @@ export default function ProductPage() {
 
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSize || !selectedSizeObj) return [];
-    return selectedSizeObj.colors.filter(c => !c.blurOnFront);
+    return selectedSizeObj.colors;
   })();
 
   const variantSelectionIncomplete = showVariantSelectors && (
-    (visibleSizes.length > 0 && !selectedSize) ||
-    (colorsForSelectedSize.length > 0 && !selectedColor)
+    ((variantOptions?.sizes.length ?? 0) > 0 && !selectedSize) ||
+    (colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !selectedColor)
   );
 
   const getFirstSelectableColor = (sizeName: string): string | null => {
@@ -132,9 +127,9 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions) return;
-    const visible = variantOptions.sizes.filter(s => !s.blurOnFront);
-    if (visible.length > 0 && !selectedSize) {
-      const def = visible.find(s => s.isDefault) || visible[0];
+    const sizes = variantOptions.sizes;
+    if (sizes.length > 0 && !selectedSize) {
+      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
       setSelectedSize(def.name);
       setSelectedColor(getFirstSelectableColor(def.name));
     }
@@ -398,12 +393,13 @@ export default function ProductPage() {
               </div>
             )}
 
-            {showVariantSelectors && visibleSizes.length > 0 && (
+            {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
               <div className="space-y-2" data-testid="section-size-selector">
                 <Label className="text-sm font-semibold">Size</Label>
                 <div className="flex flex-wrap gap-2">
-                  {visibleSizes.map((size) => {
-                    const available = isSizeAvailable(size.name);
+                  {variantOptions!.sizes.map((size) => {
+                    const available = !size.blurOnFront && isSizeAvailable(size.name);
+                    const blurred = size.blurOnFront;
                     const isSelected = selectedSize === size.name;
                     return (
                       <button
@@ -413,7 +409,7 @@ export default function ProductPage() {
                         className={`px-3 py-1.5 text-sm rounded-md border transition-all flex flex-col items-center ${
                           isSelected
                             ? "border-primary bg-primary text-primary-foreground"
-                            : !available
+                            : blurred || !isSizeAvailable(size.name)
                             ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
                             : "border-border hover:border-primary"
                         }`}
@@ -442,7 +438,8 @@ export default function ProductPage() {
                 <Label className="text-sm font-semibold">Colour</Label>
                 <div className="flex flex-wrap gap-2">
                   {colorsForSelectedSize.map((color) => {
-                    const available = isColorAvailable(selectedSize!, color.name);
+                    const available = !color.blurOnFront && isColorAvailable(selectedSize!, color.name);
+                    const blurred = color.blurOnFront;
                     const isSelected = selectedColor === color.name;
                     return (
                       <button
@@ -451,7 +448,7 @@ export default function ProductPage() {
                         disabled={!available}
                         className={`flex items-center gap-1.5 p-1.5 rounded border transition-all ${
                           isSelected ? "border-primary ring-1 ring-primary"
-                          : !available ? "border-muted opacity-40 cursor-not-allowed"
+                          : blurred || !isColorAvailable(selectedSize!, color.name) ? "border-muted opacity-40 cursor-not-allowed"
                           : "border-border hover:border-primary"
                         }`}
                         data-testid={`button-color-${color.name}`}
