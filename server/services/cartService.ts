@@ -4,6 +4,7 @@ import { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers, type Pricin
 
 export interface EnrichedCartItem extends CartItem {
   product: Product | undefined;
+  effectivePrice: number;
 }
 
 export interface CartDetails {
@@ -119,7 +120,17 @@ export class CartService {
     return Promise.all(
       items.map(async (item) => {
         const product = await this.storage.getProductById(item.productId);
-        return { ...item, product };
+        let effectivePrice = product?.price ?? 0;
+        if (product && item.selectedSize) {
+          try {
+            const variantOptions = await this.storage.getProductVariantOptions(item.productId);
+            const sizeConfig = variantOptions.sizes.find(s => s.name === item.selectedSize);
+            if (sizeConfig && sizeConfig.priceAdd > 0) {
+              effectivePrice = product.price + sizeConfig.priceAdd;
+            }
+          } catch {}
+        }
+        return { ...item, product, effectivePrice };
       })
     );
   }
@@ -127,7 +138,7 @@ export class CartService {
   private calculateCartPricing(items: EnrichedCartItem[], offerTiers: OfferTier[], deliveryTiers: DeliveryTier[], isDomestic: boolean): PricingResult {
     const priceItems = items
       .filter(i => i.product)
-      .map(i => ({ price: i.product!.price, quantity: i.quantity }));
+      .map(i => ({ price: i.effectivePrice, quantity: i.quantity }));
     return calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
   }
 }

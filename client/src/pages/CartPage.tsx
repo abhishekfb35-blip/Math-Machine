@@ -15,6 +15,7 @@ import type { Product, CartItem } from "@shared/types";
 
 interface CartItemWithProduct extends CartItem {
   product: Product | null;
+  effectivePrice?: number;
 }
 
 interface CartData {
@@ -64,7 +65,7 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
           </p>
         )}
         <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
-          {formatPrice(item.product.price)}
+          {formatPrice(item.effectivePrice ?? item.product.price)}
         </p>
         <div className="flex items-center gap-2 pt-1">
           <Button
