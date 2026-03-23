@@ -4,7 +4,7 @@ import {
   categories, products, siteConfig, productImages, productReviews, tags, productTags,
   currencyRates, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
 const BATCH = 100;
@@ -310,7 +310,7 @@ export async function seedDatabase() {
       console.log(`[seed] currencyRates: all entries up to date`);
     }
 
-    // ── 6. categoryTagVariantConfigs: insert if not exists ────────────────────
+    // ── 6. categoryTagVariantConfigs: upsert by (categoryId, tagId) ──────────
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
     const ctvcEntries: any[] = (data.categoryTagVariantConfigs || []);
@@ -318,23 +318,33 @@ export async function seedDatabase() {
     for (const ctvc of ctvcEntries) {
       const catId = catSlugToIdV[ctvc.categorySlug];
       if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
-      const [existing] = await db.select({ id: categoryTagVariantConfigs.id }).from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, ctvc.id));
+      const tagId = ctvc.tagId ?? null;
+      const whereClause = tagId
+        ? and(eq(categoryTagVariantConfigs.categoryId, catId), eq(categoryTagVariantConfigs.tagId, tagId))
+        : and(eq(categoryTagVariantConfigs.categoryId, catId));
+      const [existing] = await db.select().from(categoryTagVariantConfigs).where(whereClause);
       if (!existing) {
-        await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId: ctvc.tagId ?? null, sortOrder: ctvc.sortOrder ?? 0 });
+        await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId, sortOrder: ctvc.sortOrder ?? 0 });
+        ctvcSynced++;
+      } else if (existing.sortOrder !== (ctvc.sortOrder ?? 0)) {
+        await db.update(categoryTagVariantConfigs).set({ sortOrder: ctvc.sortOrder ?? 0 }).where(eq(categoryTagVariantConfigs.id, existing.id));
         ctvcSynced++;
       }
     }
     if (ctvcSynced > 0) {
-      console.log(`[seed] categoryTagVariantConfigs: inserted ${ctvcSynced}`);
+      console.log(`[seed] categoryTagVariantConfigs: synced ${ctvcSynced}`);
     } else {
       console.log(`[seed] categoryTagVariantConfigs: all entries up to date`);
     }
 
-    // ── 7. variantSizes: insert if not exists ─────────────────────────────────
+    // ── 7. variantSizes: upsert by (configId, name) ───────────────────────────
     const vsEntries: any[] = (data.variantSizes || []);
     let vsSynced = 0;
+    // Map seed sizeId → actual DB sizeId (in case the DB has a different PK)
+    const seedSizeIdToDbId: Record<string, string> = {};
     for (const vs of vsEntries) {
-      const [existing] = await db.select({ id: variantSizes.id }).from(variantSizes).where(eq(variantSizes.id, vs.id));
+      const [existing] = await db.select().from(variantSizes)
+        .where(and(eq(variantSizes.configId, vs.configId), eq(variantSizes.name, vs.name)));
       if (!existing) {
         await db.insert(variantSizes).values({
           id: vs.id, configId: vs.configId, name: vs.name,
@@ -342,35 +352,67 @@ export async function seedDatabase() {
           priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
           blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
         });
+        seedSizeIdToDbId[vs.id] = vs.id;
         vsSynced++;
+      } else {
+        seedSizeIdToDbId[vs.id] = existing.id;
+        const changed =
+          existing.description !== (vs.description ?? null) ||
+          existing.descriptionFontSize !== (vs.descriptionFontSize ?? 12) ||
+          existing.priceAdd !== (vs.priceAdd ?? 0) ||
+          existing.isDefault !== (vs.isDefault ?? false) ||
+          existing.blurOnFront !== (vs.blurOnFront ?? false) ||
+          existing.sortOrder !== (vs.sortOrder ?? 0);
+        if (changed) {
+          await db.update(variantSizes).set({
+            description: vs.description ?? null, descriptionFontSize: vs.descriptionFontSize ?? 12,
+            priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
+            blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
+          }).where(eq(variantSizes.id, existing.id));
+          vsSynced++;
+        }
       }
     }
     if (vsSynced > 0) {
-      console.log(`[seed] variantSizes: inserted ${vsSynced}`);
+      console.log(`[seed] variantSizes: synced ${vsSynced}`);
     } else {
       console.log(`[seed] variantSizes: all entries up to date`);
     }
 
-    // ── 8. variantColors: insert if not exists ────────────────────────────────
+    // ── 8. variantColors: upsert by (sizeId, name) ───────────────────────────
     const vcEntries: any[] = (data.variantColors || []);
     let vcSynced = 0;
     for (const vc of vcEntries) {
-      const [existing] = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.id, vc.id));
+      // Resolve actual DB sizeId (may differ from seed sizeId if row pre-existed)
+      const actualSizeId = seedSizeIdToDbId[vc.sizeId] ?? vc.sizeId;
+      const [existing] = await db.select().from(variantColors)
+        .where(and(eq(variantColors.sizeId, actualSizeId), eq(variantColors.name, vc.name)));
       if (!existing) {
         await db.insert(variantColors).values({
-          id: vc.id, sizeId: vc.sizeId, name: vc.name,
+          id: vc.id, sizeId: actualSizeId, name: vc.name,
           swatchUrl: vc.swatchUrl ?? null, blurOnFront: vc.blurOnFront ?? false, sortOrder: vc.sortOrder ?? 0,
         });
         vcSynced++;
+      } else {
+        const changed =
+          existing.swatchUrl !== (vc.swatchUrl ?? null) ||
+          existing.blurOnFront !== (vc.blurOnFront ?? false) ||
+          existing.sortOrder !== (vc.sortOrder ?? 0);
+        if (changed) {
+          await db.update(variantColors).set({
+            swatchUrl: vc.swatchUrl ?? null, blurOnFront: vc.blurOnFront ?? false, sortOrder: vc.sortOrder ?? 0,
+          }).where(eq(variantColors.id, existing.id));
+          vcSynced++;
+        }
       }
     }
     if (vcSynced > 0) {
-      console.log(`[seed] variantColors: inserted ${vcSynced}`);
+      console.log(`[seed] variantColors: synced ${vcSynced}`);
     } else {
       console.log(`[seed] variantColors: all entries up to date`);
     }
 
-    // ── 9. productVariants: insert if not exists ──────────────────────────────
+    // ── 9. productVariants: upsert by (productId, color, size) ───────────────
     const allProdsForVariants = await db.select({ id: products.id, slug: products.slug }).from(products);
     const prodSlugToIdV: Record<string, string> = Object.fromEntries(allProdsForVariants.map(p => [p.slug, p.id]));
     const pvEntries: any[] = (data.productVariants || []);
@@ -378,14 +420,18 @@ export async function seedDatabase() {
     for (const pv of pvEntries) {
       const productId = prodSlugToIdV[pv.productSlug];
       if (!productId) { console.warn(`[seed] productVariants: unknown productSlug "${pv.productSlug}"`); continue; }
-      const [existing] = await db.select({ id: productVariants.id }).from(productVariants).where(eq(productVariants.id, pv.id));
+      const [existing] = await db.select().from(productVariants)
+        .where(and(eq(productVariants.productId, productId), eq(productVariants.color, pv.color), eq(productVariants.size, pv.size)));
       if (!existing) {
         await db.insert(productVariants).values({ id: pv.id, productId, color: pv.color, size: pv.size, available: pv.available ?? true });
+        pvSynced++;
+      } else if (existing.available !== (pv.available ?? true)) {
+        await db.update(productVariants).set({ available: pv.available ?? true }).where(eq(productVariants.id, existing.id));
         pvSynced++;
       }
     }
     if (pvSynced > 0) {
-      console.log(`[seed] productVariants: inserted ${pvSynced}`);
+      console.log(`[seed] productVariants: synced ${pvSynced}`);
     } else {
       console.log(`[seed] productVariants: all entries up to date`);
     }
