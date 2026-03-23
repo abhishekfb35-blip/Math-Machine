@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, ProductVariantOptions, ProductVariant, VariantSize } from "@shared/types";
+import type { Product, ProductVariantOptions, VariantSize } from "@shared/types";
 
 interface QuickAddSheetProps {
   product: Product | null;
@@ -37,29 +37,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     enabled: !!product?.id && open,
   });
 
-  const { data: productVariants } = useQuery<ProductVariant[]>({
-    queryKey: ["/api/products", product?.id, "variants"],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/${product!.id}/variants`);
-      return res.json();
-    },
-    enabled: !!product?.id && open,
-  });
-
   const hasVariantConfig = (variantOptions?.sizes?.length ?? 0) > 0;
   const showVariantSelectors = hasVariantConfig;
 
   const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes.find(s => s.name === selectedSizeName);
 
-  const isSizeAvailable = (sizeName: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeName && v.available);
-  };
+  const isSizeAvailable = (_sizeName: string): boolean => true;
 
-  const isColorAvailable = (sizeName: string, colorName: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeName && v.color === colorName && v.available);
-  };
+  const isColorAvailable = (_sizeName: string, _colorName: string): boolean => true;
 
   const getFirstSelectableColor = (sizeName: string): string | null => {
     const sizeObj = variantOptions?.sizes.find(s => s.name === sizeName);

@@ -17,7 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions, ProductVariant } from "@shared/types";
+import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const REVIEWS_PER_PAGE = 10;
@@ -78,15 +78,6 @@ export default function ProductPage() {
     enabled: !!product?.id,
   });
 
-  const { data: productVariants } = useQuery<ProductVariant[]>({
-    queryKey: ["/api/products", product?.id, "variants"],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/${product!.id}/variants`);
-      return res.json();
-    },
-    enabled: !!product?.id,
-  });
-
   const category = categories?.find((c) => c.id === product?.categoryId);
 
   const relatedProducts = allProducts
@@ -98,15 +89,9 @@ export default function ProductPage() {
 
   const selectedSizeObj = variantOptions?.sizes.find(s => s.name === selectedSize);
 
-  const isSizeAvailable = (sizeName: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeName && v.available);
-  };
+  const isSizeAvailable = (_sizeName: string): boolean => true;
 
-  const isColorAvailable = (sizeName: string, colorName: string): boolean => {
-    if (!productVariants || productVariants.length === 0) return true;
-    return productVariants.some(v => v.size === sizeName && v.color === colorName && v.available);
-  };
+  const isColorAvailable = (_sizeName: string, _colorName: string): boolean => true;
 
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSize || !selectedSizeObj) return [];
