@@ -83,8 +83,10 @@ export default function ShopPage() {
     if (!products) return [];
     let result = products;
     if (activeFilter !== "all") {
+      const tagKeywordMap: Record<string, string> = { kids: "kids", adults: "adult", couples: "couple" };
+      const keyword = tagKeywordMap[activeFilter] || activeFilter;
       result = result.filter((p) =>
-        p.tagNames?.some((t) => t.toLowerCase().includes(activeFilter === "couples" ? "couple" : activeFilter))
+        p.tagNames?.some((t) => t.toLowerCase().includes(keyword))
       );
     }
     if (searchQuery.trim()) {

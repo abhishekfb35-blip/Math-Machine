@@ -230,7 +230,8 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    const tagKeyword = audience === "couples" ? "couple" : audience;
+    const tagKeywordMap: Record<Audience, string> = { kids: "kids", adults: "adult", couples: "couple" };
+    const tagKeyword = tagKeywordMap[audience];
     let filtered = products.filter((p) =>
       p.tagNames?.some((t) => t.toLowerCase().includes(tagKeyword))
     );
