@@ -603,7 +603,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                     </div>
                   </div>
                   <Input value={size.description || ""} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, description: e.target.value } : s))}
-                    placeholder="Optional description" className="h-7 mt-0" style={{ fontSize: `${size.descriptionFontSize ?? 12}px` }} />
+                    placeholder="Optional description" className="h-7 text-xs mt-0" />
                 </div>
                 <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-1 text-xs cursor-pointer">

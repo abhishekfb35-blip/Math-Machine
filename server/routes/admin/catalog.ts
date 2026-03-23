@@ -425,6 +425,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       const sizeSchema = z.object({
         name: z.string().min(1),
         description: z.string().optional(),
+        descriptionFontSize: z.number().int().min(8).max(72).optional().default(12),
         priceAdd: z.number().int().default(0),
         isDefault: z.boolean().default(false),
         blurOnFront: z.boolean().default(false),
