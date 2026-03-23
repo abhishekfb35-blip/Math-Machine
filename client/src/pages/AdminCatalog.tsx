@@ -530,7 +530,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] flex flex-col"
+        className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
