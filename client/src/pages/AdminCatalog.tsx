@@ -608,6 +608,18 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                     >
                       <Plus className="w-3 h-3 mr-1" /> Add
                     </Button>
+                    {size.colors.length > 0 && (
+                      <label className="ml-auto flex items-center gap-1 text-xs cursor-pointer text-muted-foreground">
+                        <Checkbox
+                          checked={size.colors.every(c => c.blurOnFront)}
+                          onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si
+                            ? { ...s, colors: s.colors.map(c => ({ ...c, blurOnFront: !!v })) }
+                            : s))}
+                          data-testid={`checkbox-hide-all-colors-${si}`}
+                        />
+                        Hide all
+                      </label>
+                    )}
                   </div>
                   {size.colors.map((color, ci) => (
                     <div key={color.localId} className="flex items-center gap-2 bg-background rounded p-1.5">
