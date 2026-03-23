@@ -288,17 +288,19 @@ export default function AdminDbCompare() {
         <Button onClick={runCompare} disabled={loading || reseeding || !prodUrl.trim()} data-testid="button-run-compare">
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Compare"}
         </Button>
-        <Button
-          variant="destructive"
-          onClick={forceReseed}
-          disabled={!canReseed || reseeding || loading}
-          title="Overwrite prod catalog with dev seed data"
-          data-testid="button-force-reseed"
-        >
-          {reseeding
-            ? <RefreshCw className="w-4 h-4 animate-spin" />
-            : <><UploadCloud className="w-4 h-4 mr-1.5" />Sync to Prod</>}
-        </Button>
+        {canReseed && (
+          <Button
+            variant="destructive"
+            onClick={forceReseed}
+            disabled={reseeding || loading}
+            title="Overwrite prod catalog with dev seed data"
+            data-testid="button-force-reseed"
+          >
+            {reseeding
+              ? <RefreshCw className="w-4 h-4 animate-spin" />
+              : <><UploadCloud className="w-4 h-4 mr-1.5" />Sync to Prod</>}
+          </Button>
+        )}
       </div>
 
       {error && (

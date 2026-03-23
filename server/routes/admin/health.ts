@@ -1296,7 +1296,13 @@ export function registerAdminHealthRoutes(app: Express) {
           },
           body: JSON.stringify({}),
         });
-        const data = await prodResp.json() as Record<string, unknown>;
+        const rawText = await prodResp.text();
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = { message: `Prod returned non-JSON (${prodResp.status}): ${rawText.slice(0, 300)}` };
+        }
         if (!prodResp.ok) return res.status(502).json(data);
         return res.json(data);
       }
