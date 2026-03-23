@@ -1,6 +1,9 @@
 import crypto from "crypto";
 import { db } from "./db";
-import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
+import {
+  categories, products, siteConfig, productImages, productReviews, tags, productTags,
+  currencyRates, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
+} from "@shared/schema";
 import { eq } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
@@ -286,6 +289,105 @@ export async function seedDatabase() {
       console.log(`[seed] siteConfig: synced ${configSynced} entries`);
     } else {
       console.log(`[seed] siteConfig: all entries up to date`);
+    }
+
+    // ── 5. currencyRates: upsert by currency ──────────────────────────────────
+    const crEntries: any[] = (data.currencyRates || []);
+    let crSynced = 0;
+    for (const cr of crEntries) {
+      const [existing] = await db.select().from(currencyRates).where(eq(currencyRates.currency, cr.currency));
+      if (!existing) {
+        await db.insert(currencyRates).values({ id: cr.id, currency: cr.currency, rateFromInr: cr.rateFromInr });
+        crSynced++;
+      } else if (String(existing.rateFromInr) !== String(cr.rateFromInr)) {
+        await db.update(currencyRates).set({ rateFromInr: cr.rateFromInr }).where(eq(currencyRates.currency, cr.currency));
+        crSynced++;
+      }
+    }
+    if (crSynced > 0) {
+      console.log(`[seed] currencyRates: synced ${crSynced} entries`);
+    } else {
+      console.log(`[seed] currencyRates: all entries up to date`);
+    }
+
+    // ── 6. categoryTagVariantConfigs: insert if not exists ────────────────────
+    const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
+    const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
+    const ctvcEntries: any[] = (data.categoryTagVariantConfigs || []);
+    let ctvcSynced = 0;
+    for (const ctvc of ctvcEntries) {
+      const catId = catSlugToIdV[ctvc.categorySlug];
+      if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
+      const [existing] = await db.select({ id: categoryTagVariantConfigs.id }).from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, ctvc.id));
+      if (!existing) {
+        await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId: ctvc.tagId ?? null, sortOrder: ctvc.sortOrder ?? 0 });
+        ctvcSynced++;
+      }
+    }
+    if (ctvcSynced > 0) {
+      console.log(`[seed] categoryTagVariantConfigs: inserted ${ctvcSynced}`);
+    } else {
+      console.log(`[seed] categoryTagVariantConfigs: all entries up to date`);
+    }
+
+    // ── 7. variantSizes: insert if not exists ─────────────────────────────────
+    const vsEntries: any[] = (data.variantSizes || []);
+    let vsSynced = 0;
+    for (const vs of vsEntries) {
+      const [existing] = await db.select({ id: variantSizes.id }).from(variantSizes).where(eq(variantSizes.id, vs.id));
+      if (!existing) {
+        await db.insert(variantSizes).values({
+          id: vs.id, configId: vs.configId, name: vs.name,
+          description: vs.description ?? null, descriptionFontSize: vs.descriptionFontSize ?? 12,
+          priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
+          blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
+        });
+        vsSynced++;
+      }
+    }
+    if (vsSynced > 0) {
+      console.log(`[seed] variantSizes: inserted ${vsSynced}`);
+    } else {
+      console.log(`[seed] variantSizes: all entries up to date`);
+    }
+
+    // ── 8. variantColors: insert if not exists ────────────────────────────────
+    const vcEntries: any[] = (data.variantColors || []);
+    let vcSynced = 0;
+    for (const vc of vcEntries) {
+      const [existing] = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.id, vc.id));
+      if (!existing) {
+        await db.insert(variantColors).values({
+          id: vc.id, sizeId: vc.sizeId, name: vc.name,
+          swatchUrl: vc.swatchUrl ?? null, blurOnFront: vc.blurOnFront ?? false, sortOrder: vc.sortOrder ?? 0,
+        });
+        vcSynced++;
+      }
+    }
+    if (vcSynced > 0) {
+      console.log(`[seed] variantColors: inserted ${vcSynced}`);
+    } else {
+      console.log(`[seed] variantColors: all entries up to date`);
+    }
+
+    // ── 9. productVariants: insert if not exists ──────────────────────────────
+    const allProdsForVariants = await db.select({ id: products.id, slug: products.slug }).from(products);
+    const prodSlugToIdV: Record<string, string> = Object.fromEntries(allProdsForVariants.map(p => [p.slug, p.id]));
+    const pvEntries: any[] = (data.productVariants || []);
+    let pvSynced = 0;
+    for (const pv of pvEntries) {
+      const productId = prodSlugToIdV[pv.productSlug];
+      if (!productId) { console.warn(`[seed] productVariants: unknown productSlug "${pv.productSlug}"`); continue; }
+      const [existing] = await db.select({ id: productVariants.id }).from(productVariants).where(eq(productVariants.id, pv.id));
+      if (!existing) {
+        await db.insert(productVariants).values({ id: pv.id, productId, color: pv.color, size: pv.size, available: pv.available ?? true });
+        pvSynced++;
+      }
+    }
+    if (pvSynced > 0) {
+      console.log(`[seed] productVariants: inserted ${pvSynced}`);
+    } else {
+      console.log(`[seed] productVariants: all entries up to date`);
     }
 
   } catch (error) {

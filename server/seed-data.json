@@ -37329,6 +37329,217 @@
     {
       "key": "seed-hash-tags",
       "value": "705530214ad497f0bb41fd8b01a07723299920df86e4d880354e3becd2466c70"
+    },
+    {
+      "key": "pwa-install-banner",
+      "value": "{\"text\":\"Early Access to New Arrivals & App-Only Offers!\",\"buttonText\":\"Get the App\",\"customUrl\":\"\"}"
+    },
+    {
+      "key": "stats",
+      "value": "{\"items\":[{\"value\":\"300+\",\"label\":\"Designs\"},{\"value\":\"7\",\"label\":\"Collections\"},{\"value\":\"Global\",\"label\":\"Delivery\"}]}"
+    }
+  ],
+  "currencyRates": [
+    {
+      "id": "areo97vgmhji0y6aooerlf0r",
+      "currency": "AED",
+      "rateFromInr": "0.039222"
+    },
+    {
+      "id": "lkojlaycg2x7k4lv31kbn89j",
+      "currency": "AUD",
+      "rateFromInr": "0.015110"
+    },
+    {
+      "id": "dly9xbqt8mx5iwew44n9gt1n",
+      "currency": "CAD",
+      "rateFromInr": "0.014650"
+    },
+    {
+      "id": "fjchlp46qf0qmcy2qjoru08d",
+      "currency": "EUR",
+      "rateFromInr": "0.009240"
+    },
+    {
+      "id": "lfhgv2bgfc6msxk19uex8e25",
+      "currency": "GBP",
+      "rateFromInr": "0.007990"
+    },
+    {
+      "id": "lqbiu2aztljnowd9fosrlkkm",
+      "currency": "SGD",
+      "rateFromInr": "0.013670"
+    },
+    {
+      "id": "vm31e274ch378a72nsi3uba9",
+      "currency": "USD",
+      "rateFromInr": "0.010680"
+    }
+  ],
+  "categoryTagVariantConfigs": [
+    {
+      "id": "guijaogqg2jpcenv1cb8rkyr",
+      "categorySlug": "towels",
+      "tagId": "aq8bd6fppxlidzna32bee0ve",
+      "sortOrder": 0
+    }
+  ],
+  "variantSizes": [
+    {
+      "id": "uof8vju8uvsw9i2mw3urgn0p",
+      "configId": "guijaogqg2jpcenv1cb8rkyr",
+      "name": "120*60 cm, Kids Size",
+      "description": "0 to 15 yrs or Uptill 5 ft 2 in of height",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": true,
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "rr92iqfp6syu0jxvxl2q3kav",
+      "configId": "guijaogqg2jpcenv1cb8rkyr",
+      "name": "75*150 cm, Adult Size",
+      "description": "King Size",
+      "descriptionFontSize": 12,
+      "priceAdd": 300,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 1
+    }
+  ],
+  "variantColors": [
+    {
+      "id": "j555xexp87h4hrjznmqhqpvl",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/uploads/1774288819164-bfc96032a0a1.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "labsmunrsnj1im9noplguh4q",
+      "sizeId": "rr92iqfp6syu0jxvxl2q3kav",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/uploads/1774292737341-61f4dc364fd2.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "jaaazlic2r9wi6uh2j05voos",
+      "sizeId": "rr92iqfp6syu0jxvxl2q3kav",
+      "name": "Baby Pink",
+      "swatchUrl": "/uploads/1774292744495-591195a0254c.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "n37dmlbbnkpkxb7rlh8ecjya",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "Baby Pink",
+      "swatchUrl": "/uploads/1774288858358-0e7927862329.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "ftt1i3t92rj9pocwpjw4jq06",
+      "sizeId": "rr92iqfp6syu0jxvxl2q3kav",
+      "name": "White",
+      "swatchUrl": "/uploads/1774292760774-283de25ca41e.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "slk62q094obhiaanjb4n1x4q",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "Lemon Yellow",
+      "swatchUrl": "/uploads/1774288882493-8b7e22ba4e04.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "c9gkwebqqvp5wgctgnbl0nwa",
+      "sizeId": "rr92iqfp6syu0jxvxl2q3kav",
+      "name": "Gray",
+      "swatchUrl": "/uploads/1774292771139-3c0b261d4c57.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "jwjnu5cfbx3zuqp3iz0akpcs",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "Purple",
+      "swatchUrl": "/uploads/1774288971143-13eda16a8e2b.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "pa0e71q2duis8p0x56d9wzxr",
+      "sizeId": "rr92iqfp6syu0jxvxl2q3kav",
+      "name": "Orange",
+      "swatchUrl": "/uploads/1774292783080-1f9ca6ec1118.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "tfmkxbrej6wlzkwvu4sl337h",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "Orange",
+      "swatchUrl": "/uploads/1774288982650-cab9bf4048b5.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "yk8vnvkjwmxf2828pyzb6w53",
+      "sizeId": "uof8vju8uvsw9i2mw3urgn0p",
+      "name": "White",
+      "swatchUrl": "/uploads/1774289008160-0ef028cd85ad.jpg",
+      "blurOnFront": false,
+      "sortOrder": 5
+    }
+  ],
+  "productVariants": [
+    {
+      "id": "xk8aa1bqcgergdqtrb5wvwj3",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "Turquoise Blue",
+      "size": "120*60 cm, Kids Size",
+      "available": true
+    },
+    {
+      "id": "zom41o5pn03bati7izlrsa0e",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "Baby Pink",
+      "size": "120*60 cm, Kids Size",
+      "available": true
+    },
+    {
+      "id": "i8xir4jjh5lcwzyws0a2x8f1",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "Lemon Yellow",
+      "size": "120*60 cm, Kids Size",
+      "available": true
+    },
+    {
+      "id": "jyocjhgq7besgc3jucg6p3yi",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "Purple",
+      "size": "120*60 cm, Kids Size",
+      "available": true
+    },
+    {
+      "id": "gyadmexgy02i3i0m6k3nq04d",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "Orange",
+      "size": "120*60 cm, Kids Size",
+      "available": true
+    },
+    {
+      "id": "ftxn768029hyrj9x2zjpf3bi",
+      "productSlug": "little-unicorn-pony-kids-bath-towel",
+      "color": "White",
+      "size": "120*60 cm, Kids Size",
+      "available": true
     }
   ]
 }
