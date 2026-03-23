@@ -96,9 +96,9 @@ export default function Home() {
   const blanketsCategory = categories?.find((c) => c.name.toLowerCase() === "blankets");
   const bathrobesCategory = categories?.find((c) => c.name.toLowerCase() === "bathrobes");
 
-  const kidsProducts = products?.filter((p) => p.tagNames?.includes("kids towels")) || [];
+  const kidsProducts = products?.filter((p) => p.tagNames?.some((t) => t.toLowerCase() === "kids towels")) || [];
 
-  const adultProducts = products?.filter((p) => p.tagNames?.includes("couple towels")) || [];
+  const adultProducts = products?.filter((p) => p.tagNames?.some((t) => t.toLowerCase() === "couple towels")) || [];
 
   const blanketProducts = blanketsCategory
     ? (products?.filter((p) => p.categoryId === blanketsCategory.id) || [])
