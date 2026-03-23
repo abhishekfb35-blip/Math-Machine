@@ -560,7 +560,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
             </Button>
           )}
         </div>
-        <ScrollArea className="flex-1 min-h-0 pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           <div className="space-y-4">
             {sizes.map((size, si) => (
               <div key={size.localId} className="border rounded-md p-3 space-y-2 bg-muted/30">
@@ -661,7 +661,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
               <Plus className="w-4 h-4 mr-1" /> Add Size
             </Button>
           </div>
-        </ScrollArea>
+        </div>
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !activeConfigTagId} data-testid="button-save-variant-config">
