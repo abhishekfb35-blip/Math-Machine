@@ -9,6 +9,7 @@ import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
 import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
 import { ensureVariantTables } from "./migrations/variant-tables";
+import { ensureVariantSizeFontColumn } from "./migrations/variant-size-font";
 import { ensureCurrencyTables } from "./migrations/currency-tables";
 import { ensureProductVariantColumns } from "./migrations/product-variant-options";
 import { ensureShippingFeeColumn } from "./migrations/add-shipping-fee";
@@ -114,6 +115,7 @@ app.get("/health", (_req, res) => {
         try {
           await migrateSiteConfigKeyPk();
           await ensureVariantTables();
+          await ensureVariantSizeFontColumn();
           await ensureCurrencyTables();
           await ensureProductVariantColumns();
           await ensureShippingFeeColumn();

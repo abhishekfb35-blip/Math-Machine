@@ -210,7 +210,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 })}
               </div>
               {selectedSizeObj?.description && (
-                <p className="text-xs text-muted-foreground">{selectedSizeObj.description}</p>
+                <p className="text-muted-foreground" style={{ fontSize: `${selectedSizeObj.descriptionFontSize ?? 12}px` }}>{selectedSizeObj.description}</p>
               )}
             </div>
           )}

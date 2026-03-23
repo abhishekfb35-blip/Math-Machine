@@ -124,7 +124,7 @@ export interface IStorage {
   listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]>;
   getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null>;
   upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
-    name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
+    name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string>;
   deleteVariantConfig(id: string): Promise<void>;
@@ -801,6 +801,7 @@ export class DatabaseStorage implements IStorage {
         id: size.id,
         name: size.name,
         description: size.description ?? undefined,
+        descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,
@@ -853,6 +854,7 @@ export class DatabaseStorage implements IStorage {
           id: size.id,
           name: size.name,
           description: size.description ?? undefined,
+          descriptionFontSize: size.descriptionFontSize ?? 12,
           priceAdd: size.priceAdd,
           isDefault: size.isDefault,
           blurOnFront: size.blurOnFront,
@@ -880,6 +882,7 @@ export class DatabaseStorage implements IStorage {
         id: size.id,
         name: size.name,
         description: size.description ?? undefined,
+        descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,
@@ -897,7 +900,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
-    name: string; description?: string; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
+    name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string> {
     const [existing] = await db.select().from(categoryTagVariantConfigs).where(
@@ -924,6 +927,7 @@ export class DatabaseStorage implements IStorage {
         configId,
         name: size.name,
         description: size.description ?? null,
+        descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,

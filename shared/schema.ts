@@ -153,6 +153,7 @@ export const variantSizes = pgTable("variant_sizes", {
   configId: text("config_id").notNull().references(() => categoryTagVariantConfigs.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
+  descriptionFontSize: integer("description_font_size").default(12),
   priceAdd: integer("price_add").notNull().default(0),
   isDefault: boolean("is_default").notNull().default(false),
   blurOnFront: boolean("blur_on_front").notNull().default(false),

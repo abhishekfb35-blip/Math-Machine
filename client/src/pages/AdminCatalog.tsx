@@ -414,7 +414,7 @@ type LocalColor = Omit<VariantColor, 'id'> & { localId: string };
 function makeLocalSize(overrides?: Partial<LocalSize>): LocalSize {
   return {
     localId: Math.random().toString(36).slice(2),
-    name: "", description: "", priceAdd: 0, isDefault: false, blurOnFront: false, sortOrder: 0,
+    name: "", description: "", descriptionFontSize: 12, priceAdd: 0, isDefault: false, blurOnFront: false, sortOrder: 0,
     colors: [],
     ...overrides,
   };
@@ -452,6 +452,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
         localId: s.id,
         name: s.name,
         description: s.description ?? "",
+        descriptionFontSize: s.descriptionFontSize ?? 12,
         priceAdd: s.priceAdd,
         isDefault: s.isDefault,
         blurOnFront: s.blurOnFront,
@@ -476,6 +477,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
         sizes: sizes.map((s, si) => ({
           name: s.name,
           description: s.description || undefined,
+          descriptionFontSize: s.descriptionFontSize ?? 12,
           priceAdd: s.priceAdd,
           isDefault: s.isDefault,
           blurOnFront: s.blurOnFront,
@@ -585,9 +587,23 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs">Description (optional)</Label>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <Label className="text-xs">Description (optional)</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs text-muted-foreground">Size</Label>
+                      <select
+                        value={size.descriptionFontSize ?? 12}
+                        onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, descriptionFontSize: parseInt(e.target.value) } : s))}
+                        className="h-6 text-xs border border-input rounded px-1 bg-background"
+                      >
+                        {[10, 11, 12, 13, 14, 16, 18].map(fs => (
+                          <option key={fs} value={fs}>{fs}px</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                   <Input value={size.description || ""} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, description: e.target.value } : s))}
-                    placeholder="Optional description" className="h-7 text-xs mt-0.5" />
+                    placeholder="Optional description" className="h-7 mt-0" style={{ fontSize: `${size.descriptionFontSize ?? 12}px` }} />
                 </div>
                 <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-1 text-xs cursor-pointer">

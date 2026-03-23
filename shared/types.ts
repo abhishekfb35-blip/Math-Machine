@@ -361,6 +361,7 @@ export interface VariantSize {
   id: string;
   name: string;
   description?: string;
+  descriptionFontSize?: number;
   priceAdd: number;
   isDefault: boolean;
   blurOnFront: boolean;
