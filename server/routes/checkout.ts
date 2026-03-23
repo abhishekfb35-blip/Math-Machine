@@ -6,10 +6,12 @@ import { getSessionId, getAuthenticatedCustomer } from "./helpers";
 import { codProvider, getRazorpayProvider } from "../providers/payment";
 import { notificationService } from "../providers/notification";
 import { OrderService, EmptyCartError } from "../services/orderService";
+import { CartService } from "../services/cartService";
 import { requireAdmin, getAdminUsername } from "../adminAuth";
 import { convertFromINR } from "../services/exchangeRateService";
 
 const orderService = new OrderService(storage, codProvider, notificationService);
+const cartService = new CartService(storage);
 
 export function registerCheckoutRoutes(app: Express) {
 
@@ -29,39 +31,13 @@ export function registerCheckoutRoutes(app: Express) {
       }
 
       const sessionId = getSessionId(req, res);
-      const cart = await storage.getOrCreateCart(sessionId);
-      const items = await storage.getCartItems(cart.id);
-
-      if (items.length === 0) {
-        return res.status(400).json({ message: "Cart is empty" });
-      }
-
-      const itemsWithProducts = await Promise.all(
-        items.map(async (item) => {
-          const product = await storage.getProductById(item.productId);
-          return { ...item, product };
-        })
-      );
-
-      const { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers } = await import("../services/discountService");
-      const priceItems = itemsWithProducts
-        .filter(i => i.product)
-        .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-
-      let offerTiers = defaultOfferTiers;
-      let deliveryTiers = defaultDeliveryTiers;
-      try {
-        const oc = await storage.getSiteConfig("offer-tiers");
-        if (oc) { const p = JSON.parse(oc.value); if (Array.isArray(p) && p.length) offerTiers = p; }
-      } catch {}
-      try {
-        const dc = await storage.getSiteConfig("delivery-tiers");
-        if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiers = p; }
-      } catch {}
-
       const requestedCurrency = (req.body.currency as string)?.toUpperCase() || "INR";
       const isDomestic = requestedCurrency === "INR";
-      const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
+      const pricing = await cartService.getCartDetails(sessionId, isDomestic);
+
+      if (pricing.items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
 
       let couponDiscount = 0;
       const discountCode = req.body.discountCode;
@@ -117,24 +93,9 @@ export function registerCheckoutRoutes(app: Express) {
         if (consent && !consent.discountUsed) {
           validatedDiscountCode = consent.discountCode;
           consentId = consent.id;
-
-          const cart = await storage.getOrCreateCart(sessionId);
-          const items = await storage.getCartItems(cart.id);
-          const itemsWithProducts = await Promise.all(
-            items.map(async (item) => {
-              const product = await storage.getProductById(item.productId);
-              return { ...item, product };
-            })
-          );
-          const priceItems = itemsWithProducts.filter(i => i.product).map(i => ({ price: i.product!.price, quantity: i.quantity }));
-          const { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers } = await import("../services/discountService");
-          let offerTiersC = defaultOfferTiers;
-          let deliveryTiersC = defaultDeliveryTiers;
-          try { const oc = await storage.getSiteConfig("offer-tiers"); if (oc) { const p = JSON.parse(oc.value); if (Array.isArray(p) && p.length) offerTiersC = p; } } catch {}
-          try { const dc = await storage.getSiteConfig("delivery-tiers"); if (dc) { const p = JSON.parse(dc.value); if (Array.isArray(p) && p.length) deliveryTiersC = p; } } catch {}
           const couponIsDomestic = !paymentCurrency || (paymentCurrency as string).toUpperCase() === "INR";
-          const pricing = calculateDiscount(priceItems, offerTiersC, deliveryTiersC, couponIsDomestic);
-          couponDiscount = Math.round(pricing.total * 0.10);
+          const couponPricing = await cartService.getCartDetails(sessionId, couponIsDomestic);
+          couponDiscount = Math.round(couponPricing.total * 0.10);
         }
       }
 
