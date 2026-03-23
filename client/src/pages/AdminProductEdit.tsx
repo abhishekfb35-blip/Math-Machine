@@ -629,7 +629,29 @@ export default function AdminProductEdit() {
                 </thead>
                 <tbody>
                   <tr className="border-t border-border/50">
-                    <td className="p-1 font-medium">Available?</td>
+                    <td className="p-1 font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <Checkbox
+                          checked={(() => {
+                            const combos = variantOptions.sizes.flatMap(s => s.colors.map(c => ({ size: s.name, color: c.name })));
+                            if (combos.length === 0) return false;
+                            const allAvail = combos.every(combo => productVariants?.find(v => v.color === combo.color && v.size === combo.size)?.available ?? false);
+                            const someAvail = combos.some(combo => productVariants?.find(v => v.color === combo.color && v.size === combo.size)?.available ?? false);
+                            return allAvail ? true : someAvail ? "indeterminate" : false;
+                          })()}
+                          onCheckedChange={(checked) => {
+                            const allCombos = variantOptions.sizes.flatMap(s =>
+                              s.colors.map(c => ({ size: s.name, color: c.name }))
+                            );
+                            saveVariantsMutation.mutate(
+                              allCombos.map(combo => ({ ...combo, available: !!checked }))
+                            );
+                          }}
+                          data-testid="variant-checkbox-select-all"
+                        />
+                        <span>Available?</span>
+                      </div>
+                    </td>
                     {variantOptions.sizes.flatMap(size =>
                       size.colors.map(color => {
                         const existing = productVariants?.find(
