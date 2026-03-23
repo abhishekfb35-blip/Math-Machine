@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ChevronLeft, GitCompare, CheckCircle2, XCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronLeft, GitCompare, CheckCircle2, XCircle, AlertTriangle, RefreshCw, ChevronDown, ChevronRight, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -185,17 +185,37 @@ function SectionShell({ title, clean, devCount, prodCount, children }: {
   );
 }
 
+interface ReseedResult {
+  success: boolean;
+  message: string;
+  counts: {
+    categories: number;
+    products: number;
+    tags: number;
+    productTags: number;
+    productImages: number;
+    productReviews: number;
+  };
+}
+
 export default function AdminDbCompare() {
   const [prodUrl, setProdUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompareResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reseeding, setReseeding] = useState(false);
+  const [reseedError, setReseedError] = useState<string | null>(null);
+  const [reseedResult, setReseedResult] = useState<ReseedResult | null>(null);
 
-  async function runCompare() {
+  async function runCompare(keepReseedBanner = false) {
     if (!prodUrl.trim()) return;
     setLoading(true);
     setError(null);
     setResult(null);
+    if (!keepReseedBanner) {
+      setReseedResult(null);
+      setReseedError(null);
+    }
     try {
       const res = await apiRequest("POST", "/api/admin/db-compare", { prodUrl: prodUrl.trim() });
       const data = await res.json();
@@ -208,6 +228,25 @@ export default function AdminDbCompare() {
     }
   }
 
+  async function forceReseed() {
+    if (!prodUrl.trim()) return;
+    setReseeding(true);
+    setReseedError(null);
+    setReseedResult(null);
+    try {
+      const res = await apiRequest("POST", "/api/admin/catalog/force-reseed", { prodUrl: prodUrl.trim() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Re-seed failed");
+      setReseedResult(data);
+      // Auto-refresh the comparison after a successful re-seed (keep the success banner visible)
+      await runCompare(true);
+    } catch (e: any) {
+      setReseedError(e.message);
+    } finally {
+      setReseeding(false);
+    }
+  }
+
   const allClean = result
     ? isProductClean(result.products) &&
       isIdTableClean(result.categories) &&
@@ -216,6 +255,8 @@ export default function AdminDbCompare() {
       isIdTableClean(result.productImages) &&
       isIdTableClean(result.productReviews)
     : null;
+
+  const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-db-compare">
@@ -244,8 +285,19 @@ export default function AdminDbCompare() {
           className="font-mono text-sm"
           data-testid="input-prod-url"
         />
-        <Button onClick={runCompare} disabled={loading || !prodUrl.trim()} data-testid="button-run-compare">
+        <Button onClick={runCompare} disabled={loading || reseeding || !prodUrl.trim()} data-testid="button-run-compare">
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Compare"}
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={forceReseed}
+          disabled={!canReseed || reseeding || loading}
+          title="Overwrite prod catalog with dev seed data"
+          data-testid="button-force-reseed"
+        >
+          {reseeding
+            ? <RefreshCw className="w-4 h-4 animate-spin" />
+            : <><UploadCloud className="w-4 h-4 mr-1.5" />Sync to Prod</>}
         </Button>
       </div>
 
@@ -253,6 +305,23 @@ export default function AdminDbCompare() {
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400 mb-4" data-testid="text-compare-error">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {error}
+        </div>
+      )}
+
+      {reseedError && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 p-3 text-sm text-red-700 dark:text-red-400 mb-4" data-testid="text-reseed-error">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          Re-seed failed: {reseedError}
+        </div>
+      )}
+
+      {reseedResult && (
+        <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 p-3 text-sm text-green-700 dark:text-green-400 mb-4" data-testid="text-reseed-success">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>
+            {reseedResult.message} —{" "}
+            {reseedResult.counts.products} products, {reseedResult.counts.categories} categories, {reseedResult.counts.tags} tags
+          </span>
         </div>
       )}
 

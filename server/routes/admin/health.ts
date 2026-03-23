@@ -6,6 +6,10 @@ import { storage } from "../../storage";
 import { requireAdmin, requireAdminAny } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
+import { db } from "../../db";
+import { siteConfig } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { seedDatabase } from "../../seed";
 
 const BRAND_SLOTS: Record<string, string> = {
   desktop: "logo-desktop.png",
@@ -1271,6 +1275,67 @@ export function registerAdminHealthRoutes(app: Express) {
     } catch (err) {
       console.error("Get audit logs error:", err);
       res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  // ── Force re-seed catalog tables ─────────────────────────────────────────
+  // If prodUrl is provided, proxies to prod's version of this endpoint.
+  // Otherwise, clears catalog hashes and runs seedDatabase() locally.
+  app.post("/api/admin/catalog/force-reseed", requireAdminAny, async (req, res) => {
+    try {
+      const { prodUrl } = (req.body || {}) as { prodUrl?: string };
+
+      if (prodUrl) {
+        // Proxy mode: call prod's endpoint
+        const adminPassword = process.env.ADMIN_PASSWORD || "";
+        const prodResp = await fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/catalog/force-reseed`, {
+          method: "POST",
+          headers: {
+            "x-admin-password": adminPassword,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        });
+        const data = await prodResp.json() as Record<string, unknown>;
+        if (!prodResp.ok) return res.status(502).json(data);
+        return res.json(data);
+      }
+
+      // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
+      const catalogTables = ["categories", "tags", "products", "productImages", "productReviews", "productTags"];
+      for (const table of catalogTables) {
+        await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
+      }
+      console.log("[force-reseed] Cleared catalog hashes, running seed...");
+
+      await seedDatabase();
+
+      // Query final counts for the response summary
+      const { pool } = await import("../../db");
+      const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+        pool.query(`SELECT COUNT(*) FROM categories`),
+        pool.query(`SELECT COUNT(*) FROM products`),
+        pool.query(`SELECT COUNT(*) FROM tags`),
+        pool.query(`SELECT COUNT(*) FROM product_tags`),
+        pool.query(`SELECT COUNT(*) FROM product_images`),
+        pool.query(`SELECT COUNT(*) FROM product_reviews`),
+      ]);
+
+      res.json({
+        success: true,
+        message: "Catalog re-seeded successfully",
+        counts: {
+          categories:     Number(cats.rows[0].count),
+          products:       Number(prods.rows[0].count),
+          tags:           Number(tgs.rows[0].count),
+          productTags:    Number(ptags.rows[0].count),
+          productImages:  Number(imgs.rows[0].count),
+          productReviews: Number(revs.rows[0].count),
+        },
+      });
+    } catch (err: any) {
+      console.error("force-reseed error:", err.message);
+      res.status(500).json({ message: err.message || "Force re-seed failed" });
     }
   });
 }
