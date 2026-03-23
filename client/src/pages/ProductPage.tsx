@@ -417,7 +417,7 @@ export default function ProductPage() {
                       >
                         <span>{size.name}</span>
                         {size.description && (
-                          <span className={`text-[10px] leading-tight ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <span className={`leading-tight ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`} style={{ fontSize: `${size.descriptionFontSize ?? 12}px` }}>
                             {size.description}
                           </span>
                         )}
