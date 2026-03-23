@@ -93,13 +93,20 @@ export default function Home() {
 
   const isLoading = categoriesLoading || productsLoading;
 
-  const kidsProducts = products?.filter((p) => p.audience === "kids" && p.productType === "towel") || [];
+  const blanketsCategory = categories?.find((c) => c.name.toLowerCase() === "blankets");
+  const bathrobesCategory = categories?.find((c) => c.name.toLowerCase() === "bathrobes");
 
-  const adultProducts = products?.filter((p) => p.audience === "couples") || [];
+  const kidsProducts = products?.filter((p) => p.tagNames?.includes("kids towels")) || [];
 
-  const blanketProducts = products?.filter((p) => p.productType === "blanket") || [];
+  const adultProducts = products?.filter((p) => p.tagNames?.includes("couple towels")) || [];
 
-  const bathrobeProducts = products?.filter((p) => p.productType === "bathrobe") || [];
+  const blanketProducts = blanketsCategory
+    ? (products?.filter((p) => p.categoryId === blanketsCategory.id) || [])
+    : [];
+
+  const bathrobeProducts = bathrobesCategory
+    ? (products?.filter((p) => p.categoryId === bathrobesCategory.id) || [])
+    : [];
 
   const featuredKids = kidsProducts.slice(0, 4);
   const featuredAdults = adultProducts.slice(0, 4);

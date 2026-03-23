@@ -26,7 +26,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [selectedColorName, setSelectedColorName] = useState<string | null>(null);
-  const isCoupleProduct = product?.audience === "couples";
+  const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],

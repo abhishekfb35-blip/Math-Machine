@@ -43,6 +43,7 @@ export interface Product {
   updatedAt: Date | null;
   averageRating?: number;
   reviewCount?: number;
+  tagNames?: string[];
 }
 
 export interface InsertProduct {

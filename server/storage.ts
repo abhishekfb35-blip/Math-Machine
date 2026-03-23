@@ -188,33 +188,55 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  private async withTagNames(prods: Product[]): Promise<Product[]> {
+    if (prods.length === 0) return prods;
+    const ids = prods.map(p => p.id);
+    const tagRows = await db.select({
+      productId: productTags.productId,
+      tagName: tags.name,
+    }).from(productTags)
+      .innerJoin(tags, eq(productTags.tagId, tags.id))
+      .where(inArray(productTags.productId, ids));
+    const tagMap = new Map<string, string[]>();
+    for (const row of tagRows) {
+      if (!tagMap.has(row.productId)) tagMap.set(row.productId, []);
+      tagMap.get(row.productId)!.push(row.tagName);
+    }
+    return prods.map(p => ({ ...p, tagNames: tagMap.get(p.id) ?? [] }));
+  }
+
+  private async withEnriched(prods: Product[]): Promise<Product[]> {
+    const withStats = await this.withReviewStats(prods);
+    return this.withTagNames(withStats);
+  }
+
   async getProducts(): Promise<Product[]> {
     const prods = await db.select().from(products).where(eq(products.active, true)).orderBy(products.sortOrder, products.name);
-    return this.withReviewStats(prods);
+    return this.withEnriched(prods);
   }
 
   async getAllProducts(): Promise<Product[]> {
     const prods = await db.select().from(products).orderBy(products.sortOrder, products.name);
-    return this.withReviewStats(prods);
+    return this.withEnriched(prods);
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
     const prods = await db.select().from(products)
       .where(and(eq(products.categoryId, categoryId), eq(products.active, true)))
       .orderBy(products.sortOrder, products.name);
-    return this.withReviewStats(prods);
+    return this.withEnriched(prods);
   }
 
   async getAllProductsByCategory(categoryId: string): Promise<Product[]> {
     const prods = await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder, products.name);
-    return this.withReviewStats(prods);
+    return this.withEnriched(prods);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
     const pattern = `%${query}%`;
-    return await db.select().from(products)
+    const prods = await db.select().from(products)
       .where(and(
         eq(products.active, true),
         or(
@@ -224,6 +246,7 @@ export class DatabaseStorage implements IStorage {
         )
       ))
       .orderBy(products.sortOrder, products.name);
+    return this.withTagNames(prods);
   }
 
   async searchAllProducts(query: string): Promise<Product[]> {
@@ -241,12 +264,16 @@ export class DatabaseStorage implements IStorage {
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
     const [prod] = await db.select().from(products).where(eq(products.slug, slug));
-    return prod;
+    if (!prod) return undefined;
+    const [enriched] = await this.withTagNames([prod]);
+    return enriched;
   }
 
   async getProductById(id: string): Promise<Product | undefined> {
     const [prod] = await db.select().from(products).where(eq(products.id, id));
-    return prod;
+    if (!prod) return undefined;
+    const [enriched] = await this.withTagNames([prod]);
+    return enriched;
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {

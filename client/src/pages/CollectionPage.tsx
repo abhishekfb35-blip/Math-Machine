@@ -230,7 +230,10 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    let filtered = products.filter((p) => (p.audience || "kids") === audience);
+    const tagKeyword = audience === "couples" ? "couple" : audience;
+    let filtered = products.filter((p) =>
+      p.tagNames?.some((t) => t.toLowerCase().includes(tagKeyword))
+    );
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => detectGender(p) === genderFilter);
     }
@@ -238,34 +241,27 @@ export default function CollectionPage() {
   }, [products, audience, genderFilter]);
 
   const productTypeSections = useMemo(() => {
-    const typeMap = new Map<string, { categories: Category[]; products: Product[] }>();
+    const categoryOrder = ["towels", "blankets", "bathrobes"];
+    const typeConfigMap: Record<string, ProductTypeConfig> = {
+      towels: productTypeConfigs["towel"],
+      blankets: productTypeConfigs["blanket"],
+      bathrobes: productTypeConfigs["bathrobe"],
+    };
 
-    for (const product of audienceProducts) {
-      const productType = product.productType || "towel";
-      if (!typeMap.has(productType)) {
-        typeMap.set(productType, { categories: [], products: [] });
-      }
-      typeMap.get(productType)!.products.push(product);
-    }
-
-    if (categories) {
-      for (const [productType, entry] of typeMap.entries()) {
-        const cat = categories.find((c) => c.slug === productType + "s" || c.slug === productType);
-        if (cat && !entry.categories.find((c) => c.id === cat.id)) {
-          entry.categories.push(cat);
-        }
-      }
-    }
-
-    const typeOrder = ["towel", "blanket", "bathrobe"];
-    return typeOrder
-      .filter((t) => typeMap.has(t) && typeMap.get(t)!.products.length > 0)
-      .map((t) => ({
-        type: t,
-        config: productTypeConfigs[t],
-        categories: typeMap.get(t)!.categories,
-        products: typeMap.get(t)!.products,
-      }));
+    return categoryOrder
+      .map((slug) => {
+        const cat = categories?.find((c) => c.slug === slug);
+        if (!cat) return null;
+        const catProducts = audienceProducts.filter((p) => p.categoryId === cat.id);
+        if (catProducts.length === 0) return null;
+        return {
+          type: slug,
+          config: typeConfigMap[slug] || productTypeConfigs["towel"],
+          categories: [cat],
+          products: catProducts,
+        };
+      })
+      .filter(Boolean) as { type: string; config: ProductTypeConfig; categories: Category[]; products: Product[] }[];
   }, [audienceProducts, categories]);
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});

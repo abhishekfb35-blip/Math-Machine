@@ -83,13 +83,9 @@ export default function ShopPage() {
     if (!products) return [];
     let result = products;
     if (activeFilter !== "all") {
-      const audienceMap: Record<string, string[]> = {
-        kids: ["kids"],
-        adults: ["adults"],
-        couples: ["couples"],
-      };
-      const audiences = audienceMap[activeFilter] || [];
-      result = result.filter((p) => audiences.includes(p.audience || "kids"));
+      result = result.filter((p) =>
+        p.tagNames?.some((t) => t.toLowerCase().includes(activeFilter === "couples" ? "couple" : activeFilter))
+      );
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();

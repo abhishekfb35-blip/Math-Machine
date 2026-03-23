@@ -133,7 +133,7 @@ export default function ProductPage() {
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity: 1,
-        personalizationName: product!.audience === "couples"
+        personalizationName: product!.tagNames?.some((t) => t.toLowerCase().includes("couple"))
           ? (gentlemanName.trim() || ladyName.trim()
             ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
             : undefined)
@@ -524,7 +524,7 @@ export default function ProductPage() {
               </div>
             )}
 
-            {product.audience === "couples" ? (
+            {product.tagNames?.some((t) => t.toLowerCase().includes("couple")) ? (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
                   Personalise with Names
