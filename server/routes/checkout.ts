@@ -52,7 +52,7 @@ export function registerCheckoutRoutes(app: Express) {
       const converted = await convertFromINR(finalAmount, requestedCurrency);
 
       const result = await razorpay.createPaymentOrder({
-        orderId: `cart_${cart.id}`,
+        orderId: `cart_${pricing.id}`,
         amount: converted.amount,
         currency: converted.currency,
         customerName: req.body.customerName || "",
