@@ -12,8 +12,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { checkoutSchema, type CheckoutInput } from "@shared/routes";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
 import SignInModal from "@/components/SignInModal";
@@ -41,6 +42,29 @@ declare global {
   }
 }
 
+const PHONE_RULES: Record<string, { min: number; max: number; label: string; stripLeadingZero?: boolean }> = {
+  INR: { min: 10, max: 10, label: "10-digit mobile number", stripLeadingZero: true },
+  USD: { min: 10, max: 10, label: "10-digit phone number" },
+  CAD: { min: 10, max: 10, label: "10-digit phone number" },
+  GBP: { min: 10, max: 11, label: "10 or 11-digit phone number", stripLeadingZero: true },
+  AUD: { min: 9,  max: 10, label: "9 or 10-digit phone number", stripLeadingZero: true },
+  AED: { min: 9,  max: 9,  label: "9-digit mobile number" },
+  SGD: { min: 8,  max: 8,  label: "8-digit phone number" },
+  MYR: { min: 9,  max: 11, label: "9 to 11-digit phone number", stripLeadingZero: true },
+  SAR: { min: 9,  max: 10, label: "9 or 10-digit phone number" },
+  EUR: { min: 8,  max: 12, label: "phone number" },
+};
+const DEFAULT_PHONE_RULE = { min: 7, max: 15, label: "phone number", stripLeadingZero: false };
+
+function sanitizePhone(value: string, currency: string): string {
+  let clean = value.replace(/\s/g, "");
+  const rule = PHONE_RULES[currency] ?? DEFAULT_PHONE_RULE;
+  if (rule.stripLeadingZero && clean.startsWith("0")) {
+    clean = clean.slice(1);
+  }
+  return clean;
+}
+
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) {
@@ -64,6 +88,22 @@ export default function CheckoutPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
+  const currencyRef = useRef(currency);
+  useEffect(() => { currencyRef.current = currency; }, [currency]);
+
+  const phoneResolver = useCallback(async (values: any, context: any, options: any) => {
+    const curr = currencyRef.current;
+    const rule = PHONE_RULES[curr] ?? DEFAULT_PHONE_RULE;
+    const sanitized = sanitizePhone(values.customerPhone || "", curr);
+    const schema = checkoutSchema.extend({
+      customerPhone: z.string()
+        .regex(/^\d+$/, "Phone number must contain digits only")
+        .min(rule.min, `Too short — need at least ${rule.min} digits`)
+        .max(rule.max, `Too long — max ${rule.max} digits for your country`),
+    });
+    return zodResolver(schema)({ ...values, customerPhone: sanitized }, context, options);
+  }, []);
+
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
   const [discountError, setDiscountError] = useState("");
@@ -114,11 +154,11 @@ export default function CheckoutPage() {
   }, [razorpayConfig]);
 
   const form = useForm<CheckoutInput>({
-    resolver: zodResolver(checkoutSchema),
+    resolver: phoneResolver,
     defaultValues: {
       customerName: customer?.name || "",
       customerEmail: customer?.email || "",
-      customerPhone: customer?.phone || "",
+      customerPhone: sanitizePhone(customer?.phone || "", currency),
       shippingAddress: customer?.shippingAddress || "",
       shippingCity: customer?.shippingCity || "",
       shippingState: customer?.shippingState || "",
@@ -364,15 +404,24 @@ export default function CheckoutPage() {
                   <FormField
                     control={form.control}
                     name="customerPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="10-digit phone number" {...field} data-testid="input-customer-phone" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const rule = PHONE_RULES[currency] ?? DEFAULT_PHONE_RULE;
+                      return (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={rule.label}
+                              {...field}
+                              data-testid="input-customer-phone"
+                              onChange={(e) => field.onChange(sanitizePhone(e.target.value, currency))}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">{rule.label}</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
               </Card>

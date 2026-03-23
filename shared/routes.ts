@@ -18,7 +18,7 @@ export const updateCartItemSchema = z.object({
 export const checkoutSchema = z.object({
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
-  customerPhone: z.string().min(10),
+  customerPhone: z.string().min(7).max(15),
   shippingAddress: z.string().min(1),
   shippingCity: z.string().min(1),
   shippingState: z.string().min(1),
