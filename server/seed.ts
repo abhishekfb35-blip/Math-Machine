@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { createId } from "@paralleldrive/cuid2";
 import { db } from "./db";
 import { categories, products, siteConfig, productImages, productReviews, tags, productTags } from "@shared/schema";
 import { eq } from "drizzle-orm";
