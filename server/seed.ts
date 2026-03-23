@@ -315,6 +315,8 @@ export async function seedDatabase() {
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
     const ctvcEntries: any[] = (data.categoryTagVariantConfigs || []);
     let ctvcSynced = 0;
+    // Map seed configId → actual DB configId (in case the DB has a different PK)
+    const seedConfigIdToDbId: Record<string, string> = {};
     for (const ctvc of ctvcEntries) {
       const catId = catSlugToIdV[ctvc.categorySlug];
       if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
@@ -325,10 +327,14 @@ export async function seedDatabase() {
       const [existing] = await db.select().from(categoryTagVariantConfigs).where(whereClause);
       if (!existing) {
         await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId, sortOrder: ctvc.sortOrder ?? 0 });
+        seedConfigIdToDbId[ctvc.id] = ctvc.id;
         ctvcSynced++;
-      } else if (existing.sortOrder !== (ctvc.sortOrder ?? 0)) {
-        await db.update(categoryTagVariantConfigs).set({ sortOrder: ctvc.sortOrder ?? 0 }).where(eq(categoryTagVariantConfigs.id, existing.id));
-        ctvcSynced++;
+      } else {
+        seedConfigIdToDbId[ctvc.id] = existing.id;
+        if (existing.sortOrder !== (ctvc.sortOrder ?? 0)) {
+          await db.update(categoryTagVariantConfigs).set({ sortOrder: ctvc.sortOrder ?? 0 }).where(eq(categoryTagVariantConfigs.id, existing.id));
+          ctvcSynced++;
+        }
       }
     }
     if (ctvcSynced > 0) {
@@ -343,11 +349,13 @@ export async function seedDatabase() {
     // Map seed sizeId → actual DB sizeId (in case the DB has a different PK)
     const seedSizeIdToDbId: Record<string, string> = {};
     for (const vs of vsEntries) {
+      // Resolve actual DB configId (may differ from seed configId if row pre-existed)
+      const actualConfigId = seedConfigIdToDbId[vs.configId] ?? vs.configId;
       const [existing] = await db.select().from(variantSizes)
-        .where(and(eq(variantSizes.configId, vs.configId), eq(variantSizes.name, vs.name)));
+        .where(and(eq(variantSizes.configId, actualConfigId), eq(variantSizes.name, vs.name)));
       if (!existing) {
         await db.insert(variantSizes).values({
-          id: vs.id, configId: vs.configId, name: vs.name,
+          id: vs.id, configId: actualConfigId, name: vs.name,
           description: vs.description ?? null, descriptionFontSize: vs.descriptionFontSize ?? 12,
           priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
           blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
