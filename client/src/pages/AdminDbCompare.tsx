@@ -258,22 +258,44 @@ export default function AdminDbCompare() {
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
 
+  const syncTitle = !prodUrl.trim()
+    ? "Enter a production URL first"
+    : result === null
+    ? "Run a compare first"
+    : allClean
+    ? "No differences — prod is already in sync"
+    : "Overwrite prod catalog with dev data";
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-db-compare">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/admin">
-          <Button variant="ghost" size="sm" data-testid="button-back-admin">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Admin
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <GitCompare className="w-5 h-5" /> Dev vs Prod Catalog Compare
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Enter your production URL to compare catalog tables
-          </p>
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" data-testid="button-back-admin">
+              <ChevronLeft className="w-4 h-4 mr-1" /> Admin
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <GitCompare className="w-5 h-5" /> Dev vs Prod Catalog Compare
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Enter your production URL to compare catalog tables
+            </p>
+          </div>
         </div>
+        <Button
+          variant={canReseed ? "destructive" : "outline"}
+          onClick={forceReseed}
+          disabled={!canReseed || reseeding || loading}
+          title={syncTitle}
+          data-testid="button-force-reseed"
+          className={`shrink-0 transition-opacity ${!canReseed ? "opacity-40" : ""}`}
+        >
+          {reseeding
+            ? <RefreshCw className="w-4 h-4 animate-spin" />
+            : <><UploadCloud className="w-4 h-4 mr-1.5" />Sync to Prod</>}
+        </Button>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -288,19 +310,6 @@ export default function AdminDbCompare() {
         <Button onClick={runCompare} disabled={loading || reseeding || !prodUrl.trim()} data-testid="button-run-compare">
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Compare"}
         </Button>
-        {canReseed && (
-          <Button
-            variant="destructive"
-            onClick={forceReseed}
-            disabled={reseeding || loading}
-            title="Overwrite prod catalog with dev seed data"
-            data-testid="button-force-reseed"
-          >
-            {reseeding
-              ? <RefreshCw className="w-4 h-4 animate-spin" />
-              : <><UploadCloud className="w-4 h-4 mr-1.5" />Sync to Prod</>}
-          </Button>
-        )}
       </div>
 
       {error && (
