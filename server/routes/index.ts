@@ -3,6 +3,7 @@ import type { Server } from "http";
 import compression from "compression";
 import { fileStorage, LocalFileStorage } from "../providers/fileStorage";
 import { registerProductRoutes } from "./products";
+import { registerHomeRoutes } from "./home";
 import { registerCartRoutes } from "./cart";
 import { registerCheckoutRoutes } from "./checkout";
 import { registerAuthRoutes } from "./auth";
@@ -28,6 +29,7 @@ export async function registerRoutes(
   }
 
   registerSeoRoutes(app);
+  registerHomeRoutes(app);
   registerProductRoutes(app);
   registerCartRoutes(app);
   registerCheckoutRoutes(app);

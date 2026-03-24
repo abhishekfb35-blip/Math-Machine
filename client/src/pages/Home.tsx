@@ -17,7 +17,7 @@ import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
 import towelsBanner from "@/assets/images/towels-collection.png";
 import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
 import blanketsBanner from "@/assets/images/blankets-collection.png";
-import type { Category, Product } from "@shared/types";
+import type { Product } from "@shared/types";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
@@ -83,35 +83,22 @@ export default function Home() {
     return sections;
   })();
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+  const { data: homeCollections, isLoading: collectionsLoading } = useQuery<{
+    kids: Product[];
+    couples: Product[];
+    blankets: Product[];
+    bathrobes: Product[];
+  }>({
+    queryKey: ["/api/home/collections"],
+    staleTime: 12 * 60 * 60 * 1000,
   });
 
-  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
-  });
+  const isLoading = collectionsLoading;
 
-  const isLoading = categoriesLoading || productsLoading;
-
-  const blanketsCategory = categories?.find((c) => c.name.toLowerCase() === "blankets");
-  const bathrobesCategory = categories?.find((c) => c.name.toLowerCase() === "bathrobes");
-
-  const kidsProducts = products?.filter((p) => p.tagNames?.some((t) => t.toLowerCase() === "kids towels")) || [];
-
-  const adultProducts = products?.filter((p) => p.tagNames?.some((t) => t.toLowerCase() === "couple towels")) || [];
-
-  const blanketProducts = blanketsCategory
-    ? (products?.filter((p) => p.categoryId === blanketsCategory.id) || [])
-    : [];
-
-  const bathrobeProducts = bathrobesCategory
-    ? (products?.filter((p) => p.categoryId === bathrobesCategory.id) || [])
-    : [];
-
-  const featuredKids = kidsProducts.slice(0, 4);
-  const featuredAdults = adultProducts.slice(0, 4);
-  const featuredBlankets = blanketProducts.slice(0, 4);
-  const featuredBathrobes = bathrobeProducts.slice(0, 4);
+  const featuredKids = homeCollections?.kids ?? [];
+  const featuredAdults = homeCollections?.couples ?? [];
+  const featuredBlankets = homeCollections?.blankets ?? [];
+  const featuredBathrobes = homeCollections?.bathrobes ?? [];
 
   return (
     <div className="pb-20 md:pb-0">

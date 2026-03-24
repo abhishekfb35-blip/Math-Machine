@@ -41,6 +41,7 @@ export interface IStorage {
   searchAllProducts(query: string): Promise<Product[]>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
   getProductById(id: string): Promise<Product | undefined>;
+  getProductsByIds(ids: string[]): Promise<Product[]>;
   createProduct(prod: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<void>;
@@ -274,6 +275,12 @@ export class DatabaseStorage implements IStorage {
     if (!prod) return undefined;
     const [enriched] = await this.withTagNames([prod]);
     return enriched;
+  }
+
+  async getProductsByIds(ids: string[]): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    const prods = await db.select().from(products).where(inArray(products.id, ids));
+    return this.withEnriched(prods);
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {
