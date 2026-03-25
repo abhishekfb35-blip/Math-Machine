@@ -272,18 +272,28 @@ function buildAdminEmailHtml(n: OrderNotification): string {
 </html>`;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildOrderConfirmedHtml(n: OrderNotification): string {
+  const safeCustomerName = escapeHtml(n.customerName || "");
   const personalizedItems = (n.items || []).filter(item => item.personalizationName && item.personalizationName.trim());
   const selectionsHtml = personalizedItems.length > 0
     ? `
       <div style="margin-bottom: 24px;">
         <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px;">Your Selections</h3>
         <div style="background: #f9f9f9; border-radius: 8px; padding: 16px;">
-          ${personalizedItems.map(item => `
-            <div style="padding: 6px 0; font-size: 15px; color: #1a1a1a; border-bottom: 1px solid #f0f0f0; last-child:border-0;">
-              <span style="font-weight: 600;">${item.personalizationName}</span>
+          ${personalizedItems.map((item, idx) => `
+            <div style="padding: 6px 0; font-size: 15px; color: #1a1a1a;${idx < personalizedItems.length - 1 ? " border-bottom: 1px solid #f0f0f0;" : ""}">
+              <span style="font-weight: 600;">${escapeHtml(item.personalizationName || "")}</span>
               <span style="color: #999; margin: 0 6px;">—</span>
-              <span style="color: #555;">${item.productName}</span>
+              <span style="color: #555;">${escapeHtml(item.productName)}</span>
             </div>
           `).join("")}
         </div>
@@ -330,7 +340,7 @@ function buildOrderConfirmedHtml(n: OrderNotification): string {
 
     <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
 
-      <p style="color: #666; font-size: 14px; margin: 0 0 4px;">Hi ${n.customerName},</p>
+      <p style="color: #666; font-size: 14px; margin: 0 0 4px;">Hi ${safeCustomerName},</p>
       <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px; font-weight: 700;">We've begun crafting something personal for you.</h2>
       <p style="color: #666; font-size: 14px; margin: 0 0 28px; line-height: 1.6;">Your order is confirmed, and each piece is now being carefully prepared.</p>
 
