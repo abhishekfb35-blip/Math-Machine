@@ -350,7 +350,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(carts.sessionId, sessionId));
     } else {
       await db.update(carts)
-        .set({ updatedAt: new Date(), abandonedEmailSentAt: null })
+        .set({ customerId: null, updatedAt: new Date(), abandonedEmailSentAt: null })
         .where(eq(carts.sessionId, sessionId));
     }
   }

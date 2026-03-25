@@ -95,11 +95,21 @@ function startAbandonedCartScheduler() {
           const itemDetails = await Promise.all(
             cartItems.map(async ci => {
               const product = await storage.getProductById(ci.productId);
+              let effectivePrice = product?.price ?? 0;
+              if (product && ci.selectedSize) {
+                try {
+                  const variantOptions = await storage.getProductVariantOptions(ci.productId);
+                  const sizeConfig = variantOptions.sizes.find(s => s.name === ci.selectedSize);
+                  if (sizeConfig && sizeConfig.priceAdd > 0) {
+                    effectivePrice = product.price + sizeConfig.priceAdd;
+                  }
+                } catch {}
+              }
               return {
                 productName: product?.name ?? "Unknown Product",
                 personalizationName: ci.personalizationName ?? null,
                 quantity: ci.quantity,
-                price: product?.price ?? 0,
+                price: effectivePrice,
               };
             })
           );
