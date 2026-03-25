@@ -475,7 +475,7 @@ export class ResendNotificationService implements INotificationService {
       await this.resend.emails.send({
         from: this.fromEmail,
         to: notification.customerEmail,
-        subject: `Your TurtleLittle piece is now in the making — #${notification.orderId.slice(-8).toUpperCase()}`,
+        subject: `Your TurtleLittle piece is now in the making`,
         html: buildOrderConfirmedHtml(notification),
       });
       return { success: true, channel: "resend" };

@@ -64,7 +64,7 @@ export function registerAdminOrderRoutes(app: Express) {
         changes: JSON.stringify({ from: order.status, to: status }),
         username: getAdminUsername(req),
       });
-      if (status === "confirmed") {
+      if (status === "confirmed" && order.customerEmail) {
         const items = await storage.getOrderItems(id);
         notificationService.sendOrderConfirmed({
           orderId: id,
