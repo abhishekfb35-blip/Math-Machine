@@ -497,14 +497,12 @@ function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], c
   const displayName = firstName && firstName !== "." ? firstName : "there";
   const itemsHtml = items.map(item => `
     <tr>
-      <td style="padding: 0; font-size: 0; line-height: 0;" colspan="3"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #1a1a1a; padding: 10px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top;" width="60%">
-          ${item.productName}
-          ${item.personalizationName ? `<br><span style="font-size: 12px; color: #666;">Name: <strong>${item.personalizationName}</strong></span>` : ""}
-        </td>
-        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #666; padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: top;" width="10%">${item.quantity}</td>
-        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #1a1a1a; font-weight: bold; padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; vertical-align: top;" width="30%">${formatCurrency(item.price)}</td>
-      </tr></table></td>
+      <td width="65%" style="font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 10px 8px 10px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; max-width: 0;">
+        ${item.productName}
+        ${item.personalizationName ? `<br><span style="font-size: 12px; color: #666;">Name: <strong>${item.personalizationName}</strong></span>` : ""}
+      </td>
+      <td width="10%" style="font-family: Arial, sans-serif; font-size: 13px; color: #666; padding: 10px 4px; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: top; white-space: nowrap;">${item.quantity}</td>
+      <td width="25%" style="font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; font-weight: bold; padding: 10px 0 10px 4px; border-bottom: 1px solid #f0f0f0; text-align: right; vertical-align: top; white-space: nowrap;">${formatCurrency(item.price)}</td>
     </tr>
   `).join("");
 
