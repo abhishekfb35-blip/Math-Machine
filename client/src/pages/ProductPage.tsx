@@ -667,6 +667,77 @@ export default function ProductPage() {
         </div>
       </div>
 
+      {productReviews && productReviews.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 py-6 border-t" data-testid="section-reviews">
+          <h2 className="text-lg font-bold mb-1" data-testid="text-reviews-title">Customer Reviews</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const avg = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
+                return (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= Math.round(avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                  />
+                );
+              })}
+            </div>
+            <span className="text-sm font-medium">
+              {(productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length).toFixed(1)} out of 5
+            </span>
+            <span className="text-sm text-muted-foreground">({productReviews.length} reviews)</span>
+          </div>
+
+          <div className="space-y-4">
+            {productReviews.slice(0, visibleReviews).map((review) => (
+              <Card key={review.id} className="p-4" data-testid={`card-review-${review.id}`}>
+                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
+                      {review.reviewerName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{review.reviewerName}</p>
+                      {review.amzReviewDate && (
+                        <p className="text-xs text-muted-foreground">{review.amzReviewDate}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 ${star <= review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {review.title && (
+                  <p className="text-sm font-semibold mb-1">{review.title}</p>
+                )}
+                <p className="text-sm text-muted-foreground">{review.body}</p>
+                {review.verifiedPurchase && (
+                  <Badge variant="secondary" className="mt-2 text-[10px] no-default-hover-elevate no-default-active-elevate">
+                    <Check className="w-2.5 h-2.5 mr-1" /> Verified Purchase
+                  </Badge>
+                )}
+              </Card>
+            ))}
+          </div>
+
+          {visibleReviews < productReviews.length && (
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => setVisibleReviews(prev => prev + REVIEWS_PER_PAGE)}
+              data-testid="button-load-more-reviews"
+            >
+              Load More Reviews
+            </Button>
+          )}
+        </div>
+      )}
+
       {isAuthenticated && product && (
         <div className="max-w-7xl mx-auto px-4 py-6 border-t" data-testid="section-write-review">
           <h2 className="text-base font-semibold mb-0.5">Review this product</h2>
@@ -755,77 +826,6 @@ export default function ProductPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {productReviews && productReviews.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 py-6 border-t" data-testid="section-reviews">
-          <h2 className="text-lg font-bold mb-1" data-testid="text-reviews-title">Customer Reviews</h2>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => {
-                const avg = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
-                return (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${star <= Math.round(avg) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
-                  />
-                );
-              })}
-            </div>
-            <span className="text-sm font-medium">
-              {(productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length).toFixed(1)} out of 5
-            </span>
-            <span className="text-sm text-muted-foreground">({productReviews.length} reviews)</span>
-          </div>
-
-          <div className="space-y-4">
-            {productReviews.slice(0, visibleReviews).map((review) => (
-              <Card key={review.id} className="p-4" data-testid={`card-review-${review.id}`}>
-                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                      {review.reviewerName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{review.reviewerName}</p>
-                      {review.amzReviewDate && (
-                        <p className="text-xs text-muted-foreground">{review.amzReviewDate}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-3.5 h-3.5 ${star <= review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                {review.title && (
-                  <p className="text-sm font-semibold mb-1">{review.title}</p>
-                )}
-                <p className="text-sm text-muted-foreground">{review.body}</p>
-                {review.verifiedPurchase && (
-                  <Badge variant="secondary" className="mt-2 text-[10px] no-default-hover-elevate no-default-active-elevate">
-                    <Check className="w-2.5 h-2.5 mr-1" /> Verified Purchase
-                  </Badge>
-                )}
-              </Card>
-            ))}
-          </div>
-
-          {visibleReviews < productReviews.length && (
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => setVisibleReviews(prev => prev + REVIEWS_PER_PAGE)}
-              data-testid="button-load-more-reviews"
-            >
-              Load More Reviews
-            </Button>
-          )}
-        </div>
-      )}
 
       {relatedProducts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 py-6 border-t">

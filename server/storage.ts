@@ -541,7 +541,7 @@ export class DatabaseStorage implements IStorage {
   async getProductReviews(productId: string): Promise<ProductReview[]> {
     return await db.select().from(productReviews)
       .where(eq(productReviews.productId, productId))
-      .orderBy(productReviews.createdAt);
+      .orderBy(desc(productReviews.createdAt));
   }
 
   async getCustomerReviewForProduct(customerId: string, productId: string): Promise<ProductReview | undefined> {
