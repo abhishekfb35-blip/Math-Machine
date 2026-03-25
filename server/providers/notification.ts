@@ -34,6 +34,7 @@ export interface NotificationResult {
 export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
+  sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult>;
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
@@ -271,6 +272,121 @@ function buildAdminEmailHtml(n: OrderNotification): string {
 </html>`;
 }
 
+function buildOrderConfirmedHtml(n: OrderNotification): string {
+  const personalizedItems = (n.items || []).filter(item => item.personalizationName && item.personalizationName.trim());
+  const selectionsHtml = personalizedItems.length > 0
+    ? `
+      <div style="margin-bottom: 24px;">
+        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px;">Your Selections</h3>
+        <div style="background: #f9f9f9; border-radius: 8px; padding: 16px;">
+          ${personalizedItems.map(item => `
+            <div style="padding: 6px 0; font-size: 15px; color: #1a1a1a; border-bottom: 1px solid #f0f0f0; last-child:border-0;">
+              <span style="font-weight: 600;">${item.personalizationName}</span>
+              <span style="color: #999; margin: 0 6px;">—</span>
+              <span style="color: #555;">${item.productName}</span>
+            </div>
+          `).join("")}
+        </div>
+        <p style="color: #666; font-size: 14px; margin: 12px 0 0; line-height: 1.6;">
+          These are the kind of pieces that quietly become a part of everyday moments—used often, remembered for a long time.
+        </p>
+      </div>`
+    : "";
+
+  const steps = ["Confirmed", "In Craft", "Finishing", "Dispatched"];
+  const progressHtml = `
+    <div style="margin-bottom: 28px;">
+      <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 14px;">Progress</h3>
+      <div style="display: flex; align-items: center; gap: 0;">
+        ${steps.map((step, i) => `
+          <div style="display: flex; align-items: center; flex: 1;">
+            <div style="text-align: center; flex: 1;">
+              <div style="
+                width: 10px; height: 10px; border-radius: 50%; margin: 0 auto 5px;
+                background: ${i === 0 ? "#1a1a1a" : "#d0d0d0"};
+              "></div>
+              <span style="
+                font-size: 11px; font-weight: ${i === 0 ? "700" : "400"};
+                color: ${i === 0 ? "#1a1a1a" : "#aaa"};
+                white-space: nowrap;
+              ">${step}</span>
+            </div>
+            ${i < steps.length - 1 ? `<div style="flex: 1; height: 1px; background: #e0e0e0; margin-bottom: 14px;"></div>` : ""}
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
+      <p style="color: #cccccc; margin: 8px 0 0; font-size: 13px;">Personalised Luxury Lifestyle Products</p>
+    </div>
+
+    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
+
+      <p style="color: #666; font-size: 14px; margin: 0 0 4px;">Hi ${n.customerName},</p>
+      <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px; font-weight: 700;">We've begun crafting something personal for you.</h2>
+      <p style="color: #666; font-size: 14px; margin: 0 0 28px; line-height: 1.6;">Your order is confirmed, and each piece is now being carefully prepared.</p>
+
+      ${selectionsHtml}
+
+      ${progressHtml}
+
+      <div style="margin-bottom: 28px;">
+        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0 0 12px;">
+          Every TurtleLittle design is developed with a focus on the smallest details—because that's what makes it feel special when you finally hold it.
+        </p>
+        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0 0 12px;">
+          Your name and design are carefully embroidered using precision machines, guided by skilled hands to ensure each stitch is clean, balanced, and lasting.
+        </p>
+        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0;">
+          We use threads and materials chosen not just for how they look, but for how they hold up—so your piece keeps its character over time.
+        </p>
+      </div>
+
+      <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
+        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">What Happens Next</h3>
+        <p style="color: #666; font-size: 14px; margin: 0; line-height: 1.6;">
+          Once your pieces are ready, we'll notify you as they move to dispatch.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 28px;">
+        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px;">Caring for Your Piece</h3>
+        <p style="color: #666; font-size: 13px; margin: 0 0 8px;">A little care goes a long way:</p>
+        <ul style="margin: 0; padding-left: 0; list-style: none;">
+          ${["Wash gently with mild detergent", "Use cold or lukewarm water", "Avoid bleach", "Tumble dry on low, or dry in shade"].map(tip =>
+            `<li style="color: #555; font-size: 14px; padding: 3px 0;">– ${tip}</li>`
+          ).join("")}
+        </ul>
+      </div>
+
+      <div style="border-top: 1px solid #f0f0f0; padding-top: 24px;">
+        <p style="color: #666; font-size: 13px; line-height: 1.7; margin: 0 0 16px;">
+          Many of our customers also choose TurtleLittle pieces for return gifts and special occasions—we'd be glad to help if you're considering something similar.
+        </p>
+        <p style="color: #666; font-size: 13px; margin: 0 0 12px;">You can also reach out anytime if you'd like an update on your order.</p>
+        <p style="color: #1a1a1a; font-size: 13px; margin: 0; line-height: 1.8;">
+          <a href="https://wa.me/919990079722" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">WhatsApp: +91 99900 79722</a><br>
+          <a href="mailto:hello@turtlelittle.com" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">Email: hello@turtlelittle.com</a>
+        </p>
+      </div>
+    </div>
+
+    <div style="text-align: center; padding: 16px;">
+      <p style="color: #999; font-size: 11px; margin: 0;">&copy; ${new Date().getFullYear()} TurtleLittle. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 export class ConsoleNotificationService implements INotificationService {
   readonly name = "console";
 
@@ -279,6 +395,15 @@ export class ConsoleNotificationService implements INotificationService {
       `[Order Confirmation] Order #${notification.orderId} for ${notification.customerName} ` +
       `(${notification.customerEmail}) — ${notification.itemCount} items, total ₹${notification.total}`
     );
+    return { success: true, channel: "console" };
+  }
+
+  async sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult> {
+    const names = (notification.items || [])
+      .filter(i => i.personalizationName)
+      .map(i => `${i.personalizationName} — ${i.productName}`)
+      .join(", ");
+    console.log(`[Order Confirmed] Order #${notification.orderId} for ${notification.customerName} — crafting: ${names || "no personalised items"}`);
     return { success: true, channel: "console" };
   }
 
@@ -341,6 +466,21 @@ export class ResendNotificationService implements INotificationService {
       };
     } catch (err) {
       console.error("Resend notification error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult> {
+    try {
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: notification.customerEmail,
+        subject: `Your TurtleLittle piece is now in the making — #${notification.orderId.slice(-8).toUpperCase()}`,
+        html: buildOrderConfirmedHtml(notification),
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend order confirmed error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }

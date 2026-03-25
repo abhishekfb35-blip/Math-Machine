@@ -64,7 +64,24 @@ export function registerAdminOrderRoutes(app: Express) {
         changes: JSON.stringify({ from: order.status, to: status }),
         username: getAdminUsername(req),
       });
-      if (["shipped", "delivered", "cancelled"].includes(status) && order.customerEmail) {
+      if (status === "confirmed") {
+        const items = await storage.getOrderItems(id);
+        notificationService.sendOrderConfirmed({
+          orderId: id,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          customerPhone: order.customerPhone || "",
+          total: order.total,
+          itemCount: items.length,
+          items: items.map(i => ({
+            productName: i.productName,
+            productPrice: i.productPrice,
+            quantity: i.quantity,
+            personalizationName: i.personalizationName ?? null,
+            isFree: i.isFree ?? null,
+          })),
+        }).catch(err => console.error("Order confirmed notification error:", err));
+      } else if (["shipped", "delivered", "cancelled"].includes(status) && order.customerEmail) {
         notificationService.sendOrderStatusUpdate(id, status, order.customerEmail)
           .catch(err => console.error("Status notification error:", err));
       }
