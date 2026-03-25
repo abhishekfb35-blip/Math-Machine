@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { storage } from "../storage";
 
 export interface OrderItemDetail {
   productName: string;
@@ -446,18 +447,32 @@ export class ResendNotificationService implements INotificationService {
     this.adminEmails = adminEmailEnv.split(",").map(e => e.trim()).filter(Boolean);
   }
 
+  private async getBccEmails(): Promise<string[]> {
+    try {
+      const config = await storage.getSiteConfig("notification-bcc-email");
+      if (!config?.value) return [];
+      const raw = config.value.replace(/^"|"$/g, "").trim();
+      return raw ? raw.split(",").map(e => e.trim()).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+
   async sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult> {
     try {
+      const bcc = await this.getBccEmails();
       const [customerResult, adminResult] = await Promise.allSettled([
         this.resend.emails.send({
           from: this.fromEmail,
           to: notification.customerEmail,
+          bcc: bcc.length ? bcc : undefined,
           subject: `Order Confirmed — #${notification.orderId.slice(-8).toUpperCase()} | TurtleLittle`,
           html: buildCustomerEmailHtml(notification),
         }),
         this.resend.emails.send({
           from: this.fromEmail,
           to: this.adminEmails,
+          bcc: bcc.length ? bcc : undefined,
           subject: `New Order #${notification.orderId.slice(-8).toUpperCase()} — ${formatCurrency(notification.total)} from ${notification.customerName}`,
           html: buildAdminEmailHtml(notification),
         }),
@@ -482,9 +497,11 @@ export class ResendNotificationService implements INotificationService {
 
   async sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult> {
     try {
+      const bcc = await this.getBccEmails();
       await this.resend.emails.send({
         from: this.fromEmail,
         to: notification.customerEmail,
+        bcc: bcc.length ? bcc : undefined,
         subject: `Your TurtleLittle piece is now in the making`,
         html: buildOrderConfirmedHtml(notification),
       });
@@ -504,10 +521,12 @@ export class ResendNotificationService implements INotificationService {
       };
 
       const message = statusMessages[status] || `Your order status has been updated to: ${status}`;
+      const bcc = await this.getBccEmails();
 
       await this.resend.emails.send({
         from: this.fromEmail,
         to: customerEmail,
+        bcc: bcc.length ? bcc : undefined,
         subject: `Order Update — #${orderId.slice(-8).toUpperCase()} | TurtleLittle`,
         html: `
 <!DOCTYPE html>
@@ -579,9 +598,11 @@ export class ResendNotificationService implements INotificationService {
   async sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult> {
     try {
       const displayName = firstName && firstName !== "." ? firstName : "there";
+      const bcc = await this.getBccEmails();
       await this.resend.emails.send({
         from: this.fromEmail,
         to: email,
+        bcc: bcc.length ? bcc : undefined,
         subject: `Welcome to TurtleLittle! Here's Your ${discountPercent}% Discount 🎉`,
         html: `<div style="max-width:560px;margin:0 auto;font-family:Arial,sans-serif;color:#333">
 <p style="text-align:center;margin:0 0 10px"><img src="https://turtlelittle.com/images/email-logo.png" alt="TurtleLittle" height="40" style="height:40px"></p>

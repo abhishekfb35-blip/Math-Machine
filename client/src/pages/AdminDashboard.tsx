@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { apiRequest } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const sections = [
   {
@@ -113,12 +116,37 @@ const sections = [
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
+  const [bccInput, setBccInput] = useState("");
+  const [bccSaved, setBccSaved] = useState(false);
 
   const handleLogout = async () => {
     await apiRequest("POST", "/api/admin/logout");
     setLocation("/admin");
     window.location.reload();
   };
+
+  useQuery({
+    queryKey: ["/api/site-config/notification-bcc-email"],
+    queryFn: async () => {
+      const res = await fetch("/api/site-config/notification-bcc-email");
+      if (!res.ok) return null;
+      const data = await res.json();
+      const val = typeof data.value === "string" ? data.value : "";
+      setBccInput(val);
+      return val;
+    },
+  });
+
+  const saveBcc = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/site-config/notification-bcc-email", { value: bccInput.trim() });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config/notification-bcc-email"] });
+      setBccSaved(true);
+      setTimeout(() => setBccSaved(false), 3000);
+    },
+  });
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-dashboard">
@@ -151,6 +179,41 @@ export default function AdminDashboard() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-8 border rounded-lg p-5" data-testid="section-email-monitoring">
+        <div className="flex items-center gap-2 mb-1">
+          <Mail className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-semibold text-sm">Email Monitoring</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          All outgoing emails (order confirmations, status updates, welcome coupons) will be BCC'd to this address. OTP emails are excluded. Separate multiple addresses with commas.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            type="email"
+            placeholder="monitor@example.com"
+            value={bccInput}
+            onChange={e => { setBccInput(e.target.value); setBccSaved(false); }}
+            onKeyDown={e => e.key === "Enter" && saveBcc.mutate()}
+            className="text-sm font-mono"
+            data-testid="input-bcc-email"
+          />
+          <Button
+            onClick={() => saveBcc.mutate()}
+            disabled={saveBcc.isPending}
+            variant="outline"
+            data-testid="button-save-bcc-email"
+          >
+            {bccSaved
+              ? <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
+              : saveBcc.isPending ? "Saving…" : "Save"
+            }
+          </Button>
+        </div>
+        {bccInput.trim() === "" && (
+          <p className="text-xs text-muted-foreground mt-2">No monitoring address set — emails go only to the recipient.</p>
+        )}
       </div>
     </div>
   );
