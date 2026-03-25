@@ -150,7 +150,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/site-config/notification-bcc-config");
       if (!res.ok) return null;
       const data = await res.json();
-      const raw = typeof data.value === "string" ? data.value : "";
+      const raw = (typeof data.value === "string" ? data.value : "").replace(/^"|"$/g, "").trim();
       if (!raw) return null;
       try {
         const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
