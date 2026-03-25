@@ -181,8 +181,8 @@ function startAbandonedCartScheduler() {
           await ensureShippingFeeColumn();
           await ensureCartCustomerColumns();
           await ensureReviewCustomerColumn();
-          await ensurePinkKidsTowelGallery();
           await seedDatabase();
+          await ensurePinkKidsTowelGallery();
           await initializeExchangeRateService();
           await ensureSkuNotNull();
           await syncImageReviewIds();
