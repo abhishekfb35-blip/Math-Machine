@@ -32,6 +32,13 @@ export interface NotificationResult {
   error?: string;
 }
 
+export interface AbandonedCartItem {
+  productName: string;
+  personalizationName: string | null;
+  quantity: number;
+  price: number;
+}
+
 export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
@@ -39,6 +46,7 @@ export interface INotificationService {
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
+  sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -477,6 +485,83 @@ export class ConsoleNotificationService implements INotificationService {
     console.log(`[Welcome Coupon] ${discountCode} (${discountPercent}% off) sent to ${firstName} <${email}>`);
     return { success: true, channel: "console" };
   }
+
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult> {
+    const summary = items.map(i => `${i.productName} x${i.quantity}${i.personalizationName ? ` (${i.personalizationName})` : ""}`).join(", ");
+    console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}>: ${summary}`);
+    return { success: true, channel: "console" };
+  }
+}
+
+function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[]): string {
+  const displayName = firstName && firstName !== "." ? firstName : "there";
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding: 0; font-size: 0; line-height: 0;" colspan="3"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #1a1a1a; padding: 10px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top;" width="60%">
+          ${item.productName}
+          ${item.personalizationName ? `<br><span style="font-size: 12px; color: #666;">Name: <strong>${item.personalizationName}</strong></span>` : ""}
+        </td>
+        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #666; padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: top;" width="10%">${item.quantity}</td>
+        <td style="font-family: Arial, sans-serif; font-size: 14px; color: #1a1a1a; font-weight: bold; padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; vertical-align: top;" width="30%">${formatCurrency(item.price)}</td>
+      </tr></table></td>
+    </tr>
+  `).join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f7f7f7">
+  <tr><td align="center" style="padding: 20px 0;">
+    <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+
+      <tr><td bgcolor="#1a1a1a" style="padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
+        <p style="margin: 0; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: 1px;">TurtleLittle</p>
+        <p style="margin: 8px 0 0; font-family: Arial, sans-serif; font-size: 13px; color: #cccccc;">Personalised Luxury Towels &amp; Blankets</p>
+      </td></tr>
+
+      <tr><td bgcolor="#ffffff" style="padding: 32px; border-radius: 0 0 12px 12px;">
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="text-align: center; padding-bottom: 24px;">
+            <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; color: #1a1a1a;">You left something behind!</p>
+            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 14px; color: #666;">Hi ${displayName}, your cart is waiting for you.</p>
+          </td></tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0; border-bottom: 2px solid #1a1a1a;">Item</td>
+            <td style="font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0; border-bottom: 2px solid #1a1a1a; text-align: center;">Qty</td>
+            <td style="font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #999; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0; border-bottom: 2px solid #1a1a1a; text-align: right;">Price</td>
+          </tr>
+          ${itemsHtml}
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
+          <tr><td align="center">
+            <a href="https://turtlelittle.com/cart" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; padding: 14px 36px; border-radius: 6px; letter-spacing: 0.5px;">Complete Your Order</a>
+          </td></tr>
+        </table>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 28px; border-top: 1px solid #f0f0f0;">
+          <tr><td style="padding-top: 20px; text-align: center;">
+            <p style="margin: 0 0 4px; font-family: Arial, sans-serif; font-size: 12px; color: #999;">Questions? <a href="https://wa.me/919990079722" style="color: #1a1a1a;">WhatsApp us</a> or email <a href="mailto:hello@turtlelittle.com" style="color: #1a1a1a;">hello@turtlelittle.com</a></p>
+          </td></tr>
+        </table>
+
+      </td></tr>
+
+      <tr><td style="text-align: center; padding: 16px;">
+        <p style="margin: 0; font-family: Arial, sans-serif; font-size: 11px; color: #999;">&copy; ${new Date().getFullYear()} TurtleLittle. All rights reserved.</p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
 }
 
 export class ResendNotificationService implements INotificationService {
@@ -670,6 +755,23 @@ export class ResendNotificationService implements INotificationService {
       return { success: true, channel: "resend" };
     } catch (err) {
       console.error("Resend welcome coupon error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult> {
+    try {
+      const bcc = await this.getBccForType("abandoned-cart");
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        bcc: bcc.length ? bcc : undefined,
+        subject: `Your TurtleLittle cart is waiting for you`,
+        html: buildAbandonedCartHtml(firstName, items),
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend abandoned cart error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }

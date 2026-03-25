@@ -13,8 +13,11 @@ import { ensureVariantSizeFontColumn } from "./migrations/variant-size-font";
 import { ensureCurrencyTables } from "./migrations/currency-tables";
 import { ensureProductVariantColumns } from "./migrations/product-variant-options";
 import { ensureShippingFeeColumn } from "./migrations/add-shipping-fee";
+import { ensureCartCustomerColumns } from "./migrations/add-cart-customer";
 import { initializeExchangeRateService } from "./services/exchangeRateService";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
+import { storage } from "./storage";
+import { notificationService } from "./providers/notification";
 import { createServer } from "http";
 
 const app = express();
@@ -78,6 +81,46 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+function startAbandonedCartScheduler() {
+  const INTERVAL_MS = 15 * 60 * 1000;
+
+  const run = async () => {
+    try {
+      const abandonedCarts = await storage.getAbandonedCarts();
+      for (const cart of abandonedCarts) {
+        try {
+          const cartItems = await storage.getCartItems(cart.cartId);
+          if (cartItems.length === 0) continue;
+
+          const itemDetails = await Promise.all(
+            cartItems.map(async ci => {
+              const product = await storage.getProductById(ci.productId);
+              return {
+                productName: product?.name ?? "Unknown Product",
+                personalizationName: ci.personalizationName ?? null,
+                quantity: ci.quantity,
+                price: product?.price ?? 0,
+              };
+            })
+          );
+
+          const firstName = (cart.customerName || "").split(" ")[0] || "";
+          await notificationService.sendAbandonedCart(cart.customerEmail, firstName, itemDetails);
+          await storage.markCartAbandonedEmailSent(cart.cartId);
+          log(`[abandoned-cart] Sent email to ${cart.customerEmail} for cart ${cart.cartId}`);
+        } catch (err: any) {
+          console.error(`[abandoned-cart] Failed for cart ${cart.cartId}:`, err.message);
+        }
+      }
+    } catch (err: any) {
+      console.error("[abandoned-cart] Scheduler error:", err.message);
+    }
+  };
+
+  setInterval(run, INTERVAL_MS);
+  log("[abandoned-cart] Scheduler started — checks every 15 minutes");
+}
+
 (async () => {
   await registerRoutes(httpServer, app);
 
@@ -119,6 +162,7 @@ app.get("/health", (_req, res) => {
           await ensureCurrencyTables();
           await ensureProductVariantColumns();
           await ensureShippingFeeColumn();
+          await ensureCartCustomerColumns();
           await seedDatabase();
           await initializeExchangeRateService();
           await ensureSkuNotNull();
@@ -126,6 +170,7 @@ app.get("/health", (_req, res) => {
           await ensurePolicyPages();
           await restoreBrandLogosFromDB();
           log("startup tasks complete");
+          startAbandonedCartScheduler();
         } catch (err: any) {
           console.error("Startup task failed:", err.message);
         }

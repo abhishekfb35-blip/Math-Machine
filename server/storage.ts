@@ -52,6 +52,9 @@ export interface IStorage {
   updateCartItem(id: string, quantity: number, personalizationName?: string, selectedColor?: string | null, selectedSize?: string | null): Promise<CartItem | undefined>;
   removeCartItem(id: string): Promise<void>;
   clearCart(cartId: string): Promise<void>;
+  updateCartActivity(sessionId: string, customerId: string | null): Promise<void>;
+  getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>>;
+  markCartAbandonedEmailSent(cartId: string): Promise<void>;
 
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
@@ -338,6 +341,42 @@ export class DatabaseStorage implements IStorage {
 
   async clearCart(cartId: string): Promise<void> {
     await db.delete(cartItems).where(eq(cartItems.cartId, cartId));
+  }
+
+  async updateCartActivity(sessionId: string, customerId: string | null): Promise<void> {
+    const updates: Record<string, unknown> = { updatedAt: new Date(), abandonedEmailSentAt: null };
+    if (customerId) {
+      updates.customerId = customerId;
+    }
+    await db.update(carts).set(updates as any).where(eq(carts.sessionId, sessionId));
+  }
+
+  async getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>> {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const rows = await db
+      .select({
+        cartId: carts.id,
+        customerId: carts.customerId,
+        updatedAt: carts.updatedAt,
+        customerEmail: customers.email,
+        customerName: customers.name,
+      })
+      .from(carts)
+      .innerJoin(customers, eq(customers.id, carts.customerId!))
+      .where(
+        and(
+          sql`${carts.customerId} IS NOT NULL`,
+          sql`${carts.updatedAt} IS NOT NULL`,
+          sql`${carts.updatedAt} < ${twoHoursAgo}`,
+          sql`${carts.abandonedEmailSentAt} IS NULL`,
+          sql`EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = ${carts.id})`
+        )
+      );
+    return rows.filter(r => r.customerId && r.updatedAt) as Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>;
+  }
+
+  async markCartAbandonedEmailSent(cartId: string): Promise<void> {
+    await db.update(carts).set({ abandonedEmailSentAt: new Date() }).where(eq(carts.id, cartId));
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {

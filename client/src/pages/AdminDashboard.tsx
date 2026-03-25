@@ -123,6 +123,7 @@ export default function AdminDashboard() {
     { key: "order-delivered", label: "Order delivered",            hint: "" },
     { key: "order-cancelled", label: "Order cancelled",            hint: "" },
     { key: "welcome-coupon",  label: "Welcome coupon",             hint: "Consent popup opt-in email" },
+    { key: "abandoned-cart",  label: "Abandoned cart",             hint: "2-hour recovery nudge for logged-in customers" },
   ] as const;
 
   type BccTypeKey = typeof BCC_TYPES[number]["key"];
@@ -135,6 +136,7 @@ export default function AdminDashboard() {
     "order-delivered": false,
     "order-cancelled": false,
     "welcome-coupon": false,
+    "abandoned-cart": false,
   });
   const [bccSaved, setBccSaved] = useState(false);
 

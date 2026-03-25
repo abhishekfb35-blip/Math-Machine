@@ -74,6 +74,9 @@ export interface InsertProduct {
 export interface Cart {
   id: string;
   sessionId: string;
+  customerId: string | null;
+  updatedAt: Date | null;
+  abandonedEmailSentAt: Date | null;
   createdAt: Date | null;
 }
 

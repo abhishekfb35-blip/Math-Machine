@@ -3,9 +3,17 @@ import { z } from "zod";
 import { storage } from "../storage";
 import { addToCartSchema, updateCartItemSchema } from "@shared/routes";
 import { CartService, NotFoundError } from "../services/cartService";
-import { getSessionId } from "./helpers";
+import { getSessionId, getAuthenticatedCustomer } from "./helpers";
 
 const cartService = new CartService(storage);
+
+async function touchCart(req: any, res: any, sessionId: string) {
+  try {
+    const customer = await getAuthenticatedCustomer(req);
+    await storage.updateCartActivity(sessionId, customer?.id ?? null);
+  } catch {
+  }
+}
 
 export function registerCartRoutes(app: Express) {
   app.get("/api/cart", async (req, res) => {
@@ -28,6 +36,7 @@ export function registerCartRoutes(app: Express) {
         input.selectedColor || null,
         input.selectedSize || null
       );
+      await touchCart(req, res, sessionId);
       res.status(isNew ? 201 : 200).json(item);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -44,8 +53,13 @@ export function registerCartRoutes(app: Express) {
     try {
       const input = updateCartItemSchema.parse(req.body);
       const id = req.params.id as string;
+      const sessionId = getSessionId(req, res);
       const result = await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
-      if ("deleted" in result) return res.status(204).send();
+      if ("deleted" in result) {
+        await touchCart(req, res, sessionId);
+        return res.status(204).send();
+      }
+      await touchCart(req, res, sessionId);
       res.json(result);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -60,7 +74,9 @@ export function registerCartRoutes(app: Express) {
 
   app.delete("/api/cart/items/:id", async (req, res) => {
     const id = req.params.id as string;
+    const sessionId = getSessionId(req, res);
     await cartService.removeItem(id);
+    await touchCart(req, res, sessionId);
     res.status(204).send();
   });
 }

@@ -43,6 +43,9 @@ export const products = pgTable("products", {
 export const carts = pgTable("carts", {
   id: text("id").primaryKey(),
   sessionId: varchar("session_id", { length: 255 }).notNull().unique(),
+  customerId: text("customer_id"),
+  updatedAt: timestamp("updated_at"),
+  abandonedEmailSentAt: timestamp("abandoned_email_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
