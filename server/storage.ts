@@ -344,11 +344,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCartActivity(sessionId: string, customerId: string | null): Promise<void> {
-    const updates: Record<string, unknown> = { updatedAt: new Date(), abandonedEmailSentAt: null };
     if (customerId) {
-      updates.customerId = customerId;
+      await db.update(carts)
+        .set({ customerId, updatedAt: new Date(), abandonedEmailSentAt: null })
+        .where(eq(carts.sessionId, sessionId));
+    } else {
+      await db.update(carts)
+        .set({ updatedAt: new Date(), abandonedEmailSentAt: null })
+        .where(eq(carts.sessionId, sessionId));
     }
-    await db.update(carts).set(updates as any).where(eq(carts.sessionId, sessionId));
   }
 
   async getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>> {
@@ -369,7 +373,8 @@ export class DatabaseStorage implements IStorage {
           sql`${carts.updatedAt} IS NOT NULL`,
           sql`${carts.updatedAt} < ${twoHoursAgo}`,
           sql`${carts.abandonedEmailSentAt} IS NULL`,
-          sql`EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = ${carts.id})`
+          sql`EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = ${carts.id})`,
+          sql`NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = ${carts.customerId} AND o.created_at > ${carts.updatedAt})`
         )
       );
     return rows.filter(r => r.customerId && r.updatedAt) as Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>;

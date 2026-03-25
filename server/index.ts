@@ -105,9 +105,14 @@ function startAbandonedCartScheduler() {
           );
 
           const firstName = (cart.customerName || "").split(" ")[0] || "";
-          await notificationService.sendAbandonedCart(cart.customerEmail, firstName, itemDetails);
-          await storage.markCartAbandonedEmailSent(cart.cartId);
-          log(`[abandoned-cart] Sent email to ${cart.customerEmail} for cart ${cart.cartId}`);
+          const cartUrl = "https://turtlelittle.com/cart";
+          const result = await notificationService.sendAbandonedCart(cart.customerEmail, firstName, itemDetails, cartUrl);
+          if (result.success) {
+            await storage.markCartAbandonedEmailSent(cart.cartId);
+            log(`[abandoned-cart] Sent email to ${cart.customerEmail} for cart ${cart.cartId}`);
+          } else {
+            console.error(`[abandoned-cart] Email delivery failed for cart ${cart.cartId}: ${result.error}`);
+          }
         } catch (err: any) {
           console.error(`[abandoned-cart] Failed for cart ${cart.cartId}:`, err.message);
         }

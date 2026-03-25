@@ -46,7 +46,7 @@ export interface INotificationService {
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
-  sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult>;
+  sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -486,14 +486,14 @@ export class ConsoleNotificationService implements INotificationService {
     return { success: true, channel: "console" };
   }
 
-  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult> {
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult> {
     const summary = items.map(i => `${i.productName} x${i.quantity}${i.personalizationName ? ` (${i.personalizationName})` : ""}`).join(", ");
-    console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}>: ${summary}`);
+    console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}> — ${summary} — ${cartUrl}`);
     return { success: true, channel: "console" };
   }
 }
 
-function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[]): string {
+function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], cartUrl: string): string {
   const displayName = firstName && firstName !== "." ? firstName : "there";
   const itemsHtml = items.map(item => `
     <tr>
@@ -541,7 +541,7 @@ function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[]): 
 
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
           <tr><td align="center">
-            <a href="https://turtlelittle.com/cart" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; padding: 14px 36px; border-radius: 6px; letter-spacing: 0.5px;">Complete Your Order</a>
+            <a href="${cartUrl}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; text-decoration: none; font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; padding: 14px 36px; border-radius: 6px; letter-spacing: 0.5px;">Complete Your Order</a>
           </td></tr>
         </table>
 
@@ -759,7 +759,7 @@ export class ResendNotificationService implements INotificationService {
     }
   }
 
-  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[]): Promise<NotificationResult> {
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult> {
     try {
       const bcc = await this.getBccForType("abandoned-cart");
       await this.resend.emails.send({
@@ -767,7 +767,7 @@ export class ResendNotificationService implements INotificationService {
         to: email,
         bcc: bcc.length ? bcc : undefined,
         subject: `Your TurtleLittle cart is waiting for you`,
-        html: buildAbandonedCartHtml(firstName, items),
+        html: buildAbandonedCartHtml(firstName, items, cartUrl),
       });
       return { success: true, channel: "resend" };
     } catch (err) {
