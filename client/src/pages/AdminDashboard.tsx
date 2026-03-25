@@ -163,8 +163,14 @@ export default function AdminDashboard() {
     },
   });
 
+  const anyTypeChecked = Object.values(bccTypes).some(Boolean);
+  const bccError = bccInput.trim() !== "" && !anyTypeChecked
+    ? "Select at least one email type to monitor."
+    : null;
+
   const saveBcc = useMutation({
     mutationFn: async () => {
+      if (bccError) return;
       const payload = JSON.stringify({ email: bccInput.trim(), types: bccTypes });
       await apiRequest("POST", "/api/site-config/notification-bcc-config", { value: payload });
     },
@@ -228,7 +234,7 @@ export default function AdminDashboard() {
           />
           <Button
             onClick={() => saveBcc.mutate()}
-            disabled={saveBcc.isPending}
+            disabled={saveBcc.isPending || !!bccError}
             variant="outline"
             data-testid="button-save-bcc-email"
           >
@@ -261,8 +267,11 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {bccInput.trim() === "" && (
-          <p className="text-xs text-muted-foreground mt-4">No monitoring address set — BCC will not be sent regardless of the selections above.</p>
+        {bccError && (
+          <p className="text-xs text-destructive mt-3" data-testid="text-bcc-error">{bccError}</p>
+        )}
+        {!bccError && bccInput.trim() === "" && (
+          <p className="text-xs text-muted-foreground mt-3">No monitoring address set — BCC will not be sent regardless of the selections above.</p>
         )}
       </div>
     </div>
