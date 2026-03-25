@@ -116,7 +116,26 @@ const sections = [
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
+  const BCC_TYPES = [
+    { key: "order-placed",    label: "New order placed",           hint: "Customer confirmation + admin alert" },
+    { key: "order-confirmed", label: "Order confirmed",            hint: "Crafting starts email" },
+    { key: "order-shipped",   label: "Order shipped",              hint: "" },
+    { key: "order-delivered", label: "Order delivered",            hint: "" },
+    { key: "order-cancelled", label: "Order cancelled",            hint: "" },
+    { key: "welcome-coupon",  label: "Welcome coupon",             hint: "Consent popup opt-in email" },
+  ] as const;
+
+  type BccTypeKey = typeof BCC_TYPES[number]["key"];
+
   const [bccInput, setBccInput] = useState("");
+  const [bccTypes, setBccTypes] = useState<Record<BccTypeKey, boolean>>({
+    "order-placed": false,
+    "order-confirmed": false,
+    "order-shipped": false,
+    "order-delivered": false,
+    "order-cancelled": false,
+    "welcome-coupon": false,
+  });
   const [bccSaved, setBccSaved] = useState(false);
 
   const handleLogout = async () => {
@@ -126,23 +145,31 @@ export default function AdminDashboard() {
   };
 
   useQuery({
-    queryKey: ["/api/site-config/notification-bcc-email"],
+    queryKey: ["/api/site-config/notification-bcc-config"],
     queryFn: async () => {
-      const res = await fetch("/api/site-config/notification-bcc-email");
+      const res = await fetch("/api/site-config/notification-bcc-config");
       if (!res.ok) return null;
       const data = await res.json();
-      const val = typeof data.value === "string" ? data.value : "";
-      setBccInput(val);
-      return val;
+      const raw = typeof data.value === "string" ? data.value : "";
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
+        setBccInput(parsed.email ?? "");
+        if (parsed.types) {
+          setBccTypes(prev => ({ ...prev, ...parsed.types } as Record<BccTypeKey, boolean>));
+        }
+      } catch { /* ignore malformed */ }
+      return raw;
     },
   });
 
   const saveBcc = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/site-config/notification-bcc-email", { value: bccInput.trim() });
+      const payload = JSON.stringify({ email: bccInput.trim(), types: bccTypes });
+      await apiRequest("POST", "/api/site-config/notification-bcc-config", { value: payload });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/site-config/notification-bcc-email"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config/notification-bcc-config"] });
       setBccSaved(true);
       setTimeout(() => setBccSaved(false), 3000);
     },
@@ -184,18 +211,18 @@ export default function AdminDashboard() {
       <div className="mt-8 border rounded-lg p-5" data-testid="section-email-monitoring">
         <div className="flex items-center gap-2 mb-1">
           <Mail className="w-4 h-4 text-muted-foreground" />
-          <h2 className="font-semibold text-sm">Email Monitoring</h2>
+          <h2 className="font-semibold text-sm">Email Monitoring (BCC)</h2>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
-          All outgoing emails (order confirmations, status updates, welcome coupons) will be BCC'd to this address. OTP emails are excluded. Separate multiple addresses with commas.
+          Enter a monitoring address and choose which email types to watch. Matching emails will be silently BCC'd. OTP codes are always excluded.
         </p>
-        <div className="flex gap-2">
+
+        <div className="flex gap-2 mb-5">
           <Input
-            type="email"
+            type="text"
             placeholder="monitor@example.com"
             value={bccInput}
             onChange={e => { setBccInput(e.target.value); setBccSaved(false); }}
-            onKeyDown={e => e.key === "Enter" && saveBcc.mutate()}
             className="text-sm font-mono"
             data-testid="input-bcc-email"
           />
@@ -211,8 +238,31 @@ export default function AdminDashboard() {
             }
           </Button>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {BCC_TYPES.map(({ key, label, hint }) => (
+            <label
+              key={key}
+              className="flex items-start gap-2.5 cursor-pointer select-none group"
+              data-testid={`label-bcc-type-${key}`}
+            >
+              <input
+                type="checkbox"
+                checked={bccTypes[key]}
+                onChange={e => { setBccTypes(prev => ({ ...prev, [key]: e.target.checked })); setBccSaved(false); }}
+                className="mt-0.5 h-4 w-4 rounded border border-input accent-foreground cursor-pointer"
+                data-testid={`checkbox-bcc-type-${key}`}
+              />
+              <span className="text-sm leading-tight">
+                {label}
+                {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+              </span>
+            </label>
+          ))}
+        </div>
+
         {bccInput.trim() === "" && (
-          <p className="text-xs text-muted-foreground mt-2">No monitoring address set — emails go only to the recipient.</p>
+          <p className="text-xs text-muted-foreground mt-4">No monitoring address set — BCC will not be sent regardless of the selections above.</p>
         )}
       </div>
     </div>

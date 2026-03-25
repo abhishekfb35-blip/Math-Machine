@@ -447,12 +447,16 @@ export class ResendNotificationService implements INotificationService {
     this.adminEmails = adminEmailEnv.split(",").map(e => e.trim()).filter(Boolean);
   }
 
-  private async getBccEmails(): Promise<string[]> {
+  private async getBccForType(type: string): Promise<string[]> {
     try {
-      const config = await storage.getSiteConfig("notification-bcc-email");
+      const config = await storage.getSiteConfig("notification-bcc-config");
       if (!config?.value) return [];
       const raw = config.value.replace(/^"|"$/g, "").trim();
-      return raw ? raw.split(",").map(e => e.trim()).filter(Boolean) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
+      if (!parsed.email?.trim()) return [];
+      if (!parsed.types?.[type]) return [];
+      return parsed.email.split(",").map(e => e.trim()).filter(Boolean);
     } catch {
       return [];
     }
@@ -460,7 +464,7 @@ export class ResendNotificationService implements INotificationService {
 
   async sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult> {
     try {
-      const bcc = await this.getBccEmails();
+      const bcc = await this.getBccForType("order-placed");
       const [customerResult, adminResult] = await Promise.allSettled([
         this.resend.emails.send({
           from: this.fromEmail,
@@ -497,7 +501,7 @@ export class ResendNotificationService implements INotificationService {
 
   async sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult> {
     try {
-      const bcc = await this.getBccEmails();
+      const bcc = await this.getBccForType("order-confirmed");
       await this.resend.emails.send({
         from: this.fromEmail,
         to: notification.customerEmail,
@@ -521,7 +525,8 @@ export class ResendNotificationService implements INotificationService {
       };
 
       const message = statusMessages[status] || `Your order status has been updated to: ${status}`;
-      const bcc = await this.getBccEmails();
+      const typeKey = status === "shipped" ? "order-shipped" : status === "delivered" ? "order-delivered" : status === "cancelled" ? "order-cancelled" : `order-${status}`;
+      const bcc = await this.getBccForType(typeKey);
 
       await this.resend.emails.send({
         from: this.fromEmail,
@@ -598,7 +603,7 @@ export class ResendNotificationService implements INotificationService {
   async sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult> {
     try {
       const displayName = firstName && firstName !== "." ? firstName : "there";
-      const bcc = await this.getBccEmails();
+      const bcc = await this.getBccForType("welcome-coupon");
       await this.resend.emails.send({
         from: this.fromEmail,
         to: email,
