@@ -285,115 +285,160 @@ function escapeHtml(str: string): string {
 function buildOrderConfirmedHtml(n: OrderNotification): string {
   const safeCustomerName = escapeHtml(n.customerName || "");
   const personalizedItems = (n.items || []).filter(item => item.personalizationName && item.personalizationName.trim());
-  const selectionsHtml = personalizedItems.length > 0
-    ? `
-      <div style="margin-bottom: 24px;">
-        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px;">Your Selections</h3>
-        <div style="background: #f9f9f9; border-radius: 8px; padding: 16px;">
+
+  const selectionsHtml = personalizedItems.length > 0 ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom: 24px;">
+      <tr>
+        <td style="padding-bottom: 10px;">
+          <p style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-family: Arial, Helvetica, sans-serif;">Your Selections</p>
+        </td>
+      </tr>
+      <tr>
+        <td bgcolor="#f9f9f9" style="padding: 16px; border-radius: 8px;">
           ${personalizedItems.map((item, idx) => `
-            <div style="padding: 6px 0; font-size: 15px; color: #1a1a1a;${idx < personalizedItems.length - 1 ? " border-bottom: 1px solid #f0f0f0;" : ""}">
-              <span style="font-weight: 600;">${escapeHtml(item.personalizationName || "")}</span>
-              <span style="color: #999; margin: 0 6px;">—</span>
-              <span style="color: #555;">${escapeHtml(item.productName)}</span>
-            </div>
-          `).join("")}
-        </div>
-        <p style="color: #666; font-size: 14px; margin: 12px 0 0; line-height: 1.6;">
-          These are the kind of pieces that quietly become a part of everyday moments—used often, remembered for a long time.
-        </p>
-      </div>`
-    : "";
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+            <tr>
+              <td style="font-size: 14px; color: #1a1a1a; padding: ${idx === 0 ? "0" : "8px 0 0"}; ${idx < personalizedItems.length - 1 ? "padding-bottom: 8px; border-bottom: 1px solid #eeeeee;" : ""} font-family: Arial, Helvetica, sans-serif;">
+                <strong style="color: #1a1a1a;">${escapeHtml(item.personalizationName || "")}</strong>
+                <span style="color: #aaaaaa; padding: 0 5px;">&#8212;</span>
+                <span style="color: #555555;">${escapeHtml(item.productName)}</span>
+              </td>
+            </tr>
+          </table>`).join("")}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 12px;">
+          <p style="color: #666666; font-size: 14px; margin: 0; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">These are the kind of pieces that quietly become a part of everyday moments&#8212;used often, remembered for a long time.</p>
+        </td>
+      </tr>
+    </table>` : "";
 
-  const steps = ["Confirmed", "In Craft", "Finishing", "Dispatched"];
   const progressHtml = `
-    <div style="margin-bottom: 28px;">
-      <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 14px;">Progress</h3>
-      <div style="display: flex; align-items: center; gap: 0;">
-        ${steps.map((step, i) => `
-          <div style="display: flex; align-items: center; flex: 1;">
-            <div style="text-align: center; flex: 1;">
-              <div style="
-                width: 10px; height: 10px; border-radius: 50%; margin: 0 auto 5px;
-                background: ${i === 0 ? "#1a1a1a" : "#d0d0d0"};
-              "></div>
-              <span style="
-                font-size: 11px; font-weight: ${i === 0 ? "700" : "400"};
-                color: ${i === 0 ? "#1a1a1a" : "#aaa"};
-                white-space: nowrap;
-              ">${step}</span>
-            </div>
-            ${i < steps.length - 1 ? `<div style="flex: 1; height: 1px; background: #e0e0e0; margin-bottom: 14px;"></div>` : ""}
-          </div>
-        `).join("")}
-      </div>
-    </div>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom: 28px;">
+      <tr>
+        <td colspan="7" style="padding-bottom: 14px;">
+          <p style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0; font-family: Arial, Helvetica, sans-serif;">Progress</p>
+        </td>
+      </tr>
+      <tr valign="middle">
+        <td align="center" width="60" style="vertical-align: middle;">
+          <div style="width: 12px; height: 12px; border-radius: 6px; background-color: #1a1a1a; margin: 0 auto;"></div>
+        </td>
+        <td style="vertical-align: middle;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td height="2" bgcolor="#1a1a1a" style="font-size: 0; line-height: 0; mso-line-height-rule: exactly;">&nbsp;</td></tr></table>
+        </td>
+        <td align="center" width="60" style="vertical-align: middle;">
+          <div style="width: 14px; height: 14px; border-radius: 7px; background-color: #b45309; margin: 0 auto;"></div>
+        </td>
+        <td style="vertical-align: middle;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td height="2" bgcolor="#e0e0e0" style="font-size: 0; line-height: 0; mso-line-height-rule: exactly;">&nbsp;</td></tr></table>
+        </td>
+        <td align="center" width="60" style="vertical-align: middle;">
+          <div style="width: 12px; height: 12px; border-radius: 6px; background-color: #e0e0e0; margin: 0 auto;"></div>
+        </td>
+        <td style="vertical-align: middle;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td height="2" bgcolor="#e0e0e0" style="font-size: 0; line-height: 0; mso-line-height-rule: exactly;">&nbsp;</td></tr></table>
+        </td>
+        <td align="center" width="60" style="vertical-align: middle;">
+          <div style="width: 12px; height: 12px; border-radius: 6px; background-color: #e0e0e0; margin: 0 auto;"></div>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" width="60" style="padding-top: 7px;"><span style="font-size: 10px; color: #555555; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">Confirmed</span></td>
+        <td></td>
+        <td align="center" width="60" style="padding-top: 7px;"><span style="font-size: 10px; color: #b45309; font-weight: 700; font-family: Arial, Helvetica, sans-serif;">In Craft</span></td>
+        <td></td>
+        <td align="center" width="60" style="padding-top: 7px;"><span style="font-size: 10px; color: #aaaaaa; font-family: Arial, Helvetica, sans-serif;">Finishing</span></td>
+        <td></td>
+        <td align="center" width="60" style="padding-top: 7px;"><span style="font-size: 10px; color: #aaaaaa; font-family: Arial, Helvetica, sans-serif;">Dispatched</span></td>
+      </tr>
+    </table>`;
 
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
-      <p style="color: #cccccc; margin: 8px 0 0; font-size: 13px;">Personalised Luxury Lifestyle Products</p>
-    </div>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f7f7f7" role="presentation">
+  <tr>
+    <td align="center" style="padding: 20px 0;">
+      <table width="600" cellpadding="0" cellspacing="0" border="0" role="presentation" style="max-width: 600px; width: 100%;">
 
-    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
+        <!-- Header -->
+        <tr>
+          <td bgcolor="#1a1a1a" align="center" style="padding: 24px 32px; border-radius: 12px 12px 0 0;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 2px; font-family: Georgia, 'Times New Roman', serif; font-weight: 400;">TurtleLittle</h1>
+            <p style="color: #cccccc; margin: 8px 0 0; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;">Personalised Luxury Lifestyle Products</p>
+          </td>
+        </tr>
 
-      <p style="color: #666; font-size: 14px; margin: 0 0 4px;">Hi ${safeCustomerName},</p>
-      <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px; font-weight: 700;">We've begun crafting something personal for you.</h2>
-      <p style="color: #666; font-size: 14px; margin: 0 0 28px; line-height: 1.6;">Your order is confirmed, and each piece is now being carefully prepared.</p>
+        <!-- Body -->
+        <tr>
+          <td bgcolor="#ffffff" style="padding: 32px; border-radius: 0 0 12px 12px;">
 
-      ${selectionsHtml}
+            <p style="color: #666666; font-size: 14px; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif;">Hi ${safeCustomerName},</p>
+            <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 8px; font-weight: 700; font-family: Georgia, 'Times New Roman', serif; line-height: 1.3;">We&#8217;ve begun crafting something personal for you.</h2>
+            <p style="color: #666666; font-size: 14px; margin: 0 0 28px; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">Your order is confirmed, and each piece is now being carefully prepared.</p>
 
-      ${progressHtml}
+            ${selectionsHtml}
 
-      <div style="margin-bottom: 28px;">
-        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0 0 12px;">
-          Every TurtleLittle design is developed with a focus on the smallest details—because that's what makes it feel special when you finally hold it.
-        </p>
-        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0 0 12px;">
-          Your name and design are carefully embroidered using precision machines, guided by skilled hands to ensure each stitch is clean, balanced, and lasting.
-        </p>
-        <p style="color: #444; font-size: 14px; line-height: 1.8; margin: 0;">
-          We use threads and materials chosen not just for how they look, but for how they hold up—so your piece keeps its character over time.
-        </p>
-      </div>
+            ${progressHtml}
 
-      <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin-bottom: 28px;">
-        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">What Happens Next</h3>
-        <p style="color: #666; font-size: 14px; margin: 0; line-height: 1.6;">
-          Once your pieces are ready, we'll notify you as they move to dispatch.
-        </p>
-      </div>
+            <p style="color: #444444; font-size: 14px; line-height: 1.8; margin: 0 0 12px; font-family: Arial, Helvetica, sans-serif;">Every TurtleLittle design is developed with a focus on the smallest details&#8212;because that&#8217;s what makes it feel special when you finally hold it.</p>
+            <p style="color: #444444; font-size: 14px; line-height: 1.8; margin: 0 0 12px; font-family: Arial, Helvetica, sans-serif;">Your name and design are carefully embroidered using precision machines, guided by skilled hands to ensure each stitch is clean, balanced, and lasting.</p>
+            <p style="color: #444444; font-size: 14px; line-height: 1.8; margin: 0 0 28px; font-family: Arial, Helvetica, sans-serif;">We use threads and materials chosen not just for how they look, but for how they hold up&#8212;so your piece keeps its character over time.</p>
 
-      <div style="margin-bottom: 28px;">
-        <h3 style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px;">Caring for Your Piece</h3>
-        <p style="color: #666; font-size: 13px; margin: 0 0 8px;">A little care goes a long way:</p>
-        <ul style="margin: 0; padding-left: 0; list-style: none;">
-          ${["Wash gently with mild detergent", "Use cold or lukewarm water", "Avoid bleach", "Tumble dry on low, or dry in shade"].map(tip =>
-            `<li style="color: #555; font-size: 14px; padding: 3px 0;">– ${tip}</li>`
-          ).join("")}
-        </ul>
-      </div>
+            <!-- What Happens Next -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom: 28px;">
+              <tr>
+                <td bgcolor="#f9f9f9" style="padding: 20px; border-radius: 8px;">
+                  <p style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px; font-family: Arial, Helvetica, sans-serif;">What Happens Next</p>
+                  <p style="color: #666666; font-size: 14px; margin: 0; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">Once your pieces are ready, we&#8217;ll notify you as they move to dispatch.</p>
+                </td>
+              </tr>
+            </table>
 
-      <div style="border-top: 1px solid #f0f0f0; padding-top: 24px;">
-        <p style="color: #666; font-size: 13px; line-height: 1.7; margin: 0 0 16px;">
-          Many of our customers also choose TurtleLittle pieces for return gifts and special occasions—we'd be glad to help if you're considering something similar.
-        </p>
-        <p style="color: #666; font-size: 13px; margin: 0 0 12px;">You can also reach out anytime if you'd like an update on your order.</p>
-        <p style="color: #1a1a1a; font-size: 13px; margin: 0; line-height: 1.8;">
-          <a href="https://wa.me/919990079722" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">WhatsApp: +91 99900 79722</a><br>
-          <a href="mailto:hello@turtlelittle.com" style="color: #1a1a1a; text-decoration: none; font-weight: 500;">Email: hello@turtlelittle.com</a>
-        </p>
-      </div>
-    </div>
+            <!-- Care tips -->
+            <p style="color: #1a1a1a; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif;">Caring for Your Piece</p>
+            <p style="color: #666666; font-size: 13px; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif;">A little care goes a long way:</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom: 28px;">
+              ${["Wash gently with mild detergent", "Use cold or lukewarm water", "Avoid bleach", "Tumble dry on low, or dry in shade"].map(tip =>
+                `<tr><td style="color: #555555; font-size: 14px; padding: 3px 0; font-family: Arial, Helvetica, sans-serif;">&#8211;&nbsp;${tip}</td></tr>`
+              ).join("")}
+            </table>
 
-    <div style="text-align: center; padding: 16px;">
-      <p style="color: #999; font-size: 11px; margin: 0;">&copy; ${new Date().getFullYear()} TurtleLittle. All rights reserved.</p>
-    </div>
-  </div>
+            <!-- Contact footer -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-top: 1px solid #f0f0f0;">
+              <tr>
+                <td style="padding-top: 24px;">
+                  <p style="color: #666666; font-size: 13px; line-height: 1.7; margin: 0 0 14px; font-family: Arial, Helvetica, sans-serif;">Many of our customers also choose TurtleLittle pieces for return gifts and special occasions&#8212;we&#8217;d be glad to help if you&#8217;re considering something similar.</p>
+                  <p style="color: #666666; font-size: 13px; margin: 0 0 12px; font-family: Arial, Helvetica, sans-serif;">You can also reach out anytime if you&#8217;d like an update on your order.</p>
+                  <p style="color: #1a1a1a; font-size: 13px; margin: 0; line-height: 2; font-family: Arial, Helvetica, sans-serif;">
+                    <a href="https://wa.me/919990079722" style="color: #1a1a1a; text-decoration: none; font-weight: 600;">WhatsApp: +91 99900 79722</a><br>
+                    <a href="mailto:hello@turtlelittle.com" style="color: #1a1a1a; text-decoration: none; font-weight: 600;">Email: hello@turtlelittle.com</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td align="center" style="padding: 16px;">
+            <p style="color: #999999; font-size: 11px; margin: 0; font-family: Arial, Helvetica, sans-serif;">&copy; ${new Date().getFullYear()} TurtleLittle. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>`;
 }
