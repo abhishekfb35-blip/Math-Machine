@@ -76,6 +76,8 @@ export interface IStorage {
   reorderProductImages(productId: string, imageIds: string[]): Promise<void>;
 
   getProductReviews(productId: string): Promise<ProductReview[]>;
+  getCustomerReviewForProduct(customerId: string, productId: string): Promise<ProductReview | undefined>;
+  customerHasOrderedProduct(customerId: string, productId: string): Promise<boolean>;
   createProductReview(review: InsertProductReview): Promise<ProductReview>;
   updateProductReview(id: string, data: Partial<InsertProductReview>): Promise<ProductReview>;
   deleteProductReview(id: string): Promise<void>;
@@ -540,6 +542,28 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(productReviews)
       .where(eq(productReviews.productId, productId))
       .orderBy(productReviews.createdAt);
+  }
+
+  async getCustomerReviewForProduct(customerId: string, productId: string): Promise<ProductReview | undefined> {
+    const [review] = await db.select().from(productReviews)
+      .where(and(eq(productReviews.customerId, customerId), eq(productReviews.productId, productId)));
+    return review;
+  }
+
+  async customerHasOrderedProduct(customerId: string, productId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(
+        and(
+          eq(orders.customerId, customerId),
+          eq(orderItems.productId, productId),
+          or(eq(orders.status, "confirmed"), eq(orders.status, "shipped"), eq(orders.status, "delivered"))
+        )
+      )
+      .limit(1);
+    return !!row;
   }
 
   async createProductReview(review: InsertProductReview): Promise<ProductReview> {

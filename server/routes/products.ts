@@ -1,5 +1,13 @@
+import { z } from "zod";
 import type { Express } from "express";
 import { storage } from "../storage";
+import { getAuthenticatedCustomer } from "./helpers";
+
+const submitReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  title: z.string().max(200).optional().nullable(),
+  body: z.string().min(10, "Review must be at least 10 characters"),
+});
 
 export function registerProductRoutes(app: Express) {
   app.get("/api/categories", async (_req, res) => {
@@ -50,6 +58,51 @@ export function registerProductRoutes(app: Express) {
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const reviews = await storage.getProductReviews(id);
     res.json(reviews);
+  });
+
+  app.get("/api/products/:id/my-review", async (req, res) => {
+    const productId = req.params.id as string;
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ message: "Not authenticated" });
+    const review = await storage.getCustomerReviewForProduct(customer.id, productId);
+    if (!review) return res.status(404).json({ message: "No review found" });
+    res.json(review);
+  });
+
+  app.post("/api/products/:id/reviews", async (req, res) => {
+    const productId = req.params.id as string;
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ message: "Not authenticated" });
+
+    const parsed = submitReviewSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0].message });
+    }
+    const { rating, title, body } = parsed.data;
+
+    const existing = await storage.getCustomerReviewForProduct(customer.id, productId);
+    const verifiedPurchase = await storage.customerHasOrderedProduct(customer.id, productId);
+
+    if (existing) {
+      const updated = await storage.updateProductReview(existing.id, {
+        rating,
+        title: title || null,
+        body,
+        verifiedPurchase,
+      });
+      return res.json(updated);
+    }
+
+    const review = await storage.createProductReview({
+      productId,
+      customerId: customer.id,
+      reviewerName: customer.name || customer.email.split("@")[0],
+      rating,
+      title: title || null,
+      body,
+      verifiedPurchase,
+    });
+    return res.status(201).json(review);
   });
 
   app.get("/api/products/:id/variants", async (req, res) => {

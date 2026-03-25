@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState, useCallback, useEffect } from "react";
-import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +21,7 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -27,6 +30,7 @@ export default function ProductPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
+  const { customer, isAuthenticated } = useAuth();
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
@@ -36,6 +40,11 @@ export default function ProductPage() {
   const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
 
   const { data: product, isLoading: productLoading } = useQuery<Product>({
     queryKey: ["/api/products", slug],
@@ -76,6 +85,35 @@ export default function ProductPage() {
       return res.json();
     },
     enabled: !!product?.id,
+  });
+
+  const { data: myReview } = useQuery<ProductReview | null>({
+    queryKey: ["/api/products", product?.id, "my-review"],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${product!.id}/my-review`, {
+        credentials: "include",
+      });
+      if (res.status === 404 || res.status === 401) return null;
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!product?.id && isAuthenticated,
+  });
+
+  const submitReviewMutation = useMutation({
+    mutationFn: async (data: { rating: number; title: string; body: string }) => {
+      const res = await apiRequest("POST", `/api/products/${product!.id}/reviews`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", product?.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", product?.id, "my-review"] });
+      setReviewDialogOpen(false);
+      toast({ title: myReview ? "Review updated" : "Review submitted", description: "Thank you for sharing your experience!" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message || "Failed to submit review. Please try again.", variant: "destructive" });
+    },
   });
 
   const category = categories?.find((c) => c.id === product?.categoryId);
@@ -119,6 +157,28 @@ export default function ProductPage() {
       setSelectedColor(getFirstSelectableColor(def.name));
     }
   }, [showVariantSelectors, variantOptions]);
+
+  const openReviewDialog = () => {
+    if (myReview) {
+      setReviewRating(myReview.rating);
+      setReviewTitle(myReview.title || "");
+      setReviewBody(myReview.body);
+    } else {
+      setReviewRating(5);
+      setReviewTitle("");
+      setReviewBody("");
+    }
+    setReviewHoverRating(0);
+    setReviewDialogOpen(true);
+  };
+
+  const handleSubmitReview = () => {
+    if (reviewBody.trim().length < 10) {
+      toast({ title: "Review too short", description: "Please write at least 10 characters.", variant: "destructive" });
+      return;
+    }
+    submitReviewMutation.mutate({ rating: reviewRating, title: reviewTitle.trim(), body: reviewBody.trim() });
+  };
 
   const handleSizeSelect = (sizeName: string) => {
     setSelectedSize(sizeName);
@@ -606,6 +666,95 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {isAuthenticated && product && (
+        <div className="max-w-7xl mx-auto px-4 py-6 border-t" data-testid="section-write-review">
+          <h2 className="text-base font-semibold mb-0.5">Review this product</h2>
+          <p className="text-sm text-muted-foreground mb-3">Share your thoughts with other customers</p>
+          <Button
+            variant="outline"
+            onClick={openReviewDialog}
+            data-testid="button-write-review"
+          >
+            <PenLine className="w-4 h-4 mr-2" />
+            {myReview ? "Edit your review" : "Write a product review"}
+          </Button>
+        </div>
+      )}
+
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-review">
+          <DialogHeader>
+            <DialogTitle>{myReview ? "Edit your review" : "Write a review"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <p className="text-sm font-medium mb-1">Reviewing as <span className="text-primary">{customer?.name || customer?.email}</span></p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Rating <span className="text-destructive">*</span></Label>
+              <div className="flex items-center gap-1" data-testid="star-rating-selector">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    onMouseEnter={() => setReviewHoverRating(star)}
+                    onMouseLeave={() => setReviewHoverRating(0)}
+                    className="p-0.5 transition-transform hover:scale-110"
+                    data-testid={`button-star-${star}`}
+                  >
+                    <Star
+                      className={`w-7 h-7 transition-colors ${
+                        star <= (reviewHoverRating || reviewRating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/30"
+                      }`}
+                    />
+                  </button>
+                ))}
+                <span className="text-sm text-muted-foreground ml-1">
+                  {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][reviewHoverRating || reviewRating]}
+                </span>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="review-title" className="text-sm font-medium mb-1 block">Title <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="review-title"
+                placeholder="Summarize your experience"
+                value={reviewTitle}
+                onChange={(e) => setReviewTitle(e.target.value)}
+                maxLength={200}
+                data-testid="input-review-title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="review-body" className="text-sm font-medium mb-1 block">Review <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="review-body"
+                placeholder="What did you like or dislike? How was the quality?"
+                value={reviewBody}
+                onChange={(e) => setReviewBody(e.target.value)}
+                rows={4}
+                maxLength={2000}
+                data-testid="input-review-body"
+              />
+              <p className="text-xs text-muted-foreground mt-1">{reviewBody.length}/2000 characters (min 10)</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewDialogOpen(false)} data-testid="button-cancel-review">Cancel</Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submitReviewMutation.isPending || reviewBody.trim().length < 10}
+              data-testid="button-submit-review"
+            >
+              {submitReviewMutation.isPending ? "Submitting..." : myReview ? "Update Review" : "Submit Review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {productReviews && productReviews.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 py-6 border-t" data-testid="section-reviews">

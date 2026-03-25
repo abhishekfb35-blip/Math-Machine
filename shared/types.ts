@@ -233,6 +233,7 @@ export interface InsertProductImage {
 export interface ProductReview {
   id: string;
   productId: string;
+  customerId: string | null;
   reviewerName: string;
   rating: number;
   title: string | null;
@@ -244,6 +245,7 @@ export interface ProductReview {
 
 export interface InsertProductReview {
   productId: string;
+  customerId?: string | null;
   reviewerName: string;
   rating: number;
   title?: string | null;

@@ -115,6 +115,7 @@ export const productImages = pgTable("product_images", {
 export const productReviews = pgTable("product_reviews", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
+  customerId: text("customer_id"),
   reviewerName: text("reviewer_name").notNull(),
   rating: integer("rating").notNull(),
   title: text("title"),
@@ -122,7 +123,7 @@ export const productReviews = pgTable("product_reviews", {
   amzReviewDate: text("amz_review_date"),
   verifiedPurchase: boolean("verified_purchase").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (t) => [uniqueIndex("product_reviews_product_customer_uniq").on(t.productId, t.customerId)]);
 
 export const tags = pgTable("tags", {
   id: text("id").primaryKey(),
