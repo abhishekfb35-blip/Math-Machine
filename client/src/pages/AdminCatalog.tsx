@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
+  Image as ImageIcon, Images, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
   Loader2, Undo2, Save, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -729,6 +729,12 @@ export default function AdminCatalog() {
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
   const [bulkTagInitialFull, setBulkTagInitialFull] = useState<Set<string>>(new Set());
   const [bulkTagInitialPartial, setBulkTagInitialPartial] = useState<Set<string>>(new Set());
+
+  type BulkImageSlot = { slotId: string; file: File | null; previewUrl: string | null; sortOrder: number };
+  const [bulkImageDialogOpen, setBulkImageDialogOpen] = useState(false);
+  const [bulkImageSlots, setBulkImageSlots] = useState<BulkImageSlot[]>([]);
+  const [bulkImageProgress, setBulkImageProgress] = useState<string | null>(null);
+
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -1129,6 +1135,70 @@ export default function AdminCatalog() {
     });
 
     if (!hasError || addOk || removeOk) resetBulkTagDialog();
+  };
+
+  const openBulkImageDialog = () => {
+    setBulkImageSlots([{ slotId: `slot-${Date.now()}`, file: null, previewUrl: null, sortOrder: 2 }]);
+    setBulkImageProgress(null);
+    setBulkImageDialogOpen(true);
+  };
+
+  const closeBulkImageDialog = () => {
+    bulkImageSlots.forEach(s => { if (s.previewUrl) URL.revokeObjectURL(s.previewUrl); });
+    setBulkImageDialogOpen(false);
+    setBulkImageSlots([]);
+    setBulkImageProgress(null);
+  };
+
+  const addBulkImageSlot = () => {
+    const maxOrder = bulkImageSlots.reduce((m, s) => Math.max(m, s.sortOrder), 1);
+    setBulkImageSlots(prev => [...prev, { slotId: `slot-${Date.now()}`, file: null, previewUrl: null, sortOrder: maxOrder + 1 }]);
+  };
+
+  const removeBulkImageSlot = (slotId: string) => {
+    const slot = bulkImageSlots.find(s => s.slotId === slotId);
+    if (slot?.previewUrl) URL.revokeObjectURL(slot.previewUrl);
+    setBulkImageSlots(prev => prev.filter(s => s.slotId !== slotId));
+  };
+
+  const handleBulkImageFileChange = (slotId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    const oldSlot = bulkImageSlots.find(s => s.slotId === slotId);
+    if (oldSlot?.previewUrl) URL.revokeObjectURL(oldSlot.previewUrl);
+    const previewUrl = URL.createObjectURL(file);
+    setBulkImageSlots(prev => prev.map(s => s.slotId === slotId ? { ...s, file, previewUrl } : s));
+  };
+
+  const handleBulkImageSubmit = async () => {
+    const filledSlots = bulkImageSlots.filter(s => s.file !== null);
+    if (filledSlots.length === 0) return;
+    const productIds = Array.from(selectedProductIds);
+    setBulkImageProgress(`Uploading ${filledSlots.length} image${filledSlots.length !== 1 ? "s" : ""}…`);
+    try {
+      const imageSlots: { sortOrder: number; imageUrl: string }[] = [];
+      for (const slot of filledSlots) {
+        const formData = new FormData();
+        formData.append("image", slot.file!);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!uploadRes.ok) throw new Error(`Upload failed for position ${slot.sortOrder}`);
+        const { url } = await uploadRes.json();
+        imageSlots.push({ sortOrder: slot.sortOrder, imageUrl: url });
+      }
+      setBulkImageProgress(`Applying to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}…`);
+      const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds, imageSlots });
+      if (!res.ok) throw new Error("Bulk apply failed");
+      const { updated } = await res.json() as { updated: number };
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
+      toast({ title: `Gallery images applied to ${updated} product${updated !== 1 ? "s" : ""}` });
+      closeBulkImageDialog();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed";
+      toast({ title: msg, variant: "destructive" });
+      setBulkImageProgress(null);
+    }
   };
 
   const handleImageUpload = async (files: FileList) => {
@@ -1541,6 +1611,15 @@ export default function AdminCatalog() {
                 >
                   <TagIcon className="w-4 h-4 mr-1" />
                   Tag {selectedProductIds.size}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={openBulkImageDialog}
+                  data-testid="button-bulk-upload-images"
+                >
+                  <Images className="w-4 h-4 mr-1" />
+                  Images {selectedProductIds.size}
                 </Button>
                 <Button
                   size="sm"
@@ -1966,6 +2045,94 @@ export default function AdminCatalog() {
                 data-testid="button-bulk-tag-apply"
               >
                 {(bulkAddTagsMutation.isPending || bulkRemoveTagsMutation.isPending) ? "Applying…" : `Apply to ${selectedProductIds.size}`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Image Upload Dialog */}
+      <Dialog open={bulkImageDialogOpen} onOpenChange={(open) => { if (!open) closeBulkImageDialog(); }}>
+        <DialogContent className="max-w-md" data-testid="dialog-bulk-upload-images">
+          <DialogHeader>
+            <DialogTitle>Upload Gallery Images for {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
+            <DialogDescription>
+              Each image slot will replace that position across all selected products. Position 1 (hero) is never changed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {bulkImageSlots.map((slot, idx) => (
+              <div key={slot.slotId} className="flex items-center gap-3" data-testid={`bulk-image-slot-${idx}`}>
+                <div className="text-xs font-medium text-muted-foreground w-16 shrink-0">
+                  Position {slot.sortOrder}
+                </div>
+                <label className="flex-1 cursor-pointer">
+                  <div className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${slot.file ? "border-primary/40 bg-muted/30" : "border-dashed"}`}>
+                    {slot.previewUrl ? (
+                      <img src={slot.previewUrl} alt="" className="w-8 h-8 object-cover rounded" />
+                    ) : (
+                      <ImageIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="truncate text-xs">{slot.file ? slot.file.name : "Click to choose image"}</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleBulkImageFileChange(slot.slotId, e)}
+                    data-testid={`input-bulk-image-slot-${idx}`}
+                  />
+                </label>
+                {bulkImageSlots.length > 1 && (
+                  <button
+                    onClick={() => removeBulkImageSlot(slot.slotId)}
+                    className="text-muted-foreground hover:text-destructive p-1 shrink-0"
+                    data-testid={`button-remove-slot-${idx}`}
+                    title="Remove slot"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={addBulkImageSlot}
+              disabled={!!bulkImageProgress}
+              data-testid="button-add-image-slot"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Add another position
+            </Button>
+
+            {bulkImageProgress && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-bulk-image-progress">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {bulkImageProgress}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={closeBulkImageDialog}
+                disabled={!!bulkImageProgress}
+                data-testid="button-bulk-image-cancel"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={bulkImageSlots.every(s => !s.file) || !!bulkImageProgress}
+                onClick={handleBulkImageSubmit}
+                data-testid="button-bulk-image-apply"
+              >
+                {bulkImageProgress ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                Apply to {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}
               </Button>
             </div>
           </div>

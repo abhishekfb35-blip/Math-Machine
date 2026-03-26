@@ -275,6 +275,24 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json(map);
   });
 
+  app.post("/api/admin/products/bulk-upload-images", requireAdmin, async (req, res) => {
+    try {
+      const { productIds, imageSlots } = z.object({
+        productIds: z.array(z.string()).min(1),
+        imageSlots: z.array(z.object({
+          sortOrder: z.number().int().min(2),
+          imageUrl: z.string().min(1),
+        })).min(1),
+      }).parse(req.body);
+      await storage.bulkReplaceProductImages(productIds, imageSlots);
+      res.json({ updated: productIds.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk upload images error:", err);
+      res.status(500).json({ message: "Failed to bulk upload images" });
+    }
+  });
+
   app.post("/api/admin/products/bulk-add-tags", requireAdmin, async (req, res) => {
     try {
       const { productIds, tagIds } = z.object({

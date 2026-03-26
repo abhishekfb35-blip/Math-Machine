@@ -74,6 +74,7 @@ export interface IStorage {
   createProductImage(img: InsertProductImage): Promise<ProductImage>;
   deleteProductImage(id: string): Promise<void>;
   reorderProductImages(productId: string, imageIds: string[]): Promise<void>;
+  bulkReplaceProductImages(productIds: string[], slots: { sortOrder: number; imageUrl: string }[]): Promise<void>;
 
   getProductReviews(productId: string): Promise<ProductReview[]>;
   getCustomerReviewForProduct(customerId: string, productId: string): Promise<ProductReview | undefined>;
@@ -536,6 +537,21 @@ export class DatabaseStorage implements IStorage {
           .where(and(eq(productImages.id, imageIds[i]), eq(productImages.productId, productId)));
       }
     });
+  }
+
+  async bulkReplaceProductImages(productIds: string[], slots: { sortOrder: number; imageUrl: string }[]): Promise<void> {
+    if (productIds.length === 0 || slots.length === 0) return;
+    const sortOrders = slots.map(s => s.sortOrder);
+    for (const productId of productIds) {
+      const existing = await db.select().from(productImages)
+        .where(and(eq(productImages.productId, productId), inArray(productImages.sortOrder, sortOrders)));
+      for (const img of existing) {
+        await db.delete(productImages).where(eq(productImages.id, img.id));
+      }
+      for (const slot of slots) {
+        await db.insert(productImages).values({ id: createId(), productId, imageUrl: slot.imageUrl, sortOrder: slot.sortOrder });
+      }
+    }
   }
 
   async getProductReviews(productId: string): Promise<ProductReview[]> {
