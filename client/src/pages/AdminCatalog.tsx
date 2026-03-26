@@ -122,42 +122,21 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
   );
 }
 
-
-function GalleryToggleButton({ productId, isExpanded, onToggle }: { productId: string; isExpanded: boolean; onToggle: () => void }) {
-  const { data: images } = useQuery<ProductImage[]>({
-    queryKey: ["/api/products", productId, "images"],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/${productId}/images`);
-      return res.json();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-  return (
-    <Button
-      size="sm"
-      variant={isExpanded ? "secondary" : "ghost"}
-      onClick={onToggle}
-      className="gap-1 px-2"
-      data-testid={`button-gallery-${productId}`}
-      title="Manage gallery images"
-    >
-      <Images className="w-4 h-4" />
-      {images !== undefined && <span className="text-xs font-medium">{images.length}</span>}
-    </Button>
-  );
+interface PendingAdd {
+  tempId: string;
+  imageUrl: string;
+  sortOrder: number;
 }
 
-function ProductImageManager({ productId }: { productId: string }) {
+function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const replaceFileInputRef = React.useRef<HTMLInputElement>(null);
-  const replacingImageRef = React.useRef<{ id: string; sortOrder: number | null } | null>(null);
 
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
-  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
 
   const { data: images, isLoading } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", productId, "images"],
@@ -167,47 +146,66 @@ function ProductImageManager({ productId }: { productId: string }) {
     },
   });
 
-
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
   const orderChanged = useMemo(() => {
     if (!localOrder) return false;
-    return JSON.stringify(serverIds) !== JSON.stringify(localOrder);
-  }, [localOrder, serverIds]);
+    const activeServerIds = serverIds.filter(id => !pendingDeletes.has(id));
+    const activeLocalIds = localOrder.filter(id => !pendingDeletes.has(id));
+    return JSON.stringify(activeServerIds) !== JSON.stringify(activeLocalIds);
+  }, [localOrder, serverIds, pendingDeletes]);
 
-  const hasPendingChanges = orderChanged;
+  const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || orderChanged;
 
   const displayItems = useMemo(() => {
     const existingImages = images || [];
     const orderedExisting = localOrder
       ? localOrder.map(id => existingImages.find(img => img.id === id)).filter(Boolean) as ProductImage[]
       : existingImages;
-    return orderedExisting.map(img => ({
-      type: "existing" as const,
-      id: img.id,
-      imageUrl: img.imageUrl,
-      sortOrder: img.sortOrder,
-    }));
-  }, [images, localOrder]);
+    const mainItem = mainImageUrl ? [{
+      type: "main" as const,
+      id: "main",
+      imageUrl: mainImageUrl,
+      isDeleted: false,
+    }] : [];
+    return [
+      ...mainItem,
+      ...orderedExisting.map(img => ({
+        type: "existing" as const,
+        id: img.id,
+        imageUrl: img.imageUrl,
+        isDeleted: pendingDeletes.has(img.id),
+      })),
+      ...pendingAdds.map(add => ({
+        type: "new" as const,
+        id: add.tempId,
+        imageUrl: add.imageUrl,
+        isDeleted: false,
+      })),
+    ];
+  }, [images, localOrder, pendingDeletes, pendingAdds, mainImageUrl]);
 
-  const handleImmediateDelete = async (imageId: string) => {
-    setDeleting(imageId);
-    try {
-      await apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-      setBrokenImages(prev => { const next = new Set(prev); next.delete(imageId); return next; });
-      if (localOrder) setLocalOrder(prev => prev ? prev.filter(id => id !== imageId) : null);
-    } catch {
-      toast({ title: "Failed to delete image", variant: "destructive" });
-    }
-    setDeleting(null);
+  const markForDelete = (id: string) => {
+    setPendingDeletes(prev => new Set(prev).add(id));
+  };
+
+  const undoDelete = (id: string) => {
+    setPendingDeletes(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const removeNewImage = (tempId: string) => {
+    setPendingAdds(prev => prev.filter(a => a.tempId !== tempId));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
-    let added = 0;
-    const baseOrder = images?.length || 0;
+    let uploaded = 0;
+    const baseOrder = (images?.length || 0) + pendingAdds.length;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -216,163 +214,150 @@ function ProductImageManager({ productId }: { productId: string }) {
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
-          await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+          setPendingAdds(prev => [...prev, {
+            tempId: `new-${Date.now()}-${i}`,
             imageUrl: data.url,
-            sortOrder: baseOrder + added,
-          });
-          added++;
+            sortOrder: baseOrder + uploaded,
+          }]);
+          uploaded++;
         }
       } catch {
         toast({ title: `Failed to upload ${file.name}`, variant: "destructive" });
       }
     }
     setUploading(false);
-    if (added > 0) {
-      setLocalOrder(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-      toast({ title: `${added} image${added > 1 ? "s" : ""} added` });
+    if (uploaded > 0) {
+      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged for save` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleReplaceSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    const target = replacingImageRef.current;
-    if (!file || !target) return;
-    if (replaceFileInputRef.current) replaceFileInputRef.current.value = "";
-    replacingImageRef.current = null;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) {
-        const newImg = await apiRequest("POST", `/api/admin/products/${productId}/images`, {
-          imageUrl: data.url,
-          sortOrder: target.sortOrder,
-        }) as { id: string };
-        try {
-          await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
-        } catch {
-          try { await apiRequest("DELETE", `/api/admin/products/${productId}/images/${newImg.id}`); } catch {}
-          throw new Error("delete failed");
-        }
-        setLocalOrder(null);
-        queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-        setBrokenImages(prev => { const next = new Set(prev); next.delete(target.id); return next; });
-        toast({ title: "Image replaced" });
-      }
-    } catch {
-      toast({ title: "Failed to replace image", variant: "destructive" });
-    }
-    setUploading(false);
-  };
-
   const moveImage = (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= displayItems.length) return;
-    const currentOrder = localOrder || serverIds;
-    const newOrder = [...currentOrder];
-    const fromId = displayItems[index].id;
-    const toId = displayItems[newIndex].id;
-    const fromIdx = newOrder.indexOf(fromId);
-    const toIdx = newOrder.indexOf(toId);
-    if (fromIdx >= 0 && toIdx >= 0) {
-      const [moved] = newOrder.splice(fromIdx, 1);
-      newOrder.splice(toIdx, 0, moved);
-      setLocalOrder(newOrder);
+    const activeItems = displayItems.filter(item => !item.isDeleted);
+    const activeIndex = activeItems.findIndex((_, i) => i === index);
+    if (activeIndex < 0) return;
+    const newIndex = activeIndex + direction;
+    if (newIndex < 0 || newIndex >= activeItems.length) return;
+
+    const existingOnly = activeItems.filter(item => item.type === "existing");
+    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[activeIndex].id);
+    const existingNewIndex = existingOnly.findIndex(item => item.id === activeItems[newIndex].id);
+
+    if (existingIndex >= 0 && existingNewIndex >= 0) {
+      const currentOrder = localOrder || serverIds;
+      const newOrder = [...currentOrder];
+      const fromIdx = newOrder.indexOf(existingOnly[existingIndex].id);
+      const toIdx = newOrder.indexOf(existingOnly[existingNewIndex].id);
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const [moved] = newOrder.splice(fromIdx, 1);
+        newOrder.splice(toIdx, 0, moved);
+        setLocalOrder(newOrder);
+      }
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (orderChanged && localOrder) {
-        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: localOrder });
+      for (const id of pendingDeletes) {
+        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${id}`);
       }
+      for (const add of pendingAdds) {
+        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+          imageUrl: add.imageUrl,
+          sortOrder: add.sortOrder,
+        });
+      }
+      if (orderChanged && localOrder) {
+        const activeOrder = localOrder.filter(id => !pendingDeletes.has(id));
+        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: activeOrder });
+      }
+      setPendingDeletes(new Set());
+      setPendingAdds([]);
       setLocalOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-      toast({ title: "Order saved" });
+      toast({ title: "Images saved" });
     } catch {
-      toast({ title: "Failed to save order", variant: "destructive" });
+      toast({ title: "Failed to save images", variant: "destructive" });
     }
     setSaving(false);
   };
 
   const handleReset = () => {
+    setPendingDeletes(new Set());
+    setPendingAdds([]);
     setLocalOrder(null);
   };
+
+  const activeItems = displayItems.filter(item => !item.isDeleted);
+  const deletedItems = displayItems.filter(item => item.isDeleted);
 
   return (
     <div className="mt-2" data-testid={`image-manager-${productId}`}>
       <div className="flex items-center gap-1 flex-wrap">
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
-        {displayItems.map((item, idx) => {
-          const isBroken = brokenImages.has(item.id);
-          const isDeleting = deleting === item.id;
-          return (
-            <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
-              <div
-                className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted relative cursor-pointer ${isBroken ? "border-2 border-destructive" : ""}`}
-                onClick={() => {
-                  replacingImageRef.current = { id: item.id, sortOrder: item.sortOrder };
-                  replaceFileInputRef.current?.click();
-                }}
-                title="Click to replace image"
-              >
-                <img
-                  src={getProductImageUrl(item.imageUrl, "small")}
-                  alt=""
-                  className="w-full h-full object-contain"
-                  onError={() => setBrokenImages(prev => new Set(prev).add(item.id))}
-                />
-                {isBroken && (
-                  <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center">
-                    <ImageIcon className="w-3 h-3 text-destructive" />
-                  </div>
-                )}
-                {item.type === "existing" && !isBroken && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Upload className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </div>
+        {activeItems.map((item, idx) => (
+          <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "main" ? "border-2 border-primary/40" : item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
+              <img
+                src={getProductImageUrl(item.imageUrl, "small")}
+                alt=""
+                className="w-full h-full object-contain"
+              />
+            </div>
+            {item.type !== "main" && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleImmediateDelete(item.id);
-                }}
-                disabled={isDeleting}
+                onClick={() => item.type === "existing" ? markForDelete(item.id) : removeNewImage(item.id)}
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                 data-testid={`button-delete-image-${item.id}`}
-                title="Delete image"
               >
-                {isDeleting ? <Loader2 className="w-2 h-2 animate-spin" /> : <X className="w-2.5 h-2.5" />}
+                <X className="w-2.5 h-2.5" />
               </button>
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pb-0.5">
-                {idx > 0 && (
+            )}
+            {item.type === "existing" && (
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
+                {idx > 0 && activeItems[idx - 1]?.type === "existing" && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); moveImage(idx, -1); }}
-                    className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                    onClick={() => moveImage(idx, -1)}
+                    className="text-white hover:text-blue-300 p-0"
                     data-testid={`button-move-left-${item.id}`}
                   >
-                    <ChevronLeft className="w-2.5 h-2.5" />
+                    <ChevronLeft className="w-3 h-3" />
                   </button>
                 )}
-                {idx < displayItems.length - 1 && (
+                {idx < activeItems.length - 1 && activeItems[idx + 1]?.type === "existing" && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); moveImage(idx, 1); }}
-                    className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                    onClick={() => moveImage(idx, 1)}
+                    className="text-white hover:text-blue-300 p-0"
                     data-testid={`button-move-right-${item.id}`}
                   >
-                    <ChevronRight className="w-2.5 h-2.5" />
+                    <ChevronRight className="w-3 h-3" />
                   </button>
                 )}
               </div>
+            )}
+          </div>
+        ))}
+        {deletedItems.map(item => (
+          <div key={item.id} className="relative" data-testid={`image-thumb-deleted-${item.id}`}>
+            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted opacity-30`}>
+              <img
+                src={getProductImageUrl(item.imageUrl, "small")}
+                alt=""
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-red-500/20" />
             </div>
-          );
-        })}
+            <button
+              onClick={() => undoDelete(item.id)}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center z-10"
+              data-testid={`button-undo-delete-${item.id}`}
+              title="Undo delete"
+            >
+              <Undo2 className="w-2.5 h-2.5" />
+            </button>
+          </div>
+        ))}
         <input
           ref={fileInputRef}
           type="file"
@@ -382,23 +367,16 @@ function ProductImageManager({ productId }: { productId: string }) {
           onChange={handleFileSelect}
           data-testid={`input-upload-images-${productId}`}
         />
-        <input
-          ref={replaceFileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleReplaceSelect}
-          data-testid={`input-replace-image-${productId}`}
-        />
-        <button
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-10 px-2 text-xs"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || saving}
-          className={`${THUMBNAIL_SIZES.adminInline} rounded border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50`}
           data-testid={`button-upload-images-${productId}`}
-          title="Add gallery image"
         >
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-        </button>
+        </Button>
       </div>
       {hasPendingChanges && (
         <div className="flex items-center gap-1 mt-1.5" data-testid={`image-save-controls-${productId}`}>
@@ -746,7 +724,6 @@ export default function AdminCatalog() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
-  const [expandedGalleryProductId, setExpandedGalleryProductId] = useState<string | null>(null);
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -1197,32 +1174,36 @@ export default function AdminCatalog() {
     const filledSlots = bulkImageSlots.filter(s => s.file !== null);
     if (filledSlots.length === 0) return;
     const productIds = Array.from(selectedProductIds);
+    let applied = 0;
     try {
-      const imageSlots: { sortOrder: number; sourceUrl: string }[] = [];
-      setBulkImageProgress(`Uploading ${filledSlots.length} image${filledSlots.length !== 1 ? "s" : ""}…`);
-      for (let i = 0; i < filledSlots.length; i++) {
-        const slot = filledSlots[i];
-        const formData = new FormData();
-        formData.append("image", slot.file!);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!uploadRes.ok) throw new Error(`Upload failed for image ${i + 1} of ${filledSlots.length}`);
-        const { url } = await uploadRes.json();
-        imageSlots.push({ sortOrder: slot.sortOrder, sourceUrl: url });
+      for (let i = 0; i < productIds.length; i++) {
+        const productId = productIds[i];
+        setBulkImageProgress(`Applying to product ${i + 1} of ${productIds.length}…`);
+        const imageSlots: { sortOrder: number; imageUrl: string }[] = [];
+        for (const slot of filledSlots) {
+          const formData = new FormData();
+          formData.append("image", slot.file!);
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if (!uploadRes.ok) throw new Error(`Image upload failed at product ${i + 1} of ${productIds.length}`);
+          const { url } = await uploadRes.json();
+          imageSlots.push({ sortOrder: slot.sortOrder, imageUrl: url });
+        }
+        const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds: [productId], imageSlots });
+        if (!res.ok) throw new Error(`Failed to save images for product ${i + 1} of ${productIds.length}`);
+        applied++;
       }
-      setBulkImageProgress(`Applying to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}…`);
-      const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds, imageSlots });
-      if (!res.ok) throw new Error("Failed to apply images to products");
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
-      toast({ title: `Gallery images applied to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}` });
+      toast({ title: `Gallery images applied to ${applied} product${applied !== 1 ? "s" : ""}` });
       closeBulkImageDialog();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed";
+      const partialNote = applied > 0 ? ` (${applied} of ${productIds.length} already applied)` : "";
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
-      toast({ title: msg, variant: "destructive" });
+      productIds.slice(0, applied).forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
+      toast({ title: `${msg}${partialNote}`, variant: "destructive" });
       setBulkImageProgress(null);
     }
   };
@@ -1869,11 +1850,6 @@ export default function AdminCatalog() {
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <GalleryToggleButton
-                      productId={prod.id}
-                      isExpanded={expandedGalleryProductId === prod.id}
-                      onToggle={() => setExpandedGalleryProductId(prev => prev === prod.id ? null : prod.id)}
-                    />
                     <Button
                       size="icon"
                       variant="ghost"
@@ -1896,9 +1872,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                {expandedGalleryProductId === prod.id && (
-                  <ProductImageManager productId={prod.id} />
-                )}
+                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
               </Card>
             ))}
             {products?.length === 0 && (

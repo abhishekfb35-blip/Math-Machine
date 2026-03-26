@@ -10,7 +10,6 @@ export interface UploadResult {
 export interface IFileStorage {
   readonly name: string;
   upload(file: Buffer, originalName: string, mimeType: string): Promise<UploadResult>;
-  copy(sourceUrl: string): Promise<UploadResult>;
   delete(url: string): Promise<void>;
   getPublicUrl(storedPath: string): string;
 }
@@ -31,25 +30,6 @@ export class LocalFileStorage implements IFileStorage {
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
     const filePath = path.join(this.uploadsDir, filename);
     await fs.promises.writeFile(filePath, file);
-    return {
-      url: `/uploads/${filename}`,
-      filename,
-    };
-  }
-
-  async copy(sourceUrl: string): Promise<UploadResult> {
-    if (!/^\/uploads\/[A-Za-z0-9._-]+$/.test(sourceUrl)) {
-      throw new Error("Invalid sourceUrl: must be a /uploads/<filename> path with no path separators");
-    }
-    const sourceName = path.basename(sourceUrl);
-    const ext = path.extname(sourceName).toLowerCase();
-    const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const sourcePath = path.resolve(this.uploadsDir, sourceName);
-    const destPath = path.resolve(this.uploadsDir, filename);
-    if (!sourcePath.startsWith(this.uploadsDir + path.sep) && sourcePath !== this.uploadsDir) {
-      throw new Error("Path traversal detected in sourceUrl");
-    }
-    await fs.promises.copyFile(sourcePath, destPath);
     return {
       url: `/uploads/${filename}`,
       filename,
