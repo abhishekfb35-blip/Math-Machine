@@ -10,6 +10,7 @@ export interface UploadResult {
 export interface IFileStorage {
   readonly name: string;
   upload(file: Buffer, originalName: string, mimeType: string): Promise<UploadResult>;
+  copy(sourceUrl: string): Promise<UploadResult>;
   delete(url: string): Promise<void>;
   getPublicUrl(storedPath: string): string;
 }
@@ -30,6 +31,19 @@ export class LocalFileStorage implements IFileStorage {
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
     const filePath = path.join(this.uploadsDir, filename);
     await fs.promises.writeFile(filePath, file);
+    return {
+      url: `/uploads/${filename}`,
+      filename,
+    };
+  }
+
+  async copy(sourceUrl: string): Promise<UploadResult> {
+    const sourceName = sourceUrl.startsWith("/uploads/") ? sourceUrl.slice("/uploads/".length) : path.basename(sourceUrl);
+    const ext = path.extname(sourceName).toLowerCase();
+    const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
+    const sourcePath = path.join(this.uploadsDir, sourceName);
+    const destPath = path.join(this.uploadsDir, filename);
+    await fs.promises.copyFile(sourcePath, destPath);
     return {
       url: `/uploads/${filename}`,
       filename,

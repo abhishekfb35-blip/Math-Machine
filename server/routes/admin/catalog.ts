@@ -4,6 +4,7 @@ import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@sha
 import { z } from "zod";
 import { requireAdmin, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
+import { fileStorage } from "../../providers/fileStorage";
 
 export function registerAdminCatalogRoutes(app: Express) {
 
@@ -281,10 +282,19 @@ export function registerAdminCatalogRoutes(app: Express) {
         productIds: z.array(z.string()).min(1),
         imageSlots: z.array(z.object({
           sortOrder: z.number().int().min(0),
-          imageUrl: z.string().min(1),
+          sourceUrl: z.string().min(1),
         })).min(1),
       }).parse(req.body);
-      await storage.bulkReplaceProductImages(productIds, imageSlots);
+
+      for (const productId of productIds) {
+        const perProductSlots: { sortOrder: number; imageUrl: string }[] = [];
+        for (const slot of imageSlots) {
+          const copied = await fileStorage.copy(slot.sourceUrl);
+          perProductSlots.push({ sortOrder: slot.sortOrder, imageUrl: copied.url });
+        }
+        await storage.bulkReplaceProductImages([productId], perProductSlots);
+      }
+
       res.json({ updated: productIds.length });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });

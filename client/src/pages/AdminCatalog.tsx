@@ -1174,36 +1174,32 @@ export default function AdminCatalog() {
     const filledSlots = bulkImageSlots.filter(s => s.file !== null);
     if (filledSlots.length === 0) return;
     const productIds = Array.from(selectedProductIds);
-    let applied = 0;
     try {
-      for (let i = 0; i < productIds.length; i++) {
-        const productId = productIds[i];
-        setBulkImageProgress(`Applying to product ${i + 1} of ${productIds.length}…`);
-        const imageSlots: { sortOrder: number; imageUrl: string }[] = [];
-        for (const slot of filledSlots) {
-          const formData = new FormData();
-          formData.append("image", slot.file!);
-          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          if (!uploadRes.ok) throw new Error(`Image upload failed at product ${i + 1} of ${productIds.length}`);
-          const { url } = await uploadRes.json();
-          imageSlots.push({ sortOrder: slot.sortOrder, imageUrl: url });
-        }
-        const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds: [productId], imageSlots });
-        if (!res.ok) throw new Error(`Failed to save images for product ${i + 1} of ${productIds.length}`);
-        applied++;
+      const imageSlots: { sortOrder: number; sourceUrl: string }[] = [];
+      for (let i = 0; i < filledSlots.length; i++) {
+        setBulkImageProgress(`Uploading image ${i + 1} of ${filledSlots.length}…`);
+        const slot = filledSlots[i];
+        const formData = new FormData();
+        formData.append("image", slot.file!);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!uploadRes.ok) throw new Error(`Upload failed for image ${i + 1} of ${filledSlots.length}`);
+        const { url } = await uploadRes.json();
+        imageSlots.push({ sortOrder: slot.sortOrder, sourceUrl: url });
       }
+      setBulkImageProgress(`Applying to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}…`);
+      const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds, imageSlots });
+      if (!res.ok) throw new Error("Failed to apply images to products");
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
-      toast({ title: `Gallery images applied to ${applied} product${applied !== 1 ? "s" : ""}` });
+      toast({ title: `Gallery images applied to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}` });
       closeBulkImageDialog();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed";
-      const partialNote = applied > 0 ? ` (${applied} of ${productIds.length} already applied)` : "";
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      productIds.slice(0, applied).forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
-      toast({ title: `${msg}${partialNote}`, variant: "destructive" });
+      productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
+      toast({ title: msg, variant: "destructive" });
       setBulkImageProgress(null);
     }
   };
