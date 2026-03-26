@@ -282,7 +282,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         productIds: z.array(z.string()).min(1),
         imageSlots: z.array(z.object({
           sortOrder: z.number().int().min(0),
-          sourceUrl: z.string().min(1),
+          sourceUrl: z.string().regex(/^\/uploads\/[A-Za-z0-9._-]+$/, "sourceUrl must be a /uploads/<filename> path"),
         })).min(1),
       }).parse(req.body);
 

@@ -38,11 +38,17 @@ export class LocalFileStorage implements IFileStorage {
   }
 
   async copy(sourceUrl: string): Promise<UploadResult> {
-    const sourceName = sourceUrl.startsWith("/uploads/") ? sourceUrl.slice("/uploads/".length) : path.basename(sourceUrl);
+    if (!/^\/uploads\/[A-Za-z0-9._-]+$/.test(sourceUrl)) {
+      throw new Error("Invalid sourceUrl: must be a /uploads/<filename> path with no path separators");
+    }
+    const sourceName = path.basename(sourceUrl);
     const ext = path.extname(sourceName).toLowerCase();
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const sourcePath = path.join(this.uploadsDir, sourceName);
-    const destPath = path.join(this.uploadsDir, filename);
+    const sourcePath = path.resolve(this.uploadsDir, sourceName);
+    const destPath = path.resolve(this.uploadsDir, filename);
+    if (!sourcePath.startsWith(this.uploadsDir + path.sep) && sourcePath !== this.uploadsDir) {
+      throw new Error("Path traversal detected in sourceUrl");
+    }
     await fs.promises.copyFile(sourcePath, destPath);
     return {
       url: `/uploads/${filename}`,
