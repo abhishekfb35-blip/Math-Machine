@@ -123,7 +123,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
 }
 
 
-function ProductImageManager({ productId }: { productId: string }) {
+function ProductImageManager({ productId, onCountLoaded }: { productId: string; onCountLoaded?: (count: number) => void }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -142,6 +142,10 @@ function ProductImageManager({ productId }: { productId: string }) {
       return res.json();
     },
   });
+
+  React.useEffect(() => {
+    if (images !== undefined) onCountLoaded?.(images.length);
+  }, [images?.length]);
 
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
   const orderChanged = useMemo(() => {
@@ -358,16 +362,15 @@ function ProductImageManager({ productId }: { productId: string }) {
           onChange={handleReplaceSelect}
           data-testid={`input-replace-image-${productId}`}
         />
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-10 px-2 text-xs"
+        <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || saving}
+          className={`${THUMBNAIL_SIZES.adminInline} rounded border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-50`}
           data-testid={`button-upload-images-${productId}`}
+          title="Add gallery image"
         >
           {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-        </Button>
+        </button>
       </div>
       {hasPendingChanges && (
         <div className="flex items-center gap-1 mt-1.5" data-testid={`image-save-controls-${productId}`}>
@@ -716,6 +719,7 @@ export default function AdminCatalog() {
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [expandedGalleryProductId, setExpandedGalleryProductId] = useState<string | null>(null);
+  const [galleryCountMap, setGalleryCountMap] = useState<Record<string, number>>({});
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -1839,13 +1843,17 @@ export default function AdminCatalog() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button
-                      size="icon"
+                      size="sm"
                       variant={expandedGalleryProductId === prod.id ? "secondary" : "ghost"}
                       onClick={() => setExpandedGalleryProductId(prev => prev === prod.id ? null : prod.id)}
                       data-testid={`button-gallery-${prod.id}`}
                       title="Manage gallery images"
+                      className="gap-1 px-2"
                     >
                       <Images className="w-4 h-4" />
+                      {galleryCountMap[prod.id] !== undefined && (
+                        <span className="text-xs font-medium">{galleryCountMap[prod.id]}</span>
+                      )}
                     </Button>
                     <Button
                       size="icon"
@@ -1870,7 +1878,10 @@ export default function AdminCatalog() {
                   </div>
                 </div>
                 {expandedGalleryProductId === prod.id && (
-                  <ProductImageManager productId={prod.id} />
+                  <ProductImageManager
+                    productId={prod.id}
+                    onCountLoaded={(count) => setGalleryCountMap(prev => ({ ...prev, [prod.id]: count }))}
+                  />
                 )}
               </Card>
             ))}
