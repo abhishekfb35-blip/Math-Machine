@@ -122,13 +122,8 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
   );
 }
 
-interface PendingAdd {
-  tempId: string;
-  imageUrl: string;
-  sortOrder: number;
-}
 
-function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
+function ProductImageManager({ productId }: { productId: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -137,7 +132,6 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   const replaceFileInputRef = React.useRef<HTMLInputElement>(null);
   const replacingImageRef = React.useRef<{ id: string; sortOrder: number | null } | null>(null);
 
-  const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
 
@@ -155,35 +149,20 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
     return JSON.stringify(serverIds) !== JSON.stringify(localOrder);
   }, [localOrder, serverIds]);
 
-  const hasPendingChanges = pendingAdds.length > 0 || orderChanged;
+  const hasPendingChanges = orderChanged;
 
   const displayItems = useMemo(() => {
     const existingImages = images || [];
     const orderedExisting = localOrder
       ? localOrder.map(id => existingImages.find(img => img.id === id)).filter(Boolean) as ProductImage[]
       : existingImages;
-    const mainItem = mainImageUrl ? [{
-      type: "main" as const,
-      id: "main",
-      imageUrl: mainImageUrl,
-      sortOrder: null as number | null,
-    }] : [];
-    return [
-      ...mainItem,
-      ...orderedExisting.map(img => ({
-        type: "existing" as const,
-        id: img.id,
-        imageUrl: img.imageUrl,
-        sortOrder: img.sortOrder,
-      })),
-      ...pendingAdds.map(add => ({
-        type: "new" as const,
-        id: add.tempId,
-        imageUrl: add.imageUrl,
-        sortOrder: add.sortOrder as number | null,
-      })),
-    ];
-  }, [images, localOrder, pendingAdds, mainImageUrl]);
+    return orderedExisting.map(img => ({
+      type: "existing" as const,
+      id: img.id,
+      imageUrl: img.imageUrl,
+      sortOrder: img.sortOrder,
+    }));
+  }, [images, localOrder]);
 
   const handleImmediateDelete = async (imageId: string) => {
     setDeleting(imageId);
@@ -198,16 +177,12 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
     setDeleting(null);
   };
 
-  const removeNewImage = (tempId: string) => {
-    setPendingAdds(prev => prev.filter(a => a.tempId !== tempId));
-  };
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
-    let uploaded = 0;
-    const baseOrder = (images?.length || 0) + pendingAdds.length;
+    let added = 0;
+    const baseOrder = images?.length || 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -216,20 +191,20 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
-          setPendingAdds(prev => [...prev, {
-            tempId: `new-${Date.now()}-${i}`,
+          await apiRequest("POST", `/api/admin/products/${productId}/images`, {
             imageUrl: data.url,
-            sortOrder: baseOrder + uploaded,
-          }]);
-          uploaded++;
+            sortOrder: baseOrder + added,
+          });
+          added++;
         }
       } catch {
         toast({ title: `Failed to upload ${file.name}`, variant: "destructive" });
       }
     }
     setUploading(false);
-    if (uploaded > 0) {
-      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged — click Save` });
+    if (added > 0) {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      toast({ title: `${added} image${added > 1 ? "s" : ""} added` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -263,51 +238,37 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   };
 
   const moveImage = (index: number, direction: -1 | 1) => {
-    const activeItems = displayItems;
     const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= activeItems.length) return;
-
-    const existingOnly = activeItems.filter(item => item.type === "existing");
-    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[index].id);
-    const existingNewIndex = existingOnly.findIndex(item => item.id === activeItems[newIndex].id);
-
-    if (existingIndex >= 0 && existingNewIndex >= 0) {
-      const currentOrder = localOrder || serverIds;
-      const newOrder = [...currentOrder];
-      const fromIdx = newOrder.indexOf(existingOnly[existingIndex].id);
-      const toIdx = newOrder.indexOf(existingOnly[existingNewIndex].id);
-      if (fromIdx >= 0 && toIdx >= 0) {
-        const [moved] = newOrder.splice(fromIdx, 1);
-        newOrder.splice(toIdx, 0, moved);
-        setLocalOrder(newOrder);
-      }
+    if (newIndex < 0 || newIndex >= displayItems.length) return;
+    const currentOrder = localOrder || serverIds;
+    const newOrder = [...currentOrder];
+    const fromId = displayItems[index].id;
+    const toId = displayItems[newIndex].id;
+    const fromIdx = newOrder.indexOf(fromId);
+    const toIdx = newOrder.indexOf(toId);
+    if (fromIdx >= 0 && toIdx >= 0) {
+      const [moved] = newOrder.splice(fromIdx, 1);
+      newOrder.splice(toIdx, 0, moved);
+      setLocalOrder(newOrder);
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      for (const add of pendingAdds) {
-        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
-          imageUrl: add.imageUrl,
-          sortOrder: add.sortOrder,
-        });
-      }
       if (orderChanged && localOrder) {
         await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: localOrder });
       }
-      setPendingAdds([]);
       setLocalOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
-      toast({ title: "Images saved" });
+      toast({ title: "Order saved" });
     } catch {
-      toast({ title: "Failed to save images", variant: "destructive" });
+      toast({ title: "Failed to save order", variant: "destructive" });
     }
     setSaving(false);
   };
 
   const handleReset = () => {
-    setPendingAdds([]);
     setLocalOrder(null);
   };
 
@@ -321,18 +282,12 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
           return (
             <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
               <div
-                className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted relative
-                  ${item.type === "main" ? "border-2 border-primary/40" : ""}
-                  ${item.type === "new" ? "ring-2 ring-green-500" : ""}
-                  ${isBroken ? "border-2 border-destructive" : ""}
-                  ${item.type === "existing" ? "cursor-pointer" : ""}
-                `}
+                className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted relative cursor-pointer ${isBroken ? "border-2 border-destructive" : ""}`}
                 onClick={() => {
-                  if (item.type !== "existing") return;
                   replacingImageRef.current = { id: item.id, sortOrder: item.sortOrder };
                   replaceFileInputRef.current?.click();
                 }}
-                title={item.type === "existing" ? "Click to replace image" : undefined}
+                title="Click to replace image"
               >
                 <img
                   src={getProductImageUrl(item.imageUrl, "small")}
@@ -351,43 +306,38 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
                   </div>
                 )}
               </div>
-              {item.type !== "main" && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (item.type === "existing") handleImmediateDelete(item.id);
-                    else removeNewImage(item.id);
-                  }}
-                  disabled={isDeleting}
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  data-testid={`button-delete-image-${item.id}`}
-                  title="Delete image"
-                >
-                  {isDeleting ? <Loader2 className="w-2 h-2 animate-spin" /> : <X className="w-2.5 h-2.5" />}
-                </button>
-              )}
-              {item.type === "existing" && (
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pb-0.5">
-                  {idx > 0 && displayItems[idx - 1]?.type === "existing" && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); moveImage(idx, -1); }}
-                      className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
-                      data-testid={`button-move-left-${item.id}`}
-                    >
-                      <ChevronLeft className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                  {idx < displayItems.length - 1 && displayItems[idx + 1]?.type === "existing" && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); moveImage(idx, 1); }}
-                      className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
-                      data-testid={`button-move-right-${item.id}`}
-                    >
-                      <ChevronRight className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                </div>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleImmediateDelete(item.id);
+                }}
+                disabled={isDeleting}
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                data-testid={`button-delete-image-${item.id}`}
+                title="Delete image"
+              >
+                {isDeleting ? <Loader2 className="w-2 h-2 animate-spin" /> : <X className="w-2.5 h-2.5" />}
+              </button>
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pb-0.5">
+                {idx > 0 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); moveImage(idx, -1); }}
+                    className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                    data-testid={`button-move-left-${item.id}`}
+                  >
+                    <ChevronLeft className="w-2.5 h-2.5" />
+                  </button>
+                )}
+                {idx < displayItems.length - 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); moveImage(idx, 1); }}
+                    className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                    data-testid={`button-move-right-${item.id}`}
+                  >
+                    <ChevronRight className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -765,6 +715,7 @@ export default function AdminCatalog() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [expandedGalleryProductId, setExpandedGalleryProductId] = useState<string | null>(null);
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -1889,6 +1840,15 @@ export default function AdminCatalog() {
                     </DropdownMenu>
                     <Button
                       size="icon"
+                      variant={expandedGalleryProductId === prod.id ? "secondary" : "ghost"}
+                      onClick={() => setExpandedGalleryProductId(prev => prev === prod.id ? null : prod.id)}
+                      data-testid={`button-gallery-${prod.id}`}
+                      title="Manage gallery images"
+                    >
+                      <Images className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
                       variant="ghost"
                       onClick={() => { window.open(`/admin/catalog/product/${prod.id}`, '_blank'); window.focus(); }}
                       data-testid={`button-edit-product-${prod.id}`}
@@ -1909,7 +1869,9 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
+                {expandedGalleryProductId === prod.id && (
+                  <ProductImageManager productId={prod.id} />
+                )}
               </Card>
             ))}
             {products?.length === 0 && (
