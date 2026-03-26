@@ -228,6 +228,7 @@ function ProductImageManager({ productId }: { productId: string }) {
     }
     setUploading(false);
     if (added > 0) {
+      setLocalOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
       toast({ title: `${added} image${added > 1 ? "s" : ""} added` });
     }
@@ -247,11 +248,17 @@ function ProductImageManager({ productId }: { productId: string }) {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.url) {
-        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+        const newImg = await apiRequest("POST", `/api/admin/products/${productId}/images`, {
           imageUrl: data.url,
           sortOrder: target.sortOrder,
-        });
-        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
+        }) as { id: string };
+        try {
+          await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
+        } catch {
+          try { await apiRequest("DELETE", `/api/admin/products/${productId}/images/${newImg.id}`); } catch {}
+          throw new Error("delete failed");
+        }
+        setLocalOrder(null);
         queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
         setBrokenImages(prev => { const next = new Set(prev); next.delete(target.id); return next; });
         toast({ title: "Image replaced" });
