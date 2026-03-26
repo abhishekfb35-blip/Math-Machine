@@ -1176,8 +1176,8 @@ export default function AdminCatalog() {
     const productIds = Array.from(selectedProductIds);
     try {
       const imageSlots: { sortOrder: number; sourceUrl: string }[] = [];
+      setBulkImageProgress(`Uploading ${filledSlots.length} image${filledSlots.length !== 1 ? "s" : ""}…`);
       for (let i = 0; i < filledSlots.length; i++) {
-        setBulkImageProgress(`Uploading image ${i + 1} of ${filledSlots.length}…`);
         const slot = filledSlots[i];
         const formData = new FormData();
         formData.append("image", slot.file!);
