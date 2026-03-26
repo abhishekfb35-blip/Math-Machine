@@ -1184,7 +1184,7 @@ export default function AdminCatalog() {
           const formData = new FormData();
           formData.append("image", slot.file!);
           const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          if (!uploadRes.ok) throw new Error(`Upload failed for product ${i + 1}, position ${slot.sortOrder + 2}`);
+          if (!uploadRes.ok) throw new Error(`Upload failed for product ${i + 1} (Position ${slot.sortOrder + 2})`);
           const { url } = await uploadRes.json();
           imageSlots.push({ sortOrder: slot.sortOrder, imageUrl: url });
         }
