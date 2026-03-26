@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
@@ -1044,6 +1044,41 @@ export default function AdminCatalog() {
       toast({ title: "Image removed" });
     },
   });
+
+  const reorderImagesMutation = useMutation({
+    mutationFn: async ({ productId, imageIds }: { productId: string; imageIds: string[] }) => {
+      await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", editingProduct?.id, "images"] });
+    },
+  });
+
+  const [localImages, setLocalImages] = useState<ProductImage[]>([]);
+  const dragImageIdx = useRef<number | null>(null);
+  const dragOverImageIdx = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (productImages) setLocalImages([...productImages].sort((a, b) => a.sortOrder - b.sortOrder));
+  }, [productImages]);
+
+  const handleImageDragStart = (idx: number) => { dragImageIdx.current = idx; };
+  const handleImageDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    dragOverImageIdx.current = idx;
+  };
+  const handleImageDrop = () => {
+    if (dragImageIdx.current === null || dragOverImageIdx.current === null) return;
+    if (dragImageIdx.current === dragOverImageIdx.current) { dragImageIdx.current = null; dragOverImageIdx.current = null; return; }
+    const updated = [...localImages];
+    const [moved] = updated.splice(dragImageIdx.current, 1);
+    updated.splice(dragOverImageIdx.current, 0, moved);
+    dragImageIdx.current = null;
+    dragOverImageIdx.current = null;
+    setLocalImages(updated);
+    if (editingProduct?.id) reorderImagesMutation.mutate({ productId: editingProduct.id, imageIds: updated.map(i => i.id) });
+  };
+  const handleImageDragEnd = () => { dragImageIdx.current = null; dragOverImageIdx.current = null; };
 
   const addReviewMutation = useMutation({
     mutationFn: async ({ productId, review }: { productId: string; review: any }) => {
@@ -2413,9 +2448,21 @@ export default function AdminCatalog() {
                   <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">Main</Badge>
                 </label>
               )}
-              {editingProduct.id && productImages?.map((img) => (
-                <div key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group`} data-testid={`thumbnail-image-${img.id}`}>
-                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
+              {editingProduct.id && localImages.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group cursor-grab active:cursor-grabbing`}
+                  data-testid={`thumbnail-image-${img.id}`}
+                  draggable
+                  onDragStart={() => handleImageDragStart(idx)}
+                  onDragOver={(e) => handleImageDragOver(e, idx)}
+                  onDrop={handleImageDrop}
+                  onDragEnd={handleImageDragEnd}
+                >
+                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md pointer-events-none" />
+                  <div className="absolute top-0.5 left-0.5 bg-black/40 rounded p-0.5 invisible group-hover:visible z-10">
+                    <GripVertical className="w-3 h-3 text-white" />
+                  </div>
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id }); }}
                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-10"
