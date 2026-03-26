@@ -28,10 +28,16 @@ export async function ensurePinkKidsTowelGallery() {
 
     let upserted = 0;
     for (const { id: productId } of productRows) {
-      await db.execute(sql`
-        DELETE FROM product_images
-        WHERE product_id = ${productId} AND sort_order IN (2, 3)
+      type CountRow = { count: string };
+      const uploadedCheck = await db.execute<CountRow>(sql`
+        SELECT COUNT(*) as count FROM product_images
+        WHERE product_id = ${productId} AND image_url LIKE '/uploads/%'
       `);
+      const uploadedRows: CountRow[] = Array.isArray(uploadedCheck)
+        ? uploadedCheck
+        : (uploadedCheck as { rows: CountRow[] }).rows ?? [];
+      const hasUserUploads = parseInt(uploadedRows[0]?.count ?? "0", 10) > 0;
+      if (hasUserUploads) continue;
 
       const now = new Date();
       await db.execute(sql`

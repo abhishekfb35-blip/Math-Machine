@@ -113,7 +113,7 @@ export async function seedDatabase() {
       // Only wipe tables that will be re-inserted. Since children must be wiped
       // before parents (no FK constraints, but logical order), go deepest first.
       if (effective.productTags)    await db.delete(productTags);
-      if (effective.productImages)  await db.delete(productImages);
+      if (changed.productImages)    await db.delete(productImages);
       if (effective.productReviews) await db.delete(productReviews);
       if (effective.products)       await db.delete(products);
       if (effective.categories)     await db.delete(categories);
@@ -210,7 +210,7 @@ export async function seedDatabase() {
             }));
 
           for (let i = 0; i < imgEntries.length; i += BATCH) {
-            await db.insert(productImages).values(imgEntries.slice(i, i + BATCH));
+            await db.insert(productImages).values(imgEntries.slice(i, i + BATCH)).onConflictDoNothing();
           }
           console.log(`[seed] productImages: inserted ${imgEntries.length}`);
         }
