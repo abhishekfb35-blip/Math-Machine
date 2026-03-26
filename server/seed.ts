@@ -4,7 +4,7 @@ import {
   categories, products, siteConfig, productImages, productReviews, tags, productTags,
   currencyRates, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
 } from "@shared/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
 const BATCH = 100;
@@ -113,7 +113,7 @@ export async function seedDatabase() {
       // Only wipe tables that will be re-inserted. Since children must be wiped
       // before parents (no FK constraints, but logical order), go deepest first.
       if (effective.productTags)    await db.delete(productTags);
-      if (changed.productImages)    await db.delete(productImages);
+      if (changed.productImages)    await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
       if (effective.productReviews) await db.delete(productReviews);
       if (effective.products)       await db.delete(products);
       if (effective.categories)     await db.delete(categories);

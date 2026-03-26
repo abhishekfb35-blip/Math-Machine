@@ -15,7 +15,6 @@ import { ensureProductVariantColumns } from "./migrations/product-variant-option
 import { ensureShippingFeeColumn } from "./migrations/add-shipping-fee";
 import { ensureCartCustomerColumns } from "./migrations/add-cart-customer";
 import { ensureReviewCustomerColumn } from "./migrations/add-review-customer";
-import { ensurePinkKidsTowelGallery } from "./migrations/pink-kids-towels-gallery";
 import { initializeExchangeRateService } from "./services/exchangeRateService";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { storage } from "./storage";
@@ -182,7 +181,6 @@ function startAbandonedCartScheduler() {
           await ensureCartCustomerColumns();
           await ensureReviewCustomerColumn();
           await seedDatabase();
-          await ensurePinkKidsTowelGallery();
           await initializeExchangeRateService();
           await ensureSkuNotNull();
           await syncImageReviewIds();
