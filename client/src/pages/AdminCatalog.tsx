@@ -123,7 +123,31 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
 }
 
 
-function ProductImageManager({ productId, onCountLoaded }: { productId: string; onCountLoaded?: (count: number) => void }) {
+function GalleryToggleButton({ productId, isExpanded, onToggle }: { productId: string; isExpanded: boolean; onToggle: () => void }) {
+  const { data: images } = useQuery<ProductImage[]>({
+    queryKey: ["/api/products", productId, "images"],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/${productId}/images`);
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  return (
+    <Button
+      size="sm"
+      variant={isExpanded ? "secondary" : "ghost"}
+      onClick={onToggle}
+      className="gap-1 px-2"
+      data-testid={`button-gallery-${productId}`}
+      title="Manage gallery images"
+    >
+      <Images className="w-4 h-4" />
+      {images !== undefined && <span className="text-xs font-medium">{images.length}</span>}
+    </Button>
+  );
+}
+
+function ProductImageManager({ productId }: { productId: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -143,9 +167,6 @@ function ProductImageManager({ productId, onCountLoaded }: { productId: string; 
     },
   });
 
-  React.useEffect(() => {
-    if (images !== undefined) onCountLoaded?.(images.length);
-  }, [images?.length]);
 
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
   const orderChanged = useMemo(() => {
@@ -226,11 +247,11 @@ function ProductImageManager({ productId, onCountLoaded }: { productId: string; 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.url) {
-        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
         await apiRequest("POST", `/api/admin/products/${productId}/images`, {
           imageUrl: data.url,
           sortOrder: target.sortOrder,
         });
+        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
         queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
         setBrokenImages(prev => { const next = new Set(prev); next.delete(target.id); return next; });
         toast({ title: "Image replaced" });
@@ -719,7 +740,6 @@ export default function AdminCatalog() {
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [expandedGalleryProductId, setExpandedGalleryProductId] = useState<string | null>(null);
-  const [galleryCountMap, setGalleryCountMap] = useState<Record<string, number>>({});
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -1842,19 +1862,11 @@ export default function AdminCatalog() {
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button
-                      size="sm"
-                      variant={expandedGalleryProductId === prod.id ? "secondary" : "ghost"}
-                      onClick={() => setExpandedGalleryProductId(prev => prev === prod.id ? null : prod.id)}
-                      data-testid={`button-gallery-${prod.id}`}
-                      title="Manage gallery images"
-                      className="gap-1 px-2"
-                    >
-                      <Images className="w-4 h-4" />
-                      {galleryCountMap[prod.id] !== undefined && (
-                        <span className="text-xs font-medium">{galleryCountMap[prod.id]}</span>
-                      )}
-                    </Button>
+                    <GalleryToggleButton
+                      productId={prod.id}
+                      isExpanded={expandedGalleryProductId === prod.id}
+                      onToggle={() => setExpandedGalleryProductId(prev => prev === prod.id ? null : prod.id)}
+                    />
                     <Button
                       size="icon"
                       variant="ghost"
@@ -1878,10 +1890,7 @@ export default function AdminCatalog() {
                   </div>
                 </div>
                 {expandedGalleryProductId === prod.id && (
-                  <ProductImageManager
-                    productId={prod.id}
-                    onCountLoaded={(count) => setGalleryCountMap(prev => ({ ...prev, [prod.id]: count }))}
-                  />
+                  <ProductImageManager productId={prod.id} />
                 )}
               </Card>
             ))}
