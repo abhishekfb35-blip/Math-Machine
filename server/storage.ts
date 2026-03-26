@@ -543,14 +543,16 @@ export class DatabaseStorage implements IStorage {
     if (productIds.length === 0 || slots.length === 0) return;
     const sortOrders = slots.map(s => s.sortOrder);
     for (const productId of productIds) {
-      const existing = await db.select().from(productImages)
-        .where(and(eq(productImages.productId, productId), inArray(productImages.sortOrder, sortOrders)));
-      for (const img of existing) {
-        await db.delete(productImages).where(eq(productImages.id, img.id));
-      }
-      for (const slot of slots) {
-        await db.insert(productImages).values({ id: createId(), productId, imageUrl: slot.imageUrl, sortOrder: slot.sortOrder });
-      }
+      await db.transaction(async (tx) => {
+        const existing = await tx.select({ id: productImages.id }).from(productImages)
+          .where(and(eq(productImages.productId, productId), inArray(productImages.sortOrder, sortOrders)));
+        for (const img of existing) {
+          await tx.delete(productImages).where(eq(productImages.id, img.id));
+        }
+        for (const slot of slots) {
+          await tx.insert(productImages).values({ id: createId(), productId, imageUrl: slot.imageUrl, sortOrder: slot.sortOrder });
+        }
+      });
     }
   }
 
