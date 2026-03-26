@@ -1178,18 +1178,18 @@ export default function AdminCatalog() {
     try {
       for (let i = 0; i < productIds.length; i++) {
         const productId = productIds[i];
-        setBulkImageProgress(`Uploading for product ${i + 1} of ${productIds.length}…`);
+        setBulkImageProgress(`Applying to product ${i + 1} of ${productIds.length}…`);
         const imageSlots: { sortOrder: number; imageUrl: string }[] = [];
         for (const slot of filledSlots) {
           const formData = new FormData();
           formData.append("image", slot.file!);
           const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          if (!uploadRes.ok) throw new Error(`Upload failed for product ${i + 1} (Position ${slot.sortOrder + 2})`);
+          if (!uploadRes.ok) throw new Error(`Image upload failed at product ${i + 1} of ${productIds.length}`);
           const { url } = await uploadRes.json();
           imageSlots.push({ sortOrder: slot.sortOrder, imageUrl: url });
         }
         const res = await apiRequest("POST", "/api/admin/products/bulk-upload-images", { productIds: [productId], imageSlots });
-        if (!res.ok) throw new Error(`Apply failed for product ${i + 1}`);
+        if (!res.ok) throw new Error(`Failed to save images for product ${i + 1} of ${productIds.length}`);
         applied++;
       }
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -1199,7 +1199,11 @@ export default function AdminCatalog() {
       closeBulkImageDialog();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed";
-      toast({ title: msg, variant: "destructive" });
+      const partialNote = applied > 0 ? ` (${applied} of ${productIds.length} already applied)` : "";
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      productIds.slice(0, applied).forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
+      toast({ title: `${msg}${partialNote}`, variant: "destructive" });
       setBulkImageProgress(null);
     }
   };
