@@ -1080,6 +1080,21 @@ export default function AdminCatalog() {
   };
   const handleImageDragEnd = () => { dragImageIdx.current = null; dragOverImageIdx.current = null; };
 
+  const handleReplaceGalleryImage = async (imageId: string, sortOrder: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !editingProduct?.id) return;
+    const formData = new FormData();
+    formData.append("image", file);
+    const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!uploadRes.ok) { toast({ title: "Upload failed", variant: "destructive" }); return; }
+    const { url } = await uploadRes.json();
+    await apiRequest("POST", `/api/admin/products/${editingProduct.id}/images`, { imageUrl: url, sortOrder, isPrimary: false });
+    await apiRequest("DELETE", `/api/admin/products/${editingProduct.id}/images/${imageId}`);
+    queryClient.invalidateQueries({ queryKey: ["/api/products", editingProduct.id, "images"] });
+    toast({ title: "Image replaced" });
+  };
+
   const addReviewMutation = useMutation({
     mutationFn: async ({ productId, review }: { productId: string; review: any }) => {
       const res = await apiRequest("POST", `/api/admin/products/${productId}/reviews`, review);
@@ -2458,16 +2473,24 @@ export default function AdminCatalog() {
                   onDragEnd={handleImageDragEnd}
                 >
                   <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md pointer-events-none" />
-                  <div className="absolute top-0.5 left-0.5 bg-black/40 rounded p-0.5 invisible group-hover:visible z-10">
+                  {/* drag handle — always visible, brighter on hover */}
+                  <div className="absolute top-0.5 left-0.5 bg-black/40 rounded p-0.5 opacity-50 group-hover:opacity-100 z-10 pointer-events-none">
                     <GripVertical className="w-3 h-3 text-white" />
                   </div>
+                  {/* click-to-replace overlay */}
+                  <label className="absolute inset-0 rounded-md bg-black/40 flex items-center justify-center invisible group-hover:visible cursor-pointer z-10">
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleReplaceGalleryImage(img.id, img.sortOrder, e)} />
+                    <Upload className="w-4 h-4 text-white" />
+                  </label>
+                  {/* delete button — above replace overlay */}
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id }); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-10"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-20"
                     data-testid={`button-delete-image-${img.id}`}
                   >
                     <X className="w-3 h-3" />
                   </button>
+                  <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">{idx + 2}</Badge>
                 </div>
               ))}
               <label className={`${THUMBNAIL_SIZES.adminEditor} rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate`} data-testid="button-upload-image">
