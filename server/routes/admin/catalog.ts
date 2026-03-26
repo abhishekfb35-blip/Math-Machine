@@ -280,7 +280,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       const { productIds, imageSlots } = z.object({
         productIds: z.array(z.string()).min(1),
         imageSlots: z.array(z.object({
-          sortOrder: z.number().int().min(2),
+          sortOrder: z.number().int().min(0),
           imageUrl: z.string().min(1),
         })).min(1),
       }).parse(req.body);

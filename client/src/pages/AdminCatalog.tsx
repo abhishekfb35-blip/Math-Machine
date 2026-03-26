@@ -1138,7 +1138,7 @@ export default function AdminCatalog() {
   };
 
   const openBulkImageDialog = () => {
-    setBulkImageSlots([{ slotId: `slot-${Date.now()}`, file: null, previewUrl: null, sortOrder: 2 }]);
+    setBulkImageSlots([{ slotId: `slot-${Date.now()}`, file: null, previewUrl: null, sortOrder: 0 }]);
     setBulkImageProgress(null);
     setBulkImageDialogOpen(true);
   };
@@ -1151,7 +1151,7 @@ export default function AdminCatalog() {
   };
 
   const addBulkImageSlot = () => {
-    const maxOrder = bulkImageSlots.reduce((m, s) => Math.max(m, s.sortOrder), 1);
+    const maxOrder = bulkImageSlots.reduce((m, s) => Math.max(m, s.sortOrder), -1);
     setBulkImageSlots(prev => [...prev, { slotId: `slot-${Date.now()}`, file: null, previewUrl: null, sortOrder: maxOrder + 1 }]);
   };
 
@@ -2064,7 +2064,7 @@ export default function AdminCatalog() {
             {bulkImageSlots.map((slot, idx) => (
               <div key={slot.slotId} className="flex items-center gap-3" data-testid={`bulk-image-slot-${idx}`}>
                 <div className="text-xs font-medium text-muted-foreground w-16 shrink-0">
-                  Position {slot.sortOrder}
+                  Position {slot.sortOrder + 2}
                 </div>
                 <label className="flex-1 cursor-pointer">
                   <div className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${slot.file ? "border-primary/40 bg-muted/30" : "border-dashed"}`}>
