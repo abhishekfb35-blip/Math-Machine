@@ -1344,4 +1344,90 @@ export function registerAdminHealthRoutes(app: Express) {
       res.status(500).json({ message: err.message || "Force re-seed failed" });
     }
   });
+
+  // ── Export current DB catalog → seed-data.json ────────────────────────────
+  app.post("/api/admin/export/seed", requireAdmin, async (_req, res) => {
+    try {
+      const { pool } = await import("../../db");
+      const seedPath = path.resolve(process.cwd(), "server", "seed-data.json");
+
+      // Read the existing seed-data.json to preserve non-catalog sections
+      const existing = JSON.parse(fs.readFileSync(seedPath, "utf-8"));
+
+      // Export categories
+      const catsResult = await pool.query(
+        `SELECT id, name, slug, description, image_url AS "imageUrl", sort_order AS "sortOrder"
+         FROM categories ORDER BY sort_order`
+      );
+
+      // Export tags
+      const tagsResult = await pool.query(
+        `SELECT id, name, description FROM tags ORDER BY name`
+      );
+
+      // Export products (with categorySlug via JOIN)
+      const prodsResult = await pool.query(
+        `SELECT p.id, p.sku, p.name, p.slug, p.description,
+                p.price, p.mrp, p.image_url AS "imageUrl",
+                c.slug AS "categorySlug",
+                p.amazon_asin AS "amazonAsin",
+                p.color, p.material, p.gsm, p.dimensions,
+                p.weight_grams AS "weightGrams",
+                p.items_in_set AS "itemsInSet",
+                p.special_features AS "specialFeatures",
+                p.bullet_points AS "bulletPoints",
+                p.search_keywords AS "searchKeywords",
+                p.product_type AS "productType",
+                p.audience, p.active, p.sort_order AS "sortOrder"
+         FROM products p
+         JOIN categories c ON c.id = p.category_id
+         ORDER BY p.sort_order, p.id`
+      );
+
+      // Export product_images — static files only, not user uploads
+      const imgsResult = await pool.query(
+        `SELECT pi.id, p.slug AS "productSlug", pi.image_url AS "imageUrl",
+                pi.sort_order AS "sortOrder", pi.is_primary AS "isPrimary"
+         FROM product_images pi
+         JOIN products p ON p.id = pi.product_id
+         WHERE pi.image_url LIKE '/images/products/%'
+         ORDER BY p.slug, pi.sort_order`
+      );
+
+      // Export product_tags (with productSlug + tagName via JOINs)
+      const ptagsResult = await pool.query(
+        `SELECT pt.id, p.slug AS "productSlug", t.name AS "tagName"
+         FROM product_tags pt
+         JOIN products p ON p.id = pt.product_id
+         JOIN tags t ON t.id = pt.tag_id
+         ORDER BY p.slug, t.name`
+      );
+
+      const updated = {
+        ...existing,
+        categories:    catsResult.rows,
+        tags:          tagsResult.rows,
+        products:      prodsResult.rows,
+        productImages: imgsResult.rows,
+        productTags:   ptagsResult.rows,
+      };
+
+      fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
+
+      res.json({
+        success: true,
+        exported: {
+          categories:    catsResult.rowCount,
+          tags:          tagsResult.rowCount,
+          products:      prodsResult.rowCount,
+          productImages: imgsResult.rowCount,
+          productTags:   ptagsResult.rowCount,
+        },
+        message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
+      });
+    } catch (err: any) {
+      console.error("export-seed error:", err.message);
+      res.status(500).json({ message: err.message || "Failed to export seed" });
+    }
+  });
 }

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronLeft, Download, Database, FileSpreadsheet, Loader2 } from "lucide-react";
+import { ChevronLeft, Download, Database, FileSpreadsheet, Loader2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface TableCounts {
   tables: Record<string, number>;
@@ -20,13 +21,43 @@ function downloadFile(url: string, fallbackName: string) {
   document.body.removeChild(a);
 }
 
+interface SeedExportResult {
+  success: boolean;
+  exported: Record<string, number>;
+  message: string;
+}
+
 export default function AdminExport() {
   const { toast } = useToast();
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [seedExporting, setSeedExporting] = useState(false);
+  const [lastSeedResult, setLastSeedResult] = useState<SeedExportResult | null>(null);
 
   const { data, isLoading } = useQuery<TableCounts>({
     queryKey: ["/api/admin/export/tables"],
   });
+
+  const handleExportSeed = async () => {
+    setSeedExporting(true);
+    setLastSeedResult(null);
+    try {
+      const res = await apiRequest("POST", "/api/admin/export/seed");
+      const result = await res.json() as SeedExportResult;
+      setLastSeedResult(result);
+      toast({
+        title: "Catalog exported to seed",
+        description: `${result.exported.products} products, ${result.exported.productImages} images synced.`,
+      });
+    } catch {
+      toast({
+        title: "Export failed",
+        description: "Could not export catalog to seed. Check server logs.",
+        variant: "destructive",
+      });
+    } finally {
+      setSeedExporting(false);
+    }
+  };
 
   const handleDownloadSQL = async () => {
     setDownloading("sql");
@@ -98,6 +129,47 @@ export default function AdminExport() {
           </div>
         </div>
       </div>
+
+      {/* Export Catalog to Seed */}
+      <Card className="p-6 mb-4 border-primary/30 bg-primary/5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-start gap-3">
+            <RefreshCw className="w-8 h-8 text-primary mt-0.5" />
+            <div>
+              <h2 className="font-semibold text-lg">Export Catalog to Seed</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Snapshot the current catalog (products, images, categories, tags) from this database
+                into <code className="text-xs bg-muted px-1 py-0.5 rounded">seed-data.json</code>.
+                Run this after making catalog changes in dev so the next production deployment
+                picks them up automatically.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Only static product images (<code className="text-xs">/images/products/</code>) are included — user-uploaded files are excluded.
+              </p>
+              {lastSeedResult && (
+                <div className="flex items-center gap-2 mt-3 text-sm text-green-700 dark:text-green-400">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>
+                    Exported: {lastSeedResult.exported.products} products &middot; {lastSeedResult.exported.productImages} images &middot; {lastSeedResult.exported.categories} categories &middot; {lastSeedResult.exported.productTags} tags
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <Button
+            onClick={handleExportSeed}
+            disabled={seedExporting}
+            data-testid="button-export-seed"
+          >
+            {seedExporting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            {seedExporting ? "Exporting…" : "Export to Seed"}
+          </Button>
+        </div>
+      </Card>
 
       <Card className="p-6 mb-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
