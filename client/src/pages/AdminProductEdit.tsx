@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
-  ChevronLeft, Image as ImageIcon, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, Plus, Trash2,
+  ChevronLeft, ChevronRight, Image as ImageIcon, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, Plus, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -146,6 +146,29 @@ export default function AdminProductEdit() {
       toast({ title: "Image removed" });
     },
   });
+
+  const reorderImagesMutation = useMutation({
+    mutationFn: async (imageIds: string[]) => {
+      await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+    },
+  });
+
+  const [localImages, setLocalImages] = useState<ProductImage[]>([]);
+  useEffect(() => {
+    if (productImages) setLocalImages([...productImages].sort((a, b) => a.sortOrder - b.sortOrder));
+  }, [productImages]);
+
+  const moveGalleryImage = (idx: number, direction: -1 | 1) => {
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= localImages.length) return;
+    const updated = [...localImages];
+    [updated[idx], updated[targetIdx]] = [updated[targetIdx], updated[idx]];
+    setLocalImages(updated);
+    reorderImagesMutation.mutate(updated.map(i => i.id));
+  };
 
   const addReviewMutation = useMutation({
     mutationFn: async ({ review }: { review: any }) => {
@@ -301,16 +324,31 @@ export default function AdminProductEdit() {
                 <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">Main</Badge>
               </label>
             )}
-            {productImages?.map((img) => (
+            {localImages.map((img, idx) => (
               <div key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group`} data-testid={`thumbnail-image-${img.id}`}>
                 <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
+                {/* arrow reorder overlay */}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 rounded-md z-10">
+                  {idx > 0 && (
+                    <button onClick={() => moveGalleryImage(idx, -1)} className="text-white hover:text-blue-300 p-0" data-testid={`button-move-left-${img.id}`}>
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  {idx < localImages.length - 1 && (
+                    <button onClick={() => moveGalleryImage(idx, 1)} className="text-white hover:text-blue-300 p-0" data-testid={`button-move-right-${img.id}`}>
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+                {/* delete button — above arrow overlay */}
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ imageId: img.id }); }}
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-10"
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
                   data-testid={`button-delete-image-${img.id}`}
                 >
                   <X className="w-3 h-3" />
                 </button>
+                <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">{idx + 2}</Badge>
               </div>
             ))}
             <label className={`${THUMBNAIL_SIZES.adminEditor} rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate`} data-testid="button-upload-image">
