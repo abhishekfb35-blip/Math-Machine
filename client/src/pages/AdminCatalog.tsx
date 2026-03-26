@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
-  Image as ImageIcon, Images, X, Upload, Eye, EyeOff, GripVertical, Star, Tag as TagIcon, ArrowRightLeft, Search,
+  Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
   Loader2, Undo2, Save, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -1055,44 +1055,18 @@ export default function AdminCatalog() {
   });
 
   const [localImages, setLocalImages] = useState<ProductImage[]>([]);
-  const dragImageIdx = useRef<number | null>(null);
-  const dragOverImageIdx = useRef<number | null>(null);
 
   useEffect(() => {
     if (productImages) setLocalImages([...productImages].sort((a, b) => a.sortOrder - b.sortOrder));
   }, [productImages]);
 
-  const handleImageDragStart = (idx: number) => { dragImageIdx.current = idx; };
-  const handleImageDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    dragOverImageIdx.current = idx;
-  };
-  const handleImageDrop = () => {
-    if (dragImageIdx.current === null || dragOverImageIdx.current === null) return;
-    if (dragImageIdx.current === dragOverImageIdx.current) { dragImageIdx.current = null; dragOverImageIdx.current = null; return; }
+  const moveGalleryImage = (idx: number, direction: -1 | 1) => {
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= localImages.length) return;
     const updated = [...localImages];
-    const [moved] = updated.splice(dragImageIdx.current, 1);
-    updated.splice(dragOverImageIdx.current, 0, moved);
-    dragImageIdx.current = null;
-    dragOverImageIdx.current = null;
+    [updated[idx], updated[targetIdx]] = [updated[targetIdx], updated[idx]];
     setLocalImages(updated);
     if (editingProduct?.id) reorderImagesMutation.mutate({ productId: editingProduct.id, imageIds: updated.map(i => i.id) });
-  };
-  const handleImageDragEnd = () => { dragImageIdx.current = null; dragOverImageIdx.current = null; };
-
-  const handleReplaceGalleryImage = async (imageId: string, sortOrder: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !editingProduct?.id) return;
-    const formData = new FormData();
-    formData.append("image", file);
-    const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-    if (!uploadRes.ok) { toast({ title: "Upload failed", variant: "destructive" }); return; }
-    const { url } = await uploadRes.json();
-    await apiRequest("POST", `/api/admin/products/${editingProduct.id}/images`, { imageUrl: url, sortOrder, isPrimary: false });
-    await apiRequest("DELETE", `/api/admin/products/${editingProduct.id}/images/${imageId}`);
-    queryClient.invalidateQueries({ queryKey: ["/api/products", editingProduct.id, "images"] });
-    toast({ title: "Image replaced" });
   };
 
   const addReviewMutation = useMutation({
@@ -2464,28 +2438,35 @@ export default function AdminCatalog() {
               {editingProduct.id && localImages.map((img, idx) => (
                 <div
                   key={img.id}
-                  className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group cursor-grab active:cursor-grabbing`}
+                  className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group`}
                   data-testid={`thumbnail-image-${img.id}`}
-                  draggable
-                  onDragStart={() => handleImageDragStart(idx)}
-                  onDragOver={(e) => handleImageDragOver(e, idx)}
-                  onDrop={handleImageDrop}
-                  onDragEnd={handleImageDragEnd}
                 >
-                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md pointer-events-none" />
-                  {/* drag handle — always visible, brighter on hover */}
-                  <div className="absolute top-0.5 left-0.5 bg-black/40 rounded p-0.5 opacity-50 group-hover:opacity-100 z-10 pointer-events-none">
-                    <GripVertical className="w-3 h-3 text-white" />
+                  <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
+                  {/* arrow reorder overlay */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 rounded-md z-10">
+                    {idx > 0 && (
+                      <button
+                        onClick={() => moveGalleryImage(idx, -1)}
+                        className="text-white hover:text-blue-300 p-0"
+                        data-testid={`button-move-left-${img.id}`}
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    )}
+                    {idx < localImages.length - 1 && (
+                      <button
+                        onClick={() => moveGalleryImage(idx, 1)}
+                        className="text-white hover:text-blue-300 p-0"
+                        data-testid={`button-move-right-${img.id}`}
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
-                  {/* click-to-replace overlay */}
-                  <label className="absolute inset-0 rounded-md bg-black/40 flex items-center justify-center invisible group-hover:visible cursor-pointer z-10">
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleReplaceGalleryImage(img.id, img.sortOrder, e)} />
-                    <Upload className="w-4 h-4 text-white" />
-                  </label>
-                  {/* delete button — above replace overlay */}
+                  {/* delete button — above arrow overlay */}
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ productId: editingProduct.id!, imageId: img.id }); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center invisible group-hover:visible z-20"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
                     data-testid={`button-delete-image-${img.id}`}
                   >
                     <X className="w-3 h-3" />
