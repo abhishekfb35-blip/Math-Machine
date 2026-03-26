@@ -2060,7 +2060,12 @@ export default function AdminCatalog() {
 
       {/* Bulk Image Upload Dialog */}
       <Dialog open={bulkImageDialogOpen} onOpenChange={(open) => { if (!open) closeBulkImageDialog(); }}>
-        <DialogContent className="max-w-md" data-testid="dialog-bulk-upload-images">
+        <DialogContent
+          className="max-w-md"
+          data-testid="dialog-bulk-upload-images"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Upload Gallery Images for {selectedProductIds.size} Product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
             <DialogDescription>
