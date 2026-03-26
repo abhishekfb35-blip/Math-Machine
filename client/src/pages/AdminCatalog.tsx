@@ -1619,7 +1619,7 @@ export default function AdminCatalog() {
                   data-testid="button-bulk-upload-images"
                 >
                   <Images className="w-4 h-4 mr-1" />
-                  Images {selectedProductIds.size}
+                  Bulk Upload Images
                 </Button>
                 <Button
                   size="sm"
@@ -2105,7 +2105,7 @@ export default function AdminCatalog() {
               data-testid="button-add-image-slot"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
-              Add another position
+              Add another slot
             </Button>
 
             {bulkImageProgress && (
