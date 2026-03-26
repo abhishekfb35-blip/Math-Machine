@@ -132,11 +132,14 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const replaceFileInputRef = React.useRef<HTMLInputElement>(null);
+  const replacingImageRef = React.useRef<{ id: string; sortOrder: number | null } | null>(null);
 
-  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
 
   const { data: images, isLoading } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", productId, "images"],
@@ -149,12 +152,10 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
   const orderChanged = useMemo(() => {
     if (!localOrder) return false;
-    const activeServerIds = serverIds.filter(id => !pendingDeletes.has(id));
-    const activeLocalIds = localOrder.filter(id => !pendingDeletes.has(id));
-    return JSON.stringify(activeServerIds) !== JSON.stringify(activeLocalIds);
-  }, [localOrder, serverIds, pendingDeletes]);
+    return JSON.stringify(serverIds) !== JSON.stringify(localOrder);
+  }, [localOrder, serverIds]);
 
-  const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || orderChanged;
+  const hasPendingChanges = pendingAdds.length > 0 || orderChanged;
 
   const displayItems = useMemo(() => {
     const existingImages = images || [];
@@ -165,7 +166,7 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
       type: "main" as const,
       id: "main",
       imageUrl: mainImageUrl,
-      isDeleted: false,
+      sortOrder: null as number | null,
     }] : [];
     return [
       ...mainItem,
@@ -173,27 +174,28 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
         type: "existing" as const,
         id: img.id,
         imageUrl: img.imageUrl,
-        isDeleted: pendingDeletes.has(img.id),
+        sortOrder: img.sortOrder,
       })),
       ...pendingAdds.map(add => ({
         type: "new" as const,
         id: add.tempId,
         imageUrl: add.imageUrl,
-        isDeleted: false,
+        sortOrder: add.sortOrder as number | null,
       })),
     ];
-  }, [images, localOrder, pendingDeletes, pendingAdds, mainImageUrl]);
+  }, [images, localOrder, pendingAdds, mainImageUrl]);
 
-  const markForDelete = (id: string) => {
-    setPendingDeletes(prev => new Set(prev).add(id));
-  };
-
-  const undoDelete = (id: string) => {
-    setPendingDeletes(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+  const handleImmediateDelete = async (imageId: string) => {
+    setDeleting(imageId);
+    try {
+      await apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      setBrokenImages(prev => { const next = new Set(prev); next.delete(imageId); return next; });
+      if (localOrder) setLocalOrder(prev => prev ? prev.filter(id => id !== imageId) : null);
+    } catch {
+      toast({ title: "Failed to delete image", variant: "destructive" });
+    }
+    setDeleting(null);
   };
 
   const removeNewImage = (tempId: string) => {
@@ -227,20 +229,46 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
     }
     setUploading(false);
     if (uploaded > 0) {
-      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged for save` });
+      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged — click Save` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleReplaceSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const target = replacingImageRef.current;
+    if (!file || !target) return;
+    if (replaceFileInputRef.current) replaceFileInputRef.current.value = "";
+    replacingImageRef.current = null;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.url) {
+        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${target.id}`);
+        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+          imageUrl: data.url,
+          sortOrder: target.sortOrder,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+        setBrokenImages(prev => { const next = new Set(prev); next.delete(target.id); return next; });
+        toast({ title: "Image replaced" });
+      }
+    } catch {
+      toast({ title: "Failed to replace image", variant: "destructive" });
+    }
+    setUploading(false);
+  };
+
   const moveImage = (index: number, direction: -1 | 1) => {
-    const activeItems = displayItems.filter(item => !item.isDeleted);
-    const activeIndex = activeItems.findIndex((_, i) => i === index);
-    if (activeIndex < 0) return;
-    const newIndex = activeIndex + direction;
+    const activeItems = displayItems;
+    const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= activeItems.length) return;
 
     const existingOnly = activeItems.filter(item => item.type === "existing");
-    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[activeIndex].id);
+    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[index].id);
     const existingNewIndex = existingOnly.findIndex(item => item.id === activeItems[newIndex].id);
 
     if (existingIndex >= 0 && existingNewIndex >= 0) {
@@ -259,9 +287,6 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   const handleSave = async () => {
     setSaving(true);
     try {
-      for (const id of pendingDeletes) {
-        await apiRequest("DELETE", `/api/admin/products/${productId}/images/${id}`);
-      }
       for (const add of pendingAdds) {
         await apiRequest("POST", `/api/admin/products/${productId}/images`, {
           imageUrl: add.imageUrl,
@@ -269,10 +294,8 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
         });
       }
       if (orderChanged && localOrder) {
-        const activeOrder = localOrder.filter(id => !pendingDeletes.has(id));
-        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: activeOrder });
+        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: localOrder });
       }
-      setPendingDeletes(new Set());
       setPendingAdds([]);
       setLocalOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
@@ -284,80 +307,90 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
   };
 
   const handleReset = () => {
-    setPendingDeletes(new Set());
     setPendingAdds([]);
     setLocalOrder(null);
   };
-
-  const activeItems = displayItems.filter(item => !item.isDeleted);
-  const deletedItems = displayItems.filter(item => item.isDeleted);
 
   return (
     <div className="mt-2" data-testid={`image-manager-${productId}`}>
       <div className="flex items-center gap-1 flex-wrap">
         {isLoading && <Skeleton className="w-10 h-10 rounded" />}
-        {activeItems.map((item, idx) => (
-          <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
-            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "main" ? "border-2 border-primary/40" : item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
-              <img
-                src={getProductImageUrl(item.imageUrl, "small")}
-                alt=""
-                className="w-full h-full object-contain"
-              />
-            </div>
-            {item.type !== "main" && (
-              <button
-                onClick={() => item.type === "existing" ? markForDelete(item.id) : removeNewImage(item.id)}
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                data-testid={`button-delete-image-${item.id}`}
+        {displayItems.map((item, idx) => {
+          const isBroken = brokenImages.has(item.id);
+          const isDeleting = deleting === item.id;
+          return (
+            <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
+              <div
+                className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted relative
+                  ${item.type === "main" ? "border-2 border-primary/40" : ""}
+                  ${item.type === "new" ? "ring-2 ring-green-500" : ""}
+                  ${isBroken ? "border-2 border-destructive" : ""}
+                  ${item.type === "existing" ? "cursor-pointer" : ""}
+                `}
+                onClick={() => {
+                  if (item.type !== "existing") return;
+                  replacingImageRef.current = { id: item.id, sortOrder: item.sortOrder };
+                  replaceFileInputRef.current?.click();
+                }}
+                title={item.type === "existing" ? "Click to replace image" : undefined}
               >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            )}
-            {item.type === "existing" && (
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
-                {idx > 0 && activeItems[idx - 1]?.type === "existing" && (
-                  <button
-                    onClick={() => moveImage(idx, -1)}
-                    className="text-white hover:text-blue-300 p-0"
-                    data-testid={`button-move-left-${item.id}`}
-                  >
-                    <ChevronLeft className="w-3 h-3" />
-                  </button>
+                <img
+                  src={getProductImageUrl(item.imageUrl, "small")}
+                  alt=""
+                  className="w-full h-full object-contain"
+                  onError={() => setBrokenImages(prev => new Set(prev).add(item.id))}
+                />
+                {isBroken && (
+                  <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center">
+                    <ImageIcon className="w-3 h-3 text-destructive" />
+                  </div>
                 )}
-                {idx < activeItems.length - 1 && activeItems[idx + 1]?.type === "existing" && (
-                  <button
-                    onClick={() => moveImage(idx, 1)}
-                    className="text-white hover:text-blue-300 p-0"
-                    data-testid={`button-move-right-${item.id}`}
-                  >
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
+                {item.type === "existing" && !isBroken && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Upload className="w-3 h-3 text-white" />
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-        ))}
-        {deletedItems.map(item => (
-          <div key={item.id} className="relative" data-testid={`image-thumb-deleted-${item.id}`}>
-            <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted opacity-30`}>
-              <img
-                src={getProductImageUrl(item.imageUrl, "small")}
-                alt=""
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute inset-0 bg-red-500/20" />
+              {item.type !== "main" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (item.type === "existing") handleImmediateDelete(item.id);
+                    else removeNewImage(item.id);
+                  }}
+                  disabled={isDeleting}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  data-testid={`button-delete-image-${item.id}`}
+                  title="Delete image"
+                >
+                  {isDeleting ? <Loader2 className="w-2 h-2 animate-spin" /> : <X className="w-2.5 h-2.5" />}
+                </button>
+              )}
+              {item.type === "existing" && (
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pb-0.5">
+                  {idx > 0 && displayItems[idx - 1]?.type === "existing" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); moveImage(idx, -1); }}
+                      className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                      data-testid={`button-move-left-${item.id}`}
+                    >
+                      <ChevronLeft className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                  {idx < displayItems.length - 1 && displayItems[idx + 1]?.type === "existing" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); moveImage(idx, 1); }}
+                      className="w-3.5 h-3.5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                      data-testid={`button-move-right-${item.id}`}
+                    >
+                      <ChevronRight className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => undoDelete(item.id)}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center z-10"
-              data-testid={`button-undo-delete-${item.id}`}
-              title="Undo delete"
-            >
-              <Undo2 className="w-2.5 h-2.5" />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         <input
           ref={fileInputRef}
           type="file"
@@ -366,6 +399,14 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
           className="hidden"
           onChange={handleFileSelect}
           data-testid={`input-upload-images-${productId}`}
+        />
+        <input
+          ref={replaceFileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleReplaceSelect}
+          data-testid={`input-replace-image-${productId}`}
         />
         <Button
           size="sm"
