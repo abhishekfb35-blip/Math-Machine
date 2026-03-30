@@ -37,6 +37,7 @@ export interface IStorage {
   getAllProducts(): Promise<Product[]>;
   getProductsByCategory(categoryId: string): Promise<Product[]>;
   getAllProductsByCategory(categoryId: string): Promise<Product[]>;
+  getAllProductsByCategoryAdmin(categoryId: string): Promise<Product[]>;
   searchProducts(query: string): Promise<Product[]>;
   searchAllProducts(query: string): Promise<Product[]>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
@@ -239,6 +240,64 @@ export class DatabaseStorage implements IStorage {
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder, products.name);
     return this.withEnriched(prods);
+  }
+
+  async getAllProductsByCategoryAdmin(categoryId: string): Promise<Product[]> {
+    const prods = await db.select().from(products)
+      .where(eq(products.categoryId, categoryId))
+      .orderBy(products.sortOrder, products.name);
+    if (prods.length === 0) return [];
+    const ids = prods.map(p => p.id);
+
+    const [reviewStats, tagRows, imageRows] = await Promise.all([
+      db.select({
+        productId: productReviews.productId,
+        reviewCount: sql<number>`count(*)::int`,
+        averageRating: sql<number>`round(avg(${productReviews.rating})::numeric, 1)`,
+      }).from(productReviews)
+        .where(inArray(productReviews.productId, ids))
+        .groupBy(productReviews.productId),
+
+      db.select({
+        productId: productTags.productId,
+        tagId: productTags.tagId,
+        tagName: tags.name,
+      }).from(productTags)
+        .innerJoin(tags, eq(productTags.tagId, tags.id))
+        .where(inArray(productTags.productId, ids)),
+
+      db.select().from(productImages)
+        .where(inArray(productImages.productId, ids))
+        .orderBy(productImages.sortOrder),
+    ]);
+
+    const reviewMap = new Map(reviewStats.map(s => [s.productId, s]));
+    const tagNameMap = new Map<string, string[]>();
+    const tagIdMap = new Map<string, string[]>();
+    const imageMap = new Map<string, typeof imageRows>();
+
+    for (const row of tagRows) {
+      if (!tagNameMap.has(row.productId)) tagNameMap.set(row.productId, []);
+      tagNameMap.get(row.productId)!.push(row.tagName);
+      if (!tagIdMap.has(row.productId)) tagIdMap.set(row.productId, []);
+      tagIdMap.get(row.productId)!.push(row.tagId);
+    }
+    for (const img of imageRows) {
+      if (!imageMap.has(img.productId)) imageMap.set(img.productId, []);
+      imageMap.get(img.productId)!.push(img);
+    }
+
+    return prods.map(p => {
+      const stats = reviewMap.get(p.id);
+      return {
+        ...p,
+        averageRating: stats ? Number(stats.averageRating) : undefined,
+        reviewCount: stats ? Number(stats.reviewCount) : undefined,
+        tagNames: tagNameMap.get(p.id) ?? [],
+        tagIds: tagIdMap.get(p.id) ?? [],
+        galleryImages: imageMap.get(p.id) ?? [],
+      };
+    });
   }
 
   async searchProducts(query: string): Promise<Product[]> {

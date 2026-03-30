@@ -78,7 +78,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.get("/api/admin/products/category/:categoryId", requireAdmin, async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
-    const prods = await storage.getAllProductsByCategory(categoryId);
+    const prods = await storage.getAllProductsByCategoryAdmin(categoryId);
     res.json(prods);
   });
 

@@ -125,7 +125,7 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
+function ProductImageManager({ productId, mainImageUrl, initialImages }: { productId: string; mainImageUrl?: string; initialImages?: ProductImage[] }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -141,6 +141,8 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
       const res = await fetch(`/api/products/${productId}/images`);
       return res.json();
     },
+    initialData: initialImages,
+    staleTime: initialImages ? Infinity : 0,
   });
 
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
@@ -774,15 +776,6 @@ export default function AdminCatalog() {
     enabled: !!selectedCategory,
   });
 
-  const { data: productTagMap } = useQuery<Record<string, string[]>>({
-    queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"],
-    queryFn: async () => {
-      if (!selectedCategory) return {};
-      const res = await fetch(`/api/admin/categories/${selectedCategory.id}/product-tags`);
-      return res.json();
-    },
-    enabled: !!selectedCategory,
-  });
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -1584,8 +1577,7 @@ export default function AdminCatalog() {
         if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
       }
       if (tagFilter !== "all") {
-        const productTagIds = productTagMap?.[p.id] || [];
-        if (!productTagIds.includes(tagFilter)) return false;
+        if (!p.tagIds?.includes(tagFilter)) return false;
       }
       return true;
     }) || [];
@@ -1623,7 +1615,7 @@ export default function AdminCatalog() {
                     const fullSet = new Set<string>();
                     const partialSet = new Set<string>();
                     (allTags || []).forEach(tag => {
-                      const count = ids.filter(id => productTagMap?.[id]?.includes(tag.id)).length;
+                      const count = ids.filter(id => products?.find(p => p.id === id)?.tagIds?.includes(tag.id)).length;
                       if (count === ids.length) fullSet.add(tag.id);
                       else if (count > 0) partialSet.add(tag.id);
                     });
@@ -1847,7 +1839,7 @@ export default function AdminCatalog() {
                       )}
                     </p>
                     <div className="mt-1">
-                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} tagIds={productTagMap?.[prod.id] || []} />
+                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} tagIds={prod.tagIds || []} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -1891,7 +1883,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
+                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} initialImages={prod.galleryImages || []} />
               </Card>
             ))}
             {products?.length === 0 && (
@@ -2023,7 +2015,7 @@ export default function AdminCatalog() {
                 const isFullPre = bulkTagInitialFull.has(tag.id) && !isRemoving;
                 const isPartialPre = bulkTagInitialPartial.has(tag.id) && !isRemoving && !isAdding;
                 const isChecked = isFullPre || isPartialPre || isAdding;
-                const tagCount = Array.from(selectedProductIds).filter(pid => (productTagMap?.[pid] || []).includes(tag.id)).length;
+                const tagCount = Array.from(selectedProductIds).filter(pid => products?.find(p => p.id === pid)?.tagIds?.includes(tag.id)).length;
 
                 const handleClick = () => {
                   if (isAdding) {
