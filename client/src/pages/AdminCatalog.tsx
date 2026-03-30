@@ -861,20 +861,6 @@ export default function AdminCatalog() {
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    return products.filter((p) => {
-      if (categoryFilter.trim()) {
-        const q = categoryFilter.trim().toLowerCase();
-        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
-      }
-      if (tagFilter !== "all") {
-        if (!p.tagIds?.includes(tagFilter)) return false;
-      }
-      return true;
-    });
-  }, [products, categoryFilter, tagFilter]);
-
   const { data: productTagsList } = useQuery<Tag[]>({
     queryKey: ["/api/admin/products", editingProduct?.id, "tags"],
     queryFn: async () => {
@@ -1588,6 +1574,16 @@ export default function AdminCatalog() {
 
   // ── Products List View ──
   if (view === "products" && selectedCategory) {
+    const filteredProducts = products?.filter((p) => {
+      if (categoryFilter.trim()) {
+        const q = categoryFilter.trim().toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
+      }
+      if (tagFilter !== "all") {
+        if (!p.tagIds?.includes(tagFilter)) return false;
+      }
+      return true;
+    }) || [];
     const totalFiltered = filteredProducts.length;
     const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
     const safePage = Math.min(currentPage, totalPages || 1);
