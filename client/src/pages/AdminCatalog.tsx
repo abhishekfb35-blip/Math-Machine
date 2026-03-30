@@ -27,10 +27,15 @@ import type { Category, Product, ProductImage, ProductReview, Tag, CategoryTagVa
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
-function ProductTagSelector({ productId, categoryId, allTags }: { productId: string; categoryId: string; allTags: Tag[] }) {
+function ProductTagSelector({ productId, categoryId, allTags, tagIds }: { productId: string; categoryId: string; allTags: Tag[]; tagIds: string[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [localTagIds, setLocalTagIds] = useState<string[]>(tagIds);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLocalTagIds(tagIds);
+  }, [tagIds]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,29 +57,21 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
     };
   }, [open]);
 
-  const { data: productTagsList, isLoading } = useQuery<Tag[]>({
-    queryKey: ["/api/admin/products", productId, "tags"],
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}/tags`);
-      return res.json();
-    },
-    enabled: true,
-  });
-
-  const currentTagIds = productTagsList?.map(t => t.id) || [];
+  const displayedTags = allTags.filter(t => localTagIds.includes(t.id));
 
   const toggleTagMutation = useMutation({
     mutationFn: async (tagId: string) => {
-      const newIds = currentTagIds.includes(tagId)
-        ? currentTagIds.filter(id => id !== tagId)
-        : [...currentTagIds, tagId];
+      const newIds = localTagIds.includes(tagId)
+        ? localTagIds.filter(id => id !== tagId)
+        : [...localTagIds, tagId];
+      setLocalTagIds(newIds);
       await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: newIds });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "product-tags"] });
     },
     onError: () => {
+      setLocalTagIds(tagIds);
       toast({ title: "Failed to update tags", variant: "destructive" });
     },
   });
@@ -82,7 +79,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
   return (
     <div className="relative" ref={containerRef}>
       <div className="flex items-center gap-1 flex-wrap">
-        {productTagsList && productTagsList.length > 0 && productTagsList.map(tag => (
+        {displayedTags.map(tag => (
           <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
             {tag.name}
           </Badge>
@@ -109,7 +106,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
               data-testid={`checkbox-tag-${productId}-${tag.id}`}
             >
               <Checkbox
-                checked={currentTagIds.includes(tag.id)}
+                checked={localTagIds.includes(tag.id)}
                 onCheckedChange={() => toggleTagMutation.mutate(tag.id)}
                 disabled={toggleTagMutation.isPending}
               />
@@ -1850,7 +1847,7 @@ export default function AdminCatalog() {
                       )}
                     </p>
                     <div className="mt-1">
-                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} />
+                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} tagIds={productTagMap?.[prod.id] || []} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
