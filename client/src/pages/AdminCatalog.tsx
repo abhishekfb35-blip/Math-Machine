@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useTransition } from "react";
 import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
@@ -736,9 +736,12 @@ export default function AdminCatalog() {
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setSelectedProductIds(new Set());
+    if (selectedProductIds.size > 0) {
+      setSelectedProductIds(new Set());
+    }
   }, [currentPage, tagFilter, categoryFilter, pageSize]);
 
   const [variantConfigCategoryId, setVariantConfigCategoryId] = useState<string | null>(null);
@@ -1741,7 +1744,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage <= 1}
-              onClick={() => setCurrentPage(safePage - 1)}
+              onClick={() => startTransition(() => setCurrentPage(safePage - 1))}
               data-testid="button-prev-page-top"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -1754,7 +1757,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage >= totalPages}
-              onClick={() => setCurrentPage(safePage + 1)}
+              onClick={() => startTransition(() => setCurrentPage(safePage + 1))}
               data-testid="button-next-page-top"
             >
               <ChevronRight className="w-4 h-4" />
@@ -1765,7 +1768,7 @@ export default function AdminCatalog() {
         {prodsLoading ? (
           <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : (
-          <div className="space-y-2">
+          <div className={`space-y-2 transition-opacity duration-150 ${isPending ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
             <div className="flex items-center gap-2 px-1 py-1">
               <Checkbox
                 checked={allSelected}
@@ -1950,7 +1953,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage <= 1}
-                      onClick={() => setCurrentPage(safePage - 1)}
+                      onClick={() => startTransition(() => setCurrentPage(safePage - 1))}
                       data-testid="button-prev-page"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -1963,7 +1966,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage >= totalPages}
-                      onClick={() => setCurrentPage(safePage + 1)}
+                      onClick={() => startTransition(() => setCurrentPage(safePage + 1))}
                       data-testid="button-next-page"
                     >
                       <ChevronRight className="w-4 h-4" />
