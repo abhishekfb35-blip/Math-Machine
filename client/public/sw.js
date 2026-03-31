@@ -1,4 +1,4 @@
-const CACHE_NAME = 'math-machine-v1';
+const CACHE_NAME = 'turtlelittle-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
