@@ -86,7 +86,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (geo && !getCookie(COOKIE_NAME) && config) {
-      const enabledCodes = config.rules.filter(r => r.enabled).map(r => r.currency);
+      const enabledCodes = (config.rules ?? []).filter(r => r.enabled).map(r => r.currency);
       const detected = (geo.currency === "INR" || enabledCodes.includes(geo.currency))
         ? geo.currency
         : "INR";
@@ -100,20 +100,20 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     setCurrencyState(code);
   }, []);
 
-  const enabledRules = config?.rules.filter(r => r.enabled) ?? [];
+  const enabledRules = (config?.rules ?? []).filter(r => r.enabled);
   const allCurrencies: CurrencyRule[] = [
     { currency: "INR", symbol: "₹", displayName: "Indian Rupee", markupPercent: 0, roundingRule: "nearest", enabled: true },
     ...enabledRules,
   ];
 
-  const currentRule = config?.rules.find(r => r.currency === currency);
+  const currentRule = (config?.rules ?? []).find(r => r.currency === currency);
 
   const convertPrice = useCallback((inrAmount: number): number => {
     if (currency === "INR") return inrAmount;
     if (!config) return inrAmount;
     const rate = config.rates[currency];
     if (!rate) return inrAmount;
-    const rule = config.rules.find(r => r.currency === currency);
+    const rule = (config.rules ?? []).find(r => r.currency === currency);
     if (!rule?.enabled) return inrAmount;
     const markupFactor = 1 + (rule.markupPercent || 0) / 100;
     const raw = inrAmount * rate * markupFactor;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'math-machine-v1';
+const CACHE_NAME = 'turtlelittle-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,13 +36,6 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        new Response(JSON.stringify([]), {
-          headers: { 'Content-Type': 'application/json' },
-        })
-      )
-    );
     return;
   }
 
