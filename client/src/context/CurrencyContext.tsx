@@ -76,6 +76,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { data: config, isLoading: configLoading } = useQuery<CurrencyConfig>({
     queryKey: ["/api/currency/config"],
     staleTime: 6 * 60 * 60 * 1000,
+    select: (raw: unknown): CurrencyConfig => {
+      const d = raw as any;
+      return {
+        rules: Array.isArray(d?.rules) ? d.rules : [],
+        rates: (d?.rates && typeof d.rates === "object" && !Array.isArray(d.rates)) ? d.rates : {},
+      };
+    },
   });
 
   const { data: geo } = useQuery<GeoData>({

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, Component, ReactNode } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -50,6 +50,20 @@ import RefundPolicyPage from "@/pages/RefundPolicyPage";
 import AboutPage from "@/pages/AboutPage";
 import ShippingPolicyPage from "@/pages/ShippingPolicyPage";
 import NotFound from "@/pages/not-found";
+
+class CurrencyBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) {
+    console.warn("[CurrencyBoundary] Currency provider failed, falling back to INR:", error.message);
+  }
+  render() {
+    if (this.state.failed) {
+      return this.props.children;
+    }
+    return <CurrencyProvider>{this.props.children}</CurrencyProvider>;
+  }
+}
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -106,7 +120,7 @@ function App() {
     <HelmetProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <CurrencyProvider>
+        <CurrencyBoundary>
         <TooltipProvider>
           <div className="min-h-screen flex flex-col">
             <AnnouncementBar />
@@ -124,7 +138,7 @@ function App() {
           <ConsentPopup />
           <Toaster />
         </TooltipProvider>
-        </CurrencyProvider>
+        </CurrencyBoundary>
       </QueryClientProvider>
     </ThemeProvider>
     </HelmetProvider>
