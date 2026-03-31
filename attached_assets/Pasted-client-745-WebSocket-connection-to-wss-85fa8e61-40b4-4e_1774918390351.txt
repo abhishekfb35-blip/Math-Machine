@@ -1,0 +1,61 @@
+client:745 WebSocket connection to 'wss://85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.replit.dev/vite-hmr?token=fnVu4pEp6xSm' failed: 
+
+client:755 WebSocket connection to 'wss://localhost:5173/?token=fnVu4pEp6xSm' failed: 
+client:765 [vite] failed to connect to websocket.
+your current setup:
+  (browser) 85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) 85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.replit.dev:/vite-hmr <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+chunk-LPF6KSF2.js?v=9d1734bf:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+CurrencyContext.tsx:103 Uncaught TypeError: Cannot read properties of undefined (reading 'filter')
+    at CurrencyProvider (CurrencyContext.tsx:103:32)
+CurrencyContext.tsx:103 Uncaught TypeError: Cannot read properties of undefined (reading 'filter')
+    at CurrencyProvider (CurrencyContext.tsx:103:32)
+chunk-LPF6KSF2.js?v=9d1734bf:14080 The above error occurred in the <CurrencyProvider> component:
+
+    at CurrencyProvider (https://85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.replit.dev/src/context/CurrencyContext.tsx:53:36)
+    at QueryClientProvider (https://85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.repli…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9d1734bf:2747:3)
+    at ThemeProvider (https://85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.replit.dev/src/components/ThemeProvider.tsx:24:33)
+    at _HelmetProvider (https://85fa8e61-40b4-4e37-991d-7f3305644757-00-37q1v27u85qn8.janeway.repli…r/workspace/node_modules/.vite/deps/react-helmet-async.js?v=9d1734bf:624:5)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+chunk-LPF6KSF2.js?v=9d1734bf:9176 Uncaught TypeError: Cannot read properties of undefined (reading 'filter')
+    at CurrencyProvider (CurrencyContext.tsx:103:32)
+client:809 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+    at HMRClient.send (client:157:18)
+    at HMRContext.send (client:119:18)
+    at sendError ((index):16:7)
+    at (index):20:3
+client:809 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+    at HMRClient.send (client:157:18)
+    at HMRContext.send (client:119:18)
+    at sendError ((index):16:7)
+    at (index):20:3
+client:809 [vite] TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (client:449:7)
+    at Object.send (client:780:16)
+    at Object.send (client:318:23)
+    at Object.send (client:396:30)
+    at HMRClient.send (client:157:18)
+    at HMRContext.send (client:119:18)
+    at sendError ((index):16:7)
+    at (index):20:3
+
+(index):1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+﻿
+
+Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
+ctrl
+i
+ to turn on code suggestions. Don't show again NEW
+
