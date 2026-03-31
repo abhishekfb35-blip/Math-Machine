@@ -13,6 +13,10 @@ export async function setupVite(server: Server, app: Express) {
     middlewareMode: true,
     hmr: { server, path: "/vite-hmr" },
     allowedHosts: true as const,
+    headers: {
+      "Cache-Control": "no-store, max-age=0, must-revalidate",
+      "Pragma": "no-cache",
+    },
   };
 
   const vite = await createViteServer({
