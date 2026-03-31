@@ -52,6 +52,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never cache Vite source modules — they have their own versioning
+  if (url.pathname.startsWith('/src/') || url.pathname.startsWith('/@')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
