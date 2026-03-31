@@ -11,6 +11,9 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(registrations => {
       registrations.forEach(r => r.unregister());
     });
+    if (typeof caches !== 'undefined') {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
   }
 }
 

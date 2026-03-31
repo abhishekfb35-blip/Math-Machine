@@ -48,29 +48,9 @@ export async function setupVite(server: Server, app: Express) {
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      const v = nanoid();
-      // Replace the static module script with one that:
-      // 1. Clears all SW registrations and their caches (awaited, blocking)
-      // 2. Only THEN imports main.tsx (with a unique URL to bypass any remaining cache)
       template = template.replace(
-        `<script type="module" src="/src/main.tsx"></script>`,
-        `<script type="module">
-(async () => {
-  try {
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      if (regs.length > 0) {
-        const cacheKeys = (typeof caches !== 'undefined') ? await caches.keys() : [];
-        await Promise.all([
-          ...regs.map(r => r.unregister()),
-          ...cacheKeys.map(k => caches.delete(k)),
-        ]);
-      }
-    }
-  } catch(e) {}
-  await import('/src/main.tsx?v=${v}');
-})();
-</script>`
+        `src="/src/main.tsx"`,
+        `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
