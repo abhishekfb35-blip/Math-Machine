@@ -6,7 +6,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { CurrencyProvider } from "@/context/CurrencyContext2";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
