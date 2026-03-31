@@ -27,15 +27,10 @@ import type { Category, Product, ProductImage, ProductReview, Tag, CategoryTagVa
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
-function ProductTagSelector({ productId, categoryId, allTags, tagIds }: { productId: string; categoryId: string; allTags: Tag[]; tagIds: string[] }) {
+function ProductTagSelector({ productId, categoryId, allTags }: { productId: string; categoryId: string; allTags: Tag[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [localTagIds, setLocalTagIds] = useState<string[]>(tagIds);
   const containerRef = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setLocalTagIds(tagIds);
-  }, [tagIds]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,21 +52,29 @@ function ProductTagSelector({ productId, categoryId, allTags, tagIds }: { produc
     };
   }, [open]);
 
-  const displayedTags = allTags.filter(t => localTagIds.includes(t.id));
+  const { data: productTagsList, isLoading } = useQuery<Tag[]>({
+    queryKey: ["/api/admin/products", productId, "tags"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/products/${productId}/tags`);
+      return res.json();
+    },
+    enabled: true,
+  });
+
+  const currentTagIds = productTagsList?.map(t => t.id) || [];
 
   const toggleTagMutation = useMutation({
     mutationFn: async (tagId: string) => {
-      const newIds = localTagIds.includes(tagId)
-        ? localTagIds.filter(id => id !== tagId)
-        : [...localTagIds, tagId];
-      setLocalTagIds(newIds);
+      const newIds = currentTagIds.includes(tagId)
+        ? currentTagIds.filter(id => id !== tagId)
+        : [...currentTagIds, tagId];
       await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: newIds });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "product-tags"] });
     },
     onError: () => {
-      setLocalTagIds(tagIds);
       toast({ title: "Failed to update tags", variant: "destructive" });
     },
   });
@@ -79,7 +82,7 @@ function ProductTagSelector({ productId, categoryId, allTags, tagIds }: { produc
   return (
     <div className="relative" ref={containerRef}>
       <div className="flex items-center gap-1 flex-wrap">
-        {displayedTags.map(tag => (
+        {productTagsList && productTagsList.length > 0 && productTagsList.map(tag => (
           <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
             {tag.name}
           </Badge>
@@ -106,7 +109,7 @@ function ProductTagSelector({ productId, categoryId, allTags, tagIds }: { produc
               data-testid={`checkbox-tag-${productId}-${tag.id}`}
             >
               <Checkbox
-                checked={localTagIds.includes(tag.id)}
+                checked={currentTagIds.includes(tag.id)}
                 onCheckedChange={() => toggleTagMutation.mutate(tag.id)}
                 disabled={toggleTagMutation.isPending}
               />
@@ -125,7 +128,7 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId, mainImageUrl, initialImages }: { productId: string; mainImageUrl?: string; initialImages?: ProductImage[] }) {
+function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -141,8 +144,6 @@ function ProductImageManager({ productId, mainImageUrl, initialImages }: { produ
       const res = await fetch(`/api/products/${productId}/images`);
       return res.json();
     },
-    initialData: initialImages,
-    staleTime: initialImages ? Infinity : 0,
   });
 
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
@@ -776,6 +777,15 @@ export default function AdminCatalog() {
     enabled: !!selectedCategory,
   });
 
+  const { data: productTagMap } = useQuery<Record<string, string[]>>({
+    queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"],
+    queryFn: async () => {
+      if (!selectedCategory) return {};
+      const res = await fetch(`/api/admin/categories/${selectedCategory.id}/product-tags`);
+      return res.json();
+    },
+    enabled: !!selectedCategory,
+  });
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -1577,7 +1587,8 @@ export default function AdminCatalog() {
         if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
       }
       if (tagFilter !== "all") {
-        if (!p.tagIds?.includes(tagFilter)) return false;
+        const productTagIds = productTagMap?.[p.id] || [];
+        if (!productTagIds.includes(tagFilter)) return false;
       }
       return true;
     }) || [];
@@ -1615,7 +1626,7 @@ export default function AdminCatalog() {
                     const fullSet = new Set<string>();
                     const partialSet = new Set<string>();
                     (allTags || []).forEach(tag => {
-                      const count = ids.filter(id => products?.find(p => p.id === id)?.tagIds?.includes(tag.id)).length;
+                      const count = ids.filter(id => productTagMap?.[id]?.includes(tag.id)).length;
                       if (count === ids.length) fullSet.add(tag.id);
                       else if (count > 0) partialSet.add(tag.id);
                     });
@@ -1839,7 +1850,7 @@ export default function AdminCatalog() {
                       )}
                     </p>
                     <div className="mt-1">
-                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} tagIds={prod.tagIds || []} />
+                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -1883,7 +1894,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} initialImages={prod.galleryImages || []} />
+                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
               </Card>
             ))}
             {products?.length === 0 && (
@@ -2015,7 +2026,7 @@ export default function AdminCatalog() {
                 const isFullPre = bulkTagInitialFull.has(tag.id) && !isRemoving;
                 const isPartialPre = bulkTagInitialPartial.has(tag.id) && !isRemoving && !isAdding;
                 const isChecked = isFullPre || isPartialPre || isAdding;
-                const tagCount = Array.from(selectedProductIds).filter(pid => products?.find(p => p.id === pid)?.tagIds?.includes(tag.id)).length;
+                const tagCount = Array.from(selectedProductIds).filter(pid => (productTagMap?.[pid] || []).includes(tag.id)).length;
 
                 const handleClick = () => {
                   if (isAdding) {

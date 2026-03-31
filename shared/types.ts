@@ -44,8 +44,6 @@ export interface Product {
   averageRating?: number;
   reviewCount?: number;
   tagNames?: string[];
-  tagIds?: string[];
-  galleryImages?: ProductImage[];
 }
 
 export interface InsertProduct {

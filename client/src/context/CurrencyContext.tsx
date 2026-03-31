@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface CurrencyRule {
   currency: string;
@@ -7,6 +8,16 @@ interface CurrencyRule {
   markupPercent: number;
   roundingRule: string;
   enabled: boolean;
+}
+
+interface CurrencyConfig {
+  rules: CurrencyRule[];
+  rates: Record<string, number>;
+}
+
+interface GeoData {
+  currency: string;
+  country: string;
 }
 
 interface CurrencyContextValue {
@@ -19,14 +30,18 @@ interface CurrencyContextValue {
   isLoading: boolean;
 }
 
-const INR_RULE: CurrencyRule = {
-  currency: "INR",
-  symbol: "₹",
-  displayName: "Indian Rupee",
-  markupPercent: 0,
-  roundingRule: "nearest",
-  enabled: true,
-};
+const COOKIE_NAME = "tl_currency";
+const COOKIE_DAYS = 7;
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function setCookieValue(name: string, value: string, days: number): void {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
 
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: "INR",
@@ -34,28 +49,95 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   setCurrency: () => {},
   convertPrice: (x) => x,
   formatPrice: (x) => `₹${x.toLocaleString("en-IN")}`,
-  availableCurrencies: [INR_RULE],
-  isLoading: false,
+  availableCurrencies: [],
+  isLoading: true,
 });
 
-export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency] = useState<string>("INR");
+function applyRounding(amount: number, rule: string): number {
+  if (rule === "up99") {
+    return Math.floor(amount) + 0.99;
+  }
+  if (rule === "up") return Math.ceil(amount);
+  return Math.round(amount);
+}
 
-  const setCurrency = useCallback((_code: string) => {}, []);
-  const convertPrice = useCallback((inrAmount: number) => inrAmount, []);
-  const formatPrice = useCallback(
-    (inrAmount: number) => `₹${inrAmount.toLocaleString("en-IN")}`,
-    []
-  );
+function formatAmount(amount: number, currencyCode: string, sym: string): string {
+  if (currencyCode === "INR") {
+    return `₹${amount.toLocaleString("en-IN")}`;
+  }
+  return `${sym}${amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export function CurrencyProvider({ children }: { children: ReactNode }) {
+  const [currency, setCurrencyState] = useState<string>(() => {
+    return getCookie(COOKIE_NAME) || "INR";
+  });
+
+  const { data: config, isLoading: configLoading } = useQuery<CurrencyConfig>({
+    queryKey: ["/api/currency/config"],
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+
+  const { data: geo } = useQuery<GeoData>({
+    queryKey: ["/api/geo"],
+    staleTime: 60 * 60 * 1000,
+    enabled: !getCookie(COOKIE_NAME),
+  });
+
+  useEffect(() => {
+    if (geo && !getCookie(COOKIE_NAME) && config) {
+      const enabledCodes = config.rules.filter(r => r.enabled).map(r => r.currency);
+      const detected = (geo.currency === "INR" || enabledCodes.includes(geo.currency))
+        ? geo.currency
+        : "INR";
+      setCurrencyState(detected);
+      setCookieValue(COOKIE_NAME, detected, COOKIE_DAYS);
+    }
+  }, [geo, config]);
+
+  const setCurrency = useCallback((code: string) => {
+    setCookieValue(COOKIE_NAME, code, COOKIE_DAYS);
+    setCurrencyState(code);
+  }, []);
+
+  const enabledRules = config?.rules.filter(r => r.enabled) ?? [];
+  const allCurrencies: CurrencyRule[] = [
+    { currency: "INR", symbol: "₹", displayName: "Indian Rupee", markupPercent: 0, roundingRule: "nearest", enabled: true },
+    ...enabledRules,
+  ];
+
+  const currentRule = config?.rules.find(r => r.currency === currency);
+
+  const convertPrice = useCallback((inrAmount: number): number => {
+    if (currency === "INR") return inrAmount;
+    if (!config) return inrAmount;
+    const rate = config.rates[currency];
+    if (!rate) return inrAmount;
+    const rule = config.rules.find(r => r.currency === currency);
+    if (!rule?.enabled) return inrAmount;
+    const markupFactor = 1 + (rule.markupPercent || 0) / 100;
+    const raw = inrAmount * rate * markupFactor;
+    return applyRounding(raw, rule.roundingRule);
+  }, [currency, config]);
+
+  const symbol = currency === "INR" ? "₹" : (currentRule?.symbol ?? currency);
+
+  const formatPrice = useCallback((inrAmount: number): string => {
+    if (currency === "INR") {
+      return `₹${inrAmount.toLocaleString("en-IN")}`;
+    }
+    const converted = convertPrice(inrAmount);
+    return formatAmount(converted, currency, symbol);
+  }, [currency, symbol, convertPrice]);
 
   const value: CurrencyContextValue = {
     currency,
-    symbol: "₹",
+    symbol,
     setCurrency,
     convertPrice,
     formatPrice,
-    availableCurrencies: [INR_RULE],
-    isLoading: false,
+    availableCurrencies: allCurrencies,
+    isLoading: configLoading,
   };
 
   return (
