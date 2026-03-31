@@ -861,20 +861,6 @@ export default function AdminCatalog() {
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    return products.filter((p) => {
-      if (categoryFilter.trim()) {
-        const q = categoryFilter.trim().toLowerCase();
-        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
-      }
-      if (tagFilter !== "all") {
-        if (!p.tagIds?.includes(tagFilter)) return false;
-      }
-      return true;
-    });
-  }, [products, categoryFilter, tagFilter]);
-
   const { data: productTagsList } = useQuery<Tag[]>({
     queryKey: ["/api/admin/products", editingProduct?.id, "tags"],
     queryFn: async () => {
@@ -1588,6 +1574,16 @@ export default function AdminCatalog() {
 
   // ── Products List View ──
   if (view === "products" && selectedCategory) {
+    const filteredProducts = products?.filter((p) => {
+      if (categoryFilter.trim()) {
+        const q = categoryFilter.trim().toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
+      }
+      if (tagFilter !== "all") {
+        if (!p.tagIds?.includes(tagFilter)) return false;
+      }
+      return true;
+    }) || [];
     const totalFiltered = filteredProducts.length;
     const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
     const safePage = Math.min(currentPage, totalPages || 1);
@@ -1748,7 +1744,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage <= 1}
-              onClick={() => startTransition(() => setCurrentPage(p => Math.max(p - 1, 1)))}
+              onClick={() => startTransition(() => setCurrentPage(safePage - 1))}
               data-testid="button-prev-page-top"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -1761,7 +1757,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage >= totalPages}
-              onClick={() => startTransition(() => setCurrentPage(p => Math.min(p + 1, totalPages)))}
+              onClick={() => startTransition(() => setCurrentPage(safePage + 1))}
               data-testid="button-next-page-top"
             >
               <ChevronRight className="w-4 h-4" />
@@ -1957,7 +1953,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage <= 1}
-                      onClick={() => startTransition(() => setCurrentPage(p => Math.max(p - 1, 1)))}
+                      onClick={() => startTransition(() => setCurrentPage(safePage - 1))}
                       data-testid="button-prev-page"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -1970,7 +1966,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage >= totalPages}
-                      onClick={() => startTransition(() => setCurrentPage(p => Math.min(p + 1, totalPages)))}
+                      onClick={() => startTransition(() => setCurrentPage(safePage + 1))}
                       data-testid="button-next-page"
                     >
                       <ChevronRight className="w-4 h-4" />
