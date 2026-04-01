@@ -27,7 +27,7 @@ import type { Category, Product, ProductImage, ProductReview, Tag, CategoryTagVa
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
-function ProductTagSelector({ productId, categoryId, allTags }: { productId: string; categoryId: string; allTags: Tag[] }) {
+function ProductTagSelector({ productId, categoryId, allTags, initialTags }: { productId: string; categoryId: string; allTags: Tag[]; initialTags: Tag[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -52,16 +52,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
     };
   }, [open]);
 
-  const { data: productTagsList, isLoading } = useQuery<Tag[]>({
-    queryKey: ["/api/admin/products", productId, "tags"],
-    queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}/tags`);
-      return res.json();
-    },
-    enabled: true,
-  });
-
-  const currentTagIds = productTagsList?.map(t => t.id) || [];
+  const currentTagIds = initialTags.map(t => t.id);
 
   const toggleTagMutation = useMutation({
     mutationFn: async (tagId: string) => {
@@ -82,7 +73,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
   return (
     <div className="relative" ref={containerRef}>
       <div className="flex items-center gap-1 flex-wrap">
-        {productTagsList && productTagsList.length > 0 && productTagsList.map(tag => (
+        {initialTags.length > 0 && initialTags.map(tag => (
           <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
             {tag.name}
           </Badge>
@@ -128,7 +119,7 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId, categoryId, mainImageUrl }: { productId: string; categoryId: string; mainImageUrl?: string }) {
+function ProductImageManager({ productId, categoryId, mainImageUrl, initialImages }: { productId: string; categoryId: string; mainImageUrl?: string; initialImages: ProductImage[] }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -138,13 +129,7 @@ function ProductImageManager({ productId, categoryId, mainImageUrl }: { productI
   const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
-  const { data: images, isLoading } = useQuery<ProductImage[]>({
-    queryKey: ["/api/products", productId, "images"],
-    queryFn: async () => {
-      const res = await fetch(`/api/products/${productId}/images`);
-      return res.json();
-    },
-  });
+  const images = initialImages;
 
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
   const orderChanged = useMemo(() => {
@@ -296,7 +281,6 @@ function ProductImageManager({ productId, categoryId, mainImageUrl }: { productI
   return (
     <div className="mt-2" data-testid={`image-manager-${productId}`}>
       <div className="flex items-center gap-1 flex-wrap">
-        {isLoading && <Skeleton className="w-10 h-10 rounded" />}
         {activeItems.map((item, idx) => (
           <div key={item.id} className="relative group" data-testid={`image-thumb-${item.id}`}>
             <div className={`${THUMBNAIL_SIZES.adminInline} rounded border overflow-hidden bg-muted ${item.type === "main" ? "border-2 border-primary/40" : item.type === "new" ? "ring-2 ring-green-500" : ""}`}>
@@ -787,20 +771,6 @@ export default function AdminCatalog() {
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
-  // Pre-populate per-product caches (images + tags) so individual components never need to fetch
-  useEffect(() => {
-    if (!catalogData) return;
-    for (const [productId, images] of Object.entries(catalogData.productImages ?? {})) {
-      queryClient.setQueryData(["/api/products", productId, "images"], images);
-    }
-    if (allTags) {
-      const tagById = new Map(allTags.map(t => [t.id, t]));
-      for (const [productId, tagIds] of Object.entries(catalogData.productTagMap ?? {})) {
-        const tags = tagIds.map(id => tagById.get(id)).filter(Boolean);
-        queryClient.setQueryData(["/api/admin/products", productId, "tags"], tags);
-      }
-    }
-  }, [catalogData, allTags]);
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -1863,7 +1833,12 @@ export default function AdminCatalog() {
                       )}
                     </p>
                     <div className="mt-1">
-                      <ProductTagSelector productId={prod.id} categoryId={selectedCategory?.id ?? ""} allTags={allTags || []} />
+                      <ProductTagSelector
+                        productId={prod.id}
+                        categoryId={selectedCategory?.id ?? ""}
+                        allTags={allTags || []}
+                        initialTags={(allTags ?? []).filter(t => (catalogData?.productTagMap?.[prod.id] ?? []).includes(t.id))}
+                      />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -1907,7 +1882,12 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} categoryId={selectedCategory?.id ?? ""} mainImageUrl={prod.imageUrl} />
+                <ProductImageManager
+                  productId={prod.id}
+                  categoryId={selectedCategory?.id ?? ""}
+                  mainImageUrl={prod.imageUrl}
+                  initialImages={catalogData?.productImages?.[prod.id] ?? []}
+                />
               </Card>
             ))}
             {products?.length === 0 && (
