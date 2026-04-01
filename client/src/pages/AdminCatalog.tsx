@@ -785,13 +785,20 @@ export default function AdminCatalog() {
   const products = catalogData?.products;
   const productTagMap = catalogData?.productTagMap;
 
-  // Pre-populate per-product image caches so ProductImageManager never needs to fetch
+  // Pre-populate per-product caches (images + tags) so individual components never need to fetch
   useEffect(() => {
-    if (!catalogData?.productImages) return;
-    for (const [productId, images] of Object.entries(catalogData.productImages)) {
+    if (!catalogData) return;
+    for (const [productId, images] of Object.entries(catalogData.productImages ?? {})) {
       queryClient.setQueryData(["/api/products", productId, "images"], images);
     }
-  }, [catalogData]);
+    if (allTags) {
+      const tagById = new Map(allTags.map(t => [t.id, t]));
+      for (const [productId, tagIds] of Object.entries(catalogData.productTagMap ?? {})) {
+        const tags = tagIds.map(id => tagById.get(id)).filter(Boolean);
+        queryClient.setQueryData(["/api/admin/products", productId, "tags"], tags);
+      }
+    }
+  }, [catalogData, allTags]);
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
