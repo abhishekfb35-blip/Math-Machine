@@ -785,6 +785,8 @@ export default function AdminCatalog() {
   const products = catalogData?.products;
   const productTagMap = catalogData?.productTagMap;
 
+  const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
+
   // Pre-populate per-product caches (images + tags) so individual components never need to fetch
   useEffect(() => {
     if (!catalogData) return;
@@ -878,8 +880,6 @@ export default function AdminCatalog() {
       toast({ title: "Review deleted" });
     },
   });
-
-  const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
   const { data: productTagsList } = useQuery<Tag[]>({
     queryKey: ["/api/admin/products", editingProduct?.id, "tags"],
