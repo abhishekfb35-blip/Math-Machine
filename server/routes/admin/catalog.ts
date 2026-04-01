@@ -82,6 +82,18 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json(prods);
   });
 
+  // Combined catalog endpoint — products + tags + images in one request
+  app.get("/api/admin/catalog/category/:categoryId", requireAdmin, async (req, res) => {
+    const categoryId = req.params.categoryId as string;
+    if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
+    const [products, productTagMap, productImages] = await Promise.all([
+      storage.getAllProductsByCategory(categoryId),
+      storage.getProductTagIdsByCategory(categoryId),
+      storage.getProductImagesByCategory(categoryId),
+    ]);
+    res.json({ products, productTagMap, productImages });
+  });
+
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
       const data = insertProductSchema.parse(req.body);

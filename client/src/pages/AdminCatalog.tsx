@@ -72,7 +72,7 @@ function ProductTagSelector({ productId, categoryId, allTags }: { productId: str
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "product-tags"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
     },
     onError: () => {
       toast({ title: "Failed to update tags", variant: "destructive" });
@@ -128,7 +128,7 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId, mainImageUrl }: { productId: string; mainImageUrl?: string }) {
+function ProductImageManager({ productId, categoryId, mainImageUrl }: { productId: string; categoryId: string; mainImageUrl?: string }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -276,6 +276,7 @@ function ProductImageManager({ productId, mainImageUrl }: { productId: string; m
       setPendingAdds([]);
       setLocalOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
       toast({ title: "Images saved" });
     } catch {
       toast({ title: "Failed to save images", variant: "destructive" });
@@ -767,25 +768,30 @@ export default function AdminCatalog() {
     return counts;
   }, [allProducts]);
 
-  const { data: products, isLoading: prodsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/admin/products/category", selectedCategory?.id],
+  const { data: catalogData, isLoading: prodsLoading } = useQuery<{
+    products: Product[];
+    productTagMap: Record<string, string[]>;
+    productImages: Record<string, ProductImage[]>;
+  }>({
+    queryKey: ["/api/admin/catalog/category", selectedCategory?.id],
     queryFn: async () => {
-      if (!selectedCategory) return [];
-      const res = await fetch(`/api/admin/products/category/${selectedCategory.id}`);
+      if (!selectedCategory) return { products: [], productTagMap: {}, productImages: {} };
+      const res = await fetch(`/api/admin/catalog/category/${selectedCategory.id}`);
       return res.json();
     },
     enabled: !!selectedCategory,
   });
 
-  const { data: productTagMap } = useQuery<Record<string, string[]>>({
-    queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"],
-    queryFn: async () => {
-      if (!selectedCategory) return {};
-      const res = await fetch(`/api/admin/categories/${selectedCategory.id}/product-tags`);
-      return res.json();
-    },
-    enabled: !!selectedCategory,
-  });
+  const products = catalogData?.products;
+  const productTagMap = catalogData?.productTagMap;
+
+  // Pre-populate per-product image caches so ProductImageManager never needs to fetch
+  useEffect(() => {
+    if (!catalogData?.productImages) return;
+    for (const [productId, images] of Object.entries(catalogData.productImages)) {
+      queryClient.setQueryData(["/api/products", productId, "images"], images);
+    }
+  }, [catalogData]);
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -940,7 +946,7 @@ export default function AdminCatalog() {
       }
     },
     onSuccess: (product: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: isNew ? "Product created" : "Product updated" });
       if (closeAfterSaveRef.current || isNew) {
@@ -996,7 +1002,7 @@ export default function AdminCatalog() {
       await apiRequest("DELETE", `/api/admin/products/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: "Product deleted" });
     },
@@ -1010,8 +1016,8 @@ export default function AdminCatalog() {
       await apiRequest("PUT", `/api/admin/products/${productId}`, { categoryId });
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", selectedCategory?.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products/category", variables.categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", variables.categoryId] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: `Moved to ${variables.categoryName}` });
     },
@@ -1092,7 +1098,7 @@ export default function AdminCatalog() {
 
   const invalidateBulkTagQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", selectedCategory?.id, "product-tags"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
   };
 
   const resetBulkTagDialog = () => {
@@ -1894,7 +1900,7 @@ export default function AdminCatalog() {
                     </Button>
                   </div>
                 </div>
-                <ProductImageManager productId={prod.id} mainImageUrl={prod.imageUrl} />
+                <ProductImageManager productId={prod.id} categoryId={selectedCategory?.id ?? ""} mainImageUrl={prod.imageUrl} />
               </Card>
             ))}
             {products?.length === 0 && (

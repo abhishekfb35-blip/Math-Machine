@@ -71,6 +71,7 @@ export interface IStorage {
   upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
 
   getProductImages(productId: string): Promise<ProductImage[]>;
+  getProductImagesByCategory(categoryId: string): Promise<Record<string, ProductImage[]>>;
   createProductImage(img: InsertProductImage): Promise<ProductImage>;
   deleteProductImage(id: string): Promise<void>;
   reorderProductImages(productId: string, imageIds: string[]): Promise<void>;
@@ -518,6 +519,25 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(productImages)
       .where(eq(productImages.productId, productId))
       .orderBy(productImages.sortOrder);
+  }
+
+  async getProductImagesByCategory(categoryId: string): Promise<Record<string, ProductImage[]>> {
+    const rows = await db.select({
+      productId: productImages.productId,
+      id: productImages.id,
+      imageUrl: productImages.imageUrl,
+      sortOrder: productImages.sortOrder,
+      isPrimary: productImages.isPrimary,
+    }).from(productImages)
+      .innerJoin(products, eq(productImages.productId, products.id))
+      .where(eq(products.categoryId, categoryId))
+      .orderBy(productImages.sortOrder);
+    const map: Record<string, ProductImage[]> = {};
+    for (const row of rows) {
+      if (!map[row.productId]) map[row.productId] = [];
+      map[row.productId].push(row as ProductImage);
+    }
+    return map;
   }
 
   async createProductImage(img: InsertProductImage): Promise<ProductImage> {
