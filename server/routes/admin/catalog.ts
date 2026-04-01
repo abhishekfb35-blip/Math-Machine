@@ -86,11 +86,12 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.get("/api/admin/catalog/category/:categoryId", requireAdmin, async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
-    const [products, productTagMap, productImages] = await Promise.all([
-      storage.getAllProductsByCategory(categoryId),
-      storage.getProductTagIdsByCategory(categoryId),
+    const [prods, { productTagMap, productTagNameMap }, productImages] = await Promise.all([
+      storage.getAllProductsByCategoryNoTags(categoryId),
+      storage.getProductTagsForCatalog(categoryId),
       storage.getProductImagesByCategory(categoryId),
     ]);
+    const products = prods.map(p => ({ ...p, tagNames: productTagNameMap[p.id] ?? [] }));
     res.json({ products, productTagMap, productImages });
   });
 

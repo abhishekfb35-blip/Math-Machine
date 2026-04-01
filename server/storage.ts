@@ -92,6 +92,8 @@ export interface IStorage {
   getProductTags(productId: string): Promise<Tag[]>;
   setProductTags(productId: string, tagIds: string[]): Promise<void>;
   getProductTagIdsByCategory(categoryId: string): Promise<Record<string, string[]>>;
+  getProductTagsForCatalog(categoryId: string): Promise<{ productTagMap: Record<string, string[]>; productTagNameMap: Record<string, string[]> }>;
+  getAllProductsByCategoryNoTags(categoryId: string): Promise<Product[]>;
 
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(filters?: { entityType?: string; entityId?: string; limit?: number; offset?: number }): Promise<AuditLog[]>;
@@ -665,6 +667,31 @@ export class DatabaseStorage implements IStorage {
       map[row.productId].push(row.tagId);
     }
     return map;
+  }
+
+  async getProductTagsForCatalog(categoryId: string): Promise<{ productTagMap: Record<string, string[]>; productTagNameMap: Record<string, string[]> }> {
+    const rows = await db
+      .select({ productId: productTags.productId, tagId: productTags.tagId, tagName: tags.name })
+      .from(productTags)
+      .innerJoin(tags, eq(productTags.tagId, tags.id))
+      .innerJoin(products, eq(productTags.productId, products.id))
+      .where(eq(products.categoryId, categoryId));
+    const productTagMap: Record<string, string[]> = {};
+    const productTagNameMap: Record<string, string[]> = {};
+    for (const row of rows) {
+      if (!productTagMap[row.productId]) productTagMap[row.productId] = [];
+      productTagMap[row.productId].push(row.tagId);
+      if (!productTagNameMap[row.productId]) productTagNameMap[row.productId] = [];
+      productTagNameMap[row.productId].push(row.tagName);
+    }
+    return { productTagMap, productTagNameMap };
+  }
+
+  async getAllProductsByCategoryNoTags(categoryId: string): Promise<Product[]> {
+    const prods = await db.select().from(products)
+      .where(eq(products.categoryId, categoryId))
+      .orderBy(products.sortOrder, products.name);
+    return this.withReviewStats(prods);
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
