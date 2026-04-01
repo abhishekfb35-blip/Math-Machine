@@ -722,6 +722,14 @@ export default function AdminCatalog() {
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
+  const [renderedPage, setRenderedPage] = useState(1);
+  const renderPageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    if (renderPageTimer.current) clearTimeout(renderPageTimer.current);
+    renderPageTimer.current = setTimeout(() => setRenderedPage(page), 200);
+  }, []);
 
   useEffect(() => {
     setSelectedProductIds(new Set());
@@ -1395,7 +1403,7 @@ export default function AdminCatalog() {
               <Card
                 key={cat.id}
                 className="p-3 hover-elevate cursor-pointer"
-                onClick={() => { setSelectedCategory(cat); setCategoryFilter(""); setCurrentPage(1); setView("products"); }}
+                onClick={() => { setSelectedCategory(cat); setCategoryFilter(""); setCurrentPage(1); if (renderPageTimer.current) clearTimeout(renderPageTimer.current); setRenderedPage(1); setView("products"); }}
                 data-testid={`card-category-${cat.id}`}
               >
                 <div className="flex items-center gap-3">
@@ -1578,7 +1586,8 @@ export default function AdminCatalog() {
     const totalFiltered = filteredProducts.length;
     const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
     const safePage = Math.min(currentPage, totalPages || 1);
-    const paginatedProducts = pageSize === 0 ? filteredProducts : filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize);
+    const safeRenderedPage = Math.min(renderedPage, totalPages || 1);
+    const paginatedProducts = pageSize === 0 ? filteredProducts : filteredProducts.slice((safeRenderedPage - 1) * pageSize, safeRenderedPage * pageSize);
     const allSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.has(p.id));
     const someSelected = selectedProductIds.size > 0;
 
@@ -1692,7 +1701,7 @@ export default function AdminCatalog() {
             <Input
               placeholder="Filter products in this category..."
               value={categoryFilter}
-              onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); if (renderPageTimer.current) clearTimeout(renderPageTimer.current); setRenderedPage(1); }}
               className="pl-9 pr-9"
               data-testid="input-category-filter"
             />
@@ -1709,7 +1718,7 @@ export default function AdminCatalog() {
           {allTags && allTags.length > 0 && (
             <Select
               value={tagFilter}
-              onValueChange={(val) => { setTagFilter(val); setCurrentPage(1); }}
+              onValueChange={(val) => { setTagFilter(val); setCurrentPage(1); if (renderPageTimer.current) clearTimeout(renderPageTimer.current); setRenderedPage(1); }}
               data-testid="select-tag-filter"
             >
               <SelectTrigger className="w-44 shrink-0" data-testid="trigger-tag-filter">
@@ -1735,7 +1744,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage <= 1}
-              onClick={() => setCurrentPage(safePage - 1)}
+              onClick={() => goToPage(safePage - 1)}
               data-testid="button-prev-page-top"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -1748,7 +1757,7 @@ export default function AdminCatalog() {
               variant="outline"
               className="h-8 w-8 p-0"
               disabled={safePage >= totalPages}
-              onClick={() => setCurrentPage(safePage + 1)}
+              onClick={() => goToPage(safePage + 1)}
               data-testid="button-next-page-top"
             >
               <ChevronRight className="w-4 h-4" />
@@ -1931,6 +1940,8 @@ export default function AdminCatalog() {
                     onValueChange={(val) => {
                       setPageSize(val === "all" ? 0 : Number(val));
                       setCurrentPage(1);
+                      if (renderPageTimer.current) clearTimeout(renderPageTimer.current);
+                      setRenderedPage(1);
                     }}
                   >
                     <SelectTrigger className="w-20 h-8 text-xs" data-testid="select-page-size">
@@ -1954,7 +1965,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage <= 1}
-                      onClick={() => setCurrentPage(safePage - 1)}
+                      onClick={() => goToPage(safePage - 1)}
                       data-testid="button-prev-page"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -1967,7 +1978,7 @@ export default function AdminCatalog() {
                       variant="outline"
                       className="h-8 w-8 p-0"
                       disabled={safePage >= totalPages}
-                      onClick={() => setCurrentPage(safePage + 1)}
+                      onClick={() => goToPage(safePage + 1)}
                       data-testid="button-next-page"
                     >
                       <ChevronRight className="w-4 h-4" />
