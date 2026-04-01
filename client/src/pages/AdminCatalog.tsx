@@ -774,9 +774,9 @@ export default function AdminCatalog() {
     productImages: Record<string, ProductImage[]>;
   }>({
     queryKey: ["/api/admin/catalog/category", selectedCategory?.id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!selectedCategory) return { products: [], productTagMap: {}, productImages: {} };
-      const res = await fetch(`/api/admin/catalog/category/${selectedCategory.id}`);
+      const res = await fetch(`/api/admin/catalog/category/${selectedCategory.id}`, { signal });
       return res.json();
     },
     enabled: !!selectedCategory,
