@@ -75,8 +75,13 @@ export async function migrateUploadsToImages(): Promise<void> {
     const srcPath = path.join(UPLOADS_DIR, row.image_url.replace("/uploads/", ""));
     try {
       const { newUrl, copied } = await migrateUrl(row.image_url, srcPath);
+      if (!copied) {
+        console.warn(`[migrate-uploads] Source file missing, skipping DB update: ${row.image_url}`);
+        skipped++;
+        continue;
+      }
       await pool.query(`UPDATE product_images SET image_url = $1 WHERE id = $2`, [newUrl, row.id]);
-      copied ? migrated++ : skipped++;
+      migrated++;
     } catch (err) {
       console.error(`[migrate-uploads] Failed: ${row.image_url}`, err);
       failed++;
@@ -87,8 +92,13 @@ export async function migrateUploadsToImages(): Promise<void> {
     const srcPath = path.join(UPLOADS_DIR, row.image_url.replace("/uploads/", ""));
     try {
       const { newUrl, copied } = await migrateUrl(row.image_url, srcPath);
+      if (!copied) {
+        console.warn(`[migrate-uploads] Source file missing, skipping DB update: ${row.image_url}`);
+        skipped++;
+        continue;
+      }
       await pool.query(`UPDATE products SET image_url = $1 WHERE id = $2`, [newUrl, row.id]);
-      copied ? migrated++ : skipped++;
+      migrated++;
     } catch (err) {
       console.error(`[migrate-uploads] Failed: ${row.image_url}`, err);
       failed++;
