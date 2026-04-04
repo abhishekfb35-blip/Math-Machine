@@ -1210,6 +1210,7 @@ export default function AdminCatalog() {
 
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       productIds.forEach(id => queryClient.invalidateQueries({ queryKey: ["/api/products", id, "images"] }));
       toast({ title: `Gallery images applied to ${productIds.length} product${productIds.length !== 1 ? "s" : ""}` });
       closeBulkImageDialog();
@@ -1217,6 +1218,7 @@ export default function AdminCatalog() {
       const msg = err instanceof Error ? err.message : "Failed";
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       toast({ title: msg, variant: "destructive" });
       setBulkImageProgress(null);
     }
