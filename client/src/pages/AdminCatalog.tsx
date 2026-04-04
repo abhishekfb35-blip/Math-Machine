@@ -709,6 +709,7 @@ export default function AdminCatalog() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [pendingChanges, setPendingChanges] = useState<Record<string, Partial<Product>>>({});
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -970,6 +971,29 @@ export default function AdminCatalog() {
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
       closeAfterSaveRef.current = false;
+    },
+  });
+
+  const saveAllProductsMutation = useMutation({
+    mutationFn: async (changes: Record<string, Partial<Product>>) => {
+      const entries = Object.entries(changes);
+      await Promise.all(
+        entries.map(([productId, patch]) => {
+          const original = products?.find(p => p.id === productId);
+          const merged = { ...original, ...patch };
+          return apiRequest("PUT", `/api/admin/products/${productId}`, merged);
+        })
+      );
+      return entries.length;
+    },
+    onSuccess: async (count) => {
+      setPendingChanges({});
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: `Saved ${count} product${count !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error saving", description: err.message, variant: "destructive" });
     },
   });
 
@@ -1693,6 +1717,29 @@ export default function AdminCatalog() {
                 </Button>
               </>
             )}
+            {Object.keys(pendingChanges).length > 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPendingChanges({})}
+                  disabled={saveAllProductsMutation.isPending}
+                  data-testid="button-discard-changes-top"
+                >
+                  <Undo2 className="w-4 h-4 mr-1" /> Discard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
+                  disabled={saveAllProductsMutation.isPending}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                  data-testid="button-save-all-top"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  {saveAllProductsMutation.isPending ? "Saving…" : `Save All (${Object.keys(pendingChanges).length})`}
+                </Button>
+              </>
+            )}
             <Button
               size="sm"
               onClick={() => {
@@ -1818,8 +1865,17 @@ export default function AdminCatalog() {
               />
               <span className="text-xs text-muted-foreground">Select all on this page</span>
             </div>
-            {paginatedProducts.map((prod) => (
-              <Card key={prod.id} className="p-3" data-testid={`card-product-${prod.id}`}>
+            {paginatedProducts.map((prod) => {
+              const pc = pendingChanges[prod.id] ?? {};
+              const isDirty = prod.id in pendingChanges;
+              const effectivePrice = pc.price ?? prod.price;
+              const effectiveMrp = pc.mrp !== undefined ? pc.mrp : prod.mrp;
+              const effectiveActive = pc.active !== undefined ? pc.active : prod.active;
+              const effectiveSortOrder = pc.sortOrder !== undefined ? pc.sortOrder : (prod.sortOrder ?? 0);
+              const setChange = (field: keyof Product, value: any) =>
+                setPendingChanges(prev => ({ ...prev, [prod.id]: { ...prev[prod.id], [field]: value } }));
+              return (
+              <Card key={prod.id} className={`p-3${isDirty ? " border-l-4 border-l-amber-400" : ""}`} data-testid={`card-product-${prod.id}`}>
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={selectedProductIds.has(prod.id)}
@@ -1839,24 +1895,61 @@ export default function AdminCatalog() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <a href={`/product/${prod.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sm truncate hover:underline text-foreground" data-testid={`text-product-name-${prod.id}`}>{prod.name}</a>
-                      {!prod.active && (
-                        <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
-                          <EyeOff className="w-2.5 h-2.5 mr-0.5" /> Hidden
-                        </Badge>
-                      )}
+                      <button
+                        type="button"
+                        title={effectiveActive ? "Visible – click to hide" : "Hidden – click to show"}
+                        onClick={() => setChange("active", !effectiveActive)}
+                        className="flex-shrink-0 focus:outline-none"
+                        data-testid={`toggle-active-${prod.id}`}
+                      >
+                        {effectiveActive
+                          ? <Eye className="w-3.5 h-3.5 text-muted-foreground/40 hover:text-green-500 transition-colors" />
+                          : <EyeOff className="w-3.5 h-3.5 text-red-400" />
+                        }
+                      </button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {prod.sku && <span className="font-mono mr-2">{prod.sku}</span>}
-                      ₹{prod.price.toLocaleString("en-IN")}
-                      {prod.mrp && prod.mrp > prod.price && (
-                        <span className="ml-1 line-through">₹{prod.mrp.toLocaleString("en-IN")}</span>
-                      )}
-                      {prod.material && <span className="ml-2">{prod.material}</span>}
-                      {prod.gsm && <span className="ml-1">{prod.gsm} GSM</span>}
+                    <div className="text-xs text-muted-foreground flex items-center flex-wrap gap-x-2 mt-0.5">
+                      {prod.sku && <span className="font-mono">{prod.sku}</span>}
+                      <span className="inline-flex items-center gap-0.5" title="Price (₹)">
+                        <span>₹</span>
+                        <input
+                          type="number"
+                          value={effectivePrice}
+                          onChange={(e) => { const v = Number(e.target.value); if (!isNaN(v) && v > 0) setChange("price", v); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs"
+                          data-testid={`input-price-${prod.id}`}
+                        />
+                      </span>
+                      <span className="inline-flex items-center gap-0.5" title="MRP (₹) – leave blank for none">
+                        <span className="line-through opacity-60">₹</span>
+                        <input
+                          type="number"
+                          value={effectiveMrp ?? ""}
+                          placeholder="MRP"
+                          onChange={(e) => { const v = e.target.value === "" ? undefined : Number(e.target.value); setChange("mrp", v); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs opacity-70"
+                          data-testid={`input-mrp-${prod.id}`}
+                        />
+                      </span>
+                      <span className="inline-flex items-center gap-0.5" title="Sort order">
+                        <span className="opacity-50">#</span>
+                        <input
+                          type="number"
+                          value={effectiveSortOrder}
+                          onChange={(e) => { const v = Number(e.target.value); if (!isNaN(v)) setChange("sortOrder", v); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-10 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs"
+                          data-testid={`input-sort-${prod.id}`}
+                        />
+                      </span>
+                      {prod.material && <span>{prod.material}</span>}
+                      {prod.gsm && <span>{prod.gsm} GSM</span>}
                       {prod.reviewCount != null && prod.averageRating != null && (
                         <button
                           type="button"
-                          className="ml-2 inline-flex items-center gap-0.5 hover:opacity-70 transition-opacity cursor-pointer"
+                          className="inline-flex items-center gap-0.5 hover:opacity-70 transition-opacity cursor-pointer"
                           onClick={(e) => { e.stopPropagation(); setReviewDialogProduct(prod as Product); setShowAddReviewForm(false); setEditingReview(null); setReviewForm(emptyReviewForm); }}
                           data-testid={`button-reviews-${prod.id}`}
                           title="Manage reviews"
@@ -1867,7 +1960,7 @@ export default function AdminCatalog() {
                           <span className="text-amber-600 font-medium ml-0.5">{prod.averageRating} ({prod.reviewCount})</span>
                         </button>
                       )}
-                    </p>
+                    </div>
                     <div className="mt-1">
                       <ProductTagSelector
                         productId={prod.id}
@@ -1925,7 +2018,35 @@ export default function AdminCatalog() {
                   initialImages={catalogData?.productImages?.[prod.id] ?? []}
                 />
               </Card>
-            ))}
+              );
+            })}
+            {Object.keys(pendingChanges).length > 0 && (
+              <div className="flex items-center justify-end gap-2 pt-3 border-t mt-3" data-testid="save-all-bottom-bar">
+                <span className="text-xs text-muted-foreground mr-auto">
+                  {Object.keys(pendingChanges).length} product{Object.keys(pendingChanges).length !== 1 ? "s" : ""} with unsaved changes
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPendingChanges({})}
+                  disabled={saveAllProductsMutation.isPending}
+                  data-testid="button-discard-changes-bottom"
+                >
+                  <Undo2 className="w-4 h-4 mr-1" /> Discard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
+                  disabled={saveAllProductsMutation.isPending}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                  data-testid="button-save-all-bottom"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  {saveAllProductsMutation.isPending ? "Saving…" : `Save All (${Object.keys(pendingChanges).length})`}
+                </Button>
+              </div>
+            )}
+
             {products?.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
