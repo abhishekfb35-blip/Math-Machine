@@ -1917,7 +1917,7 @@ export default function AdminCatalog() {
                           value={effectivePrice}
                           onChange={(e) => { const v = Number(e.target.value); if (!isNaN(v) && v > 0) setChange("price", v); }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs"
+                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           data-testid={`input-price-${prod.id}`}
                         />
                       </span>
@@ -1929,7 +1929,7 @@ export default function AdminCatalog() {
                           placeholder="MRP"
                           onChange={(e) => { const v = e.target.value === "" ? undefined : Number(e.target.value); setChange("mrp", v); }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs opacity-70"
+                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs opacity-70 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           data-testid={`input-mrp-${prod.id}`}
                         />
                       </span>
@@ -1940,7 +1940,7 @@ export default function AdminCatalog() {
                           value={effectiveSortOrder}
                           onChange={(e) => { const v = Number(e.target.value); if (!isNaN(v)) setChange("sortOrder", v); }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-10 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs"
+                          className="w-10 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           data-testid={`input-sort-${prod.id}`}
                         />
                       </span>
