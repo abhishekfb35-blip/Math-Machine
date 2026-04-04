@@ -6,7 +6,28 @@ import { requireAdmin, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
 import { fileStorage } from "../../providers/fileStorage";
 
+const sseClients = new Set<Response>();
+
+function broadcastProductUpdate(product: object) {
+  const data = `event: product-updated\ndata: ${JSON.stringify(product)}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(data); } catch { sseClients.delete(client); }
+  }
+}
+
 export function registerAdminCatalogRoutes(app: Express) {
+
+  app.get("/api/admin/product-updates/stream", requireAdmin, (req: Request, res: Response) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+    sseClients.add(res);
+    const heartbeat = setInterval(() => {
+      try { res.write(": heartbeat\n\n"); } catch { clearInterval(heartbeat); sseClients.delete(res); }
+    }, 25000);
+    req.on("close", () => { clearInterval(heartbeat); sseClients.delete(res); });
+  });
 
   app.get("/api/admin/categories", requireAdmin, async (_req, res) => {
     const cats = await storage.getCategories();
@@ -142,6 +163,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         entityType: "product", entityId: id, entityName: updated.name,
         action: "updated", changes: JSON.stringify(changedFields), username: getAdminUsername(req),
       });
+      broadcastProductUpdate(updated);
       res.json(updated);
     } catch (err: any) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });

@@ -778,6 +778,27 @@ export default function AdminCatalog() {
   const products = catalogData?.products;
   const productTagMap = catalogData?.productTagMap;
 
+  useEffect(() => {
+    if (!selectedCategory) return;
+    const es = new EventSource("/api/admin/product-updates/stream");
+    es.addEventListener("product-updated", (e) => {
+      try {
+        const updated = JSON.parse(e.data) as Product;
+        queryClient.setQueryData(
+          ["/api/admin/catalog/category", selectedCategory.id],
+          (old: typeof catalogData) => {
+            if (!old) return old;
+            return {
+              ...old,
+              products: old.products.map((p) => p.id === updated.id ? { ...p, ...updated } : p),
+            };
+          }
+        );
+      } catch {}
+    });
+    return () => es.close();
+  }, [selectedCategory?.id]);
+
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
 
