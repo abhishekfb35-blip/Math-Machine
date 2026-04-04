@@ -237,30 +237,43 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
   const handleSave = async () => {
     setSaving(true);
     try {
+      // 1. Delete marked images
       for (const id of pendingDeletes) {
         await apiRequest("DELETE", `/api/admin/products/${productId}/images/${id}`);
       }
-      const finalOrder = unifiedOrder ?? defaultOrder;
-      const mainOffset = mainImageUrl ? 1 : 0;
 
-      // POST new images with sortOrder = their final position (offset by main image)
-      for (const [pos, entry] of finalOrder.entries()) {
+      const finalOrder = unifiedOrder ?? defaultOrder;
+
+      // 2. POST new images in any order (sortOrder is placeholder; reorder call fixes it)
+      //    Capture tempId → real server ID mapping so we can build final reorder list
+      const tempToReal = new Map<string, string>();
+      for (const entry of finalOrder) {
         if (entry.type === "new") {
           const add = pendingAdds.find(a => a.tempId === entry.id);
           if (add) {
-            await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+            const res = await apiRequest("POST", `/api/admin/products/${productId}/images`, {
               imageUrl: add.imageUrl,
-              sortOrder: mainOffset + pos,
+              sortOrder: 0, // will be overwritten by reorder below
             });
+            const created = await res.json() as { id: string };
+            tempToReal.set(entry.id, created.id);
           }
         }
       }
 
-      // Reorder existing images if their order changed
-      const existingActiveInOrder = finalOrder.filter(e => e.type === "existing").map(e => e.id);
+      // 3. Issue a single reorder call with ALL image IDs (existing + newly created)
+      //    in their final visual order — this assigns sortOrder 0,1,2,… correctly.
       const serverActiveIds = serverIds.filter(id => !pendingDeletes.has(id));
-      if (JSON.stringify(existingActiveInOrder) !== JSON.stringify(serverActiveIds) && existingActiveInOrder.length > 0) {
-        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: existingActiveInOrder });
+      const existingInOrder = finalOrder.filter(e => e.type === "existing").map(e => e.id);
+      const existingOrderChanged = JSON.stringify(existingInOrder) !== JSON.stringify(serverActiveIds);
+
+      if ((existingOrderChanged || pendingAdds.length > 0)) {
+        const allFinalIds = finalOrder
+          .map(e => e.type === "existing" ? e.id : tempToReal.get(e.id))
+          .filter((id): id is string => !!id);
+        if (allFinalIds.length > 0) {
+          await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: allFinalIds });
+        }
       }
 
       setPendingDeletes(new Set());
