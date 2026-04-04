@@ -119,7 +119,11 @@ interface PendingAdd {
   sortOrder: number;
 }
 
-function ProductImageManager({ productId, categoryId, mainImageUrl, initialImages }: { productId: string; categoryId: string; mainImageUrl?: string; initialImages: ProductImage[] }) {
+function ProductImageManager({ productId, categoryId, mainImageUrl, initialImages, onDirtyChange, saveHandlerRef }: {
+  productId: string; categoryId: string; mainImageUrl?: string; initialImages: ProductImage[];
+  onDirtyChange?: (isDirty: boolean) => void;
+  saveHandlerRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+}) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -140,6 +144,14 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
   }, [localOrder, serverIds, pendingDeletes]);
 
   const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || orderChanged;
+
+  React.useEffect(() => {
+    onDirtyChange?.(hasPendingChanges);
+  }, [hasPendingChanges]);
+
+  React.useEffect(() => {
+    if (saveHandlerRef) saveHandlerRef.current = handleSave;
+  });
 
   const displayItems = useMemo(() => {
     const existingImages = images || [];
@@ -710,6 +722,14 @@ export default function AdminCatalog() {
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [pendingChanges, setPendingChanges] = useState<Record<string, Partial<Product>>>({});
+  const [dirtyImageProductIds, setDirtyImageProductIds] = useState<Set<string>>(new Set());
+  const imageManagerSaveRefsMap = React.useRef<Record<string, React.MutableRefObject<(() => Promise<void>) | null>>>({});
+  const getImageSaveRef = (productId: string): React.MutableRefObject<(() => Promise<void>) | null> => {
+    if (!imageManagerSaveRefsMap.current[productId]) {
+      imageManagerSaveRefsMap.current[productId] = { current: null };
+    }
+    return imageManagerSaveRefsMap.current[productId];
+  };
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const [bulkTagNewlyAdding, setBulkTagNewlyAdding] = useState<Set<string>>(new Set());
   const [bulkTagRemoving, setBulkTagRemoving] = useState<Set<string>>(new Set());
@@ -975,8 +995,8 @@ export default function AdminCatalog() {
   });
 
   const saveAllProductsMutation = useMutation({
-    mutationFn: async (changes: Record<string, Partial<Product>>) => {
-      const entries = Object.entries(changes);
+    mutationFn: async ({ productChanges, dirtyImageIds }: { productChanges: Record<string, Partial<Product>>; dirtyImageIds: string[] }) => {
+      const entries = Object.entries(productChanges);
       await Promise.all(
         entries.map(([productId, patch]) => {
           const original = products?.find(p => p.id === productId);
@@ -984,10 +1004,15 @@ export default function AdminCatalog() {
           return apiRequest("PUT", `/api/admin/products/${productId}`, merged);
         })
       );
-      return entries.length;
+      await Promise.all(
+        dirtyImageIds.map(productId => imageManagerSaveRefsMap.current[productId]?.current?.())
+      );
+      const affected = new Set([...Object.keys(productChanges), ...dirtyImageIds]).size;
+      return affected;
     },
     onSuccess: async (count) => {
       setPendingChanges({});
+      setDirtyImageProductIds(new Set());
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: `Saved ${count} product${count !== 1 ? "s" : ""}` });
@@ -1717,7 +1742,7 @@ export default function AdminCatalog() {
                 </Button>
               </>
             )}
-            {Object.keys(pendingChanges).length > 0 && (
+            {(Object.keys(pendingChanges).length > 0 || dirtyImageProductIds.size > 0) && (
               <Button
                 size="sm"
                 variant="outline"
@@ -1730,17 +1755,16 @@ export default function AdminCatalog() {
             )}
             <Button
               size="sm"
-              onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
-              disabled={Object.keys(pendingChanges).length === 0 || saveAllProductsMutation.isPending}
+              onClick={() => saveAllProductsMutation.mutate({ productChanges: pendingChanges, dirtyImageIds: Array.from(dirtyImageProductIds) })}
+              disabled={(Object.keys(pendingChanges).length === 0 && dirtyImageProductIds.size === 0) || saveAllProductsMutation.isPending}
               className="bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-40"
               data-testid="button-save-all-top"
             >
               <Save className="w-4 h-4 mr-1" />
-              {saveAllProductsMutation.isPending
-                ? "Saving…"
-                : Object.keys(pendingChanges).length > 0
-                  ? `Save All (${Object.keys(pendingChanges).length})`
-                  : "Save All"}
+              {(() => {
+                const n = new Set([...Object.keys(pendingChanges), ...Array.from(dirtyImageProductIds)]).size;
+                return saveAllProductsMutation.isPending ? "Saving…" : n > 0 ? `Save All (${n})` : "Save All";
+              })()}
             </Button>
             <Button
               size="sm"
@@ -2018,17 +2042,26 @@ export default function AdminCatalog() {
                   categoryId={selectedCategory?.id ?? ""}
                   mainImageUrl={prod.imageUrl}
                   initialImages={catalogData?.productImages?.[prod.id] ?? []}
+                  onDirtyChange={(isDirty) => setDirtyImageProductIds(prev => {
+                    const next = new Set(prev);
+                    if (isDirty) next.add(prod.id); else next.delete(prod.id);
+                    return next;
+                  })}
+                  saveHandlerRef={getImageSaveRef(prod.id)}
                 />
               </Card>
               );
             })}
             <div className="flex items-center justify-end gap-2 pt-3 border-t mt-3" data-testid="save-all-bottom-bar">
               <span className="text-xs text-muted-foreground mr-auto">
-                {Object.keys(pendingChanges).length > 0
-                  ? `${Object.keys(pendingChanges).length} product${Object.keys(pendingChanges).length !== 1 ? "s" : ""} with unsaved changes`
-                  : "Edit price, MRP, sort order or visibility inline above"}
+                {(() => {
+                  const n = new Set([...Object.keys(pendingChanges), ...Array.from(dirtyImageProductIds)]).size;
+                  return n > 0
+                    ? `${n} product${n !== 1 ? "s" : ""} with unsaved changes`
+                    : "Edit price, MRP, sort order, visibility or image order above";
+                })()}
               </span>
-              {Object.keys(pendingChanges).length > 0 && (
+              {(Object.keys(pendingChanges).length > 0 || dirtyImageProductIds.size > 0) && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -2041,17 +2074,16 @@ export default function AdminCatalog() {
               )}
               <Button
                 size="sm"
-                onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
-                disabled={Object.keys(pendingChanges).length === 0 || saveAllProductsMutation.isPending}
+                onClick={() => saveAllProductsMutation.mutate({ productChanges: pendingChanges, dirtyImageIds: Array.from(dirtyImageProductIds) })}
+                disabled={(Object.keys(pendingChanges).length === 0 && dirtyImageProductIds.size === 0) || saveAllProductsMutation.isPending}
                 className="bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-40"
                 data-testid="button-save-all-bottom"
               >
                 <Save className="w-4 h-4 mr-1" />
-                {saveAllProductsMutation.isPending
-                  ? "Saving…"
-                  : Object.keys(pendingChanges).length > 0
-                    ? `Save All (${Object.keys(pendingChanges).length})`
-                    : "Save All"}
+                {(() => {
+                  const n = new Set([...Object.keys(pendingChanges), ...Array.from(dirtyImageProductIds)]).size;
+                  return saveAllProductsMutation.isPending ? "Saving…" : n > 0 ? `Save All (${n})` : "Save All";
+                })()}
               </Button>
             </div>
 
