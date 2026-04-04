@@ -930,8 +930,8 @@ export default function AdminCatalog() {
         return product;
       }
     },
-    onSuccess: (product: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+    onSuccess: async (product: any) => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: isNew ? "Product created" : "Product updated" });
       if (closeAfterSaveRef.current) {
