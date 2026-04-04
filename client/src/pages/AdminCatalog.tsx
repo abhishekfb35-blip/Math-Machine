@@ -116,8 +116,9 @@ function ProductTagSelector({ productId, categoryId, allTags, initialTags }: { p
 interface PendingAdd {
   tempId: string;
   imageUrl: string;
-  sortOrder: number;
 }
+
+type UnifiedEntry = { id: string; type: "existing" | "new" };
 
 function ProductImageManager({ productId, categoryId, mainImageUrl, initialImages, onDirtyChange, saveHandlerRef }: {
   productId: string; categoryId: string; mainImageUrl?: string; initialImages: ProductImage[];
@@ -131,70 +132,69 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
 
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [pendingAdds, setPendingAdds] = useState<PendingAdd[]>([]);
-  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  // unifiedOrder: active (non-deleted) items in visual order; null = default order
+  const [unifiedOrder, setUnifiedOrder] = useState<UnifiedEntry[] | null>(null);
 
   const images = initialImages;
-
   const serverIds = useMemo(() => images?.map(img => img.id) || [], [images]);
-  const orderChanged = useMemo(() => {
-    if (!localOrder) return false;
-    const activeServerIds = serverIds.filter(id => !pendingDeletes.has(id));
-    const activeLocalIds = localOrder.filter(id => !pendingDeletes.has(id));
-    return JSON.stringify(activeServerIds) !== JSON.stringify(activeLocalIds);
-  }, [localOrder, serverIds, pendingDeletes]);
 
-  const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || orderChanged;
+  // Default order when no manual reordering has occurred
+  const defaultOrder = useMemo((): UnifiedEntry[] => [
+    ...serverIds.filter(id => !pendingDeletes.has(id)).map(id => ({ id, type: "existing" as const })),
+    ...pendingAdds.map(a => ({ id: a.tempId, type: "new" as const })),
+  ], [serverIds, pendingDeletes, pendingAdds]);
 
-  React.useEffect(() => {
-    onDirtyChange?.(hasPendingChanges);
-  }, [hasPendingChanges]);
+  const unifiedOrderChanged = useMemo(() => {
+    if (!unifiedOrder) return false;
+    return JSON.stringify(unifiedOrder) !== JSON.stringify(defaultOrder);
+  }, [unifiedOrder, defaultOrder]);
 
-  React.useEffect(() => {
-    if (saveHandlerRef) saveHandlerRef.current = handleSave;
-  });
+  const hasPendingChanges = pendingDeletes.size > 0 || pendingAdds.length > 0 || unifiedOrderChanged;
+
+  React.useEffect(() => { onDirtyChange?.(hasPendingChanges); }, [hasPendingChanges]);
+  React.useEffect(() => { if (saveHandlerRef) saveHandlerRef.current = handleSave; });
 
   const displayItems = useMemo(() => {
     const existingImages = images || [];
-    const orderedExisting = localOrder
-      ? localOrder.map(id => existingImages.find(img => img.id === id)).filter(Boolean) as ProductImage[]
-      : existingImages;
     const mainItem = mainImageUrl ? [{
-      type: "main" as const,
-      id: "main",
-      imageUrl: mainImageUrl,
-      isDeleted: false,
+      type: "main" as const, id: "main", imageUrl: mainImageUrl, isDeleted: false,
     }] : [];
-    return [
-      ...mainItem,
-      ...orderedExisting.map(img => ({
-        type: "existing" as const,
-        id: img.id,
-        imageUrl: img.imageUrl,
-        isDeleted: pendingDeletes.has(img.id),
-      })),
-      ...pendingAdds.map(add => ({
-        type: "new" as const,
-        id: add.tempId,
-        imageUrl: add.imageUrl,
-        isDeleted: false,
-      })),
-    ];
-  }, [images, localOrder, pendingDeletes, pendingAdds, mainImageUrl]);
+
+    const activeOrder = unifiedOrder ?? defaultOrder;
+    const orderedActive = activeOrder.map(entry => {
+      if (entry.type === "existing") {
+        const img = existingImages.find(i => i.id === entry.id);
+        return img ? { type: "existing" as const, id: img.id, imageUrl: img.imageUrl, isDeleted: false } : null;
+      } else {
+        const add = pendingAdds.find(a => a.tempId === entry.id);
+        return add ? { type: "new" as const, id: add.tempId, imageUrl: add.imageUrl, isDeleted: false } : null;
+      }
+    }).filter(Boolean) as Array<{ type: "main" | "existing" | "new"; id: string; imageUrl: string; isDeleted: boolean }>;
+
+    const deletedExisting = existingImages
+      .filter(img => pendingDeletes.has(img.id))
+      .map(img => ({ type: "existing" as const, id: img.id, imageUrl: img.imageUrl, isDeleted: true }));
+
+    return [...mainItem, ...orderedActive, ...deletedExisting];
+  }, [images, unifiedOrder, defaultOrder, pendingDeletes, pendingAdds, mainImageUrl]);
 
   const markForDelete = (id: string) => {
     setPendingDeletes(prev => new Set(prev).add(id));
+    setUnifiedOrder(prev => prev ? prev.filter(e => e.id !== id) : null);
   };
 
   const undoDelete = (id: string) => {
-    setPendingDeletes(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
+    setPendingDeletes(prev => { const next = new Set(prev); next.delete(id); return next; });
+    setUnifiedOrder(prev => {
+      if (!prev) return null;
+      if (prev.some(e => e.id === id)) return prev;
+      return [...prev, { id, type: "existing" as const }];
     });
   };
 
   const removeNewImage = (tempId: string) => {
     setPendingAdds(prev => prev.filter(a => a.tempId !== tempId));
+    setUnifiedOrder(prev => prev ? prev.filter(e => e.id !== tempId) : null);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +202,6 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
     if (!files || files.length === 0) return;
     setUploading(true);
     let uploaded = 0;
-    const baseOrder = (images?.length || 0) + pendingAdds.length;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -211,11 +210,9 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
-          setPendingAdds(prev => [...prev, {
-            tempId: `new-${Date.now()}-${i}`,
-            imageUrl: data.url,
-            sortOrder: baseOrder + uploaded,
-          }]);
+          const tempId = `new-${Date.now()}-${i}`;
+          setPendingAdds(prev => [...prev, { tempId, imageUrl: data.url }]);
+          setUnifiedOrder(prev => prev ? [...prev, { id: tempId, type: "new" as const }] : null);
           uploaded++;
         }
       } catch {
@@ -223,34 +220,18 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
       }
     }
     setUploading(false);
-    if (uploaded > 0) {
-      toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged for save` });
-    }
+    if (uploaded > 0) toast({ title: `${uploaded} image${uploaded > 1 ? "s" : ""} staged for save` });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const moveImage = (index: number, direction: -1 | 1) => {
-    const activeItems = displayItems.filter(item => !item.isDeleted);
-    const activeIndex = activeItems.findIndex((_, i) => i === index);
-    if (activeIndex < 0) return;
-    const newIndex = activeIndex + direction;
-    if (newIndex < 0 || newIndex >= activeItems.length) return;
-
-    const existingOnly = activeItems.filter(item => item.type === "existing");
-    const existingIndex = existingOnly.findIndex(item => item.id === activeItems[activeIndex].id);
-    const existingNewIndex = existingOnly.findIndex(item => item.id === activeItems[newIndex].id);
-
-    if (existingIndex >= 0 && existingNewIndex >= 0) {
-      const currentOrder = localOrder || serverIds;
-      const newOrder = [...currentOrder];
-      const fromIdx = newOrder.indexOf(existingOnly[existingIndex].id);
-      const toIdx = newOrder.indexOf(existingOnly[existingNewIndex].id);
-      if (fromIdx >= 0 && toIdx >= 0) {
-        const [moved] = newOrder.splice(fromIdx, 1);
-        newOrder.splice(toIdx, 0, moved);
-        setLocalOrder(newOrder);
-      }
-    }
+  // activeNonMainIdx: position among the non-main, non-deleted items (0-based in unifiedOrder)
+  const moveImage = (activeNonMainIdx: number, direction: -1 | 1) => {
+    const currentOrder = unifiedOrder ?? defaultOrder;
+    const targetIdx = activeNonMainIdx + direction;
+    if (targetIdx < 0 || targetIdx >= currentOrder.length) return;
+    const newOrder = [...currentOrder];
+    [newOrder[activeNonMainIdx], newOrder[targetIdx]] = [newOrder[targetIdx], newOrder[activeNonMainIdx]];
+    setUnifiedOrder(newOrder);
   };
 
   const handleSave = async () => {
@@ -259,19 +240,32 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
       for (const id of pendingDeletes) {
         await apiRequest("DELETE", `/api/admin/products/${productId}/images/${id}`);
       }
-      for (const add of pendingAdds) {
-        await apiRequest("POST", `/api/admin/products/${productId}/images`, {
-          imageUrl: add.imageUrl,
-          sortOrder: add.sortOrder,
-        });
+      const finalOrder = unifiedOrder ?? defaultOrder;
+      const mainOffset = mainImageUrl ? 1 : 0;
+
+      // POST new images with sortOrder = their final position (offset by main image)
+      for (const [pos, entry] of finalOrder.entries()) {
+        if (entry.type === "new") {
+          const add = pendingAdds.find(a => a.tempId === entry.id);
+          if (add) {
+            await apiRequest("POST", `/api/admin/products/${productId}/images`, {
+              imageUrl: add.imageUrl,
+              sortOrder: mainOffset + pos,
+            });
+          }
+        }
       }
-      if (orderChanged && localOrder) {
-        const activeOrder = localOrder.filter(id => !pendingDeletes.has(id));
-        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: activeOrder });
+
+      // Reorder existing images if their order changed
+      const existingActiveInOrder = finalOrder.filter(e => e.type === "existing").map(e => e.id);
+      const serverActiveIds = serverIds.filter(id => !pendingDeletes.has(id));
+      if (JSON.stringify(existingActiveInOrder) !== JSON.stringify(serverActiveIds) && existingActiveInOrder.length > 0) {
+        await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds: existingActiveInOrder });
       }
+
       setPendingDeletes(new Set());
       setPendingAdds([]);
-      setLocalOrder(null);
+      setUnifiedOrder(null);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
       toast({ title: "Images saved" });
@@ -284,11 +278,12 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
   const handleReset = () => {
     setPendingDeletes(new Set());
     setPendingAdds([]);
-    setLocalOrder(null);
+    setUnifiedOrder(null);
   };
 
   const activeItems = displayItems.filter(item => !item.isDeleted);
   const deletedItems = displayItems.filter(item => item.isDeleted);
+  const mainOffset = mainImageUrl ? 1 : 0;
 
   return (
     <div className="mt-2" data-testid={`image-manager-${productId}`}>
@@ -311,20 +306,20 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
                 <X className="w-2.5 h-2.5" />
               </button>
             )}
-            {item.type === "existing" && (
+            {item.type !== "main" && (
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-0.5 rounded">
-                {idx > 0 && activeItems[idx - 1]?.type === "existing" && (
+                {idx > mainOffset && (
                   <button
-                    onClick={() => moveImage(idx, -1)}
+                    onClick={() => moveImage(idx - mainOffset, -1)}
                     className="text-white hover:text-blue-300 p-0"
                     data-testid={`button-move-left-${item.id}`}
                   >
                     <ChevronLeft className="w-3 h-3" />
                   </button>
                 )}
-                {idx < activeItems.length - 1 && activeItems[idx + 1]?.type === "existing" && (
+                {idx < activeItems.length - 1 && (
                   <button
-                    onClick={() => moveImage(idx, 1)}
+                    onClick={() => moveImage(idx - mainOffset, 1)}
                     className="text-white hover:text-blue-300 p-0"
                     data-testid={`button-move-right-${item.id}`}
                   >
