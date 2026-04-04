@@ -794,10 +794,12 @@ export default function AdminCatalog() {
             };
           }
         );
-      } catch {}
+      } catch (err) {
+        console.error("[SSE] Failed to process product-updated event:", err);
+      }
     });
     return () => es.close();
-  }, [selectedCategory?.id]);
+  }, [selectedCategory?.id, queryClient]);
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
