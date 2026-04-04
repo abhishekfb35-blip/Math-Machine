@@ -734,7 +734,7 @@
       "description": "Beautiful personalised bathrobe with embroidered heart design. 100% high-grade cotton, super soft and absorbent. A thoughtful gift for loved ones.",
       "price": 2599,
       "mrp": 3769,
-      "imageUrl": "/uploads/1775311257285-44c5152e44e7.jpg",
+      "imageUrl": "/images/products/1775311257285-44c5152e44e7.jpg",
       "categorySlug": "bathrobes",
       "amazonAsin": null,
       "color": null,
@@ -4034,7 +4034,7 @@
       "description": "Soft and absorbent 100% cotton bath towel for kids. Double-stitched borders for enhanced durability. 500 GSM fabric for superior softness and absorbency. Purely embroidered Ninja Hattori design.",
       "price": 999,
       "mrp": 1449,
-      "imageUrl": "/uploads/1775318729326-35fcffc6a9a3.jpg",
+      "imageUrl": "/images/products/1775318729326-35fcffc6a9a3.jpg",
       "categorySlug": "towels",
       "amazonAsin": "B01MS4OVC8",
       "color": "Blue",
@@ -4084,7 +4084,7 @@
       "description": "Soft and absorbent 100% cotton bath towel for kids. Double-stitched borders for enhanced durability. 500 GSM fabric for superior softness and absorbency. Purely embroidered Rio Bird design.",
       "price": 999,
       "mrp": 1449,
-      "imageUrl": "/uploads/1775314845930-31444051516f.jpg",
+      "imageUrl": "/images/products/1775314845930-31444051516f.jpg",
       "categorySlug": "towels",
       "amazonAsin": "B09PRSRM76",
       "color": "White",
@@ -4109,7 +4109,7 @@
       "description": "Premium 100% cotton adult bath towel with 600 GSM. FCB Barcelona Soccer Club embroidered design. Sized 150 x 75 cm for adults. Personalised with name.",
       "price": 1599,
       "mrp": 1899,
-      "imageUrl": "/uploads/1775318696189-b21646bca017.jpg",
+      "imageUrl": "/images/products/1775318696189-b21646bca017.jpg",
       "categorySlug": "towels",
       "amazonAsin": "B076XX3QGM",
       "color": "White",
@@ -11375,16 +11375,16 @@
       "isPrimary": false
     },
     {
-      "id": "m576bt4izxnrfi2rqpuold47",
+      "id": "roqfjlt7qu090eo40xm4a4fz",
       "productSlug": "100-cotton-footballer-soccer-player-personalised-adult-bath-towel-500-gsm-set-of",
-      "imageUrl": "/images/products/1774551331284-5cc5bcc7e7bf.jpg",
+      "imageUrl": "/images/products/1774551503319-7dcd5ad50c88.jpg",
       "sortOrder": 1,
       "isPrimary": false
     },
     {
-      "id": "roqfjlt7qu090eo40xm4a4fz",
+      "id": "m576bt4izxnrfi2rqpuold47",
       "productSlug": "100-cotton-footballer-soccer-player-personalised-adult-bath-towel-500-gsm-set-of",
-      "imageUrl": "/images/products/1774551503319-7dcd5ad50c88.jpg",
+      "imageUrl": "/images/products/1774551331284-5cc5bcc7e7bf.jpg",
       "sortOrder": 1,
       "isPrimary": false
     },
@@ -11393,6 +11393,13 @@
       "productSlug": "aeroplane-embroidered-kids-bath-towel",
       "imageUrl": "/images/products/aeroplane-embroidered-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "tfb55faf8q6zyqv0o8j2ktku",
+      "productSlug": "aeroplane-embroidered-kids-bath-towel",
+      "imageUrl": "/images/products/1775335807651-94721f8455d9.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -11473,6 +11480,13 @@
       "isPrimary": false
     },
     {
+      "id": "msa2np60a32jm9b1f4bqu2ry",
+      "productSlug": "animals-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335884152-d4e80f3fe1e6.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "g2tarzdgc6la7ajg9h5cn8ih",
       "productSlug": "animals-kids-bath-towel-2",
       "imageUrl": "/images/products/animals-kids-bath-towel-2_1.jpg",
@@ -11543,6 +11557,13 @@
       "isPrimary": false
     },
     {
+      "id": "vyedf3e5y5uwgrvhfgwjc436",
+      "productSlug": "ant-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775336198497-2e1b28104914.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "ymdf116jzdvwylxkqfln79bn",
       "productSlug": "ant-kids-bath-towel-2",
       "imageUrl": "/images/products/ant-kids-bath-towel-2_2.jpg",
@@ -11596,6 +11617,13 @@
       "productSlug": "baby-boy-owl-kids-bath-towel",
       "imageUrl": "/images/products/baby-boy-owl-kids-bath-towel_3.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "hm16b2wvzny59brq6nwtqupr",
+      "productSlug": "baby-boy-owl-kids-bath-towel",
+      "imageUrl": "/images/products/1775335922526-8733af27a2dd.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -11669,10 +11697,38 @@
       "isPrimary": false
     },
     {
+      "id": "adb7gnxygy4yxe30pkpikozw",
+      "productSlug": "baby-fish-and-friends-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835040-b66fa2d8608b.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "en2xjq7zopbhckob01t2i5kl",
+      "productSlug": "baby-fish-and-friends-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835055-04fbeca6f9c2.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fwueiqpmfhcu080ywnsy3c24",
+      "productSlug": "baby-fish-and-friends-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835056-d06833c1ea5f.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "q7hhemh9rkow34n57kfkx7hf",
       "productSlug": "baby-fish-and-friends-kids-bath-towel-1",
       "imageUrl": "/images/products/1774549303781-3cb5320c9b55.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "hkj4hybs9ztn0ygcgql2os34",
+      "productSlug": "baby-fish-and-friends-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335927131-4fc9389260c5.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -11690,10 +11746,31 @@
       "isPrimary": false
     },
     {
+      "id": "u072baberdywnrnjadzsrl5f",
+      "productSlug": "baby-fish-embroidered-kids-bath-towel",
+      "imageUrl": "/images/products/1775319882338-4b5502954770.jpg",
+      "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
       "id": "a2ot4kwymk41upw6m280i734",
       "productSlug": "baby-girl-elephant-kids-bath-towel",
       "imageUrl": "/images/products/baby-girl-elephant-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "afn02r4i9ll43yqqo0k34krs",
+      "productSlug": "baby-girl-elephant-kids-bath-towel",
+      "imageUrl": "/images/products/1775335254838-5d08219e4163.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "lu7csou4rd6vnbj9itv5wup5",
+      "productSlug": "baby-girl-elephant-kids-bath-towel",
+      "imageUrl": "/images/products/1775335257032-a28eb881f4bf.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -11718,6 +11795,13 @@
       "isPrimary": false
     },
     {
+      "id": "nr8pw945asuf9x50kjguu0gw",
+      "productSlug": "baby-girl-elephant-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336428342-0964fab037f9.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
       "id": "tnqjek1smboivjyhig4rtjfr",
       "productSlug": "baby-girl-owl-embroidered-kids-girls-bath-towel",
       "imageUrl": "/images/products/baby-girl-owl-embroidered-kids-girls-bath-towel_1.jpg",
@@ -11732,10 +11816,24 @@
       "isPrimary": false
     },
     {
+      "id": "z6lunoqbrae8014cv2m2vg4j",
+      "productSlug": "baby-girl-owl-embroidered-kids-girls-bath-towel",
+      "imageUrl": "/images/products/1775335887505-cde12de29cca.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "qngtwcmkkfflylq9s5v2ax18",
       "productSlug": "baby-girl-super-hero-kids-bath-towel",
       "imageUrl": "/images/products/baby-girl-super-hero-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mll0x69dvwemi4u4w1lixugy",
+      "productSlug": "baby-girl-super-hero-kids-bath-towel",
+      "imageUrl": "/images/products/1775336172519-fea4c4812d1e.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -11760,10 +11858,59 @@
       "isPrimary": false
     },
     {
+      "id": "t3gjw3nlol7z3rdh3jwll2cy",
+      "productSlug": "baby-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775318835111-2f07c3483939.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mocv4alj5qcmcy3icvduqp2o",
+      "productSlug": "baby-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775318835112-a112df6fa335.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "q86for4oj7swbfxkhmtadu6c",
+      "productSlug": "baby-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775318835112-1b35afbefaff.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "byjqqmfxy5272vlfha088lwk",
       "productSlug": "baby-mermaid-sleeping-in-dads-arms-kids-bath-towel",
       "imageUrl": "/images/products/baby-mermaid-sleeping-in-dads-arms-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "kdpfeydezjthc6vrcc0ao4fi",
+      "productSlug": "baby-mermaid-sleeping-in-dads-arms-kids-bath-towel",
+      "imageUrl": "/images/products/1775336034064-e21ffe940a20.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "tgy21w21yksc5mzf5251nm8b",
+      "productSlug": "baby-mickey-and-minnie-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835098-f9f84e834ff5.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "rcco635d70uddx7l094fk72d",
+      "productSlug": "baby-mickey-and-minnie-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835098-87fdee555e14.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "m7kmt756x3roqidjotrsbs2h",
+      "productSlug": "baby-mickey-and-minnie-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835098-9ad25dc52d92.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -11806,6 +11953,20 @@
       "productSlug": "baby-princess-the-bear-kids-bath-towel",
       "imageUrl": "/images/products/baby-princess-the-bear-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "upls1upibpbmn72el8m48nq8",
+      "productSlug": "baby-princess-the-bear-kids-bath-towel",
+      "imageUrl": "/images/products/1775336011759-630f0457a6eb.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "en8iddttr7t8r6rm909ek3qy",
+      "productSlug": "baby-princess-the-bear-kids-bath-towel",
+      "imageUrl": "/images/products/1775336024070-435c26b32b84.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -11939,6 +12100,13 @@
       "productSlug": "basketball-adult-sports-bath-towel-for-men",
       "imageUrl": "/images/products/basketball-adult-sports-bath-towel-for-men_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "alg5jwz91y8wemqzh5zr9tko",
+      "productSlug": "basketball-adult-sports-bath-towel-for-men",
+      "imageUrl": "/images/products/1775336223209-6ddb7b11825f.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -12229,6 +12397,13 @@
       "isPrimary": false
     },
     {
+      "id": "skzvoq9i81eeayqr7hqtzd7z",
+      "productSlug": "boss-baby-kids-bath-towel",
+      "imageUrl": "/images/products/1775335292701-25f4f9f0b082.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "qsemdfzkz11ysert2xdwqa9e",
       "productSlug": "boy-and-girl-owl-kids-bath-towel-set",
       "imageUrl": "/images/products/boy-and-girl-owl-kids-bath-towel-set_2.jpg",
@@ -12236,9 +12411,37 @@
       "isPrimary": false
     },
     {
+      "id": "dmc9hcs66j4pn1uu86ja9va0",
+      "productSlug": "boy-and-girl-owl-kids-bath-towel-set",
+      "imageUrl": "/images/products/1775313978519-837479dc9849.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "bwxmjwsintgkt7e3fka52ps8",
       "productSlug": "boy-and-girl-owl-kids-bath-towel-set",
       "imageUrl": "/images/products/boy-and-girl-owl-kids-bath-towel-set_3.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ve33whhtq0v2igqq6cfusqli",
+      "productSlug": "boy-girl-owl-couple-towel-set",
+      "imageUrl": "/images/products/1775313473026-1bcca1ac6762.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "s2k4keb7kqd14cnwrfo49la1",
+      "productSlug": "boy-girl-owl-couple-towel-set",
+      "imageUrl": "/images/products/1775313473027-c0cc8288164d.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "zr4vjxb9c6ifp6ih6cquzmn7",
+      "productSlug": "boy-girl-owl-couple-towel-set",
+      "imageUrl": "/images/products/1775313473027-3b7eb7248525.jpg",
       "sortOrder": 2,
       "isPrimary": false
     },
@@ -12254,6 +12457,13 @@
       "productSlug": "boy-on-cycle-kids-bath-towel",
       "imageUrl": "/images/products/boy-on-cycle-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "don146jtrpbljrecqwuhjcok",
+      "productSlug": "boy-on-cycle-kids-bath-towel",
+      "imageUrl": "/images/products/1775335881421-f08a4fe3cf6e.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -12282,6 +12492,13 @@
       "productSlug": "boy-on-cyclebike-kids-bath-towel-1",
       "imageUrl": "/images/products/boy-on-cyclebike-kids-bath-towel-1_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "u5pvis87fkddm97fk5ht42ec",
+      "productSlug": "boy-on-cyclebike-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337512697-7e3b951e6149.png",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -12369,6 +12586,27 @@
       "isPrimary": false
     },
     {
+      "id": "ux8aw5ney8v3ft969jqhiyxz",
+      "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473003-52e0c57eb639.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "wtskdpdqzjh3r8v7f1qg90z6",
+      "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473004-e0f42a89794c.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "zdto6l60622ckxn92wwvx1vr",
+      "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473004-d24eeb476319.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "t267fqpvltoha1a6ne3sw07h",
       "productSlug": "butterfly-adult-white-bath-towel-for-women",
       "imageUrl": "/images/products/butterfly-adult-white-bath-towel-for-women_1.jpg",
@@ -12432,6 +12670,27 @@
       "isPrimary": false
     },
     {
+      "id": "noejlarmbh55qp5xmxdxrl9l",
+      "productSlug": "butterfly-twine-couple-towel-set",
+      "imageUrl": "/images/products/1775314063940-acd087c9dda8.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "jvbdo6g5po9h8fyr6m57uzao",
+      "productSlug": "butterfly-twine-couple-towel-set",
+      "imageUrl": "/images/products/1775314063940-5c771906a095.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "lxt806pbtrpn7qcquzoiq2j9",
+      "productSlug": "butterfly-twine-couple-towel-set",
+      "imageUrl": "/images/products/1775314063940-93c07e3d1d29.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "ti167yd5sf5wf5dtdmybx850",
       "productSlug": "captain-america-towel",
       "imageUrl": "/images/products/1774547761592-7a6dc6ee27b7.jpg",
@@ -12488,6 +12747,27 @@
       "isPrimary": false
     },
     {
+      "id": "tivpvzeeroovtg9fnoate65u",
+      "productSlug": "caterpillar-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835125-d472ec317ee3.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "v3t2q8wu12rq4jd55u7bs00v",
+      "productSlug": "caterpillar-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835126-2b7b7f8ebfab.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "l6b0xzxn1zn8lhungr9q2sf2",
+      "productSlug": "caterpillar-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835126-662ecda5a12c.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "mnub8x97nb920ab5p8k94vi9",
       "productSlug": "caterpillar-kids-bath-towel-2",
       "imageUrl": "/images/products/caterpillar-kids-bath-towel-2_1.jpg",
@@ -12506,6 +12786,76 @@
       "productSlug": "christmas-bells-handkitchen-towels-set",
       "imageUrl": "/images/products/christmas-bells-handkitchen-towels-set_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "as9jqgauzzu54z8gs8wpt7ps",
+      "productSlug": "christmas-bells-handkitchen-towels-set",
+      "imageUrl": "/images/products/1775335275247-4d62c0761362.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "zk24psflwphpakw6t0hfbdw7",
+      "productSlug": "christmas-bells-handkitchen-towels-set",
+      "imageUrl": "/images/products/1775335279863-eadcc6fbef52.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "wqt77htis39k6x0d4uftzzzf",
+      "productSlug": "cotton-fcb-barcelona-soccer-club-personalised-adult-bath-towel-600-gsm-set-of-1-",
+      "imageUrl": "/images/products/1775332193626-9164b9e2687b.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "a5tbxe25ds9md2ehfndhduvo",
+      "productSlug": "cotton-fcb-barcelona-soccer-club-personalised-adult-bath-towel-600-gsm-set-of-1-",
+      "imageUrl": "/images/products/1775332193917-ad73f7d55385.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "jakuxmehg1u7nfh74uzp8v1o",
+      "productSlug": "cotton-fcb-barcelona-soccer-club-personalised-adult-bath-towel-600-gsm-set-of-1-",
+      "imageUrl": "/images/products/1775332194204-854955a368d8.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "vhc0gzaf4aqce4p5wan8yiyy",
+      "productSlug": "cotton-ninja-hattori-personalised-embroidered-kids-bath-towel-500-gsm-set-of-1-b",
+      "imageUrl": "/images/products/1775333887963-5fa57a327a57.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "qfgzc2wo3qe9ppq784vjhio5",
+      "productSlug": "cotton-ninja-hattori-personalised-embroidered-kids-bath-towel-500-gsm-set-of-1-b",
+      "imageUrl": "/images/products/1775335206635-6d798983b290.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ddvbn2u2yv4bgl2ssoefalvh",
+      "productSlug": "cotton-rio-bird-personalised-kids-bath-towel-500-gsm-set-of-1-white",
+      "imageUrl": "/images/products/1775332194513-47ea931c1810.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mnggww71azng0f9cfmj0b0fl",
+      "productSlug": "cotton-rio-bird-personalised-kids-bath-towel-500-gsm-set-of-1-white",
+      "imageUrl": "/images/products/1775332194528-2bc1a768e821.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "olpqr03n1w7811evz9isbuuc",
+      "productSlug": "cotton-rio-bird-personalised-kids-bath-towel-500-gsm-set-of-1-white",
+      "imageUrl": "/images/products/1775332194538-2fbd6183f294.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -12621,6 +12971,13 @@
       "isPrimary": false
     },
     {
+      "id": "ms6w11aprhnb68l70yoimrq4",
+      "productSlug": "crciket-player-sports-kids-bath-towel",
+      "imageUrl": "/images/products/1775335445585-cd9cd05aa2c4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "it76i156q0t6qr4jxv009xgl",
       "productSlug": "cricket-bat-and-ball-kids-bath-towel-blue",
       "imageUrl": "/images/products/cricket-bat-and-ball-kids-bath-towel-blue_1.jpg",
@@ -12712,6 +13069,13 @@
       "isPrimary": false
     },
     {
+      "id": "gzy3wxoqqp8ntw810r6czz8h",
+      "productSlug": "cruiser-motorcyclebike-biker-adult-bath-towel",
+      "imageUrl": "/images/products/1775319879876-34a43ef0a8a0.jpg",
+      "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
       "id": "o85zp1y8rp41ssc47vxc5liy",
       "productSlug": "cup-cake-kids-bath-towel",
       "imageUrl": "/images/products/cup-cake-kids-bath-towel_1.jpg",
@@ -12730,6 +13094,13 @@
       "productSlug": "cup-cake-kids-bath-towel",
       "imageUrl": "/images/products/cup-cake-kids-bath-towel_3.jpg",
       "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "f10tfj8hx6y1p6ze76toshyn",
+      "productSlug": "cup-cake-kids-bath-towel",
+      "imageUrl": "/images/products/1775335617329-01545036d40c.jpg",
+      "sortOrder": 3,
       "isPrimary": false
     },
     {
@@ -12835,6 +13206,13 @@
       "productSlug": "cute-cow-kids-boys-girls-bath-towel",
       "imageUrl": "/images/products/cute-cow-kids-boys-girls-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mr4sduabg5e7423la9e87mb9",
+      "productSlug": "cute-cow-kids-boys-girls-bath-towel",
+      "imageUrl": "/images/products/1775336351961-e96adc395ac6.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -13020,6 +13398,13 @@
       "isPrimary": false
     },
     {
+      "id": "xvnfbizighc1px06i4syvg6l",
+      "productSlug": "dinosaur-kids-bath-towel",
+      "imageUrl": "/images/products/1775335428242-f22ec18b3e8b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "d3tpoeccpzl8jhzuuu53fil6",
       "productSlug": "dinosaur-kids-bath-towel-1",
       "imageUrl": "/images/products/dinosaur-kids-bath-towel-1_1.jpg",
@@ -13090,6 +13475,13 @@
       "isPrimary": false
     },
     {
+      "id": "k8xjp4627j69o2t75v74lxj6",
+      "productSlug": "dog-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335904640-08281d101644.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "vnesgxj2gzm2tb5soujeeshg",
       "productSlug": "dora-explorer-towel",
       "imageUrl": "/images/products/1774547771127-b8134bfce827.jpg",
@@ -13125,6 +13517,27 @@
       "isPrimary": false
     },
     {
+      "id": "feqyzekin1fmsefcqi9ghiwu",
+      "productSlug": "dragonfly-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775314063953-2932c199dbca.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "r36pl91bcq0l454wuxd14uz5",
+      "productSlug": "dragonfly-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775314063953-68745bcd3bf4.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bvd4necjj733pj8zaaqzc9le",
+      "productSlug": "dragonfly-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775314063953-4eec79e8e60b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "xp2yyekz1xa8lgy8wb16d8f3",
       "productSlug": "elephant-kids-bath-towel",
       "imageUrl": "/images/products/elephant-kids-bath-towel_1.jpg",
@@ -13136,6 +13549,13 @@
       "productSlug": "elephant-kids-bath-towel",
       "imageUrl": "/images/products/elephant-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "pqiey79huab7vl2b4qbu273g",
+      "productSlug": "elephant-kids-bath-towel",
+      "imageUrl": "/images/products/1775336432674-503d5f0d2a00.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13153,6 +13573,13 @@
       "isPrimary": false
     },
     {
+      "id": "i5e2d3wwvzf6h1lhnpkrbc51",
+      "productSlug": "elvis-adult-bath-towel-king",
+      "imageUrl": "/images/products/1775335391012-fa7824d45192.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "laecqdlftl522erjdkj1royc",
       "productSlug": "elvis-kids-bath-towel-queen",
       "imageUrl": "/images/products/elvis-kids-bath-towel-queen_2.jpg",
@@ -13164,6 +13591,13 @@
       "productSlug": "elvis-kids-bath-towel-queen",
       "imageUrl": "/images/products/elvis-kids-bath-towel-queen_3.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "cp5ruighzv6uu73df40zoflv",
+      "productSlug": "elvis-kids-bath-towel-queen",
+      "imageUrl": "/images/products/1775335388410-e0513274fd89.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13188,6 +13622,48 @@
       "isPrimary": false
     },
     {
+      "id": "jedgsq12w0wm1qd2g76j944o",
+      "productSlug": "fabric-mr-and-mrs-bath-towels-5x25ft-white-pack-of-2",
+      "imageUrl": "/images/products/1775314063883-cbf253af415c.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "o4asft8s0grssj46v3wcg672",
+      "productSlug": "fabric-mr-and-mrs-bath-towels-5x25ft-white-pack-of-2",
+      "imageUrl": "/images/products/1775314063883-c36b1196362b.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "g0lthb1remiav14zwf0w2zqa",
+      "productSlug": "fabric-mr-and-mrs-bath-towels-5x25ft-white-pack-of-2",
+      "imageUrl": "/images/products/1775314063883-91bf9b18a2cf.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "foqhjyvoatw0e5lql10j19fm",
+      "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849496-452311d8d8b0.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "xso4ry10wivuxdy3wfird803",
+      "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849496-e9f6a8818050.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "atarxhpxxb3i31hr454ws7bi",
+      "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849496-15ce71d056e2.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "zmazxfd9vytn33sc6rgt663h",
       "productSlug": "floral-bee-ladies-bath-towel-for-women",
       "imageUrl": "/images/products/floral-bee-ladies-bath-towel-for-women_1.jpg",
@@ -13202,6 +13678,13 @@
       "isPrimary": false
     },
     {
+      "id": "d62jm4yyiqrly1vbmz1q7ixu",
+      "productSlug": "floral-bee-ladies-bath-towel-for-women",
+      "imageUrl": "/images/products/1775336121074-d210a23e275b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "sexmmoke1ts5zjpi3hw3ostf",
       "productSlug": "floral-butterfly-adult-bath-towel",
       "imageUrl": "/images/products/floral-butterfly-adult-bath-towel_1.jpg",
@@ -13212,6 +13695,111 @@
       "id": "nbzf2nn3zocr0h20hr9q6v54",
       "productSlug": "floral-butterfly-adult-bath-towel",
       "imageUrl": "/images/products/floral-butterfly-adult-bath-towel_2.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "t20jmxplld6lxj0y1y3ss4d6",
+      "productSlug": "floral-emblem-couple",
+      "imageUrl": "/images/products/1775313472921-54a6699455ef.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "fcfyi54qaqjicar4y86phi48",
+      "productSlug": "floral-emblem-couple",
+      "imageUrl": "/images/products/1775313472922-b3f69a01e4de.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "zstr80om6xhzpixi1grfyw1t",
+      "productSlug": "floral-emblem-couple",
+      "imageUrl": "/images/products/1775313472935-e1ada06da9fe.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "hq1730jebl01lpuc29run5ph",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473064-8ec5b818cbba.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "fsop99jg6ttmxbq1ra4hzg2k",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473064-e7fac7e07aa7.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "y4ktz8hwm3h518exxonxg9cr",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473065-375ddb7bcf41.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "q2y7i7mbwahuu638fvk6twj5",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
+      "imageUrl": "/images/products/1775313849532-fd1cfae5ab88.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "d40mr9oe25z1bpw5njvpljtj",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
+      "imageUrl": "/images/products/1775313849532-abb4b1459b21.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "kdz4zvvnbzlc8rysxinwwft9",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
+      "imageUrl": "/images/products/1775313849532-6c71cd6fe177.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ueeogv60p22bjg23q60m5gbn",
+      "productSlug": "floral-heart-ladybird-couple",
+      "imageUrl": "/images/products/1775313471823-eac20307740a.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "qqa0ymi0kgzfykgial068v4d",
+      "productSlug": "floral-heart-ladybird-couple",
+      "imageUrl": "/images/products/1775313472158-20f1a275585d.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "uq4mlwl96cc2dd3k7pcpagv0",
+      "productSlug": "floral-heart-ladybird-couple",
+      "imageUrl": "/images/products/1775313472465-2ff4815a0cf8.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "tdix2ciadyvbrmiobalf0cqx",
+      "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473058-722387118d80.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "usg7u6942e4qt96f70np6mis",
+      "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473058-b9d932fbeda2.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "rjypemp4l9420x5gy1rhhod8",
+      "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473058-9a682eba81ea.jpg",
       "sortOrder": 2,
       "isPrimary": false
     },
@@ -13230,10 +13818,31 @@
       "isPrimary": false
     },
     {
+      "id": "d66o2urxmyu8nd43o0tv6joi",
+      "productSlug": "floral-with-lady-bug-adult-bath-towel-for-women",
+      "imageUrl": "/images/products/1775336023192-eaf87e3c48b6.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "us4w2k512erilxkdujgnrd1o",
       "productSlug": "flower-pot-kids-bath-towel",
       "imageUrl": "/images/products/flower-pot-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mk7ndyc7015u8cwv1yjj5aga",
+      "productSlug": "flower-pot-kids-bath-towel",
+      "imageUrl": "/images/products/1775336450993-5487731804f5.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "yrv68v0jvg747j62epqjfhn8",
+      "productSlug": "flower-pot-kids-bath-towel",
+      "imageUrl": "/images/products/1775336453747-0cad31e63c7f.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13248,6 +13857,34 @@
       "productSlug": "flower-pot-kids-bath-towel-1",
       "imageUrl": "/images/products/1774550418672-f141ad00de5f.png",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "nqpfjl8e8case4yyl6bbn1be",
+      "productSlug": "flower-pot-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336458425-a1259b62a4d6.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "xj3ur9dsww1zxdqv5u9yazc0",
+      "productSlug": "flowers-bee-couple",
+      "imageUrl": "/images/products/1775313472981-c194c9a6827a.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ohno7p041yd1f46ls8lw0fpf",
+      "productSlug": "flowers-bee-couple",
+      "imageUrl": "/images/products/1775313472981-426bca7e6355.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "jish7g4pijbiyzlbxqxs0keo",
+      "productSlug": "flowers-bee-couple",
+      "imageUrl": "/images/products/1775313472981-4fd0bab896ed.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13297,6 +13934,13 @@
       "productSlug": "footballersoccer-player-sports-kids-bath-towel-1",
       "imageUrl": "/images/products/footballersoccer-player-sports-kids-bath-towel-1_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "lj27m841o3fjajda3ym9sl2z",
+      "productSlug": "footballersoccer-player-sports-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336445418-6224e0752b8e.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -13454,6 +14098,13 @@
       "isPrimary": false
     },
     {
+      "id": "mb3oppxy0huy4evp3a1uin2k",
+      "productSlug": "girls-heart-adult-bath-towel-for-women-teenagers",
+      "imageUrl": "/images/products/1775337535956-020c17d571b3.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "y4ez0vp3bq6fqtsmu6ai7qkr",
       "productSlug": "girls-heart-adult-bath-towel-for-women-teenagers-1",
       "imageUrl": "/images/products/girls-heart-adult-bath-towel-for-women-teenagers-1_1.jpg",
@@ -13468,10 +14119,45 @@
       "isPrimary": false
     },
     {
+      "id": "x7pioh4hom9uc7w06t1vpooh",
+      "productSlug": "girls-heart-adult-bath-towel-for-women-teenagers-1",
+      "imageUrl": "/images/products/1775337540034-c3ec84db7bd1.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "j2lhgpix6hv77mtcp921y7h8",
       "productSlug": "girls-heart-kids-bath-towel",
       "imageUrl": "/images/products/girls-heart-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "cbvy4taegwohzzl244jim8cf",
+      "productSlug": "girls-heart-kids-bath-towel",
+      "imageUrl": "/images/products/1775335792478-93405765da0f.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bz3xmebsbtre5ghuojf6dtfm",
+      "productSlug": "girls-heart-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337548778-0cee17aeb4e6.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "pr41q0r42p6dk1cwdepp04fe",
+      "productSlug": "girls-heart-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337549068-c67cb951cd73.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "a7deuvnq5y48v6cb5tzxyh8p",
+      "productSlug": "girls-heart-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337549370-386f3f675529.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13507,6 +14193,13 @@
       "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
       "imageUrl": "/images/products/gold-initials-emblem-valentines-couple-bath-towel_2.jpg",
       "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "pn7yoc9b2uik7fasrtdvwut2",
+      "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
+      "imageUrl": "/images/products/1775313967673-aeb59d725d86.jpg",
+      "sortOrder": 3,
       "isPrimary": false
     },
     {
@@ -13563,6 +14256,34 @@
       "productSlug": "golden-crown-towel-set-1-bath-plus-2-hand-towels",
       "imageUrl": "/images/products/golden-crown-towel-set-1-bath-plus-2-hand-towels_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "log66o18imlhvq6yyhn0fhg8",
+      "productSlug": "golden-crown-towel-set-1-bath-plus-2-hand-towels",
+      "imageUrl": "/images/products/1775335308424-281ababc2bd0.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "o2e1qk2q869p60pn7zrgjbzs",
+      "productSlug": "golden-emblem-with-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775313472988-38d08359519a.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "fj4ymtwi4w36ehw1pdkuli4k",
+      "productSlug": "golden-emblem-with-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775313472988-c232e72a1087.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "mkspz9pz582sv892iegi79y4",
+      "productSlug": "golden-emblem-with-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775313472988-ae075b09bc14.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13636,6 +14357,48 @@
       "isPrimary": false
     },
     {
+      "id": "owa0kxf8qhq5vm06eytugmxy",
+      "productSlug": "he-and-she-devil-couple-towel-set",
+      "imageUrl": "/images/products/1775314063918-60c00a091caf.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "pef9szjfwtgp4h74tx5wdfkc",
+      "productSlug": "he-and-she-devil-couple-towel-set",
+      "imageUrl": "/images/products/1775314063919-765c7ba06d58.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "kdw9idfic8w4nt8dac91z9dx",
+      "productSlug": "he-and-she-devil-couple-towel-set",
+      "imageUrl": "/images/products/1775314063919-5919c1cb946c.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "slvyyf2ydukmrry2ygtj961i",
+      "productSlug": "he-and-she-owls-kids-bath-towel",
+      "imageUrl": "/images/products/1775314063890-3cf6e9360e7a.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "nttbpz48j112obj8ihj0om91",
+      "productSlug": "he-and-she-owls-kids-bath-towel",
+      "imageUrl": "/images/products/1775314063890-f8fe1d20d934.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "lyliaytkh372kfkgbbvtvugf",
+      "productSlug": "he-and-she-owls-kids-bath-towel",
+      "imageUrl": "/images/products/1775314063891-ba3994c843f4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "upxkn87pdag53ea6h3xulbl2",
       "productSlug": "he-devil-adult-bath-towel",
       "imageUrl": "/images/products/he-devil-adult-bath-towel_1.jpg",
@@ -13647,6 +14410,13 @@
       "productSlug": "he-devil-adult-bath-towel",
       "imageUrl": "/images/products/he-devil-adult-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "vlffys39yihs2ioedgs88ey1",
+      "productSlug": "he-devil-adult-bath-towel",
+      "imageUrl": "/images/products/1775336489047-167315586e5a.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13734,6 +14504,62 @@
       "isPrimary": false
     },
     {
+      "id": "j5xvuyp3xi3ygssk7fl8erg7",
+      "productSlug": "heart-ladieswomens-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775335563137-28d537798e49.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ejwgjv11mcizm8x9bflyu6cf",
+      "productSlug": "heart-personalised-bathrobe",
+      "imageUrl": "/images/products/1775311268375-edcba9456698.jpg",
+      "sortOrder": 0,
+      "isPrimary": true
+    },
+    {
+      "id": "gtbflj0jwomjax1av3d9clpk",
+      "productSlug": "heart-personalised-bathrobe",
+      "imageUrl": "/images/products/1775311282993-4405f1508fc2.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fu2tvka2v479ct48vlpkvgyj",
+      "productSlug": "heart-personalised-bathrobe",
+      "imageUrl": "/images/products/1775311311709-77e500aaaa2c.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "faauhkggeq1poft8q17kkag8",
+      "productSlug": "heart-personalised-bathrobe",
+      "imageUrl": "/images/products/1775311343622-96fc07253be9.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
+      "id": "i2fdvwvbvqxc17hge4xmosuz",
+      "productSlug": "hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849513-c95f20b2e4cb.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "incelumx0lmci26ff1lduf4o",
+      "productSlug": "hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849513-5e87bde2fead.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "t9pgvwxs9jhs24flwqgwq0dx",
+      "productSlug": "hearts-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849513-1e63585fd7fb.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "znudwppqjiel7bo539pgiz9w",
       "productSlug": "hello-kitty-towel",
       "imageUrl": "/images/products/1774540032790-893b95d12207.jpg",
@@ -13748,6 +14574,69 @@
       "isPrimary": false
     },
     {
+      "id": "tjm2n1slaz4ivlbpivncfzbp",
+      "productSlug": "his-and-her-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849480-02307de13ea9.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "vl4akzroq13ez7qm0ry1x1xv",
+      "productSlug": "his-and-her-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849480-6afa39324c9a.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "vl1b9dgykdieabm5qv9aqgy7",
+      "productSlug": "his-and-her-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849480-10f6d3b7f76b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "xgteqgofrj1z1gtaf7lpdvei",
+      "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
+      "imageUrl": "/images/products/1775313849504-6b4c1cc81e56.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "vk44xry75pnl48w7x8uhwxhm",
+      "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
+      "imageUrl": "/images/products/1775313849505-6ae886483c8a.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ultsne9u2675ue1ny6o310eg",
+      "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
+      "imageUrl": "/images/products/1775313849505-d53f7b4546a9.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "egibxus0fch95fievommb0jz",
+      "productSlug": "his-her-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473073-5d280b0155d9.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "u4lupa7g9sp0z51f9qg4x2rp",
+      "productSlug": "his-her-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473073-11f192dd5302.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "c26ndkod2qj0rao8lg2n14hu",
+      "productSlug": "his-her-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473073-1c6d2893be8e.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "m3fvtx59etwer3br4rcxsfg6",
       "productSlug": "homer-simpson-playing-guitar-luxury-adult-bath-towel",
       "imageUrl": "/images/products/homer-simpson-playing-guitar-luxury-adult-bath-towel_2.jpg",
@@ -13759,6 +14648,13 @@
       "productSlug": "homer-simpson-playing-guitar-luxury-adult-bath-towel",
       "imageUrl": "/images/products/1774548088898-9d0970bf73a5.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fhrfvzqbt1bzevw3b8qfeohi",
+      "productSlug": "homer-simpson-playing-guitar-luxury-adult-bath-towel",
+      "imageUrl": "/images/products/1775333847893-052786a34dc4.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13811,6 +14707,13 @@
       "isPrimary": false
     },
     {
+      "id": "ou1a2iqio0bjz4xvbvsfj6rj",
+      "productSlug": "honey-bee-with-flower-kids-bath-towel-pink",
+      "imageUrl": "/images/products/1775336269976-8f172fafe147.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "k67obj5cz4d2y7z33denplto",
       "productSlug": "honey-bee-with-flower-kids-bath-towel-white",
       "imageUrl": "/images/products/honey-bee-with-flower-kids-bath-towel-white_1.jpg",
@@ -13822,6 +14725,13 @@
       "productSlug": "honey-bee-with-flower-kids-bath-towel-white",
       "imageUrl": "/images/products/honey-bee-with-flower-kids-bath-towel-white_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "llrgrq2whv5845qn10g5jbqp",
+      "productSlug": "honey-bee-with-flower-kids-bath-towel-white",
+      "imageUrl": "/images/products/1775336274892-1373e7f6c6fd.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13839,6 +14749,48 @@
       "isPrimary": false
     },
     {
+      "id": "xz12kvmam6e8rbls5lmjmq7z",
+      "productSlug": "honey-bee-with-honey-bucket-kids-bath-towel-white",
+      "imageUrl": "/images/products/1775318834191-8047eaa12be6.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "abcp0lamx88bcpzj22mczrdz",
+      "productSlug": "honey-bee-with-honey-bucket-kids-bath-towel-white",
+      "imageUrl": "/images/products/1775318834467-28e9c422ff4d.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "pvhsresdr4z1f1632b6cf6fp",
+      "productSlug": "honey-bee-with-honey-bucket-kids-bath-towel-white",
+      "imageUrl": "/images/products/1775318834753-42bf92e115d9.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "j8a6b5uilnaz1rz425vl5z24",
+      "productSlug": "initials-with-butterfly-design-couple-towel-set",
+      "imageUrl": "/images/products/1775314063947-edb990076b24.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "o8o1nz94lbfxmmx426jd15zv",
+      "productSlug": "initials-with-butterfly-design-couple-towel-set",
+      "imageUrl": "/images/products/1775314063947-505425cbe6f8.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "k505olx19thql4w0wb6pjvrp",
+      "productSlug": "initials-with-butterfly-design-couple-towel-set",
+      "imageUrl": "/images/products/1775314063947-5b5dcc3dbc6b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "ha6tcvdhvfu9t5cscg1uk17m",
       "productSlug": "initialsmonogram-kids-white-bath-towel",
       "imageUrl": "/images/products/initialsmonogram-kids-white-bath-towel_1.jpg",
@@ -13850,6 +14802,13 @@
       "productSlug": "initialsmonogram-kids-white-bath-towel",
       "imageUrl": "/images/products/initialsmonogram-kids-white-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "v6empp7qkqow2dc0xj823dpa",
+      "productSlug": "initialsmonogram-kids-white-bath-towel",
+      "imageUrl": "/images/products/1775335567051-712cb2654e30.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13867,6 +14826,13 @@
       "isPrimary": false
     },
     {
+      "id": "xk7jlsh0j0enfc9pul9jew41",
+      "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775335570363-0989079c86c4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "azfwomwd1b7fhasa2ipj97lv",
       "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel-1",
       "imageUrl": "/images/products/initialsmonogram-ladieswomens-adult-white-bath-towel-1_1.jpg",
@@ -13878,6 +14844,13 @@
       "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel-1",
       "imageUrl": "/images/products/initialsmonogram-ladieswomens-adult-white-bath-towel-1_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "nk9fr3z4lipcne1hrj080k94",
+      "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel-1",
+      "imageUrl": "/images/products/1775337583876-1184741ec4fb.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -13902,6 +14875,27 @@
       "isPrimary": false
     },
     {
+      "id": "xlqb0edcuwmpyp3dqk8i9q8p",
+      "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473042-1a594b47b54a.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "npjcjofeh5zekqglf4epqiax",
+      "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473043-81317a4da872.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "dyam84z2ntobcy7cv04iyquu",
+      "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473043-0bc439ca7e97.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "qsp1npiglxjkgwyd9lnjesn1",
       "productSlug": "kids-bath-towel",
       "imageUrl": "/images/products/kids-bath-towel_1.jpg",
@@ -13913,6 +14907,13 @@
       "productSlug": "kids-bath-towel",
       "imageUrl": "/images/products/kids-bath-towel_2.jpg",
       "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ko7zu5qm2d9vff2pj69yd27p",
+      "productSlug": "kids-bath-towel",
+      "imageUrl": "/images/products/1775319933771-3a0a4a26ed5a.jpg",
+      "sortOrder": 4,
       "isPrimary": false
     },
     {
@@ -13930,10 +14931,24 @@
       "isPrimary": false
     },
     {
+      "id": "tpr3q6gmu0uq0kx11xponelj",
+      "productSlug": "kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335578022-83a8e37571c3.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "jgxnmgll5gwx2b3novtvocit",
       "productSlug": "kids-bath-towel-2",
       "imageUrl": "/images/products/kids-bath-towel-2_1.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "yfn4i5prkwu88jvoppeo5aug",
+      "productSlug": "kids-bath-towel-2",
+      "imageUrl": "/images/products/1775332227881-0fc921b77c08.jpg",
+      "sortOrder": 6,
       "isPrimary": false
     },
     {
@@ -13979,6 +14994,13 @@
       "isPrimary": false
     },
     {
+      "id": "vcwbsujccos93t5m8xa80edh",
+      "productSlug": "kids-bath-towel-5",
+      "imageUrl": "/images/products/1775336262225-7e6622c486fd.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "fp1pyli49b083wu72ejx98xb",
       "productSlug": "kids-bath-towel-6",
       "imageUrl": "/images/products/1774550210650-c30c27ddc1be.jpg",
@@ -14021,6 +15043,13 @@
       "isPrimary": false
     },
     {
+      "id": "awgwl2wr7y4bpzg80aczn697",
+      "productSlug": "king-and-queen-crown-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313930578-75b6e349ec65.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
       "id": "s3v8axhimu7wtpqu26ozn7g8",
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
       "imageUrl": "/images/products/king-and-queen-of-hearts-valentines-couple-bath-towel-s_2.jpg",
@@ -14039,6 +15068,27 @@
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
       "imageUrl": "/images/products/king-and-queen-of-hearts-valentines-couple-bath-towel-s_4.jpg",
       "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
+      "id": "rtm0khggpkq1zlkiz3z03n4i",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313472996-d0eace3e15cd.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "lgbcutm4q7gavpji4gaceaur",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313472996-60a2ba197378.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "xksx4i7e50dgypmkof7yb2q1",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313472997-554050bd0e2b.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14084,6 +15134,48 @@
       "isPrimary": false
     },
     {
+      "id": "s3otvifvimefyx402fxpsui1",
+      "productSlug": "king-queen-crown-couple",
+      "imageUrl": "/images/products/1775313472965-4c2fefdb10fb.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "w3ba1ilu2wrhdo8n14qhu8oc",
+      "productSlug": "king-queen-crown-couple",
+      "imageUrl": "/images/products/1775313472965-c6e7a4efc1a1.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bhqspgiig79x33hxe7p4hr8l",
+      "productSlug": "king-queen-crown-couple",
+      "imageUrl": "/images/products/1775313472965-f83575c6d93d.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "zwxktdx4ukxmdyq257i4hvr9",
+      "productSlug": "king-queen-crown-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849488-a7d37d56804d.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "hu8tlgct36wtwu3selghgewm",
+      "productSlug": "king-queen-crown-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849488-7bbce0efc80f.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "uzwj3wf5joyx101ccs9hqi2t",
+      "productSlug": "king-queen-crown-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849488-4cca68f2a935.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "f83r37gnwll86rohw1xwxv2s",
       "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
       "imageUrl": "/images/products/king-queen-crown-valentines-couple-bath-towel-set_1.jpg",
@@ -14109,6 +15201,13 @@
       "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
       "imageUrl": "/images/products/king-queen-crown-valentines-couple-bath-towel-set_4.jpg",
       "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
+      "id": "dszi6bf2f440tpz3wyb0zyko",
+      "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775335604099-af1fa5cb0c11.jpg",
+      "sortOrder": 4,
       "isPrimary": false
     },
     {
@@ -14151,6 +15250,13 @@
       "productSlug": "kohli-cricket-player-kids-bath-towel",
       "imageUrl": "/images/products/kohli-cricket-player-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ziqwlwqffs1v0flws6h4z2sv",
+      "productSlug": "kohli-cricket-player-kids-bath-towel",
+      "imageUrl": "/images/products/1775336496132-2dce07f6b258.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14210,6 +15316,34 @@
       "isPrimary": false
     },
     {
+      "id": "a4umpjyjwaqu0ndnuhadtk7p",
+      "productSlug": "laurel-with-initials-couple-towel-set",
+      "imageUrl": "/images/products/1775313952865-7314367d2069.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
+      "id": "zfqmirnycqfsqjhob7ocr0dp",
+      "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849422-b9fed537e2c1.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ocwadjlbp75z1xlqwlrb46p3",
+      "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849436-cff0c40b2d04.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "tgmp8hft3n6480bu3xu9i1c6",
+      "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849451-8c17f4d99457.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "uajq5t66u7udjwo4uesxkv8q",
       "productSlug": "laurelemblem-with-initials-adult-white-bath-towel",
       "imageUrl": "/images/products/laurelemblem-with-initials-adult-white-bath-towel_1.jpg",
@@ -14256,6 +15390,13 @@
       "productSlug": "lion-cub-kids-bath-towel",
       "imageUrl": "/images/products/lion-cub-kids-bath-towel_2.jpg",
       "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "n72933mkiq6kqxl9z98j055a",
+      "productSlug": "lion-cub-kids-bath-towel",
+      "imageUrl": "/images/products/1775319849842-1409ad612c4d.jpg",
+      "sortOrder": 4,
       "isPrimary": false
     },
     {
@@ -14336,10 +15477,45 @@
       "isPrimary": false
     },
     {
+      "id": "as9dq0967i8dbogy63ilfqra",
+      "productSlug": "love-turtles-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473035-d78689216f49.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "lwnv361gh3xblvtbsooicvvx",
+      "productSlug": "love-turtles-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473035-b2ed4748ce60.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "pl8shzerybw2kyftdr9pcq2v",
+      "productSlug": "love-turtles-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313473035-d0488b40dbd8.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "vxb5bplfpx8xr5tch10d06p6",
       "productSlug": "mama-duck-with-ducklings-kids-bath-towel",
       "imageUrl": "/images/products/mama-duck-with-ducklings-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "n9pqyosoz2ly726anihxniwe",
+      "productSlug": "mama-duck-with-ducklings-kids-bath-towel",
+      "imageUrl": "/images/products/1775335608439-9c8efc1a5df3.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "x9s88404aw4lcov8kus1th6g",
+      "productSlug": "mama-duck-with-ducklings-kids-bath-towel",
+      "imageUrl": "/images/products/1775335611087-3abe5daebefe.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14368,6 +15544,13 @@
       "productSlug": "maradona-footballersoccer-player-kids-bath-towel",
       "imageUrl": "/images/products/maradona-footballersoccer-player-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bt1a11yblu4z3uv4vhu9yvlh",
+      "productSlug": "maradona-footballersoccer-player-kids-bath-towel",
+      "imageUrl": "/images/products/1775335740399-e467043b7468.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14525,6 +15708,13 @@
       "isPrimary": false
     },
     {
+      "id": "nojvmjy1u7o06sh9wmbn7iun",
+      "productSlug": "messi-argentina-footballersoccer-player-adult-bath-towel",
+      "imageUrl": "/images/products/1775335736230-fa5c5fb9d71c.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "mcofc2uqt5kjdqz4bjfcf73m",
       "productSlug": "messi-argentina-footballersoccer-player-kids-bath-towel",
       "imageUrl": "/images/products/messi-argentina-footballersoccer-player-kids-bath-towel_1.jpg",
@@ -14536,6 +15726,13 @@
       "productSlug": "messi-argentina-footballersoccer-player-kids-bath-towel",
       "imageUrl": "/images/products/messi-argentina-footballersoccer-player-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "k5kwniu6xrq2m3trz2mkpop8",
+      "productSlug": "messi-argentina-footballersoccer-player-kids-bath-towel",
+      "imageUrl": "/images/products/1775335913654-83ca841873e3.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14567,6 +15764,13 @@
       "isPrimary": false
     },
     {
+      "id": "mhrkumka3m5hl7z7g12m1m3u",
+      "productSlug": "mickey-with-aero-plane-kids-bath-towel",
+      "imageUrl": "/images/products/1775335589536-5e9a668cac9b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "qkeokxh3ihq1m3s1rqj4kln8",
       "productSlug": "motorcyclebike-kids-bath-towel",
       "imageUrl": "/images/products/motorcyclebike-kids-bath-towel_1.jpg",
@@ -14578,6 +15782,13 @@
       "productSlug": "motorcyclebike-kids-bath-towel",
       "imageUrl": "/images/products/motorcyclebike-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "e4tu565c2bcx8oyn6zivj584",
+      "productSlug": "motorcyclebike-kids-bath-towel",
+      "imageUrl": "/images/products/1775336290949-ba98d742da53.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14616,6 +15827,48 @@
       "isPrimary": false
     },
     {
+      "id": "sroprvprof4yuf76zyzu1n5b",
+      "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775314062656-579bf3cb27e4.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "b0wwdf5cyfo5j6y6dsb9n161",
+      "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775314062994-d8db870c7839.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "x9c4k4vxeo7u6zbbrpai45s6",
+      "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775314063339-81a50780265e.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "zzkq4q9n6jhlfvkhiqsshcga",
+      "productSlug": "mr-mrs-mush-lips-couple",
+      "imageUrl": "/images/products/1775313472973-3ea38bed264d.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "iee6yu5y9n8f1bxwecuyq2fi",
+      "productSlug": "mr-mrs-mush-lips-couple",
+      "imageUrl": "/images/products/1775313472974-4757358c07cb.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "o5g5rrjgei9gz9j09ftkr8cg",
+      "productSlug": "mr-mrs-mush-lips-couple",
+      "imageUrl": "/images/products/1775313472974-06095d992dc4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "q9s45xi5vvw54k56swk5d56y",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "imageUrl": "/images/products/mr-mrs-right-couple-bathrobes-for-adults-men-women-with_1.jpg",
@@ -14641,6 +15894,69 @@
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "imageUrl": "/images/products/mr-mrs-right-couple-bathrobes-for-adults-men-women-with_4.jpg",
       "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
+      "id": "gky9u6m17bon2irhf17l8lha",
+      "productSlug": "mr-right-mrs-always-right-couple-towel-set",
+      "imageUrl": "/images/products/1775314063671-a5b30ebe8cde.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "onkj9xig96syq62qkhafv35g",
+      "productSlug": "mr-right-mrs-always-right-couple-towel-set",
+      "imageUrl": "/images/products/1775314063777-7da0ed0bd7e4.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "b8qwi4x7hkm268tylru2nnpz",
+      "productSlug": "mr-right-mrs-always-right-couple-towel-set",
+      "imageUrl": "/images/products/1775314063779-b8c491747b83.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "wk0ii3o16nkb87e5l2t2e48r",
+      "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849524-30bbacfbef4b.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "weq8ucgv7ye7b37zvthvvtqv",
+      "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849524-5ef9e00ee0a9.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "vb14ijngiwbws799a2f0hyt9",
+      "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
+      "imageUrl": "/images/products/1775313849524-ac1456189448.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "pl4145gox017dckcmj2fq21k",
+      "productSlug": "mrs-always-right-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775318835076-18ce986f0d05.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "h0j7wq0d9v78a9sg6219zvle",
+      "productSlug": "mrs-always-right-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775318835076-4056e5875ded.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "mberavw862r93yxyugpge4n0",
+      "productSlug": "mrs-always-right-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775318835077-c0fcb6fa365b.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14686,6 +16002,13 @@
       "isPrimary": false
     },
     {
+      "id": "yr5oru7xwp5h2wu3d5ifg91i",
+      "productSlug": "new-born-baby-girl-chick-kids-bath-towel",
+      "imageUrl": "/images/products/1775320628219-925e710a833d.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
       "id": "bfcf5kolpelog9jtm5t4y6hr",
       "productSlug": "new-born-baby-with-bottle-kids-bath-towel",
       "imageUrl": "/images/products/new-born-baby-with-bottle-kids-bath-towel_1.jpg",
@@ -14721,10 +16044,52 @@
       "isPrimary": false
     },
     {
+      "id": "gfierc51qacdjx10kq1cg2u2",
+      "productSlug": "olaf-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835118-16415c8c83e2.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "wp4yu6t2bperjypkszth3sxd",
+      "productSlug": "olaf-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835118-a07153f43b8e.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "pcwici4o5y7cz39q1pjc9sz3",
+      "productSlug": "olaf-kids-bath-towel",
+      "imageUrl": "/images/products/1775318835118-0f8f9c3773d7.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "tuyvgv4exfmot6p35vwqoudv",
       "productSlug": "olaf-kids-bath-towel",
       "imageUrl": "/images/products/olaf-kids-bath-towel_3.jpg",
       "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
+      "id": "uv63b1puxdjlc9tgp3gx4uws",
+      "productSlug": "owls-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775314063905-06a096a2fe75.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "jogr7d8vafupgsx0gr7uqgcf",
+      "productSlug": "owls-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775314063905-6719697707c2.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fo0wnwiapc9h0mnkphv63uzb",
+      "productSlug": "owls-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775314063905-474058ccc603.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14816,6 +16181,13 @@
       "productSlug": "party-elephant-with-baloons-kids-bath-towel",
       "imageUrl": "/images/products/party-elephant-with-baloons-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "b7af5vdpb1999kk5lol4ocn3",
+      "productSlug": "party-elephant-with-baloons-kids-bath-towel",
+      "imageUrl": "/images/products/1775335594638-bd15126e368a.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -14931,10 +16303,24 @@
       "isPrimary": false
     },
     {
+      "id": "y7k15p8nmtk3fzn7fjdzjsdh",
+      "productSlug": "penguin-kids-bath-towel",
+      "imageUrl": "/images/products/1775335936496-464452fc8cd4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "upuk0kpg2in6vja8mtsaqcbz",
       "productSlug": "peppa-fairy-towel",
       "imageUrl": "/images/products/1774540071817-6dab3cab2d07.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "q5srndlpyx7civ2ynksoqnrq",
+      "productSlug": "peppa-fairy-towel",
+      "imageUrl": "/images/products/1775333381219-dcf6620ded37.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -14991,6 +16377,13 @@
       "productSlug": "pink-doll-adult-bath-towel",
       "imageUrl": "/images/products/pink-doll-adult-bath-towel_2.jpg",
       "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ft1z4b4nyj8533osn3ejepiv",
+      "productSlug": "pink-doll-adult-bath-towel",
+      "imageUrl": "/images/products/1775332241483-1cfd5e9549ee.jpg",
+      "sortOrder": 3,
       "isPrimary": false
     },
     {
@@ -15085,6 +16478,13 @@
       "isPrimary": false
     },
     {
+      "id": "fvzsak8cydnodjzq629rro7g",
+      "productSlug": "pony-pink-ponyunicorn-bath-towel",
+      "imageUrl": "/images/products/1775335794331-981fb97a7bf4.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "t8uoavux5sv7hv8o6e8uqapy",
       "productSlug": "pony-unicorn-kids-bath-towel",
       "imageUrl": "/images/products/1774539850742-defd297e4260.jpg",
@@ -15106,10 +16506,24 @@
       "isPrimary": false
     },
     {
+      "id": "h011o9vpsoxy7ckmso4hsjgn",
+      "productSlug": "pony-unicorn-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335815454-6f09a76e9cad.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "d7gn5my7jwyjgbb0j6lyqmts",
       "productSlug": "pony-unicorn-kids-bath-towel-2",
       "imageUrl": "/images/products/pony-unicorn-kids-bath-towel-2_1.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "vcte4wmjh8go1icewj4p02yx",
+      "productSlug": "pony-unicorn-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775320717631-cced50e791af.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15120,10 +16534,24 @@
       "isPrimary": false
     },
     {
+      "id": "b643aie2hpt0cy09v7flcqck",
+      "productSlug": "pony-unicorn-kids-bath-towel-3",
+      "imageUrl": "/images/products/1775335319312-ab425a4a81a6.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "w69atrxh437yar1iu4av7min",
       "productSlug": "pony-unicorn-kids-girls-bath-towel",
       "imageUrl": "/images/products/pony-unicorn-kids-girls-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "drkgkl4ilfcldv6nsjtym9aj",
+      "productSlug": "pony-unicorn-kids-girls-bath-towel",
+      "imageUrl": "/images/products/1775335995703-821cd71e7a96.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -15183,6 +16611,13 @@
       "isPrimary": false
     },
     {
+      "id": "qbaa8dar1u5cv7tipu6k5c6v",
+      "productSlug": "pony-unicorn-on-rainbow-bath-towel",
+      "imageUrl": "/images/products/1775335901661-afd416da0388.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "wn8hwxpwkits97lu6r9ab9pp",
       "productSlug": "pony-unicornpony-on-cloud-kids-bath-towel",
       "imageUrl": "/images/products/pony-unicornpony-on-cloud-kids-bath-towel_1.jpg",
@@ -15190,10 +16625,45 @@
       "isPrimary": false
     },
     {
+      "id": "wwyuujqcao4zvn0f1suox2sc",
+      "productSlug": "pony-unicornpony-on-cloud-kids-bath-towel",
+      "imageUrl": "/images/products/1775335895791-fe8a94fa6eaf.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "acqzkthmu7b6irvnukpjhqk5",
       "productSlug": "ponyunicorn-kids-bath-towel",
       "imageUrl": "/images/products/ponyunicorn-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ho0v8tar09x81lx3o64b1lno",
+      "productSlug": "ponyunicorn-kids-bath-towel",
+      "imageUrl": "/images/products/1775335432953-03210a7c14a5.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "zt573xkenjuht1620b0g8sib",
+      "productSlug": "prince-and-princess-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473011-5754c371e992.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "sgm57rhzrtd72vsbrsgd99ax",
+      "productSlug": "prince-and-princess-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473011-a1b27db740fe.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "v9nwws5rut22mqqgbx1ge33x",
+      "productSlug": "prince-and-princess-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473011-214f2ede5cda.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15365,6 +16835,13 @@
       "isPrimary": false
     },
     {
+      "id": "e6cgzzs7brznsvsvm3ddvjzd",
+      "productSlug": "princess-embroidered-kids-bath-towel",
+      "imageUrl": "/images/products/1775335693502-ca539cf47661.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "lbe8kz3p3py4acal6ni6ovyu",
       "productSlug": "princess-embroidered-kids-bath-towel-1",
       "imageUrl": "/images/products/princess-embroidered-kids-bath-towel-1_1.jpg",
@@ -15372,10 +16849,24 @@
       "isPrimary": false
     },
     {
+      "id": "bb3hoexujz9rhvqmcgiitnk9",
+      "productSlug": "princess-embroidered-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336042369-2b03e19cd504.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "ismrcvxm9n76k2rv5jc1j95k",
       "productSlug": "princess-in-blue-dress-kids-bath-towel",
       "imageUrl": "/images/products/princess-in-blue-dress-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ftyjiq1jqnwbthl29o3kaalb",
+      "productSlug": "princess-in-blue-dress-kids-bath-towel",
+      "imageUrl": "/images/products/1775337472552-e74007dec166.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -15407,10 +16898,38 @@
       "isPrimary": false
     },
     {
+      "id": "cn84kffz3fa78q1p1s65yiw7",
+      "productSlug": "princess-in-pink-kids-bath-towel",
+      "imageUrl": "/images/products/1775335546696-3a02602c98f9.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "dz5e40bndnf7v35yvtd3euff",
+      "productSlug": "princess-in-pink-kids-bath-towel",
+      "imageUrl": "/images/products/1775335552597-0628ff0a874a.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "kdny84i32irx07j6t5wt5ibw",
       "productSlug": "princess-in-purple-dress-kids-bath-towel",
       "imageUrl": "/images/products/princess-in-purple-dress-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ii8rhm5ey9u4tqct7a0ioxad",
+      "productSlug": "princess-in-purple-dress-kids-bath-towel",
+      "imageUrl": "/images/products/1775337476676-48153e0e58ca.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "rl57xsr48la8ze31ewmggrxu",
+      "productSlug": "princess-in-purple-dress-kids-bath-towel",
+      "imageUrl": "/images/products/1775337480940-89ba29c9c6ad.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15435,10 +16954,31 @@
       "isPrimary": false
     },
     {
+      "id": "hn5ombz3tx0ofv18o65208b7",
+      "productSlug": "princess-kids-bath-towel",
+      "imageUrl": "/images/products/1775335220602-169a21c6ab0c.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "zuuryg9qhm1epey5doffog0n",
       "productSlug": "princess-kids-bath-towel-1",
       "imageUrl": "/images/products/princess-kids-bath-towel-1_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "mac0ksq07gui9hx1nzl7rg46",
+      "productSlug": "princess-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335829223-8a7e0d696e7c.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "v5f6lj50svqqmceyicazw4dc",
+      "productSlug": "princess-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335849574-6e945c3db20b.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15484,10 +17024,38 @@
       "isPrimary": false
     },
     {
+      "id": "iew0zbvktb61rvth4cewsd01",
+      "productSlug": "princess-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775320698481-a77138604402.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "wkl26fwle816wfoksa6frg3u",
+      "productSlug": "princess-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775320702352-ab465d243324.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
       "id": "efr38m66vszp0gmu34pghlwd",
       "productSlug": "princess-kids-bath-towel-3",
       "imageUrl": "/images/products/princess-kids-bath-towel-3_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "z5p3gd4qoe31hk749wm4lp3l",
+      "productSlug": "princess-kids-bath-towel-3",
+      "imageUrl": "/images/products/1775335373629-b3f4ccedaa7c.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "tasr22m0zzzlsbw4cil3i2mo",
+      "productSlug": "princess-kids-bath-towel-3",
+      "imageUrl": "/images/products/1775335374203-8998df1e5785.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15505,10 +17073,24 @@
       "isPrimary": false
     },
     {
+      "id": "k8u5z4ijqdpomm6exguniwi3",
+      "productSlug": "princess-kids-bath-towel-4",
+      "imageUrl": "/images/products/1775335547418-c6341c67afde.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "lxltoe9yr4p8om71gnb2m774",
       "productSlug": "princess-kids-bath-towel-5",
       "imageUrl": "/images/products/princess-kids-bath-towel-5_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "rhwymspev3vdq8m3tqmetd9c",
+      "productSlug": "princess-kids-bath-towel-5",
+      "imageUrl": "/images/products/1775335869729-1744f44c17d2.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -15547,6 +17129,13 @@
       "isPrimary": false
     },
     {
+      "id": "yy307v1ovrd0usb8dypfw7gi",
+      "productSlug": "princess-kids-bath-towel-8",
+      "imageUrl": "/images/products/1775336216850-b0242d2ffdb3.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "a3pc862rmuut7j49dvh7mr9k",
       "productSlug": "princess-kids-bath-towel-9",
       "imageUrl": "/images/products/princess-kids-bath-towel-9_1.jpg",
@@ -15565,6 +17154,13 @@
       "productSlug": "princess-kids-bath-towel-white-contemporary",
       "imageUrl": "/images/products/princess-kids-bath-towel-white-contemporary_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "dlvuk2pwvna0ui936h40cmu2",
+      "productSlug": "princess-kids-bath-towel-white-contemporary",
+      "imageUrl": "/images/products/1775335553423-212c8dd1b83f.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15631,6 +17227,13 @@
       "isPrimary": false
     },
     {
+      "id": "zpbhmy4kny8eb3lew176agww",
+      "productSlug": "princess-sisters-kids-bath-towel",
+      "imageUrl": "/images/products/1775335418445-5b0a4d50aa68.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "o6u39gs5ekvbeswruk5oj6r4",
       "productSlug": "princess-sophia-0-to-5-yrs-baby-kids-blanket4-4-x-3-4-yellow",
       "imageUrl": "/images/products/princess-sophia-0-to-5-yrs-baby-kids-blanket4-4-x-3-4-y_1.jpg",
@@ -15666,6 +17269,13 @@
       "isPrimary": false
     },
     {
+      "id": "m13g8n2zbkvh6y8hl79ehbvz",
+      "productSlug": "princess-sophia-embroidered-bath-towel",
+      "imageUrl": "/images/products/1775336038806-4acf53f81ac9.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "riff3twq0dipo1zap2qljbt4",
       "productSlug": "princess-with-a-rose-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
       "imageUrl": "/images/products/princess-with-a-rose-0-to-5-yrs-kids-ac-blanket35x-6-ft_1.jpg",
@@ -15684,6 +17294,13 @@
       "productSlug": "princess-with-bird-kids-bath-towel",
       "imageUrl": "/images/products/princess-with-bird-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "j2xhte9mheu5hvheag5x92dg",
+      "productSlug": "princess-with-bird-kids-bath-towel",
+      "imageUrl": "/images/products/1775335339708-3e2093939f85.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -15712,6 +17329,13 @@
       "productSlug": "princess-with-butterflies-kids-bath-towel",
       "imageUrl": "/images/products/princess-with-butterflies-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "hlulud1ff4yeedzuxdaimwnl",
+      "productSlug": "princess-with-butterflies-kids-bath-towel",
+      "imageUrl": "/images/products/1775335584557-f760403bbe46.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15750,6 +17374,13 @@
       "isPrimary": false
     },
     {
+      "id": "f6gnxf113yvcsf02n2t26tjd",
+      "productSlug": "princess-with-magic-lamp-kids-bath-towel",
+      "imageUrl": "/images/products/1775335402940-210876497689.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "izrbsxf8imqzxd6zvvebosk8",
       "productSlug": "princess-with-rose-kids-bath-towel",
       "imageUrl": "/images/products/princess-with-rose-kids-bath-towel_1.jpg",
@@ -15782,6 +17413,13 @@
       "productSlug": "princess-with-rose-kids-bath-towel-1",
       "imageUrl": "/images/products/1774549869858-87502dc51f7b.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "w2nuqpehw26iddzo01djrigd",
+      "productSlug": "princess-with-rose-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336279178-3a45cd50346b.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15834,6 +17472,13 @@
       "isPrimary": false
     },
     {
+      "id": "jfw56w3ocs9mbacbnpkhp8k7",
+      "productSlug": "queen-bee-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775336126297-b4b8a8d6e3da.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "vo93hwvxw16e40hq7qzwvpqa",
       "productSlug": "queen-bee-bathrobe-for-adultswomen-with-name-and-initials",
       "imageUrl": "/images/products/queen-bee-bathrobe-for-adultswomen-with-name-and-initia_1.jpg",
@@ -15883,6 +17528,13 @@
       "isPrimary": false
     },
     {
+      "id": "v3n3narokt6wmh4h3lqeey5u",
+      "productSlug": "queen-crown-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775337503482-9a0b47b85c45.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "m3j3qlodc0jd5dx59blarhcs",
       "productSlug": "queen-of-hearts-on-pink-kids-bath-towel",
       "imageUrl": "/images/products/queen-of-hearts-on-pink-kids-bath-towel_1.jpg",
@@ -15911,10 +17563,31 @@
       "isPrimary": false
     },
     {
+      "id": "f10qi5etcoc7m9cbln7ita8j",
+      "productSlug": "rabbit-with-carrot-kids-bath-towel",
+      "imageUrl": "/images/products/1775336482157-e3c9df7d3354.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "zycjrhv3yb52rwiuufur5zjv",
       "productSlug": "rabbit-with-carrot-kids-bath-towel-1",
       "imageUrl": "/images/products/rabbit-with-carrot-kids-bath-towel-1_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "oknvvfdexdie8kkdsknuzr9s",
+      "productSlug": "rabbit-with-carrot-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337484764-f333f39b6248.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "glhnyf70ced7w9akgft5cq6o",
+      "productSlug": "rabbit-with-carrot-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337487603-7625a9161c54.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15929,6 +17602,13 @@
       "productSlug": "red-beetle-adult-bath-towel",
       "imageUrl": "/images/products/red-beetle-adult-bath-towel_3.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "h818tkbx54xht45qjc13e2hy",
+      "productSlug": "red-beetle-adult-bath-towel",
+      "imageUrl": "/images/products/1775335979309-cfe3c2341f18.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -15995,6 +17675,13 @@
       "isPrimary": false
     },
     {
+      "id": "g4vilzf6dbd55vza7wr2grht",
+      "productSlug": "red-sports-car-kids-bath-towel",
+      "imageUrl": "/images/products/1775335993343-9cacdcc8e3f7.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "gp35wsgl6rzitdif7rehsu4b",
       "productSlug": "red-sports-car-kids-bath-towel-1",
       "imageUrl": "/images/products/red-sports-car-kids-bath-towel-1_1.jpg",
@@ -16009,6 +17696,13 @@
       "isPrimary": false
     },
     {
+      "id": "fu899rs8h1en2sxn7h127ozq",
+      "productSlug": "red-sports-car-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335995188-9df6a42a2ff8.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "jdgm29tanqe5sullbwcua51r",
       "productSlug": "red-sports-car-kids-embroidered-bath-towel",
       "imageUrl": "/images/products/red-sports-car-kids-embroidered-bath-towel_1.jpg",
@@ -16020,6 +17714,13 @@
       "productSlug": "red-sports-car-kids-embroidered-bath-towel",
       "imageUrl": "/images/products/red-sports-car-kids-embroidered-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fxyy8mszgxjvw4u4tmwid7c9",
+      "productSlug": "red-sports-car-kids-embroidered-bath-towel",
+      "imageUrl": "/images/products/1775335782999-d1f0d990e2d1.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16051,10 +17752,24 @@
       "isPrimary": false
     },
     {
+      "id": "ep7dcmd2u6y8gch7myhk2atz",
+      "productSlug": "red-sports-race-car-embrodiered-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775335790705-b637c7176040.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "plqup0a8h6i29q99h4shxw4i",
       "productSlug": "robot-superhero-kids-bath-towel",
       "imageUrl": "/images/products/robot-superhero-kids-bath-towel_2.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "or3rzegf31tjxu1wcyd07f2d",
+      "productSlug": "robot-superhero-kids-bath-towel",
+      "imageUrl": "/images/products/1775333663813-71dd41742d3e.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -16107,6 +17822,13 @@
       "isPrimary": false
     },
     {
+      "id": "pcrfnvan3psj66uark27cu5m",
+      "productSlug": "ronaldo-soccer-kids-bath-towel",
+      "imageUrl": "/images/products/1775337494570-5402133b8f28.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "mhb2o1uojv1546pfh6v9kmyp",
       "productSlug": "ronaldo-soccer-kids-bath-towel-1",
       "imageUrl": "/images/products/ronaldo-soccer-kids-bath-towel-1_1.jpg",
@@ -16118,6 +17840,13 @@
       "productSlug": "ronaldo-soccer-kids-bath-towel-1",
       "imageUrl": "/images/products/ronaldo-soccer-kids-bath-towel-1_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bfopc24k7ob3bped7kyb802n",
+      "productSlug": "ronaldo-soccer-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775337496644-7768637ae324.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16135,6 +17864,13 @@
       "isPrimary": false
     },
     {
+      "id": "aiovh95scpiknb94hwye3tmq",
+      "productSlug": "ronaldo-soccerfootball-kids-bath-towel",
+      "imageUrl": "/images/products/1775335874496-1a12de51c3cd.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "l0yv5vt3m67qs4jdh9pf245k",
       "productSlug": "ronaldo-soccerfootball-player-kids-bath-towel",
       "imageUrl": "/images/products/ronaldo-soccerfootball-player-kids-bath-towel_1.jpg",
@@ -16146,6 +17882,13 @@
       "productSlug": "ronaldo-soccerfootball-player-kids-bath-towel",
       "imageUrl": "/images/products/ronaldo-soccerfootball-player-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "bggketsrkrct3e4urh50b13n",
+      "productSlug": "ronaldo-soccerfootball-player-kids-bath-towel",
+      "imageUrl": "/images/products/1775335878125-b8325ac60cbd.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16163,6 +17906,13 @@
       "isPrimary": false
     },
     {
+      "id": "fvc4obmc809oc0pj0qjiqmzq",
+      "productSlug": "royal-lion-emblem-adult-bath-towel-for-men-and-women",
+      "imageUrl": "/images/products/1775335662536-d71577e4404e.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "kqxwjkyb344etjpytef1wc2e",
       "productSlug": "santa-claus-christmas-kids-bath-towel",
       "imageUrl": "/images/products/santa-claus-christmas-kids-bath-towel_1.jpg",
@@ -16177,6 +17927,13 @@
       "isPrimary": false
     },
     {
+      "id": "mp7o37tj8f38uunr9rvq5a7w",
+      "productSlug": "santa-claus-christmas-kids-bath-towel",
+      "imageUrl": "/images/products/1775336035562-b065d11267fb.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "rjgihpz8xxmngoq5q9gzmdk5",
       "productSlug": "santa-claus-in-chimney-christmas-kids-bath-towel",
       "imageUrl": "/images/products/santa-claus-in-chimney-christmas-kids-bath-towel_1.jpg",
@@ -16188,6 +17945,13 @@
       "productSlug": "santa-claus-in-chimney-christmas-kids-bath-towel",
       "imageUrl": "/images/products/santa-claus-in-chimney-christmas-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ew86pmxksgsz90rqsgum0z5t",
+      "productSlug": "santa-claus-in-chimney-christmas-kids-bath-towel",
+      "imageUrl": "/images/products/1775337499150-0bfd33e3734f.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16215,28 +17979,21 @@
       "id": "uynk63rqhov0smcxsewcxae5",
       "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
       "imageUrl": "/images/products/santa-claus-with-his-reindeer-christmas-kids-bath-towel_1.jpg",
-      "sortOrder": 1,
+      "sortOrder": 0,
       "isPrimary": false
     },
     {
       "id": "xalpuuks660diulwiko5mptp",
       "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
       "imageUrl": "/images/products/santa-claus-with-his-reindeer-christmas-kids-bath-towel_2.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "c51u5j6x8g3bfrdfbouanp6s",
+      "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
+      "imageUrl": "/images/products/1775344537854-1202112edc70.jpg",
       "sortOrder": 2,
-      "isPrimary": false
-    },
-    {
-      "id": "w147thk3e8uldjbjstjghjcq",
-      "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
-      "imageUrl": "/images/products/santa-claus-with-his-reindeer-christmas-kids-bath-towel_3.jpg",
-      "sortOrder": 3,
-      "isPrimary": false
-    },
-    {
-      "id": "fcpcxxlq7ygomf42cyfcjyhr",
-      "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
-      "imageUrl": "/images/products/santa-claus-with-his-reindeer-christmas-kids-bath-towel_4.jpg",
-      "sortOrder": 4,
       "isPrimary": false
     },
     {
@@ -16251,6 +18008,13 @@
       "productSlug": "she-devil-ladieswomens-adult-white-bath-towel",
       "imageUrl": "/images/products/she-devil-ladieswomens-adult-white-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "fkm2pujwrv5znqpknon2a6l6",
+      "productSlug": "she-devil-ladieswomens-adult-white-bath-towel",
+      "imageUrl": "/images/products/1775337507285-7fa091cbcdbd.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16271,6 +18035,27 @@
       "id": "eegyuuynprc3oq308yehtbna",
       "productSlug": "shiva-bike-towel",
       "imageUrl": "/images/products/1774547739850-9ab5b42c944b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "oqhe7f2aaz0e2g9rszsll9c9",
+      "productSlug": "shorts-frock-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313848106-37e2ea9a4c6b.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "e9hce0f9of6h3ztshlsls7vy",
+      "productSlug": "shorts-frock-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313848765-228364c88504.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "hx2knld6bbxmpl4zzc55pjvj",
+      "productSlug": "shorts-frock-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775313849060-55fc03fca072.jpg",
       "sortOrder": 2,
       "isPrimary": false
     },
@@ -16324,6 +18109,13 @@
       "isPrimary": false
     },
     {
+      "id": "gjhiszs0ujwm95s29mzor3ob",
+      "productSlug": "snow-man-with-christmas-tree-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775335527725-6b028a3e0167.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "g3gmgnqzsspntezfhbpvqgdq",
       "productSlug": "soccerfootball-adult-bath-towel",
       "imageUrl": "/images/products/soccerfootball-adult-bath-towel_1.jpg",
@@ -16352,6 +18144,27 @@
       "isPrimary": false
     },
     {
+      "id": "uci8ruw70ufsl1bgq8vgqwpw",
+      "productSlug": "soccerfootball-embroidered-luxury-adult-bath-hand-towel-set",
+      "imageUrl": "/images/products/1775318835083-3b2c91259a6b.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ybydvuzxdksmvfbnyofp4iao",
+      "productSlug": "soccerfootball-embroidered-luxury-adult-bath-hand-towel-set",
+      "imageUrl": "/images/products/1775318835083-39afe5ed6093.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ftozv1jdq5yi3kqdycz043gy",
+      "productSlug": "soccerfootball-embroidered-luxury-adult-bath-hand-towel-set",
+      "imageUrl": "/images/products/1775318835083-f0b0fa7fbdc3.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "j9m4c2oekvizjigzy8xmx2y1",
       "productSlug": "soccerfootball-player-adult-bath-towel",
       "imageUrl": "/images/products/soccerfootball-player-adult-bath-towel_1.jpg",
@@ -16366,10 +18179,24 @@
       "isPrimary": false
     },
     {
+      "id": "wigheypxgbg9jrp4slxq2h4k",
+      "productSlug": "soccerfootball-player-adult-bath-towel",
+      "imageUrl": "/images/products/1775335399788-fa7e97c915b2.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "tzx1epi6j3u37hy4d4vqd0ub",
       "productSlug": "soccerfootball-player-adult-bath-towel-1",
       "imageUrl": "/images/products/soccerfootball-player-adult-bath-towel-1_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "cuyc6cggudijqd2falwvnmmc",
+      "productSlug": "soccerfootball-player-adult-bath-towel-1",
+      "imageUrl": "/images/products/1775336438661-a1c57e6fa81b.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -16401,6 +18228,13 @@
       "isPrimary": false
     },
     {
+      "id": "n6tpnsh7crcpdynhnx2g1tve",
+      "productSlug": "space-rocket-kids-bath-towel",
+      "imageUrl": "/images/products/1775335908487-d95b592037f9.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "dmga6hffmjgkmrs3kywyw2wl",
       "productSlug": "space-rocket-kids-bath-towel-1",
       "imageUrl": "/images/products/space-rocket-kids-bath-towel-1_1.jpg",
@@ -16426,6 +18260,13 @@
       "productSlug": "space-rocket-kids-bath-towel-1",
       "imageUrl": "/images/products/space-rocket-kids-bath-towel-1_4.jpg",
       "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
+      "id": "jf9g9zh2lyl82bcgpbw65k9w",
+      "productSlug": "space-rocket-with-astronaut-kids-bath-towel",
+      "imageUrl": "/images/products/1775315391838-d49c90b043b0.jpg",
+      "sortOrder": 0,
       "isPrimary": false
     },
     {
@@ -16492,6 +18333,27 @@
       "isPrimary": false
     },
     {
+      "id": "yibf51ekrq1mib0ema8nka3n",
+      "productSlug": "sports-adult-teenager-white-bath-towel-for-women",
+      "imageUrl": "/images/products/1775337526278-6f859636d20d.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "bfhxocwtgrslgnywycg6nnqc",
+      "productSlug": "sports-adult-teenager-white-bath-towel-for-women",
+      "imageUrl": "/images/products/1775337529369-9948b0359580.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "kkhqw81oc8i2lfqd6vd3jqn3",
+      "productSlug": "sports-adult-teenager-white-bath-towel-for-women",
+      "imageUrl": "/images/products/1775337532150-fcabf7e2a274.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "u4jzzyueld5ex9no4pp36ntt",
       "productSlug": "sports-car-kids-bath-towel",
       "imageUrl": "/images/products/sports-car-kids-bath-towel_1.jpg",
@@ -16503,6 +18365,34 @@
       "productSlug": "sports-car-kids-bath-towel",
       "imageUrl": "/images/products/sports-car-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "xr1r5bv442dn982fbwip2ju4",
+      "productSlug": "sports-car-kids-bath-towel",
+      "imageUrl": "/images/products/1775335544039-02175f63539b.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "zz58lprcbnipaf7uzculrqf1",
+      "productSlug": "sports-kids-boys-girls-bath-towel",
+      "imageUrl": "/images/products/1775337516550-c6bcd961b43c.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "sfirrhpyo6nnuuv3yhz4g9rh",
+      "productSlug": "sports-kids-boys-girls-bath-towel",
+      "imageUrl": "/images/products/1775337519777-a10af7a2ff12.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "t63cbllfbfzmusr5hwwelzak",
+      "productSlug": "sports-kids-boys-girls-bath-towel",
+      "imageUrl": "/images/products/1775337522679-2b46e8d99d4d.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16520,6 +18410,13 @@
       "isPrimary": false
     },
     {
+      "id": "gdjcvf3vfynvuxxzkatysqgg",
+      "productSlug": "sports-racing-car-kids-bath-towel",
+      "imageUrl": "/images/products/1775335658251-0e31e98b57e1.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "yhzf8g9fgimk85flzbz5chvk",
       "productSlug": "strawberry-hat-girl-kids-bath-towel",
       "imageUrl": "/images/products/strawberry-hat-girl-kids-bath-towel_1.jpg",
@@ -16531,6 +18428,13 @@
       "productSlug": "strawberry-hat-girl-kids-bath-towel",
       "imageUrl": "/images/products/strawberry-hat-girl-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "t28cqqvukjtlmbbe8xpq21ly",
+      "productSlug": "strawberry-hat-girl-kids-bath-towel",
+      "imageUrl": "/images/products/1775335439860-54d2282fa7b1.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -16639,6 +18543,13 @@
       "isPrimary": false
     },
     {
+      "id": "srywuasm9tch8opzdhv11npd",
+      "productSlug": "superhero-kids-bath-towel-10",
+      "imageUrl": "/images/products/1775336492395-ce1ff83bc7f9.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "gsx7o6nj98uccn89qtkamsfl",
       "productSlug": "superhero-kids-bath-towel-11",
       "imageUrl": "/images/products/superhero-kids-bath-towel-11_1.jpg",
@@ -16691,6 +18602,48 @@
       "id": "pa2d9ta3qruokmmmxtqqq88y",
       "productSlug": "superhero-kids-bath-towel-3",
       "imageUrl": "/images/products/superhero-kids-bath-towel-3_2.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ngb3odajqxh1inej3lqrm52l",
+      "productSlug": "superhero-kids-bath-towel-4",
+      "imageUrl": "/images/products/1775318835091-b4b938d2f9ee.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "gtgmylkswnyivmaukm8f8i82",
+      "productSlug": "superhero-kids-bath-towel-4",
+      "imageUrl": "/images/products/1775318835091-e8d60009d65a.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "gh352syp1l7hkt8o9msef3t6",
+      "productSlug": "superhero-kids-bath-towel-4",
+      "imageUrl": "/images/products/1775318835091-bc4cebd85d43.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "fj08gvzmv2zok5nxq2ke0gl2",
+      "productSlug": "superhero-kids-bath-towel-5",
+      "imageUrl": "/images/products/1775318835105-84cb11167e64.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "uhdgbid1deplxysmo84dhha6",
+      "productSlug": "superhero-kids-bath-towel-5",
+      "imageUrl": "/images/products/1775318835105-e05679be749a.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "e4s52fejevr4sr1uqn8nm8zr",
+      "productSlug": "superhero-kids-bath-towel-5",
+      "imageUrl": "/images/products/1775318835105-acd766adec65.jpg",
       "sortOrder": 2,
       "isPrimary": false
     },
@@ -16800,6 +18753,27 @@
       "isPrimary": false
     },
     {
+      "id": "d4kluwmz035aev1cwmti285a",
+      "productSlug": "superhero-logo-couple-towel-set",
+      "imageUrl": "/images/products/1775314063912-a574086f0324.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "uyn7bmwsk1qlvr5k8q4rk8ow",
+      "productSlug": "superhero-logo-couple-towel-set",
+      "imageUrl": "/images/products/1775314063912-8138b64b9993.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "ukudoiomsntt1xxiopbnhb1u",
+      "productSlug": "superhero-logo-couple-towel-set",
+      "imageUrl": "/images/products/1775314063912-4bbc2a52ae7a.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "snfujdzr1y6jmskyxtmufzfb",
       "productSlug": "superman-towel",
       "imageUrl": "/images/products/1774559926768-11b705e66cd7.jpg",
@@ -16842,6 +18816,13 @@
       "isPrimary": false
     },
     {
+      "id": "gyo85xa6gm5y4pkmw8vxyojg",
+      "productSlug": "teddy-bear-on-bike-kids-bath-towel",
+      "imageUrl": "/images/products/1775336287551-f486d6fa4e86.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "v1qnr3hpj6grp2wisi6rha7i",
       "productSlug": "teddy-bear-on-plain-kids-bath-towel",
       "imageUrl": "/images/products/teddy-bear-on-plain-kids-bath-towel_1.jpg",
@@ -16867,6 +18848,13 @@
       "productSlug": "tennis-player-adult-bath-towel-for-men",
       "imageUrl": "/images/products/tennis-player-adult-bath-towel-for-men_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "uqm2zzgrztznxoa268o1f3c7",
+      "productSlug": "tennis-player-adult-bath-towel-for-men",
+      "imageUrl": "/images/products/1775337559462-63cb8f45673f.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -16993,6 +18981,13 @@
       "productSlug": "turtle-surfing-in-the-ocean-kids-bath-towel",
       "imageUrl": "/images/products/turtle-surfing-in-the-ocean-kids-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "msawprm9a0d2xta4dv5xqau6",
+      "productSlug": "turtle-surfing-in-the-ocean-kids-bath-towel",
+      "imageUrl": "/images/products/1775335615042-365fbf25e502.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -17143,10 +19138,24 @@
       "isPrimary": false
     },
     {
+      "id": "un0kg2gz0t9sd8xe5i7oj1ap",
+      "productSlug": "unicorn-pony-kids-bath-towel",
+      "imageUrl": "/images/products/1775335452894-3324c8cab2aa.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "hlx9gw6kd1csm8bijv78ckji",
       "productSlug": "unicorn-pony-kids-bath-towel-1",
       "imageUrl": "/images/products/unicorn-pony-kids-bath-towel-1_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ykb2cyualg7x8u245pemkqzu",
+      "productSlug": "unicorn-pony-kids-bath-towel-1",
+      "imageUrl": "/images/products/1775336110885-46b6ac2350ee.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -17161,6 +19170,13 @@
       "productSlug": "unicorn-pony-kids-bath-towel-2",
       "imageUrl": "/images/products/unicorn-pony-kids-bath-towel-2_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "edpnd23lvxuqrv6jnxi04ehv",
+      "productSlug": "unicorn-pony-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775335541702-41f8e2d0c9ff.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -17311,6 +19327,27 @@
       "isPrimary": false
     },
     {
+      "id": "xxwz41i12dbdii9hqnjsk5jk",
+      "productSlug": "valentines-hearts-valentines-couple-bath-towel",
+      "imageUrl": "/images/products/1775314063925-05807c9a49d1.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "aylzmiw4uoatcexoogz7h38n",
+      "productSlug": "valentines-hearts-valentines-couple-bath-towel",
+      "imageUrl": "/images/products/1775314063925-a482cb414820.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "pccl0x6ijrpo386he5c1w701",
+      "productSlug": "valentines-hearts-valentines-couple-bath-towel",
+      "imageUrl": "/images/products/1775314063925-15903a56b0f1.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "r67515zueyq5ysjy29apttzh",
       "productSlug": "vanity-butterfly-lady-adult-white-bath-towel-for-women",
       "imageUrl": "/images/products/vanity-butterfly-lady-adult-white-bath-towel-for-women_1.jpg",
@@ -17346,10 +19383,31 @@
       "isPrimary": false
     },
     {
+      "id": "m97n3gessc6utut7lx2dd80o",
+      "productSlug": "vanity-butterfly-lady-adult-white-bath-towel-for-women-1",
+      "imageUrl": "/images/products/1775336331878-9e053346f408.jpg",
+      "sortOrder": 3,
+      "isPrimary": false
+    },
+    {
+      "id": "hghpwlqdcqh0xfm0ubukw0k2",
+      "productSlug": "vanity-butterfly-lady-adult-white-bath-towel-for-women-1",
+      "imageUrl": "/images/products/1775336335615-bf09b5462269.jpg",
+      "sortOrder": 4,
+      "isPrimary": false
+    },
+    {
       "id": "a1t0vhjsj2q5oan9a7qrgi8m",
       "productSlug": "vanity-cat-adult-white-bath-towel-for-women",
       "imageUrl": "/images/products/vanity-cat-adult-white-bath-towel-for-women_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "eflppdiubda2awjrhq3tqyqn",
+      "productSlug": "vanity-cat-adult-white-bath-towel-for-women",
+      "imageUrl": "/images/products/1775332253324-4cd3645c776e.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -17367,6 +19425,13 @@
       "isPrimary": false
     },
     {
+      "id": "jee6bg6b32876n8baici06nz",
+      "productSlug": "vanity-winking-cat-adult-white-bath-towel-for-women",
+      "imageUrl": "/images/products/1775335461885-79fd3d06d75f.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "pelrdmdmsz6fptflsru7uzp3",
       "productSlug": "vanity-winking-cat-adult-white-bath-towel-for-women-2",
       "imageUrl": "/images/products/vanity-winking-cat-adult-white-bath-towel-for-women-2_1.jpg",
@@ -17381,10 +19446,24 @@
       "isPrimary": false
     },
     {
+      "id": "u0tgakz9m3b7vz19485jx47d",
+      "productSlug": "vanity-winking-cat-adult-white-bath-towel-for-women-2",
+      "imageUrl": "/images/products/1775335457469-53312b2c4d51.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "baaefazjupcqjco1x6tdvq9a",
       "productSlug": "whale-fish-kids-bath-towel",
       "imageUrl": "/images/products/whale-fish-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "qh50omfrvx1g16l8hf49jkg4",
+      "productSlug": "whale-fish-kids-bath-towel",
+      "imageUrl": "/images/products/1775336151468-6d734eb9f69c.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -17416,10 +19495,66 @@
       "isPrimary": false
     },
     {
+      "id": "jmxws2pyrv7tdauegz2y9k9m",
+      "productSlug": "whale-fish-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775337586243-bfab936c89aa.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "ttuj6jtppirwrglz9s8fjadk",
+      "productSlug": "wings-emblem-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473050-6d62a8e415e5.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "adqje6woo398xeq7zbcxfhup",
+      "productSlug": "wings-emblem-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473050-1a2bd0fc04f6.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "dig8215z0h89o15p4n7bxtta",
+      "productSlug": "wings-emblem-couple-bath-towels",
+      "imageUrl": "/images/products/1775313473051-662c2892928a.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
+      "id": "f29hiadl76begqstxxi7j8f6",
+      "productSlug": "wings-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775336155910-4174c3aa02ea.jpg",
+      "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "hhynwuwfncbrr8yk4dw4hjbu",
+      "productSlug": "wings-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775336158581-8f4d3a85f864.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "vmcv8k8c0sgigrcdhfyab91t",
+      "productSlug": "wings-emblem-valentines-couple-bath-towels",
+      "imageUrl": "/images/products/1775314063933-b2e742a70126.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "efe02utkrbn8n8oyv35hp83q",
       "productSlug": "winking-cat-kids-bath-towel",
       "imageUrl": "/images/products/winking-cat-kids-bath-towel_1.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "ziwak1z77g9nmsge58x36qbb",
+      "productSlug": "winking-cat-kids-bath-towel",
+      "imageUrl": "/images/products/1775335468494-0601f55d7c40.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
@@ -17437,6 +19572,13 @@
       "isPrimary": false
     },
     {
+      "id": "e8s4o9vq8phwd1oo69xd6gjm",
+      "productSlug": "winking-cat-kids-bath-towel-2",
+      "imageUrl": "/images/products/1775335465495-53cb005a5fb9.jpg",
+      "sortOrder": 2,
+      "isPrimary": false
+    },
+    {
       "id": "zblq3d6igxs43ynrbspcve6z",
       "productSlug": "womens-adult-bath-towel",
       "imageUrl": "/images/products/womens-adult-bath-towel_1.jpg",
@@ -17448,6 +19590,13 @@
       "productSlug": "womens-adult-bath-towel",
       "imageUrl": "/images/products/womens-adult-bath-towel_2.jpg",
       "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
+      "id": "igoxblhyk2xr1prql7nbh88f",
+      "productSlug": "womens-adult-bath-towel",
+      "imageUrl": "/images/products/1775335944303-c02d2933b0ba.jpg",
+      "sortOrder": 2,
       "isPrimary": false
     },
     {
@@ -17472,10 +19621,24 @@
       "isPrimary": false
     },
     {
+      "id": "y72wy9iy2mhdj6f9am89myg8",
+      "productSlug": "yellow-car-kids-bath-towel-blue-120-x-60-cm",
+      "imageUrl": "/images/products/1775335345008-1c70f02ce5a4.jpg",
+      "sortOrder": 1,
+      "isPrimary": false
+    },
+    {
       "id": "vo0qrnk1taqigwwi3qca3wmk",
       "productSlug": "yellow-mustang-adult-bath-towel",
       "imageUrl": "/images/products/yellow-mustang-adult-bath-towel_2.jpg",
       "sortOrder": 0,
+      "isPrimary": false
+    },
+    {
+      "id": "wmjie0d49ioj0phf52v91ajn",
+      "productSlug": "yellow-mustang-adult-bath-towel",
+      "imageUrl": "/images/products/1775320588761-9e18da66594e.jpg",
+      "sortOrder": 1,
       "isPrimary": false
     },
     {
