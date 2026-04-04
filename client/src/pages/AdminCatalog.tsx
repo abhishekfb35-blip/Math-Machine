@@ -772,6 +772,7 @@ export default function AdminCatalog() {
       return res.json();
     },
     enabled: !!selectedCategory,
+    refetchOnWindowFocus: true,
   });
 
   const products = catalogData?.products;
