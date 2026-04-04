@@ -1384,7 +1384,7 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.sort_order, p.id`
       );
 
-      // Export product_images — static files only, not user uploads
+      // Export product_images — all images stored in /images/products/ (includes uploads)
       const imgsResult = await pool.query(
         `SELECT pi.id, p.slug AS "productSlug", pi.image_url AS "imageUrl",
                 pi.sort_order AS "sortOrder", pi.is_primary AS "isPrimary"

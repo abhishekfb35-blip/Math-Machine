@@ -15,6 +15,26 @@ export interface IFileStorage {
   getPublicUrl(storedPath: string): string;
 }
 
+const PRODUCT_IMAGES_DIR = path.join(process.cwd(), "client", "public", "images", "products");
+const RESIZE_SIZES: Record<string, number> = {
+  small: 150,
+  medium: 400,
+  large: 800,
+};
+
+async function generateResizedVariants(buffer: Buffer, filename: string): Promise<void> {
+  const sharp = (await import("sharp")).default;
+  for (const [sizeName, width] of Object.entries(RESIZE_SIZES)) {
+    const dir = path.join(PRODUCT_IMAGES_DIR, sizeName);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const outPath = path.join(dir, filename);
+    await sharp(buffer)
+      .resize(width, null, { withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toFile(outPath);
+  }
+}
+
 export class LocalFileStorage implements IFileStorage {
   readonly name = "local";
   private uploadsDir: string;
@@ -24,35 +44,65 @@ export class LocalFileStorage implements IFileStorage {
     if (!fs.existsSync(this.uploadsDir)) {
       fs.mkdirSync(this.uploadsDir, { recursive: true });
     }
+    if (!fs.existsSync(PRODUCT_IMAGES_DIR)) {
+      fs.mkdirSync(PRODUCT_IMAGES_DIR, { recursive: true });
+    }
   }
 
   async upload(file: Buffer, originalName: string, _mimeType: string): Promise<UploadResult> {
-    const ext = path.extname(originalName).toLowerCase();
+    const ext = path.extname(originalName).toLowerCase() || ".jpg";
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const filePath = path.join(this.uploadsDir, filename);
+    const filePath = path.join(PRODUCT_IMAGES_DIR, filename);
     await fs.promises.writeFile(filePath, file);
-    return { url: `/uploads/${filename}`, filename };
+    try {
+      await generateResizedVariants(file, filename);
+    } catch (err) {
+      console.warn(`[fileStorage] Resize failed for ${filename}:`, err);
+    }
+    return { url: `/images/products/${filename}`, filename };
   }
 
   async copy(sourceUrl: string): Promise<UploadResult> {
-    const sourceName = sourceUrl.startsWith("/uploads/")
-      ? sourceUrl.slice("/uploads/".length)
-      : path.basename(sourceUrl);
-    const ext = path.extname(sourceName).toLowerCase() || ".jpg";
+    const ext = path.extname(sourceUrl).toLowerCase() || ".jpg";
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-    const srcPath = path.join(this.uploadsDir, sourceName);
-    const destPath = path.join(this.uploadsDir, filename);
+    const destPath = path.join(PRODUCT_IMAGES_DIR, filename);
+
+    let srcPath: string;
+    if (sourceUrl.startsWith("/images/products/")) {
+      srcPath = path.join(PRODUCT_IMAGES_DIR, path.basename(sourceUrl));
+    } else if (sourceUrl.startsWith("/uploads/")) {
+      srcPath = path.join(this.uploadsDir, sourceUrl.slice("/uploads/".length));
+    } else {
+      srcPath = path.join(PRODUCT_IMAGES_DIR, path.basename(sourceUrl));
+    }
+
     await fs.promises.copyFile(srcPath, destPath);
-    return { url: `/uploads/${filename}`, filename };
+    const buffer = await fs.promises.readFile(destPath);
+    try {
+      await generateResizedVariants(buffer, filename);
+    } catch (err) {
+      console.warn(`[fileStorage] Resize failed for copy ${filename}:`, err);
+    }
+    return { url: `/images/products/${filename}`, filename };
   }
 
   async delete(url: string): Promise<void> {
-    const filename = url.replace("/uploads/", "");
-    const filePath = path.join(this.uploadsDir, filename);
+    let filePath: string;
+    if (url.startsWith("/images/products/")) {
+      const basename = path.basename(url);
+      filePath = path.join(PRODUCT_IMAGES_DIR, basename);
+      for (const sizeName of Object.keys(RESIZE_SIZES)) {
+        const variantPath = path.join(PRODUCT_IMAGES_DIR, sizeName, basename);
+        try { await fs.promises.unlink(variantPath); } catch {}
+      }
+    } else if (url.startsWith("/uploads/")) {
+      filePath = path.join(this.uploadsDir, url.slice("/uploads/".length));
+    } else {
+      return;
+    }
     try {
       await fs.promises.unlink(filePath);
-    } catch {
-    }
+    } catch {}
   }
 
   getPublicUrl(storedPath: string): string {
