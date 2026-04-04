@@ -1718,28 +1718,30 @@ export default function AdminCatalog() {
               </>
             )}
             {Object.keys(pendingChanges).length > 0 && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setPendingChanges({})}
-                  disabled={saveAllProductsMutation.isPending}
-                  data-testid="button-discard-changes-top"
-                >
-                  <Undo2 className="w-4 h-4 mr-1" /> Discard
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
-                  disabled={saveAllProductsMutation.isPending}
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
-                  data-testid="button-save-all-top"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  {saveAllProductsMutation.isPending ? "Saving…" : `Save All (${Object.keys(pendingChanges).length})`}
-                </Button>
-              </>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPendingChanges({})}
+                disabled={saveAllProductsMutation.isPending}
+                data-testid="button-discard-changes-top"
+              >
+                <Undo2 className="w-4 h-4 mr-1" /> Discard
+              </Button>
             )}
+            <Button
+              size="sm"
+              onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
+              disabled={Object.keys(pendingChanges).length === 0 || saveAllProductsMutation.isPending}
+              className="bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-40"
+              data-testid="button-save-all-top"
+            >
+              <Save className="w-4 h-4 mr-1" />
+              {saveAllProductsMutation.isPending
+                ? "Saving…"
+                : Object.keys(pendingChanges).length > 0
+                  ? `Save All (${Object.keys(pendingChanges).length})`
+                  : "Save All"}
+            </Button>
             <Button
               size="sm"
               onClick={() => {
@@ -2020,11 +2022,13 @@ export default function AdminCatalog() {
               </Card>
               );
             })}
-            {Object.keys(pendingChanges).length > 0 && (
-              <div className="flex items-center justify-end gap-2 pt-3 border-t mt-3" data-testid="save-all-bottom-bar">
-                <span className="text-xs text-muted-foreground mr-auto">
-                  {Object.keys(pendingChanges).length} product{Object.keys(pendingChanges).length !== 1 ? "s" : ""} with unsaved changes
-                </span>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t mt-3" data-testid="save-all-bottom-bar">
+              <span className="text-xs text-muted-foreground mr-auto">
+                {Object.keys(pendingChanges).length > 0
+                  ? `${Object.keys(pendingChanges).length} product${Object.keys(pendingChanges).length !== 1 ? "s" : ""} with unsaved changes`
+                  : "Edit price, MRP, sort order or visibility inline above"}
+              </span>
+              {Object.keys(pendingChanges).length > 0 && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -2034,18 +2038,22 @@ export default function AdminCatalog() {
                 >
                   <Undo2 className="w-4 h-4 mr-1" /> Discard
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
-                  disabled={saveAllProductsMutation.isPending}
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
-                  data-testid="button-save-all-bottom"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  {saveAllProductsMutation.isPending ? "Saving…" : `Save All (${Object.keys(pendingChanges).length})`}
-                </Button>
-              </div>
-            )}
+              )}
+              <Button
+                size="sm"
+                onClick={() => saveAllProductsMutation.mutate(pendingChanges)}
+                disabled={Object.keys(pendingChanges).length === 0 || saveAllProductsMutation.isPending}
+                className="bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-40"
+                data-testid="button-save-all-bottom"
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {saveAllProductsMutation.isPending
+                  ? "Saving…"
+                  : Object.keys(pendingChanges).length > 0
+                    ? `Save All (${Object.keys(pendingChanges).length})`
+                    : "Save All"}
+              </Button>
+            </div>
 
             {products?.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
