@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import compression from "compression";
-import { fileStorage, LocalFileStorage } from "../providers/fileStorage";
 import { registerProductRoutes } from "./products";
 import { registerHomeRoutes } from "./home";
 import { registerCartRoutes } from "./cart";
@@ -22,11 +21,6 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.use(compression());
-
-  if (fileStorage instanceof LocalFileStorage) {
-    const express = await import("express");
-    app.use("/uploads", express.default.static(fileStorage.getUploadsDir()));
-  }
 
   registerSeoRoutes(app);
   registerHomeRoutes(app);

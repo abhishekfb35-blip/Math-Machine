@@ -8,9 +8,5 @@ export function getProductImageUrl(imageUrl: string, size: ImageSize = "large"):
     return `/images/products/${size}/${filename}`;
   }
 
-  if (imageUrl.startsWith("/uploads/")) {
-    return imageUrl;
-  }
-
   return imageUrl;
 }

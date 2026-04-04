@@ -37,13 +37,8 @@ async function generateResizedVariants(buffer: Buffer, filename: string): Promis
 
 export class LocalFileStorage implements IFileStorage {
   readonly name = "local";
-  private uploadsDir: string;
 
-  constructor(uploadsDir?: string) {
-    this.uploadsDir = uploadsDir || path.join(process.cwd(), "uploads");
-    if (!fs.existsSync(this.uploadsDir)) {
-      fs.mkdirSync(this.uploadsDir, { recursive: true });
-    }
+  constructor() {
     if (!fs.existsSync(PRODUCT_IMAGES_DIR)) {
       fs.mkdirSync(PRODUCT_IMAGES_DIR, { recursive: true });
     }
@@ -65,17 +60,8 @@ export class LocalFileStorage implements IFileStorage {
   async copy(sourceUrl: string): Promise<UploadResult> {
     const ext = path.extname(sourceUrl).toLowerCase() || ".jpg";
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
+    const srcPath = path.join(PRODUCT_IMAGES_DIR, path.basename(sourceUrl));
     const destPath = path.join(PRODUCT_IMAGES_DIR, filename);
-
-    let srcPath: string;
-    if (sourceUrl.startsWith("/images/products/")) {
-      srcPath = path.join(PRODUCT_IMAGES_DIR, path.basename(sourceUrl));
-    } else if (sourceUrl.startsWith("/uploads/")) {
-      srcPath = path.join(this.uploadsDir, sourceUrl.slice("/uploads/".length));
-    } else {
-      srcPath = path.join(PRODUCT_IMAGES_DIR, path.basename(sourceUrl));
-    }
-
     await fs.promises.copyFile(srcPath, destPath);
     const buffer = await fs.promises.readFile(destPath);
     try {
@@ -87,30 +73,16 @@ export class LocalFileStorage implements IFileStorage {
   }
 
   async delete(url: string): Promise<void> {
-    let filePath: string;
-    if (url.startsWith("/images/products/")) {
-      const basename = path.basename(url);
-      filePath = path.join(PRODUCT_IMAGES_DIR, basename);
-      for (const sizeName of Object.keys(RESIZE_SIZES)) {
-        const variantPath = path.join(PRODUCT_IMAGES_DIR, sizeName, basename);
-        try { await fs.promises.unlink(variantPath); } catch {}
-      }
-    } else if (url.startsWith("/uploads/")) {
-      filePath = path.join(this.uploadsDir, url.slice("/uploads/".length));
-    } else {
-      return;
+    if (!url.startsWith("/images/products/")) return;
+    const basename = path.basename(url);
+    for (const sizeName of Object.keys(RESIZE_SIZES)) {
+      try { await fs.promises.unlink(path.join(PRODUCT_IMAGES_DIR, sizeName, basename)); } catch {}
     }
-    try {
-      await fs.promises.unlink(filePath);
-    } catch {}
+    try { await fs.promises.unlink(path.join(PRODUCT_IMAGES_DIR, basename)); } catch {}
   }
 
   getPublicUrl(storedPath: string): string {
     return storedPath;
-  }
-
-  getUploadsDir(): string {
-    return this.uploadsDir;
   }
 }
 
