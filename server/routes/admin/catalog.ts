@@ -11,7 +11,10 @@ const sseClients = new Set<Response>();
 function broadcastProductUpdate(product: object) {
   const data = `event: product-updated\ndata: ${JSON.stringify(product)}\n\n`;
   for (const client of sseClients) {
-    try { client.write(data); } catch { sseClients.delete(client); }
+    try {
+      client.write(data);
+      (client as any).flush?.();
+    } catch { sseClients.delete(client); }
   }
 }
 
@@ -21,10 +24,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders();
     sseClients.add(res);
     const heartbeat = setInterval(() => {
-      try { res.write(": heartbeat\n\n"); } catch { clearInterval(heartbeat); sseClients.delete(res); }
+      try {
+        res.write(": heartbeat\n\n");
+        (res as any).flush?.();
+      } catch { clearInterval(heartbeat); sseClients.delete(res); }
     }, 25000);
     req.on("close", () => { clearInterval(heartbeat); sseClients.delete(res); });
   });
