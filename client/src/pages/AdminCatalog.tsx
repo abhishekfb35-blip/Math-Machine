@@ -934,11 +934,12 @@ export default function AdminCatalog() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: isNew ? "Product created" : "Product updated" });
-      if (closeAfterSaveRef.current || isNew) {
+      if (closeAfterSaveRef.current) {
         setView("products");
         setEditingProduct(null);
       } else {
-        setEditingProduct((prev: any) => prev ? { ...prev, id: product.id ?? prev.id } : prev);
+        setEditingProduct((prev: any) => prev ? { ...prev, ...product } : product);
+        if (isNew) setIsNew(false);
       }
       closeAfterSaveRef.current = false;
     },
@@ -2354,9 +2355,15 @@ export default function AdminCatalog() {
         <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("products"); setEditingProduct(null); }} data-testid="button-back-products">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Products
         </Button>
-        <h1 className="text-xl font-bold mb-4" data-testid="text-edit-product-title">
+        <h1 className="text-xl font-bold mb-1" data-testid="text-edit-product-title">
           {isNew ? "New Product" : "Edit Product"}
         </h1>
+        {!isNew && editingProduct.updatedAt && (
+          <p className="text-xs text-muted-foreground mb-4" data-testid="text-product-last-saved">
+            Last saved {new Date(editingProduct.updatedAt).toLocaleString()}
+          </p>
+        )}
+        {(isNew || !editingProduct.updatedAt) && <div className="mb-4" />}
 
         <div className="space-y-4">
           <div>
@@ -2741,17 +2748,31 @@ export default function AdminCatalog() {
           )}
 
           {isNew ? (
-            <Button
-              className="w-full"
-              onClick={() => {
-                closeAfterSaveRef.current = true;
-                saveProductMutation.mutate(editingProduct as any);
-              }}
-              disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
-              data-testid="button-save-product"
-            >
-              {saveProductMutation.isPending ? "Creating..." : "Create Product"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                variant="outline"
+                onClick={() => {
+                  closeAfterSaveRef.current = false;
+                  saveProductMutation.mutate(editingProduct as any);
+                }}
+                disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
+                data-testid="button-save-product"
+              >
+                {saveProductMutation.isPending && !closeAfterSaveRef.current ? "Creating..." : "Create"}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  closeAfterSaveRef.current = true;
+                  saveProductMutation.mutate(editingProduct as any);
+                }}
+                disabled={saveProductMutation.isPending || !editingProduct.name || !editingProduct.slug || !editingProduct.price}
+                data-testid="button-save-close-product"
+              >
+                {saveProductMutation.isPending && closeAfterSaveRef.current ? "Creating..." : "Create & Close"}
+              </Button>
+            </div>
           ) : (
             <div className="flex gap-2">
               <Button
