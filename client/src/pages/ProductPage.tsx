@@ -151,7 +151,8 @@ export default function ProductPage() {
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions) return;
     const sizes = variantOptions.sizes;
-    if (sizes.length > 0 && !selectedSize) {
+    const isKidsBathrobe = product?.productType === "bathrobe" && product?.audience === "kids";
+    if (sizes.length > 0 && !selectedSize && !isKidsBathrobe) {
       const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
       setSelectedSize(def.name);
       setSelectedColor(getFirstSelectableColor(def.name));
