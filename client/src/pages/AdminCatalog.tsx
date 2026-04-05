@@ -1928,7 +1928,14 @@ export default function AdminCatalog() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <a href={`/product/${prod.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sm truncate hover:underline text-foreground" data-testid={`text-product-name-${prod.id}`}>{prod.name}</a>
+                      <input
+                        type="text"
+                        value={pc.name ?? prod.name}
+                        onChange={(e) => setChange("name", e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-medium text-sm bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-foreground w-full min-w-0"
+                        data-testid={`input-product-name-${prod.id}`}
+                      />
                       <button
                         type="button"
                         title={effectiveActive ? "Visible – click to hide" : "Hidden – click to show"}
@@ -2066,7 +2073,7 @@ export default function AdminCatalog() {
                   const n = new Set([...Object.keys(pendingChanges), ...Array.from(dirtyImageProductIds)]).size;
                   return n > 0
                     ? `${n} product${n !== 1 ? "s" : ""} with unsaved changes`
-                    : "Edit price, MRP, sort order, visibility or image order above";
+                    : "Edit title, price, MRP, sort order, visibility or image order above";
                 })()}
               </span>
               {(Object.keys(pendingChanges).length > 0 || dirtyImageProductIds.size > 0) && (
