@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,17 @@ import { useAuth } from "@/hooks/useAuth";
 
 const REVIEWS_PER_PAGE = 10;
 
+const NAME_MIN = 3;
+const NAME_MAX = 11;
+
+function nameCharHint(val: string): { text: string; className: string } {
+  const len = val.length;
+  const left = NAME_MAX - len;
+  if (len === 0) return { text: `${NAME_MIN} to ${NAME_MAX} characters`, className: "text-muted-foreground" };
+  if (len < NAME_MIN) return { text: `Minimum ${NAME_MIN} characters · ${left} character${left !== 1 ? "s" : ""} left`, className: "text-amber-500" };
+  return { text: `${left} character${left !== 1 ? "s" : ""} left`, className: "text-muted-foreground" };
+}
+
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const [, navigate] = useLocation();
@@ -34,6 +46,7 @@ export default function ProductPage() {
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
+  const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
@@ -591,29 +604,35 @@ export default function ProductPage() {
                   Personalise with Names
                 </Label>
                 <div className="space-y-2">
-                  <Input
-                    id="gentleman-name"
-                    placeholder="Name of Gentleman"
-                    value={gentlemanName}
-                    onChange={(e) => setGentlemanName(e.target.value)}
-                    maxLength={30}
-                    data-testid="input-gentleman-name"
-                  />
-                  <Input
-                    id="lady-name"
-                    placeholder="Name of Lady"
-                    value={ladyName}
-                    onChange={(e) => setLadyName(e.target.value)}
-                    maxLength={30}
-                    data-testid="input-lady-name"
-                  />
+                  <div>
+                    <Input
+                      id="gentleman-name"
+                      placeholder="Name of Gentleman"
+                      value={gentlemanName}
+                      onChange={(e) => setGentlemanName(e.target.value)}
+                      maxLength={NAME_MAX}
+                      data-testid="input-gentleman-name"
+                    />
+                    {(() => { const h = nameCharHint(gentlemanName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                  </div>
+                  <div>
+                    <Input
+                      id="lady-name"
+                      placeholder="Name of Lady"
+                      value={ladyName}
+                      onChange={(e) => setLadyName(e.target.value)}
+                      maxLength={NAME_MAX}
+                      data-testid="input-lady-name"
+                    />
+                    {(() => { const h = nameCharHint(ladyName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Both names will be embroidered on the set
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="personalization" className="text-sm font-medium">
                   Personalise with a Name
                 </Label>
@@ -622,20 +641,34 @@ export default function ProductPage() {
                   placeholder="Enter name to embroider"
                   value={personalizationName}
                   onChange={(e) => setPersonalizationName(e.target.value)}
-                  maxLength={30}
+                  maxLength={NAME_MAX}
                   data-testid="input-personalization-name"
                 />
-                <p className="text-xs text-muted-foreground">
-                  This name will be embroidered on the product
-                </p>
+                {(() => { const h = nameCharHint(personalizationName); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
               </div>
             )}
 
             <Button
               className="w-full"
               size="lg"
-              onClick={() => addToCartMutation.mutate()}
-              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete}
+              onClick={() => {
+                const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
+                const nameInvalid = isCoupleProduct
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
+                if (nameInvalid) return;
+                const nameEmpty = isCoupleProduct
+                  ? gentlemanName.trim() === "" && ladyName.trim() === ""
+                  : personalizationName.trim() === "";
+                if (nameEmpty) { setShowNameConfirm(true); return; }
+                addToCartMutation.mutate();
+              }}
+              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
+                const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
+                return isCoupleProduct
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
+              })()}
               data-testid="button-add-to-cart"
             >
               {addToCartMutation.isPending ? (
@@ -848,6 +881,26 @@ export default function ProductPage() {
         open={!!quickAddProduct}
         onOpenChange={(open) => { if (!open) setQuickAddProduct(null); }}
       />
+
+      <AlertDialog open={showNameConfirm} onOpenChange={setShowNameConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No name added</AlertDialogTitle>
+            <AlertDialogDescription>
+              This product can be personalised with an embroidered name. Are you sure you want to add it to your cart without a name?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-name-confirm-cancel">Add a name</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="button-name-confirm-proceed"
+              onClick={() => { setShowNameConfirm(false); addToCartMutation.mutate(); }}
+            >
+              Proceed without name
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

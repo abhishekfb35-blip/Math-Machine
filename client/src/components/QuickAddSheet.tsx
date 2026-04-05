@@ -6,10 +6,22 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, ProductVariantOptions, VariantSize } from "@shared/types";
+
+const NAME_MIN = 3;
+const NAME_MAX = 11;
+
+function nameCharHint(val: string): { text: string; className: string } {
+  const len = val.length;
+  const left = NAME_MAX - len;
+  if (len === 0) return { text: `${NAME_MIN} to ${NAME_MAX} characters`, className: "text-muted-foreground" };
+  if (len < NAME_MIN) return { text: `Minimum ${NAME_MIN} characters · ${left} character${left !== 1 ? "s" : ""} left`, className: "text-amber-500" };
+  return { text: `${left} character${left !== 1 ? "s" : ""} left`, className: "text-muted-foreground" };
+}
 
 interface QuickAddSheetProps {
   product: Product | null;
@@ -23,6 +35,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
+  const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [selectedColorName, setSelectedColorName] = useState<string | null>(null);
@@ -122,6 +135,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   if (!product) return null;
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
@@ -243,28 +257,32 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
           {isCoupleProduct ? (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Personalise with Names
-              </Label>
-              <Input
-                id="qa-gentleman-name"
-                placeholder="Name of Gentleman"
-                value={gentlemanName}
-                onChange={(e) => setGentlemanName(e.target.value)}
-                maxLength={30}
-                data-testid="input-quickadd-gentleman"
-              />
-              <Input
-                id="qa-lady-name"
-                placeholder="Name of Lady"
-                value={ladyName}
-                onChange={(e) => setLadyName(e.target.value)}
-                maxLength={30}
-                data-testid="input-quickadd-lady"
-              />
+              <Label className="text-sm font-medium">Personalise with Names</Label>
+              <div>
+                <Input
+                  id="qa-gentleman-name"
+                  placeholder="Name of Gentleman"
+                  value={gentlemanName}
+                  onChange={(e) => setGentlemanName(e.target.value)}
+                  maxLength={NAME_MAX}
+                  data-testid="input-quickadd-gentleman"
+                />
+                {(() => { const h = nameCharHint(gentlemanName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+              </div>
+              <div>
+                <Input
+                  id="qa-lady-name"
+                  placeholder="Name of Lady"
+                  value={ladyName}
+                  onChange={(e) => setLadyName(e.target.value)}
+                  maxLength={NAME_MAX}
+                  data-testid="input-quickadd-lady"
+                />
+                {(() => { const h = nameCharHint(ladyName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+              </div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="qa-personalization" className="text-sm font-medium">
                 Personalise with a Name
               </Label>
@@ -273,9 +291,10 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 placeholder="Enter name to embroider (optional)"
                 value={personalizationName}
                 onChange={(e) => setPersonalizationName(e.target.value)}
-                maxLength={30}
+                maxLength={NAME_MAX}
                 data-testid="input-quickadd-name"
               />
+              {(() => { const h = nameCharHint(personalizationName); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
             </div>
           )}
 
@@ -307,8 +326,22 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           <Button
             className="w-full"
             size="lg"
-            onClick={() => addToCartMutation.mutate()}
-            disabled={addToCartMutation.isPending || !!variantSelectionIncomplete}
+            onClick={() => {
+              const nameInvalid = isCoupleProduct
+                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
+                : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
+              if (nameInvalid) return;
+              const nameEmpty = isCoupleProduct
+                ? gentlemanName.trim() === "" && ladyName.trim() === ""
+                : personalizationName.trim() === "";
+              if (nameEmpty) { setShowNameConfirm(true); return; }
+              addToCartMutation.mutate();
+            }}
+            disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (
+              isCoupleProduct
+                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
+                : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN
+            )}
             data-testid="button-quickadd-submit"
           >
             {addToCartMutation.isPending ? (
@@ -325,5 +358,26 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         </div>
       </SheetContent>
     </Sheet>
+
+    <AlertDialog open={showNameConfirm} onOpenChange={setShowNameConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>No name added</AlertDialogTitle>
+          <AlertDialogDescription>
+            This product can be personalised with an embroidered name. Are you sure you want to add it to your cart without a name?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-testid="button-name-confirm-cancel">Add a name</AlertDialogCancel>
+          <AlertDialogAction
+            data-testid="button-name-confirm-proceed"
+            onClick={() => { setShowNameConfirm(false); addToCartMutation.mutate(); }}
+          >
+            Proceed without name
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
