@@ -111,9 +111,13 @@ export function registerAdminHealthRoutes(app: Express) {
     }
     try {
       const crypto = await import("crypto");
-      const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
-      const filename = `${Date.now()}-${crypto.default.randomBytes(6).toString("hex")}${ext}`;
-      await fs.promises.writeFile(path.join(SWATCHES_DIR, filename), req.file.buffer);
+      const sharp = (await import("sharp")).default;
+      const filename = `${Date.now()}-${crypto.default.randomBytes(6).toString("hex")}.jpg`;
+      const resized = await sharp(req.file.buffer)
+        .resize(100, 100, { fit: "cover" })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+      await fs.promises.writeFile(path.join(SWATCHES_DIR, filename), resized);
       res.json({ url: `/images/swatches/${filename}` });
     } catch (err) {
       console.error("Swatch upload error:", err);
