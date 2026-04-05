@@ -520,7 +520,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     try {
       const formData = new FormData();
       formData.append("image", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/upload-swatch", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Upload failed");
       const { url } = await res.json();
       setSizes(prev => prev.map(s => s.localId === sizeLocalId ? {

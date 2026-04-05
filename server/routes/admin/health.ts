@@ -102,6 +102,25 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
+  const SWATCHES_DIR = path.join(process.cwd(), "client", "public", "images", "swatches");
+  if (!fs.existsSync(SWATCHES_DIR)) fs.mkdirSync(SWATCHES_DIR, { recursive: true });
+
+  app.post("/api/upload-swatch", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+    try {
+      const crypto = await import("crypto");
+      const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+      const filename = `${Date.now()}-${crypto.default.randomBytes(6).toString("hex")}${ext}`;
+      await fs.promises.writeFile(path.join(SWATCHES_DIR, filename), req.file.buffer);
+      res.json({ url: `/images/swatches/${filename}` });
+    } catch (err) {
+      console.error("Swatch upload error:", err);
+      res.status(500).json({ message: "Failed to upload swatch" });
+    }
+  });
+
   app.get("/api/admin/brand-logos", requireAdmin, async (_req: Request, res: Response) => {
     try {
       const imagesDir = getBrandImagesDir();
@@ -1403,6 +1422,16 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.slug, t.name`
       );
 
+      // Export variantColors with swatch URLs in /images/swatches/
+      const vcResult = await pool.query(
+        `SELECT vc.id, vc.size_id AS "sizeId", vc.name,
+                vc.swatch_url AS "swatchUrl",
+                vc.blur_on_front AS "blurOnFront",
+                vc.sort_order AS "sortOrder"
+         FROM variant_colors vc
+         ORDER BY vc.sort_order, vc.id`
+      );
+
       const updated = {
         ...existing,
         categories:    catsResult.rows,
@@ -1410,6 +1439,7 @@ export function registerAdminHealthRoutes(app: Express) {
         products:      prodsResult.rows,
         productImages: imgsResult.rows,
         productTags:   ptagsResult.rows,
+        variantColors: vcResult.rows,
       };
 
       fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
@@ -1422,6 +1452,7 @@ export function registerAdminHealthRoutes(app: Express) {
           products:      prodsResult.rowCount,
           productImages: imgsResult.rowCount,
           productTags:   ptagsResult.rowCount,
+          variantColors: vcResult.rowCount,
         },
         message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
       });
