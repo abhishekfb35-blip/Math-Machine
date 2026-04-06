@@ -5,6 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const DISMISSED_KEY = "google_onetap_dismissed";
+const VISITED_KEY = "tl_has_visited";
 
 export default function GoogleOneTap() {
   const [location, navigate] = useLocation();
@@ -30,6 +31,12 @@ export default function GoogleOneTap() {
     if (location.startsWith("/admin") || location === "/signin") return;
     if (sessionStorage.getItem(DISMISSED_KEY)) return;
     if (initialized.current) return;
+
+    const hasVisitedBefore = localStorage.getItem(VISITED_KEY);
+    if (!hasVisitedBefore) {
+      localStorage.setItem(VISITED_KEY, "1");
+      return;
+    }
 
     let cancelled = false;
 
