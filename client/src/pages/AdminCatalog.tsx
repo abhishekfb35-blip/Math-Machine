@@ -1949,7 +1949,7 @@ export default function AdminCatalog() {
                         }
                       </button>
                       <a
-                        href={`/products/${prod.slug}`}
+                        href={`/product/${prod.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="View on site"
