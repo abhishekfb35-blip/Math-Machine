@@ -4,13 +4,13 @@ uploads = []
 id = "99odT7shNP7g1wQwj7XpG"
 uri = "file://client/public/og-option-a.png"
 type = "image"
-title = "spa lifestyle OG image"
+title = "spa towel OG image v2"
 
 [[generated]]
 id = "TMoX56h5-HBi54DGgvGNF"
 uri = "file://client/public/og-option-b.png"
 type = "image"
-title = "gift occasion OG image"
+title = "embroidered name OG image v2"
 
 [[generated]]
 id = "CmJB6FWit4uTWpLDXa6yx"
@@ -22,13 +22,13 @@ title = "flat lay editorial OG image"
 id = "noORaAFXjVlzqPKq4T32j"
 uri = "file://client/public/og-option-a.png"
 type = "image"
-title = "Option A — Spa / Lifestyle"
+title = "Option A — Spa / Lifestyle (v2)"
 
 [[outputs]]
 id = "pZGrqKLdVTcvhebovRQqK"
 uri = "file://client/public/og-option-b.png"
 type = "image"
-title = "Option B — Gift / Occasion"
+title = "Option B — Embroidered Name Close-up (v2)"
 
 [[outputs]]
 id = "qP9CBBKwhZpsODxuuTov4"
