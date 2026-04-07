@@ -176,7 +176,7 @@ export default function Header() {
 
             <CurrencySelector />
 
-            <Button size="icon" variant="ghost" onClick={toggleTheme} data-testid="button-theme-toggle">
+            <Button size="icon" variant="ghost" onClick={toggleTheme} className="hidden md:inline-flex" data-testid="button-theme-toggle">
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
 
