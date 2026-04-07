@@ -21,6 +21,7 @@ import { nullifySwatchUploads } from "./migrations/nullify-swatch-uploads";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
+import { setupOgMiddleware } from "./ogMiddleware";
 
 const app = express();
 const httpServer = createServer(app);
@@ -153,6 +154,8 @@ function startAbandonedCartScheduler() {
 
     return res.status(status).json({ message });
   });
+
+  setupOgMiddleware(app, storage);
 
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
