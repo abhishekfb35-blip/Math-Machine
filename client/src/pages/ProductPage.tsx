@@ -241,8 +241,11 @@ export default function ProductPage() {
     try { return JSON.parse(product.specialFeatures); } catch { return []; }
   })() : [];
 
-  const discountPercent = product?.mrp && product.mrp > product.price
-    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+  const effectivePriceAdd = selectedSizeObj?.priceAdd ?? 0;
+  const effectiveSellingPrice = (product?.price ?? 0) + effectivePriceAdd;
+  const effectiveMrp = (product?.mrp ?? 0) + effectivePriceAdd;
+  const discountPercent = product?.mrp && effectiveMrp > effectiveSellingPrice
+    ? Math.round(((effectiveMrp - effectiveSellingPrice) / effectiveMrp) * 100)
     : 0;
 
   const images = product ? (() => {
@@ -405,9 +408,9 @@ export default function ProductPage() {
                 <p className="text-2xl font-bold text-primary" data-testid="text-product-price">
                   {formatPrice((product.price) + (selectedSizeObj?.priceAdd ?? 0))}
                 </p>
-                {product.mrp && product.mrp > product.price && (
+                {product.mrp && effectiveMrp > effectiveSellingPrice && (
                   <p className="text-base text-muted-foreground line-through" data-testid="text-product-mrp">
-                    {formatPrice(product.mrp)}
+                    {formatPrice(effectiveMrp)}
                   </p>
                 )}
                 {discountPercent > 0 && (
