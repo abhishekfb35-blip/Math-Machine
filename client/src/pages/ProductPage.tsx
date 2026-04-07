@@ -23,6 +23,7 @@ import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useAuth } from "@/hooks/useAuth";
+import ShareButton from "@/components/ShareButton";
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -402,7 +403,15 @@ export default function ProductPage() {
                   {category.name}
                 </p>
               )}
-              <h1 className="text-xl md:text-2xl font-bold" data-testid="text-product-name">{product.name}</h1>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-xl md:text-2xl font-bold" data-testid="text-product-name">{product.name}</h1>
+                <ShareButton
+                  url={`https://turtlelittle.com/product/${slug}`}
+                  title={product.name}
+                  text={`Check out ${product.name} on TurtleLittle — personalised luxury embroidered towels & blankets!`}
+                  className="shrink-0 mt-0.5"
+                />
+              </div>
 
               <div className="flex items-baseline gap-2 mt-2">
                 <p className="text-2xl font-bold text-primary" data-testid="text-product-price">

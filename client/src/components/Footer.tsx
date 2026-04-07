@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { MessageCircle, Mail, Phone, MapPin } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultFooter, type FooterConfig } from "@/lib/siteConfigDefaults";
+import ShareButton from "@/components/ShareButton";
 
 export default function Footer() {
   const config = useSiteConfig<FooterConfig>("footer", defaultFooter);
@@ -34,6 +35,12 @@ export default function Footer() {
                 <Mail className="w-4 h-4" />
                 Email
               </a>
+              <ShareButton
+                url="https://turtlelittle.com"
+                title="TurtleLittle — Personalised Luxury Towels & Blankets"
+                text="Check out TurtleLittle — personalised luxury embroidered towels, blankets & bathrobes!"
+                className="opacity-70 hover:opacity-100"
+              />
             </div>
           </div>
 

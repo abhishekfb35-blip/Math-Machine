@@ -11,6 +11,7 @@ import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, defaultPwaInstall, type HeaderConfig, type PwaInstallConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
 import CurrencySelector from "@/components/CurrencySelector";
+import ShareButton from "@/components/ShareButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -307,6 +308,12 @@ export default function Header() {
                   )}
                 </a>
               </SheetClose>
+              <ShareButton
+                variant="row"
+                url="https://turtlelittle.com"
+                title="TurtleLittle — Personalised Luxury Towels & Blankets"
+                text="Check out TurtleLittle — personalised luxury embroidered towels, blankets & bathrobes!"
+              />
             </div>
           </nav>
         </SheetContent>
