@@ -17,20 +17,20 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut, Smartphone,
+  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut, Smartphone, Globe,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
   defaultStats, defaultFooter, defaultFeaturedSections, defaultHomepageCollections,
-  defaultPwaInstall,
+  defaultPwaInstall, defaultSeo,
   type AnnouncementConfig, type HeroConfig, type HeaderConfig,
   type PromiseConfig, type CollectionsConfig, type ProductTypesConfig,
   type PromoConfig, type TestimonialsConfig, type StatsConfig,
   type FooterConfig, type FeaturedSectionsConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
-  type PwaInstallConfig,
+  type PwaInstallConfig, type SeoConfig,
 } from "@/lib/siteConfigDefaults";
 
 import heroBanner from "@/assets/images/hero-banner.png";
@@ -152,6 +152,73 @@ function ImageField({ label, value, onChange, testId, fallbackImage }: { label: 
         placeholder="Or paste image URL"
         data-testid={testId}
       />
+    </div>
+  );
+}
+
+function SeoSection({ data }: { data: SeoConfig }) {
+  const [config, setConfig] = useState(data);
+  const save = useSaveConfig("seo");
+  useEffect(() => { setConfig(data); }, [data]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Brand Name</Label>
+          <Input
+            value={config.brandName}
+            onChange={(e) => setConfig({ ...config, brandName: e.target.value })}
+            placeholder="TurtleLittle"
+            data-testid="input-seo-brand-name"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Tagline</Label>
+          <Input
+            value={config.tagline}
+            onChange={(e) => setConfig({ ...config, tagline: e.target.value })}
+            placeholder="Personalised Luxury Towels & Blankets"
+            data-testid="input-seo-tagline"
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Site URL</Label>
+        <Input
+          value={config.siteUrl}
+          onChange={(e) => setConfig({ ...config, siteUrl: e.target.value })}
+          placeholder="https://turtlelittle.com"
+          data-testid="input-seo-site-url"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Default Meta Description</Label>
+        <Textarea
+          value={config.metaDescription}
+          onChange={(e) => setConfig({ ...config, metaDescription: e.target.value })}
+          placeholder="Short description shown in Google search results and social previews"
+          rows={3}
+          data-testid="input-seo-meta-description"
+        />
+        <p className="text-xs text-muted-foreground">{config.metaDescription.length}/160 chars — Google typically shows up to 160</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Share Image (OG Image)</Label>
+        <p className="text-xs text-muted-foreground">
+          This image appears when someone shares your site link on WhatsApp, Twitter, LinkedIn, iMessage, etc.
+          Recommended size: <strong>1200 × 630 px</strong> (landscape).
+        </p>
+        <ImageField
+          label="Share Image"
+          value={config.ogImageUrl}
+          onChange={(url) => setConfig({ ...config, ogImageUrl: url })}
+          testId="seo-og-image"
+        />
+      </div>
+      <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-seo">
+        <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Site Identity"}
+      </Button>
     </div>
   );
 }
@@ -896,6 +963,15 @@ export default function AdminBuilder() {
               </AccordionTrigger>
               <AccordionContent>
                 <AnnouncementSection data={getConfig("announcement", defaultAnnouncement)} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="seo" className="border rounded-md px-4">
+              <AccordionTrigger data-testid="accordion-seo">
+                <SectionHeader icon={Globe} title="Site Identity & SEO" />
+              </AccordionTrigger>
+              <AccordionContent>
+                <SeoSection data={getConfig("seo", defaultSeo)} />
               </AccordionContent>
             </AccordionItem>
 

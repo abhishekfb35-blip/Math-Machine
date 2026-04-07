@@ -1,3 +1,19 @@
+export interface SeoConfig {
+  brandName: string;
+  tagline: string;
+  metaDescription: string;
+  ogImageUrl: string;
+  siteUrl: string;
+}
+
+export const defaultSeo: SeoConfig = {
+  brandName: "TurtleLittle",
+  tagline: "Personalised Luxury Towels & Blankets",
+  metaDescription: "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered across India.",
+  ogImageUrl: "/og-image.png",
+  siteUrl: "https://turtlelittle.com",
+};
+
 export interface AnnouncementConfig {
   items: { text: string }[];
 }

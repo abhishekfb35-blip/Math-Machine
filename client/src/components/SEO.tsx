@@ -1,9 +1,6 @@
 import { Helmet } from "react-helmet-async";
-
-const SITE_NAME = "TurtleLittle";
-const SITE_URL = "https://turtlelittle.com";
-const DEFAULT_DESCRIPTION = "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered across India.";
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { defaultSeo, type SeoConfig } from "@/lib/siteConfigDefaults";
 
 interface SEOProps {
   title?: string;
@@ -17,36 +14,49 @@ interface SEOProps {
 
 export default function SEO({
   title,
-  description = DEFAULT_DESCRIPTION,
+  description,
   path = "/",
-  image = DEFAULT_IMAGE,
+  image,
   type = "website",
   noindex = false,
   jsonLd,
 }: SEOProps) {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} - Personalised Luxury Towels & Blankets`;
-  const canonicalUrl = `${SITE_URL}${path}`;
+  const seo = useSiteConfig<SeoConfig>("seo", defaultSeo);
+
+  const siteUrl = seo.siteUrl || "https://turtlelittle.com";
+  const siteName = seo.brandName || "TurtleLittle";
+  const resolvedDescription = description ?? seo.metaDescription;
+  const ogImagePath = seo.ogImageUrl || "/og-image.png";
+  const defaultOgImage = ogImagePath.startsWith("http") ? ogImagePath : `${siteUrl}${ogImagePath}`;
+  const resolvedImage = image
+    ? (image.startsWith("http") ? image : `${siteUrl}${image}`)
+    : defaultOgImage;
+
+  const fullTitle = title
+    ? `${title} | ${siteName}`
+    : `${siteName} - ${seo.tagline || "Personalised Luxury Towels & Blankets"}`;
+  const canonicalUrl = `${siteUrl}${path}`;
 
   return (
     <Helmet>
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={resolvedDescription} />
       <link rel="canonical" href={canonicalUrl} />
 
       {noindex && <meta name="robots" content="noindex, nofollow" />}
 
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={resolvedDescription} />
       <meta property="og:type" content={type} />
       <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:image" content={image} />
-      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:image" content={resolvedImage} />
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="en_IN" />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
+      <meta name="twitter:description" content={resolvedDescription} />
+      <meta name="twitter:image" content={resolvedImage} />
 
       {jsonLd && (
         <script type="application/ld+json">
