@@ -241,26 +241,26 @@ export default function Header() {
           </SheetHeader>
           <nav className="flex flex-col py-2" data-testid="nav-mobile-drawer">
             <SheetClose asChild>
-              <Link href="/">
-                <button
-                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location === "/" ? "text-primary bg-accent/50" : "text-foreground"}`}
-                  data-testid="drawer-link-home"
-                >
-                  <Home className="w-4 h-4 shrink-0" />
-                  Home
-                </button>
-              </Link>
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); navigate("/"); setMenuOpen(false); }}
+                className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location === "/" ? "text-primary bg-accent/50" : "text-foreground"}`}
+                data-testid="drawer-link-home"
+              >
+                <Home className="w-4 h-4 shrink-0" />
+                Home
+              </a>
             </SheetClose>
             <SheetClose asChild>
-              <Link href="/shop">
-                <button
-                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${isShopActive ? "text-primary bg-accent/50" : "text-foreground"}`}
-                  data-testid="drawer-link-shop"
-                >
-                  <Grid3X3 className="w-4 h-4 shrink-0" />
-                  All Products
-                </button>
-              </Link>
+              <a
+                href="/shop"
+                onClick={(e) => { e.preventDefault(); navigate("/shop"); setMenuOpen(false); }}
+                className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${isShopActive ? "text-primary bg-accent/50" : "text-foreground"}`}
+                data-testid="drawer-link-shop"
+              >
+                <Grid3X3 className="w-4 h-4 shrink-0" />
+                All Products
+              </a>
             </SheetClose>
 
             <div className="px-5 pt-4 pb-1">
@@ -268,45 +268,44 @@ export default function Header() {
             </div>
             {categories.map((cat) => (
               <SheetClose key={cat.href} asChild>
-                <a href={cat.href}>
-                  <button
-                    className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${isCategoryActive(cat.href) ? "text-primary bg-accent/50" : "text-foreground"}`}
-                    data-testid={`drawer-link-${cat.label.toLowerCase()}`}
-                  >
-                    <cat.icon className="w-4 h-4 shrink-0" />
-                    {cat.label}
-                  </button>
+                <a
+                  href={cat.href}
+                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${isCategoryActive(cat.href) ? "text-primary bg-accent/50" : "text-foreground"}`}
+                  data-testid={`drawer-link-${cat.label.toLowerCase()}`}
+                >
+                  <cat.icon className="w-4 h-4 shrink-0" />
+                  {cat.label}
                 </a>
               </SheetClose>
             ))}
 
             <div className="border-t mt-2 pt-2">
               <SheetClose asChild>
-                <Link href={isAuthenticated ? "/account" : "/signin"}>
-                  <button
-                    className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
-                    data-testid="drawer-link-account"
-                  >
-                    <User className="w-4 h-4 shrink-0" />
-                    {isAuthenticated ? `My Account` : "Sign In"}
-                  </button>
-                </Link>
+                <a
+                  href={isAuthenticated ? "/account" : "/signin"}
+                  onClick={(e) => { e.preventDefault(); navigate(isAuthenticated ? "/account" : "/signin"); setMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                  data-testid="drawer-link-account"
+                >
+                  <User className="w-4 h-4 shrink-0" />
+                  {isAuthenticated ? "My Account" : "Sign In"}
+                </a>
               </SheetClose>
               <SheetClose asChild>
-                <Link href="/cart">
-                  <button
-                    className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
-                    data-testid="drawer-link-cart"
-                  >
-                    <ShoppingBag className="w-4 h-4 shrink-0" />
-                    Cart
-                    {cart && cart.itemCount > 0 && (
-                      <Badge className="ml-auto h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">
-                        {cart.itemCount}
-                      </Badge>
-                    )}
-                  </button>
-                </Link>
+                <a
+                  href="/cart"
+                  onClick={(e) => { e.preventDefault(); navigate("/cart"); setMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                  data-testid="drawer-link-cart"
+                >
+                  <ShoppingBag className="w-4 h-4 shrink-0" />
+                  Cart
+                  {cart && cart.itemCount > 0 && (
+                    <Badge className="ml-auto h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">
+                      {cart.itemCount}
+                    </Badge>
+                  )}
+                </a>
               </SheetClose>
             </div>
           </nav>
