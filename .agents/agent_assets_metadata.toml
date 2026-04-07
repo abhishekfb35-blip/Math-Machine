@@ -10,13 +10,25 @@ title = "spa towel OG image v2"
 id = "TMoX56h5-HBi54DGgvGNF"
 uri = "file://client/public/og-option-b.png"
 type = "image"
-title = "embroidered name OG image v2"
+title = "lifestyle gifting OG image v3"
 
 [[generated]]
 id = "CmJB6FWit4uTWpLDXa6yx"
 uri = "file://client/public/og-option-c.png"
 type = "image"
 title = "flat lay editorial OG image"
+
+[[generated]]
+id = "JUOGAPRGOYsjn7jxbD1LV"
+uri = "file://client/public/og-option-c2.png"
+type = "image"
+title = "rolled towels flat lay OG image"
+
+[[generated]]
+id = "YXRH6lN8g3x473M4WIbqk"
+uri = "file://client/public/og-option-c3.png"
+type = "image"
+title = "knolling flat lay OG image"
 
 [[outputs]]
 id = "noORaAFXjVlzqPKq4T32j"
@@ -28,10 +40,22 @@ title = "Option A — Spa / Lifestyle (v2)"
 id = "pZGrqKLdVTcvhebovRQqK"
 uri = "file://client/public/og-option-b.png"
 type = "image"
-title = "Option B — Embroidered Name Close-up (v2)"
+title = "Option B — Gifting Moment (v3)"
 
 [[outputs]]
 id = "qP9CBBKwhZpsODxuuTov4"
 uri = "file://client/public/og-option-c.png"
 type = "image"
-title = "Option C — Flat Lay Editorial"
+title = "Option C1 — Flat Lay with Props"
+
+[[outputs]]
+id = "MuGGEa2FOiUobupplA5Nu"
+uri = "file://client/public/og-option-c2.png"
+type = "image"
+title = "Option C2 — Rolled Towels on Tray"
+
+[[outputs]]
+id = "mn4jpViByy4y-1eoYquVJ"
+uri = "file://client/public/og-option-c3.png"
+type = "image"
+title = "Option C3 — Knolling Flat Lay"
