@@ -4,3 +4,13 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Uploaded product & swatch images (large binary files — re-uploaded per environment)
+client/public/images/
+
+# Generated PWA icons (auto-generated from brand assets on startup)
+client/public/icon-192.png
+client/public/icon-512.png
+
+# Agent working files
+.local/
