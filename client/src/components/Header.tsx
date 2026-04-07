@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Bath, Shirt, Layers } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
+
+const categories = [
+  { label: "Towels", href: "/shop#towels", icon: Bath },
+  { label: "Bathrobes", href: "/shop#bathrobes", icon: Shirt },
+  { label: "Blankets", href: "/shop#blankets", icon: Layers },
+];
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -26,6 +39,7 @@ export default function Header() {
   const pwaConfig = useSiteConfig<PwaInstallConfig>("pwa-install-banner", defaultPwaInstall);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
 
@@ -42,23 +56,43 @@ export default function Header() {
     }
   };
 
+  const isCategoryActive = (href: string) => {
+    const slug = href.split("#")[1];
+    return location.startsWith("/shop") && typeof window !== "undefined" && window.location.hash === `#${slug}`;
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between gap-2 h-[72px] md:h-[86px]">
-          <Link href="/" data-testid="link-home">
-            <picture>
-              <source media="(min-width: 768px)" srcSet="/images/logo-desktop.png" />
-              <img
-                src="/images/logo-mobile.png"
-                alt={config.brandName}
-                className="h-[55px] md:h-[66px] w-auto cursor-pointer"
-                data-testid="img-brand-logo"
-                onError={(e) => { (e.target as HTMLImageElement).src = "/images/logo.png"; }}
-              />
-            </picture>
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* Mobile hamburger */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="md:hidden"
+              onClick={() => setMenuOpen(true)}
+              data-testid="button-menu-open"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
 
+            <Link href="/" data-testid="link-home">
+              <picture>
+                <source media="(min-width: 768px)" srcSet="/images/logo-desktop.png" />
+                <img
+                  src="/images/logo-mobile.png"
+                  alt={config.brandName}
+                  className="h-[55px] md:h-[66px] w-auto cursor-pointer"
+                  data-testid="img-brand-logo"
+                  onError={(e) => { (e.target as HTMLImageElement).src = "/images/logo.png"; }}
+                />
+              </picture>
+            </Link>
+          </div>
+
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1" data-testid="nav-desktop">
             <Link href="/">
               <Button variant={location === "/" ? "secondary" : "ghost"} size="sm" data-testid="link-nav-home">
@@ -66,10 +100,20 @@ export default function Header() {
               </Button>
             </Link>
             <Link href="/shop">
-              <Button variant={location.startsWith("/shop") ? "secondary" : "ghost"} size="sm" data-testid="link-nav-shop">
+              <Button variant={location.startsWith("/shop") && !location.includes("#") ? "secondary" : "ghost"} size="sm" data-testid="link-nav-shop">
                 <Grid3X3 className="w-4 h-4 mr-1" /> Shop
               </Button>
             </Link>
+            {categories.map((cat) => (
+              <a key={cat.href} href={cat.href} data-testid={`link-nav-${cat.label.toLowerCase()}`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                >
+                  {cat.label}
+                </Button>
+              </a>
+            ))}
           </nav>
 
           <div className="flex items-center gap-1">
@@ -173,6 +217,86 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Mobile navigation drawer */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="px-5 py-4 border-b">
+            <SheetTitle className="text-left text-base font-semibold">Menu</SheetTitle>
+          </SheetHeader>
+          <nav className="flex flex-col py-2" data-testid="nav-mobile-drawer">
+            <SheetClose asChild>
+              <Link href="/">
+                <button
+                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location === "/" ? "text-primary bg-accent/50" : "text-foreground"}`}
+                  data-testid="drawer-link-home"
+                >
+                  <Home className="w-4 h-4 shrink-0" />
+                  Home
+                </button>
+              </Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Link href="/shop">
+                <button
+                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location.startsWith("/shop") ? "text-primary bg-accent/50" : "text-foreground"}`}
+                  data-testid="drawer-link-shop"
+                >
+                  <Grid3X3 className="w-4 h-4 shrink-0" />
+                  All Products
+                </button>
+              </Link>
+            </SheetClose>
+
+            <div className="px-5 pt-4 pb-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Shop by Category</p>
+            </div>
+            {categories.map((cat) => (
+              <SheetClose key={cat.href} asChild>
+                <a href={cat.href}>
+                  <button
+                    className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                    data-testid={`drawer-link-${cat.label.toLowerCase()}`}
+                  >
+                    <cat.icon className="w-4 h-4 shrink-0" />
+                    {cat.label}
+                  </button>
+                </a>
+              </SheetClose>
+            ))}
+
+            <div className="border-t mt-2 pt-2">
+              <SheetClose asChild>
+                <Link href={isAuthenticated ? "/account" : "/signin"}>
+                  <button
+                    className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                    data-testid="drawer-link-account"
+                  >
+                    <User className="w-4 h-4 shrink-0" />
+                    {isAuthenticated ? `My Account` : "Sign In"}
+                  </button>
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link href="/cart">
+                  <button
+                    className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                    data-testid="drawer-link-cart"
+                  >
+                    <ShoppingBag className="w-4 h-4 shrink-0" />
+                    Cart
+                    {cart && cart.itemCount > 0 && (
+                      <Badge className="ml-auto h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">
+                        {cart.itemCount}
+                      </Badge>
+                    )}
+                  </button>
+                </Link>
+              </SheetClose>
+            </div>
+          </nav>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }

@@ -265,8 +265,9 @@ export const defaultFooter: FooterConfig = {
   phone: "+91 99900 79722",
   address: "New Delhi, India",
   shopLinks: [
-    { label: "Kids Collection", href: "/collection/kids" },
-    { label: "Couple Sets", href: "/collection/couples" },
+    { label: "Towels", href: "/shop#towels" },
+    { label: "Bathrobes", href: "/shop#bathrobes" },
+    { label: "Blankets", href: "/shop#blankets" },
     { label: "All Products", href: "/shop" },
     { label: "My Cart", href: "/cart" },
   ],

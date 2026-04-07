@@ -163,7 +163,7 @@ export default function ShopPage() {
           groupedByCategory.map(({ category, products: catProducts }) => {
             const banner = categoryBanners[category.slug];
             return (
-              <section key={category.id} className="space-y-3">
+              <section key={category.id} id={category.slug} className="space-y-3">
                 {banner && (
                   <div className="relative rounded-md overflow-hidden" data-testid={`banner-${category.slug}`}>
                     <img
