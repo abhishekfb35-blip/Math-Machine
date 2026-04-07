@@ -1,0 +1,37 @@
+uploads = []
+
+[[generated]]
+id = "99odT7shNP7g1wQwj7XpG"
+uri = "file://client/public/og-option-a.png"
+type = "image"
+title = "spa lifestyle OG image"
+
+[[generated]]
+id = "TMoX56h5-HBi54DGgvGNF"
+uri = "file://client/public/og-option-b.png"
+type = "image"
+title = "gift occasion OG image"
+
+[[generated]]
+id = "CmJB6FWit4uTWpLDXa6yx"
+uri = "file://client/public/og-option-c.png"
+type = "image"
+title = "flat lay editorial OG image"
+
+[[outputs]]
+id = "noORaAFXjVlzqPKq4T32j"
+uri = "file://client/public/og-option-a.png"
+type = "image"
+title = "Option A — Spa / Lifestyle"
+
+[[outputs]]
+id = "pZGrqKLdVTcvhebovRQqK"
+uri = "file://client/public/og-option-b.png"
+type = "image"
+title = "Option B — Gift / Occasion"
+
+[[outputs]]
+id = "qP9CBBKwhZpsODxuuTov4"
+uri = "file://client/public/og-option-c.png"
+type = "image"
+title = "Option C — Flat Lay Editorial"
