@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  Loader2, Undo2, Save, Palette
+  Loader2, Undo2, Save, Palette, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1948,6 +1948,17 @@ export default function AdminCatalog() {
                           : <EyeOff className="w-3.5 h-3.5 text-red-400" />
                         }
                       </button>
+                      <a
+                        href={`/products/${prod.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View on site"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-shrink-0 text-muted-foreground/40 hover:text-primary transition-colors"
+                        data-testid={`link-product-preview-${prod.id}`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center flex-wrap gap-x-2 mt-0.5">
                       {prod.sku && <span className="font-mono">{prod.sku}</span>}
