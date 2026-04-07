@@ -52,6 +52,10 @@ export default function Header() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  useEffect(() => {
+    setCurrentHash(window.location.hash);
+  }, [location]);
+
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
   });
