@@ -50,7 +50,7 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
         !rawImagePath.includes("/small/") &&
         !rawImagePath.includes("/medium/") &&
         !rawImagePath.includes("/large/")
-          ? `/images/products/small/${rawImagePath.replace("/images/products/", "")}`
+          ? `/images/products/medium/${rawImagePath.replace("/images/products/", "")}`
           : rawImagePath;
       const imageUrl = resolvedImagePath
         ? `${siteUrl}${resolvedImagePath}`
@@ -75,8 +75,8 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${safeImage}" />
-  <meta property="og:image:width" content="800" />
-  <meta property="og:image:height" content="800" />
+  <meta property="og:image:width" content="400" />
+  <meta property="og:image:height" content="600" />
   <meta property="og:url" content="${safeUrl}" />
   <meta property="og:type" content="product" />
   <meta property="og:site_name" content="TurtleLittle" />
