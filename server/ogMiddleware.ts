@@ -30,6 +30,21 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function resolveProductImageUrl(rawPath: string, siteUrl: string): string {
+  if (!rawPath) return `${siteUrl}/og-image.png`;
+  if (rawPath.startsWith("http")) return rawPath;
+  if (
+    rawPath.startsWith("/images/products/") &&
+    !rawPath.includes("/small/") &&
+    !rawPath.includes("/medium/") &&
+    !rawPath.includes("/large/")
+  ) {
+    const filename = rawPath.replace("/images/products/", "");
+    return `${siteUrl}/images/products/medium/${filename}`;
+  }
+  return `${siteUrl}${rawPath}`;
+}
+
 export function setupOgMiddleware(app: Express, storage: IStorage) {
   app.get("/product/:slug", async (req: Request, res: Response, next: NextFunction) => {
     const ua = req.headers["user-agent"] || "";
@@ -39,22 +54,15 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
       const product = await storage.getProductBySlug(req.params.slug);
       if (!product) return next();
 
-      const images = await storage.getProductImages(product.id);
-
       const siteUrl = "https://turtlelittle.com";
       const productUrl = `${siteUrl}/product/${product.slug}`;
 
-      const firstImage = images.find((img) => img.isPrimary) ?? images[0];
-      const rawImagePath = firstImage?.imageUrl ?? "";
-      const resolvedImagePath = rawImagePath.startsWith("/images/products/") &&
-        !rawImagePath.includes("/small/") &&
-        !rawImagePath.includes("/medium/") &&
-        !rawImagePath.includes("/large/")
-          ? `/images/products/medium/${rawImagePath.replace("/images/products/", "")}`
-          : rawImagePath;
-      const imageUrl = resolvedImagePath
-        ? `${siteUrl}${resolvedImagePath}`
-        : `${siteUrl}/og-image.png`;
+      const rawImagePath = product.imageUrl || (() => {
+        storage.getProductImages(product.id).then((imgs) => imgs[0]?.imageUrl ?? "");
+        return "";
+      })();
+
+      const imageUrl = resolveProductImageUrl(rawImagePath, siteUrl);
 
       const rawDesc = product.description
         ? product.description.replace(/\n/g, " ").slice(0, 160)
@@ -75,8 +83,6 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${safeImage}" />
-  <meta property="og:image:width" content="400" />
-  <meta property="og:image:height" content="600" />
   <meta property="og:url" content="${safeUrl}" />
   <meta property="og:type" content="product" />
   <meta property="og:site_name" content="TurtleLittle" />
