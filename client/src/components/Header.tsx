@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useTheme } from "@/components/ThemeProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { defaultHeader, defaultPwaInstall, type HeaderConfig, type PwaInstallConfig } from "@/lib/siteConfigDefaults";
+import { defaultHeader, defaultPwaInstall, defaultSeo, type HeaderConfig, type PwaInstallConfig, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShareButton from "@/components/ShareButton";
@@ -38,6 +38,7 @@ export default function Header() {
   const [location, navigate] = useLocation();
   const config = useSiteConfig<HeaderConfig>("header", defaultHeader);
   const pwaConfig = useSiteConfig<PwaInstallConfig>("pwa-install-banner", defaultPwaInstall);
+  const seoConfig = useSiteConfig<SeoConfig>("seo", defaultSeo);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -310,9 +311,9 @@ export default function Header() {
               </SheetClose>
               <ShareButton
                 variant="row"
-                url="https://turtlelittle.com"
-                title="TurtleLittle — Personalised Luxury Towels & Blankets"
-                text="Check out TurtleLittle — personalised luxury embroidered towels, blankets & bathrobes!"
+                url={seoConfig.siteUrl || "https://turtlelittle.com"}
+                title={`${seoConfig.brandName} — ${seoConfig.tagline}`}
+                text={seoConfig.metaDescription}
               />
             </div>
           </nav>
