@@ -45,8 +45,15 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
       const productUrl = `${siteUrl}/product/${product.slug}`;
 
       const firstImage = images.find((img) => img.isPrimary) ?? images[0];
-      const imageUrl = firstImage?.imageUrl
-        ? `${siteUrl}${firstImage.imageUrl}`
+      const rawImagePath = firstImage?.imageUrl ?? "";
+      const resolvedImagePath = rawImagePath.startsWith("/images/products/") &&
+        !rawImagePath.includes("/small/") &&
+        !rawImagePath.includes("/medium/") &&
+        !rawImagePath.includes("/large/")
+          ? `/images/products/small/${rawImagePath.replace("/images/products/", "")}`
+          : rawImagePath;
+      const imageUrl = resolvedImagePath
+        ? `${siteUrl}${resolvedImagePath}`
         : `${siteUrl}/og-image.png`;
 
       const rawDesc = product.description
