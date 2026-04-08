@@ -45,7 +45,43 @@ function resolveProductImageUrl(rawPath: string, siteUrl: string): string {
   return `${siteUrl}${rawPath}`;
 }
 
+const SITE_OG_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TurtleLittle — Personalised Luxury Towels &amp; Blankets</title>
+  <meta name="description" content="Premium embroidered towels and blankets personalised with your name. Buy 2 Get 1 Free offer!" />
+  <link rel="canonical" href="https://turtlelittle.com" />
+  <meta property="og:title" content="TurtleLittle — Personalised Luxury Towels &amp; Blankets" />
+  <meta property="og:description" content="Premium embroidered towels and blankets personalised with your name. Buy 2 Get 1 Free offer!" />
+  <meta property="og:image" content="https://turtlelittle.com/og-image.jpg" />
+  <meta property="og:image:secure_url" content="https://turtlelittle.com/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://turtlelittle.com" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TurtleLittle" />
+  <meta property="og:locale" content="en_IN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TurtleLittle — Personalised Luxury Towels &amp; Blankets" />
+  <meta name="twitter:description" content="Premium embroidered towels and blankets personalised with your name. Buy 2 Get 1 Free offer!" />
+  <meta name="twitter:image" content="https://turtlelittle.com/og-image.jpg" />
+</head>
+<body>
+  <h1>TurtleLittle — Personalised Luxury Towels &amp; Blankets</h1>
+  <p>Premium embroidered towels and blankets personalised with your name. Buy 2 Get 1 Free offer!</p>
+  <a href="https://turtlelittle.com">Shop Now</a>
+</body>
+</html>`;
+
 export function setupOgMiddleware(app: Express, storage: IStorage) {
+  app.get("/", (req: Request, res: Response, next: NextFunction) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!isCrawler(ua)) return next();
+    res.status(200).set({ "Content-Type": "text/html" }).end(SITE_OG_HTML);
+  });
+
   app.get("/product/:slug", async (req: Request, res: Response, next: NextFunction) => {
     const ua = req.headers["user-agent"] || "";
     if (!isCrawler(ua)) return next();
