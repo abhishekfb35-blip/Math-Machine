@@ -83,8 +83,10 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${safeImage}" />
+  <meta property="og:image:secure_url" content="${safeImage}" />
+  <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:url" content="${safeUrl}" />
-  <meta property="og:type" content="product" />
+  <meta property="og:type" content="website" />
   <meta property="og:site_name" content="TurtleLittle" />
   <meta property="og:locale" content="en_IN" />
   <meta name="twitter:card" content="summary_large_image" />
