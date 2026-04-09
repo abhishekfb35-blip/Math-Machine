@@ -41,6 +41,7 @@ import AdminDbCompare from "@/pages/AdminDbCompare";
 import AdminPricing from "@/pages/AdminPricing";
 import AdminCustomers from "@/pages/AdminCustomers";
 import AdminOffers from "@/pages/AdminOffers";
+import AdminUsers from "@/pages/AdminUsers";
 import AdminGuard from "@/components/AdminGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/admin/pricing" component={() => <AdminGuard><AdminPricing /></AdminGuard>} />
       <Route path="/admin/customers" component={() => <AdminGuard><AdminCustomers /></AdminGuard>} />
       <Route path="/admin/offers" component={() => <AdminGuard><AdminOffers /></AdminGuard>} />
+      <Route path="/admin/users" component={() => <AdminGuard><AdminUsers /></AdminGuard>} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />

@@ -255,6 +255,17 @@ export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
+export const adminUsers = pgTable("admin_users", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  permissions: text("permissions").notNull().default("[]"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({ id: true, createdAt: true });
+
 export const currencyRates = pgTable("currency_rates", {
   id: text("id").primaryKey(),
   currency: varchar("currency", { length: 3 }).notNull().unique(),

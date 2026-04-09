@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -21,6 +21,7 @@ import type {
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
+  AdminUser, InsertAdminUser,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
@@ -146,6 +147,12 @@ export interface IStorage {
   getPricingRuleByCurrency(currency: string): Promise<PricingRule | undefined>;
   upsertPricingRule(data: InsertPricingRule): Promise<PricingRule>;
   updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined>;
+
+  getAdminUsers(): Promise<AdminUser[]>;
+  getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
+  getAdminUserById(id: string): Promise<AdminUser | undefined>;
+  createAdminUser(data: InsertAdminUser): Promise<AdminUser>;
+  updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1177,6 +1184,50 @@ export class DatabaseStorage implements IStorage {
     };
     const [updated] = await db.update(pricingRules).set(dbData).where(eq(pricingRules.currency, currency)).returning();
     return updated ? this.coercePricingRule(updated) : undefined;
+  }
+
+  private coerceAdminUser(row: typeof adminUsers.$inferSelect): AdminUser {
+    return {
+      ...row,
+      permissions: (() => { try { return JSON.parse(row.permissions); } catch { return []; } })(),
+    };
+  }
+
+  async getAdminUsers(): Promise<AdminUser[]> {
+    const rows = await db.select().from(adminUsers).orderBy(adminUsers.createdAt);
+    return rows.map(r => this.coerceAdminUser(r));
+  }
+
+  async getAdminUserByUsername(username: string): Promise<AdminUser | undefined> {
+    const [row] = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
+    return row ? this.coerceAdminUser(row) : undefined;
+  }
+
+  async getAdminUserById(id: string): Promise<AdminUser | undefined> {
+    const [row] = await db.select().from(adminUsers).where(eq(adminUsers.id, id));
+    return row ? this.coerceAdminUser(row) : undefined;
+  }
+
+  async createAdminUser(data: InsertAdminUser): Promise<AdminUser> {
+    const [row] = await db.insert(adminUsers).values({
+      id: createId(),
+      username: data.username,
+      passwordHash: data.passwordHash,
+      permissions: JSON.stringify(data.permissions ?? []),
+      isActive: data.isActive ?? true,
+    }).returning();
+    return this.coerceAdminUser(row);
+  }
+
+  async updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined> {
+    const updateData: Partial<typeof adminUsers.$inferInsert> = {
+      ...(data.username !== undefined && { username: data.username }),
+      ...(data.passwordHash !== undefined && { passwordHash: data.passwordHash }),
+      ...(data.permissions !== undefined && { permissions: JSON.stringify(data.permissions) }),
+      ...(data.isActive !== undefined && { isActive: data.isActive }),
+    };
+    const [row] = await db.update(adminUsers).set(updateData).where(eq(adminUsers.id, id)).returning();
+    return row ? this.coerceAdminUser(row) : undefined;
   }
 }
 

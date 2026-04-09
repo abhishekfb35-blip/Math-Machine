@@ -1,13 +1,21 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { storage } from "./storage";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-const activeSessions = new Map<string, { expiresAt: number; username: string }>();
+interface SessionData {
+  expiresAt: number;
+  username: string;
+  isSuperAdmin: boolean;
+  permissions: string[];
+}
 
-function getAdminCredentials() {
+const activeSessions = new Map<string, SessionData>();
+
+function getEnvAdminCredentials() {
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
   const plainPassword = process.env.ADMIN_PASSWORD;
@@ -24,22 +32,45 @@ export async function handleAdminLogin(req: Request, res: Response) {
     return res.status(400).json({ message: "Username and password are required" });
   }
 
-  const creds = getAdminCredentials();
-  if (!creds) {
-    return res.status(500).json({ message: "Admin credentials not configured" });
+  const envCreds = getEnvAdminCredentials();
+
+  if (envCreds && username === envCreds.username) {
+    let valid = false;
+    if (envCreds.passwordHash && envCreds.passwordHash.startsWith("$2b$")) {
+      valid = await bcrypt.compare(password, envCreds.passwordHash);
+    } else if (envCreds.plainPassword) {
+      valid = password === envCreds.plainPassword;
+    }
+
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    activeSessions.set(sessionToken, {
+      expiresAt: Date.now() + SESSION_MAX_AGE,
+      username,
+      isSuperAdmin: true,
+      permissions: [],
+    });
+
+    res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
+      httpOnly: true,
+      maxAge: SESSION_MAX_AGE,
+      sameSite: "lax",
+      secure: false,
+      path: "/",
+    });
+
+    return res.json({ success: true });
   }
 
-  if (username !== creds.username) {
+  const dbUser = await storage.getAdminUserByUsername(username);
+  if (!dbUser || !dbUser.isActive) {
     return res.status(401).json({ message: "Invalid username or password" });
   }
 
-  let valid = false;
-  if (creds.passwordHash && creds.passwordHash.startsWith("$2b$")) {
-    valid = await bcrypt.compare(password, creds.passwordHash);
-  } else if (creds.plainPassword) {
-    valid = password === creds.plainPassword;
-  }
-
+  const valid = await bcrypt.compare(password, dbUser.passwordHash);
   if (!valid) {
     return res.status(401).json({ message: "Invalid username or password" });
   }
@@ -47,7 +78,9 @@ export async function handleAdminLogin(req: Request, res: Response) {
   const sessionToken = crypto.randomBytes(32).toString("hex");
   activeSessions.set(sessionToken, {
     expiresAt: Date.now() + SESSION_MAX_AGE,
-    username,
+    username: dbUser.username,
+    isSuperAdmin: false,
+    permissions: dbUser.permissions,
   });
 
   res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
@@ -73,25 +106,28 @@ export function handleAdminLogout(req: Request, res: Response) {
 export function handleAdminCheck(req: Request, res: Response) {
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {
-    return res.json({ authenticated: false });
+    return res.json({ authenticated: false, isSuperAdmin: false, permissions: [] });
   }
 
   const session = activeSessions.get(token);
   if (!session || session.expiresAt < Date.now()) {
     activeSessions.delete(token);
     res.clearCookie(ADMIN_SESSION_COOKIE);
-    return res.json({ authenticated: false });
+    return res.json({ authenticated: false, isSuperAdmin: false, permissions: [] });
   }
 
-  return res.json({ authenticated: true });
+  return res.json({
+    authenticated: true,
+    isSuperAdmin: session.isSuperAdmin,
+    permissions: session.permissions,
+  });
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const creds = getAdminCredentials();
-  if (!creds) {
+  const envCreds = getEnvAdminCredentials();
+  if (!envCreds) {
     return next();
   }
-
 
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {
@@ -103,6 +139,26 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     activeSessions.delete(token);
     res.clearCookie(ADMIN_SESSION_COOKIE);
     return res.status(401).json({ message: "Session expired" });
+  }
+
+  next();
+}
+
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+  if (!token) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  const session = activeSessions.get(token);
+  if (!session || session.expiresAt < Date.now()) {
+    activeSessions.delete(token);
+    res.clearCookie(ADMIN_SESSION_COOKIE);
+    return res.status(401).json({ message: "Session expired" });
+  }
+
+  if (!session.isSuperAdmin) {
+    return res.status(403).json({ message: "Superadmin access required" });
   }
 
   next();
@@ -124,15 +180,15 @@ export async function generatePasswordHash(password: string): Promise<string> {
 }
 
 export function requireAdminAny(req: Request, res: Response, next: NextFunction) {
-  const creds = getAdminCredentials();
-  if (!creds) return next();
+  const envCreds = getEnvAdminCredentials();
+  if (!envCreds) return next();
 
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   const session = token ? activeSessions.get(token) : null;
   if (session && session.expiresAt >= Date.now()) return next();
 
   const headerPassword = req.headers["x-admin-password"] as string | undefined;
-  if (headerPassword && creds.plainPassword && headerPassword === creds.plainPassword) return next();
+  if (headerPassword && envCreds.plainPassword && headerPassword === envCreds.plainPassword) return next();
 
   return res.status(401).json({ message: "Authentication required" });
 }

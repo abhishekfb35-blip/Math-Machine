@@ -14,6 +14,7 @@ import { registerAdminHealthRoutes } from "./admin/health";
 import { registerAdminConsentRoutes } from "./admin/consent";
 import { registerAdminPricingRoutes } from "./admin/pricing";
 import { registerAdminCustomerRoutes } from "./admin/customers";
+import { registerAdminUserRoutes } from "./admin/users";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -35,6 +36,7 @@ export async function registerRoutes(
   registerAdminCatalogRoutes(app);
   registerAdminPricingRoutes(app);
   registerAdminCustomerRoutes(app);
+  registerAdminUserRoutes(app);
 
   return httpServer;
 }

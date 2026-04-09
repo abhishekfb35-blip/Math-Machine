@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2 } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -114,8 +114,22 @@ const sections = [
   },
 ];
 
+const superAdminSection = {
+  title: "Admin Users",
+  description: "Manage sub-admin accounts and permissions",
+  href: "/admin/users",
+  icon: UserCog,
+  color: "text-slate-600 dark:text-slate-400",
+  bg: "bg-slate-50 dark:bg-slate-950/30",
+};
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
+
+  const { data: authData } = useQuery<{ authenticated: boolean; isSuperAdmin: boolean; permissions: string[] }>({
+    queryKey: ["/api/admin/check"],
+    staleTime: 5 * 60 * 1000,
+  });
   const BCC_TYPES = [
     { key: "order-placed",    label: "New order placed",           hint: "Customer confirmation + admin alert" },
     { key: "order-confirmed", label: "Order confirmed",            hint: "Crafting starts email" },
@@ -196,7 +210,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {sections.map((section) => (
+        {[...sections, ...(authData?.isSuperAdmin ? [superAdminSection] : [])].map((section) => (
           <Link key={section.href} href={section.href}>
             <Card
               className="p-5 cursor-pointer hover:shadow-md transition-shadow h-full"

@@ -433,3 +433,19 @@ export interface InsertPricingRule {
   roundingRule?: string;
   enabled?: boolean;
 }
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  passwordHash: string;
+  permissions: string[];
+  isActive: boolean;
+  createdAt: Date | null;
+}
+
+export interface InsertAdminUser {
+  username: string;
+  passwordHash: string;
+  permissions?: string[];
+  isActive?: boolean;
+}
