@@ -34,6 +34,9 @@ const DEFAULT_FIELDS: FormFieldConfig[] = [
   { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
 ];
 
+const DEFAULT_TRIGGER_DELAY_SECS = 5;
+const DEFAULT_TRIGGER_SCROLL_COUNT = 5;
+
 interface PopupSettings {
   enabled: boolean;
   headline: string;
@@ -42,6 +45,8 @@ interface PopupSettings {
   buttonText: string;
   discountPercent: number;
   fields: FormFieldConfig[];
+  triggerDelaySecs?: number;
+  triggerScrollCount?: number;
 }
 
 export default function ConsentPopup() {
@@ -84,6 +89,8 @@ export default function ConsentPopup() {
           buttonText: d.value?.buttonText || "",
           discountPercent: d.value?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT,
           fields: mergedFields,
+          triggerDelaySecs: d.value?.triggerDelaySecs ?? DEFAULT_TRIGGER_DELAY_SECS,
+          triggerScrollCount: d.value?.triggerScrollCount ?? DEFAULT_TRIGGER_SCROLL_COUNT,
         });
       })
       .catch(() => {
@@ -95,6 +102,8 @@ export default function ConsentPopup() {
           buttonText: "",
           discountPercent: DEFAULT_DISCOUNT_PERCENT,
           fields: DEFAULT_FIELDS,
+          triggerDelaySecs: DEFAULT_TRIGGER_DELAY_SECS,
+          triggerScrollCount: DEFAULT_TRIGGER_SCROLL_COUNT,
         });
       });
   }, []);
@@ -157,13 +166,16 @@ export default function ConsentPopup() {
     if (authLoading || !settings) return;
     if (!shouldShow()) return;
 
+    const delaySecs = settings.triggerDelaySecs ?? DEFAULT_TRIGGER_DELAY_SECS;
+    const scrollThreshold = settings.triggerScrollCount ?? DEFAULT_TRIGGER_SCROLL_COUNT;
+
     const timer = setTimeout(() => {
       triggerPopup();
-    }, 5000);
+    }, delaySecs * 1000);
 
     const handleScroll = () => {
       scrollCount.current += 1;
-      if (scrollCount.current >= 2) {
+      if (scrollCount.current >= scrollThreshold) {
         triggerPopup();
       }
     };

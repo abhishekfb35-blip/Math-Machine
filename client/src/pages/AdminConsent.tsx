@@ -36,6 +36,8 @@ interface ConsentSettings {
   buttonText: string;
   discountPercent: number;
   fields: FormFieldConfig[];
+  triggerDelaySecs: number;
+  triggerScrollCount: number;
 }
 
 const DEFAULT_SETTINGS: ConsentSettings = {
@@ -46,6 +48,8 @@ const DEFAULT_SETTINGS: ConsentSettings = {
   buttonText: "",
   discountPercent: 10,
   fields: DEFAULT_FIELDS,
+  triggerDelaySecs: 5,
+  triggerScrollCount: 5,
 };
 
 interface ConsentsResponse {
@@ -233,6 +237,32 @@ export default function AdminConsent() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Leave empty to use default: "Get My {settings.discountPercent}% Discount"
                   </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium block mb-1">Delay (seconds)</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={settings.triggerDelaySecs}
+                      onChange={e => setSettings(s => ({ ...s, triggerDelaySecs: parseInt(e.target.value) || 0 }))}
+                      className="w-32"
+                      data-testid="input-popup-trigger-delay"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Time before popup appears automatically</p>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium block mb-1">Scroll count to trigger</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={settings.triggerScrollCount}
+                      onChange={e => setSettings(s => ({ ...s, triggerScrollCount: parseInt(e.target.value) || 1 }))}
+                      className="w-32"
+                      data-testid="input-popup-trigger-scroll"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Number of scroll events before popup appears</p>
+                  </div>
                 </div>
               </div>
 
