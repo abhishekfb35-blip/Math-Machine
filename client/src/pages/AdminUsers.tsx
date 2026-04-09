@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,6 +65,7 @@ export default function AdminUsers() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [form, setForm] = useState<UserFormState>(defaultForm);
+  const [confirmToggle, setConfirmToggle] = useState<AdminUser | null>(null);
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
@@ -93,6 +104,8 @@ export default function AdminUsers() {
       apiRequest("PATCH", `/api/admin/users/${id}`, { isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setConfirmToggle(null);
+      toast({ title: "User status updated" });
     },
     onError: async (err: any) => {
       const msg = err?.message || "Failed to update user";
@@ -217,7 +230,7 @@ export default function AdminUsers() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => toggleActiveMutation.mutate({ id: user.id, isActive: !user.isActive })}
+                    onClick={() => setConfirmToggle(user)}
                     data-testid={`button-toggle-active-${user.id}`}
                     title={user.isActive ? "Deactivate user" : "Activate user"}
                   >
@@ -316,6 +329,32 @@ export default function AdminUsers() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={!!confirmToggle} onOpenChange={open => { if (!open) setConfirmToggle(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmToggle?.isActive ? "Deactivate user?" : "Activate user?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmToggle?.isActive
+                ? `This will prevent "${confirmToggle?.username}" from logging in. You can reactivate them at any time.`
+                : `This will allow "${confirmToggle?.username}" to log in again with their existing permissions.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-confirm-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmToggle && toggleActiveMutation.mutate({ id: confirmToggle.id, isActive: !confirmToggle.isActive })}
+              className={confirmToggle?.isActive ? "bg-destructive hover:bg-destructive/90" : ""}
+              data-testid="button-confirm-toggle"
+            >
+              {toggleActiveMutation.isPending ? "Updating…" : confirmToggle?.isActive ? "Deactivate" : "Activate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

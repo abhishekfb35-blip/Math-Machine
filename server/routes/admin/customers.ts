@@ -1,9 +1,9 @@
 import type { Express, Request, Response } from "express";
-import { requireAdmin } from "../../adminAuth";
+import { requirePermission } from "../../adminAuth";
 import { storage } from "../../storage";
 
 export function registerAdminCustomerRoutes(app: Express) {
-  app.get("/api/admin/customers", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/customers", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -22,7 +22,7 @@ export function registerAdminCustomerRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/customers/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const [customer, orders] = await Promise.all([
@@ -48,7 +48,7 @@ export function registerAdminCustomerRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/customers/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, phone, shippingAddress, shippingCity, shippingState, shippingPincode } = req.body;

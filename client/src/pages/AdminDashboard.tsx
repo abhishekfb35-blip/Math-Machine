@@ -15,6 +15,7 @@ const sections = [
     icon: Package,
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-50 dark:bg-blue-950/30",
+    permission: "catalog",
   },
   {
     title: "Orders",
@@ -23,6 +24,7 @@ const sections = [
     icon: ShoppingCart,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    permission: "orders",
   },
   {
     title: "Page Builder",
@@ -31,6 +33,7 @@ const sections = [
     icon: Layout,
     color: "text-purple-600 dark:text-purple-400",
     bg: "bg-purple-50 dark:bg-purple-950/30",
+    permission: "builder",
   },
   {
     title: "Policy Pages",
@@ -39,6 +42,7 @@ const sections = [
     icon: FileText,
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/30",
+    permission: "pages",
   },
   {
     title: "Brand Assets",
@@ -47,6 +51,7 @@ const sections = [
     icon: Image,
     color: "text-pink-600 dark:text-pink-400",
     bg: "bg-pink-50 dark:bg-pink-950/30",
+    permission: "brand",
   },
   {
     title: "Consent & Offers",
@@ -55,6 +60,7 @@ const sections = [
     icon: Gift,
     color: "text-green-600 dark:text-green-400",
     bg: "bg-green-50 dark:bg-green-950/30",
+    permission: "consent",
   },
   {
     title: "Health Checks",
@@ -63,6 +69,7 @@ const sections = [
     icon: Shield,
     color: "text-red-600 dark:text-red-400",
     bg: "bg-red-50 dark:bg-red-950/30",
+    permission: "health",
   },
   {
     title: "Audit Log",
@@ -71,6 +78,7 @@ const sections = [
     icon: History,
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-50 dark:bg-amber-950/30",
+    permission: "audit",
   },
   {
     title: "Export Data",
@@ -79,6 +87,7 @@ const sections = [
     icon: Download,
     color: "text-cyan-600 dark:text-cyan-400",
     bg: "bg-cyan-50 dark:bg-cyan-950/30",
+    permission: "export",
   },
   {
     title: "DB Compare",
@@ -87,6 +96,7 @@ const sections = [
     icon: GitCompare,
     color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-50 dark:bg-violet-950/30",
+    permission: "health",
   },
   {
     title: "International Pricing",
@@ -95,6 +105,7 @@ const sections = [
     icon: Globe,
     color: "text-teal-600 dark:text-teal-400",
     bg: "bg-teal-50 dark:bg-teal-950/30",
+    permission: "pricing",
   },
   {
     title: "Customers",
@@ -103,6 +114,7 @@ const sections = [
     icon: Users,
     color: "text-indigo-600 dark:text-indigo-400",
     bg: "bg-indigo-50 dark:bg-indigo-950/30",
+    permission: "customers",
   },
   {
     title: "Offers & Delivery",
@@ -111,6 +123,7 @@ const sections = [
     icon: Tag,
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/30",
+    permission: "offers",
   },
 ];
 
@@ -210,7 +223,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[...sections, ...(authData?.isSuperAdmin ? [superAdminSection] : [])].map((section) => (
+        {[...sections.filter(s => authData?.isSuperAdmin || (authData?.permissions ?? []).includes(s.permission)), ...(authData?.isSuperAdmin ? [superAdminSection] : [])].map((section) => (
           <Link key={section.href} href={section.href}>
             <Card
               className="p-5 cursor-pointer hover:shadow-md transition-shadow h-full"

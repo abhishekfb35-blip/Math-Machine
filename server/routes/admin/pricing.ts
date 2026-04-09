@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../../storage";
-import { requireAdmin } from "../../adminAuth";
+import { requirePermission } from "../../adminAuth";
 import { detectCurrency } from "../../services/geoService";
 import { fetchAndStoreRates, getRateServiceStatus } from "../../services/exchangeRateService";
 
@@ -46,7 +46,7 @@ export function registerAdminPricingRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/pricing-rules", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/pricing-rules", requirePermission("pricing"), async (_req, res) => {
     try {
       const [rules, rates] = await Promise.all([
         storage.getPricingRules(),
@@ -68,7 +68,7 @@ export function registerAdminPricingRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/currency-status", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/currency-status", requirePermission("pricing"), async (_req, res) => {
     try {
       const [rules, rateRows] = await Promise.all([
         storage.getPricingRules(),
@@ -99,7 +99,7 @@ export function registerAdminPricingRoutes(app: Express) {
     }
   });
 
-  app.put("/api/admin/pricing-rules/:currency", requireAdmin, async (req, res) => {
+  app.put("/api/admin/pricing-rules/:currency", requirePermission("pricing"), async (req, res) => {
     try {
       const { currency } = req.params;
       const { markupPercent, roundingRule, enabled, symbol, displayName } = req.body;
@@ -117,7 +117,7 @@ export function registerAdminPricingRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/pricing-rules/refresh-rates", requireAdmin, async (_req, res) => {
+  app.post("/api/admin/pricing-rules/refresh-rates", requirePermission("pricing"), async (_req, res) => {
     try {
       await fetchAndStoreRates();
       const [rules, rates] = await Promise.all([

@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { storage } from "../../storage";
-import { requireAdmin, getAdminUsername } from "../../adminAuth";
+import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { handleAdminLogin, handleAdminLogout, handleAdminCheck } from "../../adminAuth";
 import { notificationService } from "../../providers/notification";
 
@@ -18,7 +18,7 @@ export function registerAdminOrderRoutes(app: Express) {
   app.post("/api/admin/logout", handleAdminLogout);
   app.get("/api/admin/check", handleAdminCheck);
 
-  app.get("/api/admin/orders", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/orders", requirePermission("orders"), async (req: Request, res: Response) => {
     try {
       const status = req.query.status as string | undefined;
       const search = req.query.search as string | undefined;
@@ -36,7 +36,7 @@ export function registerAdminOrderRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/orders/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/orders/:id", requirePermission("orders"), async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
       const order = await storage.getOrderById(id);
@@ -49,7 +49,7 @@ export function registerAdminOrderRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/orders/:id/status", requirePermission("orders"), async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
       const { status } = orderStatusSchema.parse(req.body);
@@ -95,7 +95,7 @@ export function registerAdminOrderRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/orders/:id/notes", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/orders/:id/notes", requirePermission("orders"), async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
       const { notes } = orderNotesSchema.parse(req.body);

@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
 import { checkoutSchema } from "@shared/routes";
@@ -7,7 +7,7 @@ import { codProvider, getRazorpayProvider } from "../providers/payment";
 import { notificationService } from "../providers/notification";
 import { OrderService, EmptyCartError } from "../services/orderService";
 import { CartService } from "../services/cartService";
-import { requireAdmin, getAdminUsername } from "../adminAuth";
+import { requireAdmin, getAdminUsername, requirePermission } from "../adminAuth";
 import { convertFromINR } from "../services/exchangeRateService";
 
 const orderService = new OrderService(storage, codProvider, notificationService);
@@ -163,7 +163,29 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
-  app.post("/api/site-config/:key", requireAdmin, async (req, res) => {
+  const SITE_CONFIG_PERMISSIONS: Record<string, string> = {
+    header: "builder",
+    hero: "builder",
+    homepageCollections: "builder",
+    announcement: "builder",
+    terms: "pages",
+    privacy: "pages",
+    refund: "pages",
+    shipping: "pages",
+    about: "pages",
+    seo: "seo",
+    "offer-tiers": "offers",
+    "delivery-tiers": "offers",
+  };
+
+  app.post("/api/site-config/:key", requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+    const key = req.params.key as string;
+    const permission = SITE_CONFIG_PERMISSIONS[key];
+    if (permission) {
+      return requirePermission(permission)(req, res, next);
+    }
+    next();
+  }, async (req, res) => {
     try {
       const key = req.params.key as string;
       const value = JSON.stringify(req.body.value);

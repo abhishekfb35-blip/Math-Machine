@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 import { storage } from "../../storage";
-import { requireAdmin, requireAdminAny } from "../../adminAuth";
+import { requireAdmin, requireAdminAny, requirePermission } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { db } from "../../db";
@@ -89,7 +89,7 @@ export async function restoreBrandLogosFromDB(): Promise<void> {
 
 export function registerAdminHealthRoutes(app: Express) {
 
-  app.post("/api/upload", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
+  app.post("/api/upload", requirePermission("catalog"), upload.single("image"), async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
@@ -105,7 +105,7 @@ export function registerAdminHealthRoutes(app: Express) {
   const SWATCHES_DIR = path.join(process.cwd(), "client", "public", "images", "swatches");
   if (!fs.existsSync(SWATCHES_DIR)) fs.mkdirSync(SWATCHES_DIR, { recursive: true });
 
-  app.post("/api/upload-swatch", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
+  app.post("/api/upload-swatch", requirePermission("catalog"), upload.single("image"), async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
     }
@@ -125,7 +125,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/brand-logos", requireAdmin, async (_req: Request, res: Response) => {
+  app.get("/api/admin/brand-logos", requirePermission("brand"), async (_req: Request, res: Response) => {
     try {
       const imagesDir = getBrandImagesDir();
       const logos: Record<string, string | null> = {};
@@ -140,7 +140,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/brand-logo", requireAdmin, upload.single("image"), async (req: Request, res: Response) => {
+  app.post("/api/admin/brand-logo", requirePermission("brand"), upload.single("image"), async (req: Request, res: Response) => {
     const slot = req.body?.slot as string;
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });
@@ -192,7 +192,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/deploy-check", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/deploy-check", requirePermission("health"), async (_req, res) => {
     try {
       const fs = await import("fs");
       const projectRoot = path.resolve(currentDir, "..");
@@ -337,7 +337,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/data-check", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/data-check", requirePermission("health"), async (_req, res) => {
     try {
       const { pool } = await import("../../db");
       const environment = process.env.NODE_ENV || "development";
@@ -775,7 +775,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/seo-audit", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/seo-audit", requirePermission("seo"), async (_req, res) => {
     try {
       const fs = await import("fs");
       const seoIsProduction = currentDir.endsWith("/dist") || currentDir.endsWith("\\dist");
@@ -1061,7 +1061,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/export/sql", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/export/sql", requirePermission("export"), async (_req, res) => {
     try {
       const databaseUrl = process.env.DATABASE_URL;
       if (!databaseUrl) {
@@ -1081,7 +1081,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/export/csv/:table", requireAdmin, async (req, res) => {
+  app.get("/api/admin/export/csv/:table", requirePermission("export"), async (req, res) => {
     try {
       const allowedTables = [
         "categories", "products", "tags", "product_tags", "product_images",
@@ -1110,7 +1110,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/export/tables", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/export/tables", requirePermission("export"), async (_req, res) => {
     try {
       const databaseUrl = process.env.DATABASE_URL;
       if (!databaseUrl) {
@@ -1168,7 +1168,7 @@ export function registerAdminHealthRoutes(app: Express) {
   });
 
   // ── DB Compare (dev calls prod snapshot and diffs) ────────────────────────
-  app.post("/api/admin/db-compare", requireAdmin, async (req, res) => {
+  app.post("/api/admin/db-compare", requirePermission("health"), async (req, res) => {
     try {
       const { prodUrl } = req.body as { prodUrl: string };
       if (!prodUrl) return res.status(400).json({ message: "prodUrl is required" });
@@ -1262,7 +1262,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/audit-logs/type-summary", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/audit-logs/type-summary", requirePermission("audit"), async (_req, res) => {
     try {
       const summary = await storage.getAuditLogTypeSummary();
       res.json(summary);
@@ -1272,7 +1272,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/audit-logs/entity-summary", requireAdmin, async (req, res) => {
+  app.get("/api/admin/audit-logs/entity-summary", requirePermission("audit"), async (req, res) => {
     try {
       const entityType = req.query.entityType as string;
       if (!entityType) return res.status(400).json({ message: "entityType is required" });
@@ -1284,7 +1284,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/audit-logs", requireAdmin, async (req, res) => {
+  app.get("/api/admin/audit-logs", requirePermission("audit"), async (req, res) => {
     try {
       const entityType = req.query.entityType as string | undefined;
       const entityId = req.query.entityId as string | undefined;
@@ -1369,7 +1369,7 @@ export function registerAdminHealthRoutes(app: Express) {
   });
 
   // ── Export current DB catalog → seed-data.json ────────────────────────────
-  app.post("/api/admin/export/seed", requireAdmin, async (_req, res) => {
+  app.post("/api/admin/export/seed", requirePermission("export"), async (_req, res) => {
     try {
       const { pool } = await import("../../db");
       const seedPath = path.resolve(process.cwd(), "server", "seed-data.json");

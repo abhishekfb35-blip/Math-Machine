@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
 import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@shared/schema";
 import { z } from "zod";
-import { requireAdmin, getAdminUsername } from "../../adminAuth";
+import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
 import { fileStorage } from "../../providers/fileStorage";
 
@@ -20,7 +20,7 @@ function broadcastProductUpdate(product: object) {
 
 export function registerAdminCatalogRoutes(app: Express) {
 
-  app.get("/api/admin/product-updates/stream", requireAdmin, (req: Request, res: Response) => {
+  app.get("/api/admin/product-updates/stream", requirePermission("catalog"), (req: Request, res: Response) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -36,12 +36,12 @@ export function registerAdminCatalogRoutes(app: Express) {
     req.on("close", () => { clearInterval(heartbeat); sseClients.delete(res); });
   });
 
-  app.get("/api/admin/categories", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/categories", requirePermission("catalog"), async (_req, res) => {
     const cats = await storage.getCategories();
     res.json(cats);
   });
 
-  app.post("/api/admin/categories", requireAdmin, async (req, res) => {
+  app.post("/api/admin/categories", requirePermission("catalog"), async (req, res) => {
     try {
       const data = insertCategorySchema.parse(req.body);
       const cat = await storage.createCategory(data);
@@ -58,7 +58,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.put("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/categories/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -79,7 +79,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/categories/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     const before = await storage.getCategoryById(id);
@@ -91,19 +91,19 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.status(204).send();
   });
 
-  app.get("/api/admin/products", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/products", requirePermission("catalog"), async (_req, res) => {
     const prods = await storage.getAllProducts();
     res.json(prods);
   });
 
-  app.get("/api/admin/products/search", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/search", requirePermission("catalog"), async (req, res) => {
     const q = (req.query.q as string || "").trim();
     if (!q) return res.json([]);
     const prods = await storage.searchAllProducts(q);
     res.json(prods);
   });
 
-  app.get("/api/admin/products/category/:categoryId", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/category/:categoryId", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     const prods = await storage.getAllProductsByCategory(categoryId);
@@ -111,7 +111,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   });
 
   // Combined catalog endpoint — products + tags + images in one request
-  app.get("/api/admin/catalog/category/:categoryId", requireAdmin, async (req, res) => {
+  app.get("/api/admin/catalog/category/:categoryId", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     const [prods, { productTagMap, productTagNameMap }, productImages] = await Promise.all([
@@ -123,7 +123,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json({ products, productTagMap, productImages });
   });
 
-  app.post("/api/admin/products", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products", requirePermission("catalog"), async (req, res) => {
     try {
       const data = insertProductSchema.parse(req.body);
       data.sku = generateSku();
@@ -142,7 +142,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/products/:id", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     const product = await storage.getProductById(id);
@@ -150,7 +150,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json(product);
   });
 
-  app.put("/api/admin/products/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -180,7 +180,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/products/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     const before = await storage.getProductById(id);
@@ -193,7 +193,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.status(204).send();
   });
 
-  app.post("/api/admin/products/:id/images", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products/:id/images", requirePermission("catalog"), async (req, res) => {
     const productId = req.params.id as string;
     if (!productId) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -205,14 +205,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/products/:productId/images/:imageId", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/products/:productId/images/:imageId", requirePermission("catalog"), async (req, res) => {
     const imageId = req.params.imageId as string;
     if (!imageId) return res.status(400).json({ message: "Invalid image ID" });
     await storage.deleteProductImage(imageId);
     res.status(204).send();
   });
 
-  app.put("/api/admin/products/:id/images/reorder", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:id/images/reorder", requirePermission("catalog"), async (req, res) => {
     const productId = req.params.id as string;
     const { imageIds } = req.body;
     if (!productId || !Array.isArray(imageIds)) return res.status(400).json({ message: "Invalid request" });
@@ -225,7 +225,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/products/:id/reviews", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products/:id/reviews", requirePermission("catalog"), async (req, res) => {
     const productId = req.params.id as string;
     if (!productId) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -237,7 +237,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.put("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:productId/reviews/:reviewId", requirePermission("catalog"), async (req, res) => {
     const reviewId = req.params.reviewId as string;
     if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });
     try {
@@ -249,19 +249,19 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/products/:productId/reviews/:reviewId", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/products/:productId/reviews/:reviewId", requirePermission("catalog"), async (req, res) => {
     const reviewId = req.params.reviewId as string;
     if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });
     await storage.deleteProductReview(reviewId);
     res.status(204).send();
   });
 
-  app.get("/api/admin/tags", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/tags", requirePermission("catalog"), async (_req, res) => {
     const allTags = await storage.getTags();
     res.json(allTags);
   });
 
-  app.post("/api/admin/tags", requireAdmin, async (req, res) => {
+  app.post("/api/admin/tags", requirePermission("catalog"), async (req, res) => {
     try {
       const data = insertTagSchema.parse(req.body);
       const tag = await storage.createTag(data);
@@ -278,7 +278,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.put("/api/admin/tags/:id", requireAdmin, async (req, res) => {
+  app.put("/api/admin/tags/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
@@ -299,7 +299,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/tags/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/tags/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     const before = await storage.getTags().then(t => t.find(x => x.id === id));
@@ -311,14 +311,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.status(204).send();
   });
 
-  app.get("/api/admin/categories/:id/product-tags", requireAdmin, async (req, res) => {
+  app.get("/api/admin/categories/:id/product-tags", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid category ID" });
     const map = await storage.getProductTagIdsByCategory(id);
     res.json(map);
   });
 
-  app.post("/api/admin/products/bulk-upload-images", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products/bulk-upload-images", requirePermission("catalog"), async (req, res) => {
     try {
       const { productIds, imageSlots } = z.object({
         productIds: z.array(z.string()).min(1),
@@ -349,7 +349,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/products/bulk-add-tags", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products/bulk-add-tags", requirePermission("catalog"), async (req, res) => {
     try {
       const { productIds, tagIds } = z.object({
         productIds: z.array(z.string()).min(1),
@@ -371,7 +371,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/products/bulk-remove-tags", requireAdmin, async (req, res) => {
+  app.post("/api/admin/products/bulk-remove-tags", requirePermission("catalog"), async (req, res) => {
     try {
       const { productIds, tagIds } = z.object({
         productIds: z.array(z.string()).min(1),
@@ -393,14 +393,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/:id/tags", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const productTagsList = await storage.getProductTags(id);
     res.json(productTagsList);
   });
 
-  app.put("/api/admin/products/:id/tags", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:id/tags", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -414,14 +414,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/products/:id/variants", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/:id/variants", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const variants = await storage.getProductVariants(id);
     res.json(variants);
   });
 
-  app.put("/api/admin/products/:id/variants", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:id/variants", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -442,14 +442,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/products/:id/variant-options", requireAdmin, async (req, res) => {
+  app.get("/api/admin/products/:id/variant-options", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const opts = await storage.getProductVariantOptions(id);
     res.json(opts);
   });
 
-  app.put("/api/admin/products/:id/variant-options", requireAdmin, async (req, res) => {
+  app.put("/api/admin/products/:id/variant-options", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     try {
@@ -479,14 +479,14 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/categories/:id/variant-configs", requireAdmin, async (req, res) => {
+  app.get("/api/admin/categories/:id/variant-configs", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid category ID" });
     const configs = await storage.listCategoryTagVariantConfigs(id);
     res.json(configs);
   });
 
-  app.put("/api/admin/categories/:id/variant-configs", requireAdmin, async (req, res) => {
+  app.put("/api/admin/categories/:id/variant-configs", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.id as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     try {
@@ -521,7 +521,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/admin/variant-configs/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/variant-configs/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid config ID" });
     try {

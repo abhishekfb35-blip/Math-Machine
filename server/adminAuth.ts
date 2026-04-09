@@ -144,6 +144,31 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export function requirePermission(permission: string) {
+  return function(req: Request, res: Response, next: NextFunction) {
+    const envCreds = getEnvAdminCredentials();
+    if (!envCreds) return next();
+
+    const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const session = activeSessions.get(token);
+    if (!session || session.expiresAt < Date.now()) {
+      activeSessions.delete(token);
+      res.clearCookie(ADMIN_SESSION_COOKIE);
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    if (session.isSuperAdmin || session.permissions.includes(permission)) {
+      return next();
+    }
+
+    return res.status(403).json({ message: `Permission denied: requires '${permission}'` });
+  };
+}
+
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {
