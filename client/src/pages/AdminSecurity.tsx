@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -128,10 +128,12 @@ export default function AdminSecurity() {
   const [rateLimitConfig, setRateLimitConfig] = useState<RateLimitConfig | null>(null);
   const [guestCartCleanup, setGuestCartCleanup] = useState<GuestCartCleanup | null>(null);
 
-  if (data && !rateLimitConfig) {
-    setRateLimitConfig(data.rateLimitConfig);
-    setGuestCartCleanup(data.guestCartCleanup);
-  }
+  useEffect(() => {
+    if (data && !rateLimitConfig) {
+      setRateLimitConfig(data.rateLimitConfig);
+      setGuestCartCleanup(data.guestCartCleanup);
+    }
+  }, [data]);
 
   const saveGlobalMutation = useMutation({
     mutationFn: async () => {
