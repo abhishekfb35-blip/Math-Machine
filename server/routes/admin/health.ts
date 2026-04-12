@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 import { storage } from "../../storage";
-import { requireAdmin, requireAdminAny, requirePermission } from "../../adminAuth";
+import { requireAdmin, requirePermission, requireSuperAdmin } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { db } from "../../db";
@@ -1137,7 +1137,7 @@ export function registerAdminHealthRoutes(app: Express) {
   });
 
   // ── DB Snapshot (catalog tables only) ────────────────────────────────────
-  app.get("/api/admin/db-snapshot", requireAdminAny, async (_req, res) => {
+  app.get("/api/admin/db-snapshot", requirePermission("health"), async (_req, res) => {
     try {
       const { pool } = await import("../../db");
       const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
@@ -1304,7 +1304,7 @@ export function registerAdminHealthRoutes(app: Express) {
   // ── Force re-seed catalog tables ─────────────────────────────────────────
   // If prodUrl is provided, proxies to prod's version of this endpoint.
   // Otherwise, clears catalog hashes and runs seedDatabase() locally.
-  app.post("/api/admin/catalog/force-reseed", requireAdminAny, async (req, res) => {
+  app.post("/api/admin/catalog/force-reseed", requireSuperAdmin, async (req, res) => {
     try {
       const { prodUrl } = (req.body || {}) as { prodUrl?: string };
 
