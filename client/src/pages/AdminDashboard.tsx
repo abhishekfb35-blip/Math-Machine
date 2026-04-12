@@ -176,6 +176,7 @@ export default function AdminDashboard() {
     "abandoned-cart": false,
   });
   const [bccSaved, setBccSaved] = useState(false);
+  const [bccEditing, setBccEditing] = useState(false);
 
   const handleLogout = async () => {
     await apiRequest("POST", "/api/admin/logout");
@@ -216,6 +217,7 @@ export default function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/site-config/notification-bcc-config"] });
       setBccSaved(true);
+      setBccEditing(false);
       setTimeout(() => setBccSaved(false), 3000);
     },
   });
@@ -262,27 +264,55 @@ export default function AdminDashboard() {
           Enter a monitoring address and choose which email types to watch. Matching emails will be silently BCC'd. OTP codes are always excluded.
         </p>
 
-        <div className="flex gap-2 mb-5">
-          <Input
-            type="text"
-            placeholder="monitor@example.com"
-            value={bccInput}
-            onChange={e => { setBccInput(e.target.value); setBccSaved(false); }}
-            className="text-sm font-mono"
-            data-testid="input-bcc-email"
-          />
-          <Button
-            onClick={() => saveBcc.mutate()}
-            disabled={saveBcc.isPending || !!bccError}
-            variant="outline"
-            data-testid="button-save-bcc-email"
-          >
-            {bccSaved
-              ? <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
-              : saveBcc.isPending ? "Saving…" : "Save"
-            }
-          </Button>
-        </div>
+        {bccInput.trim() && !bccEditing ? (
+          <div className="flex items-center gap-2 mb-5">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-md border text-sm font-mono text-foreground">
+              <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span data-testid="text-bcc-email-display">{bccInput.trim()}</span>
+              {bccSaved && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto shrink-0" />}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBccEditing(true)}
+              data-testid="button-edit-bcc-email"
+            >
+              Edit
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2 mb-5">
+            <Input
+              type="text"
+              placeholder="monitor@example.com"
+              value={bccInput}
+              onChange={e => { setBccInput(e.target.value); setBccSaved(false); }}
+              className="text-sm font-mono"
+              data-testid="input-bcc-email"
+            />
+            <Button
+              onClick={() => saveBcc.mutate()}
+              disabled={saveBcc.isPending || !!bccError}
+              variant="outline"
+              data-testid="button-save-bcc-email"
+            >
+              {bccSaved
+                ? <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
+                : saveBcc.isPending ? "Saving…" : "Save"
+              }
+            </Button>
+            {bccEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBccEditing(false)}
+                data-testid="button-cancel-bcc-edit"
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {BCC_TYPES.map(({ key, label, hint }) => (

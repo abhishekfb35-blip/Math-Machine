@@ -154,6 +154,7 @@ export default function AdminSecurity() {
   const [savedTier, setSavedTier] = useState<"global" | "moderate" | "strict" | null>(null);
   const [cleanupSaved, setCleanupSaved] = useState(false);
   const [alertSaved, setAlertSaved] = useState(false);
+  const [alertEmailEditing, setAlertEmailEditing] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{ deleted: number } | null>(null);
   const [historyDays, setHistoryDays] = useState<7 | 30>(7);
 
@@ -225,6 +226,7 @@ export default function AdminSecurity() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
       setAlertSaved(true);
+      setAlertEmailEditing(false);
       setTimeout(() => setAlertSaved(false), 3000);
     },
   });
@@ -495,14 +497,46 @@ export default function AdminSecurity() {
           <CardContent className="space-y-4">
             <div>
               <Label className="text-xs mb-1 block">Alert email address</Label>
-              <Input
-                type="email"
-                placeholder="admin@example.com"
-                value={alertConfig.alertEmail}
-                onChange={(e) => setAlertConfig((c) => c ? { ...c, alertEmail: e.target.value } : c)}
-                className="h-8 text-sm"
-                data-testid="input-alert-email"
-              />
+              {alertConfig.alertEmail && !alertEmailEditing ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md border text-sm font-mono">
+                    <Bell className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span data-testid="text-alert-email-display">{alertConfig.alertEmail}</span>
+                    {alertSaved && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto shrink-0" />}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setAlertEmailEditing(true)}
+                    data-testid="button-edit-alert-email"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="email"
+                    placeholder="admin@example.com"
+                    value={alertConfig.alertEmail}
+                    onChange={(e) => setAlertConfig((c) => c ? { ...c, alertEmail: e.target.value } : c)}
+                    className="h-8 text-sm"
+                    data-testid="input-alert-email"
+                  />
+                  {alertEmailEditing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => setAlertEmailEditing(false)}
+                      data-testid="button-cancel-alert-email-edit"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
