@@ -20,11 +20,12 @@ import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { nullifySwatchUploads } from "./migrations/nullify-swatch-uploads";
 import { ensureAdminUsersTable } from "./migrations/admin-users-table";
 import { ensureWishlistsTable } from "./migrations/wishlists-table";
+import { ensureRateLimitStatsTable } from "./migrations/rate-limit-stats-table";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
 import { setupOgMiddleware } from "./ogMiddleware";
-import { loadRateLimitConfig } from "./middleware/rateLimiter";
+import { loadRateLimitConfig, getPendingBlockSnapshot, clearPendingBlocks } from "./middleware/rateLimiter";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -117,6 +118,69 @@ function startGuestCartCleanupScheduler() {
 
   setInterval(run, INTERVAL_MS);
   log("[guest-cart-cleanup] Scheduler started — runs daily");
+}
+
+let lastSecurityAlertAt = 0;
+
+function startRateLimitStatsScheduler() {
+  const FLUSH_INTERVAL_MS = 5 * 60 * 1000;
+
+  const flush = async () => {
+    try {
+      const snapshot = getPendingBlockSnapshot();
+      if (snapshot.length === 0) return;
+      clearPendingBlocks();
+
+      const now = new Date();
+      const bucketHour = new Date(now);
+      bucketHour.setMinutes(0, 0, 0);
+
+      for (const { tier, cat, count } of snapshot) {
+        try {
+          await storage.upsertRateLimitStats(tier, cat, bucketHour, count);
+        } catch (e: any) {
+          console.error("[rate-limit-stats] flush error:", e.message);
+        }
+      }
+
+      const totalBlocks = snapshot.reduce((s, x) => s + x.count, 0);
+      log(`[rate-limit-stats] Flushed ${totalBlocks} blocks to DB`);
+
+      try {
+        const alertRecord = await storage.getSiteConfig("security-alert-config");
+        if (alertRecord) {
+          const alertCfg = JSON.parse(alertRecord.value);
+          const alertEmail: string = alertCfg.alertEmail || "";
+          const threshold: number = alertCfg.alertThreshold ?? 50;
+          const cooldownMs: number = (alertCfg.alertCooldownMinutes ?? 60) * 60 * 1000;
+
+          if (alertEmail && totalBlocks >= threshold) {
+            const now = Date.now();
+            if (now - lastSecurityAlertAt > cooldownMs) {
+              lastSecurityAlertAt = now;
+              notificationService.sendSecurityAlert({
+                toEmail: alertEmail,
+                totalBlocks,
+                windowMinutes: 5,
+                breakdown: snapshot,
+                siteUrl: "turtlelittle.com",
+              }).then(r => {
+                if (r.success) log(`[rate-limit-stats] Security alert sent to ${alertEmail}`);
+                else console.error("[rate-limit-stats] Alert send failed:", r.error);
+              }).catch(e => console.error("[rate-limit-stats] Alert error:", e.message));
+            }
+          }
+        }
+      } catch (e: any) {
+        console.error("[rate-limit-stats] alert config load error:", e.message);
+      }
+    } catch (err: any) {
+      console.error("[rate-limit-stats] Scheduler error:", err.message);
+    }
+  };
+
+  setInterval(flush, FLUSH_INTERVAL_MS);
+  log("[rate-limit-stats] Stats flush scheduler started — runs every 5 minutes");
 }
 
 function startAbandonedCartScheduler() {
@@ -228,10 +292,12 @@ function startAbandonedCartScheduler() {
           await nullifySwatchUploads();
           await ensureAdminUsersTable();
           await ensureWishlistsTable();
+          await ensureRateLimitStatsTable();
           await loadRateLimitConfig();
           log("startup tasks complete");
           startAbandonedCartScheduler();
           startGuestCartCleanupScheduler();
+          startRateLimitStatsScheduler();
         } catch (err: any) {
           console.error("Startup task failed:", err.message);
         }

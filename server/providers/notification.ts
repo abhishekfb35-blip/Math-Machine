@@ -39,6 +39,14 @@ export interface AbandonedCartItem {
   price: number;
 }
 
+export interface SecurityAlertPayload {
+  toEmail: string;
+  totalBlocks: number;
+  windowMinutes: number;
+  breakdown: Array<{ tier: string; cat: string; count: number }>;
+  siteUrl?: string;
+}
+
 export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
@@ -47,6 +55,7 @@ export interface INotificationService {
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
   sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult>;
+  sendSecurityAlert(payload: SecurityAlertPayload): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -491,6 +500,11 @@ export class ConsoleNotificationService implements INotificationService {
     console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}> — ${summary} — ${cartUrl}`);
     return { success: true, channel: "console" };
   }
+
+  async sendSecurityAlert(payload: SecurityAlertPayload): Promise<NotificationResult> {
+    console.log(`[Security Alert] ${payload.totalBlocks} blocks in ${payload.windowMinutes}min — sending to ${payload.toEmail}`);
+    return { success: true, channel: "console" };
+  }
 }
 
 function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], cartUrl: string): string {
@@ -770,6 +784,46 @@ export class ResendNotificationService implements INotificationService {
       return { success: true, channel: "resend" };
     } catch (err) {
       console.error("Resend abandoned cart error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendSecurityAlert(payload: SecurityAlertPayload): Promise<NotificationResult> {
+    try {
+      const breakdownRows = payload.breakdown
+        .map(b => `<tr><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;">${b.tier}</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;">${b.cat}</td><td style="padding:4px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600;color:#dc2626;">${b.count}</td></tr>`)
+        .join("");
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;border:2px solid #dc2626;overflow:hidden;">
+  <div style="background:#dc2626;padding:16px 24px;">
+    <h1 style="color:#fff;margin:0;font-size:18px;">⚠️ Security Alert — TurtleLittle</h1>
+  </div>
+  <div style="padding:24px;">
+    <p style="font-size:15px;color:#1a1a1a;margin:0 0 8px;"><strong>${payload.totalBlocks}</strong> rate-limit blocks detected in the last <strong>${payload.windowMinutes} minutes</strong>.</p>
+    <p style="font-size:13px;color:#666;margin:0 0 20px;">This may indicate a bot attack, credential-stuffing attempt, or abnormal traffic spike on <strong>${payload.siteUrl || "turtlelittle.com"}</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#f9f9f9;">
+        <th style="text-align:left;padding:6px 8px;color:#666;">Tier</th>
+        <th style="text-align:left;padding:6px 8px;color:#666;">Endpoint</th>
+        <th style="text-align:right;padding:6px 8px;color:#666;">Blocks</th>
+      </tr></thead>
+      <tbody>${breakdownRows}</tbody>
+    </table>
+    <p style="font-size:12px;color:#999;margin:20px 0 0;">Review your rate-limit settings at /admin/security if needed.</p>
+  </div>
+</div>
+</body></html>`;
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: payload.toEmail,
+        subject: `⚠️ Security Alert: ${payload.totalBlocks} blocks in ${payload.windowMinutes}min — TurtleLittle`,
+        html,
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend security alert error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }

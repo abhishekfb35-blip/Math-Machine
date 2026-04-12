@@ -223,6 +223,15 @@ export async function generatePasswordHash(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
 
+export function getAdminSessionCount(): number {
+  const now = Date.now();
+  let active = 0;
+  for (const [, session] of activeSessions.entries()) {
+    if (session.expiresAt >= now) active++;
+  }
+  return active;
+}
+
 export function requireAdminAny(req: Request, res: Response, next: NextFunction) {
   const envCreds = getEnvAdminCredentials();
   if (!envCreds) return next();

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -22,6 +22,7 @@ import type {
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
   AdminUser, InsertAdminUser,
+  RateLimitStats,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
@@ -160,6 +161,11 @@ export interface IStorage {
   syncWishlist(customerId: string, productIds: string[]): Promise<void>;
 
   pruneGuestCarts(retentionDays: number): Promise<number>;
+
+  upsertRateLimitStats(tier: string, endpointCategory: string, bucketHour: Date, addCount: number): Promise<void>;
+  getRateLimitStats(sinceHours: number): Promise<RateLimitStats[]>;
+  pruneRateLimitStats(retentionDays: number): Promise<void>;
+  getActiveCustomerSessionCount(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1278,6 +1284,46 @@ export class DatabaseStorage implements IStorage {
     await db.delete(cartItems).where(inArray(cartItems.cartId, ids));
     await db.delete(carts).where(inArray(carts.id, ids));
     return ids.length;
+  }
+
+  async upsertRateLimitStats(tier: string, endpointCategory: string, bucketHour: Date, addCount: number): Promise<void> {
+    await db.execute(sql`
+      INSERT INTO rate_limit_stats (id, tier, endpoint_category, bucket_hour, block_count)
+      VALUES (${createId()}, ${tier}, ${endpointCategory}, ${bucketHour}, ${addCount})
+      ON CONFLICT (tier, endpoint_category, bucket_hour)
+      DO UPDATE SET block_count = rate_limit_stats.block_count + ${addCount}
+    `);
+  }
+
+  async getRateLimitStats(sinceHours: number): Promise<RateLimitStats[]> {
+    const since = new Date(Date.now() - sinceHours * 60 * 60 * 1000);
+    const rows = await db.execute(sql`
+      SELECT id, tier, endpoint_category, bucket_hour, block_count, created_at
+      FROM rate_limit_stats
+      WHERE bucket_hour >= ${since}
+      ORDER BY bucket_hour DESC
+    `);
+    return (rows.rows as any[]).map(r => ({
+      id: r.id,
+      tier: r.tier,
+      endpointCategory: r.endpoint_category,
+      bucketHour: new Date(r.bucket_hour),
+      blockCount: Number(r.block_count),
+      createdAt: r.created_at ? new Date(r.created_at) : null,
+    }));
+  }
+
+  async pruneRateLimitStats(retentionDays: number): Promise<void> {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    await db.execute(sql`DELETE FROM rate_limit_stats WHERE bucket_hour < ${cutoff}`);
+  }
+
+  async getActiveCustomerSessionCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(customerSessions)
+      .where(gt(customerSessions.expiresAt, new Date()));
+    return Number(result?.count ?? 0);
   }
 }
 

@@ -461,3 +461,19 @@ export interface InsertAdminUser {
   permissions?: string[];
   isActive?: boolean;
 }
+
+export interface RateLimitStats {
+  id: string;
+  tier: string;
+  endpointCategory: string;
+  bucketHour: Date;
+  blockCount: number;
+  createdAt: Date | null;
+}
+
+export interface InsertRateLimitStats {
+  tier: string;
+  endpointCategory: string;
+  bucketHour: Date;
+  blockCount: number;
+}
