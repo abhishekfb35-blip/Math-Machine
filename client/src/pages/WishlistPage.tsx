@@ -60,12 +60,11 @@ export default function WishlistPage() {
         )}
       </div>
 
-      {quickAddProduct && (
-        <QuickAddSheet
-          product={quickAddProduct}
-          onClose={() => setQuickAddProduct(null)}
-        />
-      )}
+      <QuickAddSheet
+        product={quickAddProduct}
+        open={!!quickAddProduct}
+        onOpenChange={(open) => { if (!open) setQuickAddProduct(null); }}
+      />
     </>
   );
 }
