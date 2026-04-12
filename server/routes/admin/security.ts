@@ -1,7 +1,25 @@
 import type { Express, Request, Response } from "express";
+import { z } from "zod";
 import { requireAdmin, requireSuperAdmin } from "../../adminAuth";
 import { getRateLimitConfig, saveRateLimitConfig, loadRateLimitConfig, type RateLimitConfig } from "../../middleware/rateLimiter";
 import { storage } from "../../storage";
+
+const tierSchema = z.object({
+  enabled: z.boolean(),
+  windowMs: z.number().int().positive(),
+  max: z.number().int().positive(),
+});
+
+const rateLimitConfigSchema = z.object({
+  global:   tierSchema,
+  moderate: tierSchema,
+  strict:   tierSchema,
+});
+
+const guestCartCleanupSchema = z.object({
+  enabled: z.boolean(),
+  retentionDays: z.number().int().min(1).max(365),
+});
 
 export function registerAdminSecurityRoutes(app: Express) {
   app.get("/api/admin/security-config", requireAdmin, requireSuperAdmin, async (_req: Request, res: Response) => {
@@ -36,18 +54,22 @@ export function registerAdminSecurityRoutes(app: Express) {
     try {
       const { rateLimitConfig, guestCartCleanup } = req.body;
 
-      if (rateLimitConfig) {
-        const config = rateLimitConfig as RateLimitConfig;
-        await saveRateLimitConfig(config);
+      if (rateLimitConfig !== undefined) {
+        const parsed = rateLimitConfigSchema.safeParse(rateLimitConfig);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid rate limit config", errors: parsed.error.errors });
+        }
+        await saveRateLimitConfig(parsed.data as RateLimitConfig);
       }
 
-      if (guestCartCleanup) {
+      if (guestCartCleanup !== undefined) {
+        const parsed = guestCartCleanupSchema.safeParse(guestCartCleanup);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid cleanup config", errors: parsed.error.errors });
+        }
         await storage.upsertSiteConfig(
           "guest-cart-cleanup",
-          JSON.stringify({
-            enabled: guestCartCleanup.enabled ?? true,
-            retentionDays: guestCartCleanup.retentionDays ?? 30,
-          })
+          JSON.stringify(parsed.data)
         );
       }
 
