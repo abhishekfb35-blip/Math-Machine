@@ -45,6 +45,7 @@ import AdminUsers from "@/pages/AdminUsers";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminGuard from "@/components/AdminGuard";
 import SuperAdminGuard from "@/components/SuperAdminGuard";
+import PermissionGuard from "@/components/PermissionGuard";
 import SignInPage from "@/pages/SignInPage";
 import AccountPage from "@/pages/AccountPage";
 import TermsPage from "@/pages/TermsPage";
@@ -77,23 +78,23 @@ function Router() {
       <Route path="/account" component={AccountPage} />
       <Route path="/admin" component={() => <AdminGuard><AdminDashboard /></AdminGuard>} />
       <Route path="/admin/login" component={() => <AdminGuard><AdminDashboard /></AdminGuard>} />
-      <Route path="/admin/builder" component={() => <AdminGuard><AdminBuilder /></AdminGuard>} />
-      <Route path="/admin/catalog/product/:id" component={() => <AdminGuard><AdminProductEdit /></AdminGuard>} />
-      <Route path="/admin/brand" component={() => <AdminGuard><AdminBrandAssets /></AdminGuard>} />
-      <Route path="/admin/catalog" component={() => <AdminGuard><AdminCatalog /></AdminGuard>} />
-      <Route path="/admin/audit-log" component={() => <AdminGuard><AdminAuditLog /></AdminGuard>} />
-      <Route path="/admin/pages" component={() => <AdminGuard><AdminPages /></AdminGuard>} />
-      <Route path="/admin/orders" component={() => <AdminGuard><AdminOrders /></AdminGuard>} />
-      <Route path="/admin/export" component={() => <AdminGuard><AdminExport /></AdminGuard>} />
-      <Route path="/admin/checks" component={() => <AdminGuard><AdminChecks /></AdminGuard>} />
-      <Route path="/admin/deploy-check" component={() => <AdminGuard><AdminDeployCheck /></AdminGuard>} />
-      <Route path="/admin/data-check" component={() => <AdminGuard><AdminDataCheck /></AdminGuard>} />
-      <Route path="/admin/db-compare" component={() => <AdminGuard><AdminDbCompare /></AdminGuard>} />
-      <Route path="/admin/seo-audit" component={() => <AdminGuard><AdminSeoAudit /></AdminGuard>} />
-      <Route path="/admin/consent" component={() => <AdminGuard><AdminConsent /></AdminGuard>} />
-      <Route path="/admin/pricing" component={() => <AdminGuard><AdminPricing /></AdminGuard>} />
-      <Route path="/admin/customers" component={() => <AdminGuard><AdminCustomers /></AdminGuard>} />
-      <Route path="/admin/offers" component={() => <AdminGuard><AdminOffers /></AdminGuard>} />
+      <Route path="/admin/builder" component={() => <PermissionGuard permission="builder"><AdminBuilder /></PermissionGuard>} />
+      <Route path="/admin/catalog/product/:id" component={() => <PermissionGuard permission="catalog"><AdminProductEdit /></PermissionGuard>} />
+      <Route path="/admin/brand" component={() => <PermissionGuard permission="brand"><AdminBrandAssets /></PermissionGuard>} />
+      <Route path="/admin/catalog" component={() => <PermissionGuard permission="catalog"><AdminCatalog /></PermissionGuard>} />
+      <Route path="/admin/audit-log" component={() => <PermissionGuard permission="audit"><AdminAuditLog /></PermissionGuard>} />
+      <Route path="/admin/pages" component={() => <PermissionGuard permission="pages"><AdminPages /></PermissionGuard>} />
+      <Route path="/admin/orders" component={() => <PermissionGuard permission="orders"><AdminOrders /></PermissionGuard>} />
+      <Route path="/admin/export" component={() => <PermissionGuard permission="export"><AdminExport /></PermissionGuard>} />
+      <Route path="/admin/checks" component={() => <PermissionGuard permission="health"><AdminChecks /></PermissionGuard>} />
+      <Route path="/admin/deploy-check" component={() => <PermissionGuard permission="health"><AdminDeployCheck /></PermissionGuard>} />
+      <Route path="/admin/data-check" component={() => <PermissionGuard permission="health"><AdminDataCheck /></PermissionGuard>} />
+      <Route path="/admin/db-compare" component={() => <PermissionGuard permission="health"><AdminDbCompare /></PermissionGuard>} />
+      <Route path="/admin/seo-audit" component={() => <PermissionGuard permission="seo"><AdminSeoAudit /></PermissionGuard>} />
+      <Route path="/admin/consent" component={() => <PermissionGuard permission="consent"><AdminConsent /></PermissionGuard>} />
+      <Route path="/admin/pricing" component={() => <PermissionGuard permission="pricing"><AdminPricing /></PermissionGuard>} />
+      <Route path="/admin/customers" component={() => <PermissionGuard permission="customers"><AdminCustomers /></PermissionGuard>} />
+      <Route path="/admin/offers" component={() => <PermissionGuard permission="offers"><AdminOffers /></PermissionGuard>} />
       <Route path="/admin/users" component={() => <SuperAdminGuard><AdminUsers /></SuperAdminGuard>} />
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />

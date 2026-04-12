@@ -200,6 +200,17 @@ export function getAdminUsername(req: Request): string {
   return "unknown";
 }
 
+export function getAdminRole(req: Request): { username: string; isSuperAdmin: boolean; permissions: string[] } {
+  const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+  if (token) {
+    const session = activeSessions.get(token);
+    if (session && session.expiresAt >= Date.now()) {
+      return { username: session.username, isSuperAdmin: session.isSuperAdmin, permissions: session.permissions };
+    }
+  }
+  return { username: "unknown", isSuperAdmin: false, permissions: [] };
+}
+
 export async function generatePasswordHash(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
