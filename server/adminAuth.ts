@@ -15,6 +15,29 @@ interface SessionData {
 
 const activeSessions = new Map<string, SessionData>();
 
+const failedLoginTimestamps: number[] = [];
+const MAX_FAILED_LOGIN_AGE_MS = 24 * 60 * 60 * 1000;
+
+function recordFailedLogin() {
+  const now = Date.now();
+  failedLoginTimestamps.push(now);
+  const cutoff = now - MAX_FAILED_LOGIN_AGE_MS;
+  while (failedLoginTimestamps.length > 0 && failedLoginTimestamps[0] < cutoff) {
+    failedLoginTimestamps.shift();
+  }
+}
+
+export function getFailedLoginStats(): { lastHour: number; last24h: number } {
+  const now = Date.now();
+  const cutoff24h = now - MAX_FAILED_LOGIN_AGE_MS;
+  const cutoff1h  = now - 60 * 60 * 1000;
+  const relevant = failedLoginTimestamps.filter(t => t >= cutoff24h);
+  return {
+    lastHour: relevant.filter(t => t >= cutoff1h).length,
+    last24h:  relevant.length,
+  };
+}
+
 function getEnvAdminCredentials() {
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
@@ -43,6 +66,7 @@ export async function handleAdminLogin(req: Request, res: Response) {
     }
 
     if (!valid) {
+      recordFailedLogin();
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
@@ -67,11 +91,13 @@ export async function handleAdminLogin(req: Request, res: Response) {
 
   const dbUser = await storage.getAdminUserByUsername(username);
   if (!dbUser || !dbUser.isActive) {
+    recordFailedLogin();
     return res.status(401).json({ message: "Invalid username or password" });
   }
 
   const valid = await bcrypt.compare(password, dbUser.passwordHash);
   if (!valid) {
+    recordFailedLogin();
     return res.status(401).json({ message: "Invalid username or password" });
   }
 

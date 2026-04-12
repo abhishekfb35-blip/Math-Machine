@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Shield, Trash2, RefreshCw, CheckCircle2, AlertCircle, Loader2, Lock,
-  Users, Activity, Bell, BarChart3,
+  Users, Activity, Bell, BarChart3, UserPlus, AlertTriangle, Clock,
 } from "lucide-react";
 
 interface TierConfig {
@@ -42,13 +42,24 @@ interface SecurityConfig {
   alertConfig: AlertConfig;
 }
 
+interface CleanupEntry {
+  timestamp: string;
+  deleted: number;
+}
+
 interface SecurityReport {
   liveSessions: { admin: number; customer: number };
+  newSignups7d: number;
+  failedLogins: { lastHour: number; last24h: number };
+  lastCleanup: CleanupEntry | null;
+  cleanupHistory: CleanupEntry[];
   totalBlocks24h: number;
-  totalBlocks7d: number;
+  totalBlocksWindow: number;
   byTier24h: Record<string, number>;
   byCategory24h: Record<string, number>;
-  hourlyBuckets: Array<{ hour: string; tier: string; category: string; count: number }>;
+  byTierWindow: Record<string, number>;
+  dailyBreakdown: Array<{ date: string; global?: number; moderate?: number; strict?: number }>;
+  days: number;
 }
 
 function minutesToMs(m: number) { return m * 60_000; }
@@ -101,9 +112,12 @@ function TierCard({
   );
 }
 
-function StatBox({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
+function StatBox({ label, value, sub, color, icon }: {
+  label: string; value: string | number; sub?: string; color?: string; icon?: React.ReactNode;
+}) {
   return (
     <div className="border rounded-lg p-3 text-center">
+      {icon && <div className="flex justify-center mb-1 text-muted-foreground">{icon}</div>}
       <p className={`text-2xl font-bold ${color ?? ""}`}>{value}</p>
       <p className="text-xs font-medium mt-0.5">{label}</p>
       {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
@@ -111,11 +125,37 @@ function StatBox({ label, value, sub, color }: { label: string; value: string | 
   );
 }
 
+function formatRelativeTime(iso: string): string {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const catLabels: Record<string, string> = {
+  otp: "OTP / Auth",
+  checkout: "Checkout / Payment",
+  cart: "Cart",
+  consent: "Consent / Discount",
+  other: "Other",
+};
+
+const tierColors: Record<string, string> = {
+  global: "text-blue-600",
+  moderate: "text-amber-600",
+  strict: "text-red-600",
+};
+
 export default function AdminSecurity() {
   const [savedTier, setSavedTier] = useState<"global" | "moderate" | "strict" | null>(null);
   const [cleanupSaved, setCleanupSaved] = useState(false);
   const [alertSaved, setAlertSaved] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{ deleted: number } | null>(null);
+  const [historyDays, setHistoryDays] = useState<7 | 30>(7);
 
   const { data, isLoading } = useQuery<SecurityConfig>({
     queryKey: ["/api/admin/security-config"],
@@ -127,9 +167,9 @@ export default function AdminSecurity() {
   });
 
   const { data: report, isLoading: reportLoading, refetch: refetchReport } = useQuery<SecurityReport>({
-    queryKey: ["/api/admin/security-report"],
+    queryKey: ["/api/admin/security-report", historyDays],
     queryFn: async () => {
-      const res = await fetch("/api/admin/security-report");
+      const res = await fetch(`/api/admin/security-report?days=${historyDays}`);
       if (!res.ok) throw new Error("Failed to load report");
       return res.json();
     },
@@ -153,14 +193,12 @@ export default function AdminSecurity() {
       if (!rateLimitConfig) return;
       await apiRequest("POST", "/api/admin/security-config", { rateLimitConfig });
     },
-    onSuccess: (_, _vars, ctx) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
-    },
   });
 
   function saveTier(tier: "global" | "moderate" | "strict") {
     saveRateLimitMutation.mutate(undefined, {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
         setSavedTier(tier);
         setTimeout(() => setSavedTier(null), 3000);
       },
@@ -198,6 +236,7 @@ export default function AdminSecurity() {
     },
     onSuccess: (result) => {
       setCleanupResult(result);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-report", historyDays] });
       setTimeout(() => setCleanupResult(null), 5000);
     },
   });
@@ -210,19 +249,7 @@ export default function AdminSecurity() {
     );
   }
 
-  const tierColors: Record<string, string> = {
-    global: "text-blue-600",
-    moderate: "text-amber-600",
-    strict: "text-red-600",
-  };
-
-  const catLabels: Record<string, string> = {
-    otp: "OTP / Auth",
-    checkout: "Checkout / Payment",
-    cart: "Cart",
-    consent: "Consent / Discount",
-    other: "Other",
-  };
+  const allTiers = ["global", "moderate", "strict"];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-security">
@@ -242,7 +269,7 @@ export default function AdminSecurity() {
 
       <div className="space-y-6">
 
-        {/* Live Report */}
+        {/* Security Report */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -250,64 +277,93 @@ export default function AdminSecurity() {
                 <CardTitle className="text-base flex items-center gap-2">
                   <BarChart3 className="w-4 h-4" /> Security Report
                 </CardTitle>
-                <CardDescription className="text-xs">Live snapshot and 24-hour block history. Refreshes every 30 s.</CardDescription>
+                <CardDescription className="text-xs">Live snapshot + block history. Refreshes every 30 s.</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => refetchReport()} disabled={reportLoading} data-testid="button-refresh-report">
                 <RefreshCw className={`w-4 h-4 ${reportLoading ? "animate-spin" : ""}`} />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {reportLoading && !report ? (
               <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
             ) : report ? (
               <>
+                {/* Live Snapshot */}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" /> Active Sessions
+                    <Users className="w-3.5 h-3.5" /> Live Snapshot
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <StatBox label="Admin sessions" value={report.liveSessions.admin} color="text-primary" />
-                    <StatBox label="Customer sessions" value={report.liveSessions.customer} color="text-primary" />
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <StatBox
+                      label="Admin sessions"
+                      value={report.liveSessions.admin}
+                      icon={<Shield className="w-3.5 h-3.5" />}
+                      color="text-primary"
+                    />
+                    <StatBox
+                      label="Customer sessions"
+                      value={report.liveSessions.customer}
+                      icon={<Users className="w-3.5 h-3.5" />}
+                      color="text-primary"
+                    />
+                    <StatBox
+                      label="New signups (7d)"
+                      value={report.newSignups7d}
+                      icon={<UserPlus className="w-3.5 h-3.5" />}
+                    />
+                    <StatBox
+                      label="Failed logins (1h)"
+                      value={report.failedLogins.lastHour}
+                      icon={<AlertTriangle className="w-3.5 h-3.5" />}
+                      color={report.failedLogins.lastHour > 5 ? "text-red-600" : report.failedLogins.lastHour > 0 ? "text-amber-600" : ""}
+                    />
+                    <StatBox
+                      label="Failed logins (24h)"
+                      value={report.failedLogins.last24h}
+                      icon={<AlertTriangle className="w-3.5 h-3.5" />}
+                      color={report.failedLogins.last24h > 20 ? "text-red-600" : ""}
+                    />
+                    <StatBox
+                      label="Last cleanup"
+                      value={report.lastCleanup ? `${report.lastCleanup.deleted} carts` : "Never"}
+                      sub={report.lastCleanup ? formatRelativeTime(report.lastCleanup.timestamp) : undefined}
+                      icon={<Clock className="w-3.5 h-3.5" />}
+                    />
                   </div>
                 </div>
 
+                {/* Blocks 24h summary */}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1">
-                    <Activity className="w-3.5 h-3.5" /> Rate-Limit Blocks
+                    <Activity className="w-3.5 h-3.5" /> Rate-Limit Blocks (24 h)
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <StatBox
-                      label="Blocks last 24 h"
+                      label="Total blocks (24 h)"
                       value={report.totalBlocks24h}
                       color={report.totalBlocks24h > 100 ? "text-red-600" : report.totalBlocks24h > 20 ? "text-amber-600" : ""}
                     />
-                    <StatBox label="Blocks last 7 days" value={report.totalBlocks7d} />
+                    <StatBox label={`Total blocks (${report.days}d)`} value={report.totalBlocksWindow} />
                   </div>
-                </div>
 
-                {Object.keys(report.byTier24h).length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">By Tier (24 h)</p>
-                    <div className="flex flex-wrap gap-2">
+                  {Object.keys(report.byTier24h).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {Object.entries(report.byTier24h).map(([tier, cnt]) => (
                         <Badge key={tier} variant="outline" className={`text-xs ${tierColors[tier] ?? ""}`}>
                           {tier}: {cnt}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {Object.keys(report.byCategory24h).length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">By Endpoint (24 h)</p>
-                    <div className="space-y-1.5">
+                  {Object.keys(report.byCategory24h).length > 0 && (
+                    <div className="space-y-1.5 mt-3">
                       {Object.entries(report.byCategory24h)
                         .sort((a, b) => b[1] - a[1])
                         .map(([cat, cnt]) => (
                           <div key={cat} className="flex items-center gap-2 text-sm">
-                            <span className="w-32 text-xs text-muted-foreground flex-shrink-0">{catLabels[cat] ?? cat}</span>
+                            <span className="w-36 text-xs text-muted-foreground flex-shrink-0">{catLabels[cat] ?? cat}</span>
                             <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                               <div
                                 className="bg-primary h-full rounded-full"
@@ -318,11 +374,105 @@ export default function AdminSecurity() {
                           </div>
                         ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {report.totalBlocks24h === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">No blocks recorded in the last 24 hours.</p>
+                  {report.totalBlocks24h === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">No blocks in the last 24 hours.</p>
+                  )}
+                </div>
+
+                {/* Block History Table */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                      <BarChart3 className="w-3.5 h-3.5" /> Block History
+                    </p>
+                    <div className="flex gap-1">
+                      <Button
+                        variant={historyDays === 7 ? "default" : "outline"}
+                        size="sm"
+                        className="h-6 text-xs px-2"
+                        onClick={() => setHistoryDays(7)}
+                        data-testid="button-history-7d"
+                      >
+                        7d
+                      </Button>
+                      <Button
+                        variant={historyDays === 30 ? "default" : "outline"}
+                        size="sm"
+                        className="h-6 text-xs px-2"
+                        onClick={() => setHistoryDays(30)}
+                        data-testid="button-history-30d"
+                      >
+                        30d
+                      </Button>
+                    </div>
+                  </div>
+
+                  {report.dailyBreakdown.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-1.5 pr-3 font-semibold text-muted-foreground">Date</th>
+                            {allTiers.map(t => (
+                              <th key={t} className={`text-right py-1.5 px-2 font-semibold ${tierColors[t] ?? ""}`}>
+                                {t.charAt(0).toUpperCase() + t.slice(1)}
+                              </th>
+                            ))}
+                            <th className="text-right py-1.5 pl-2 font-semibold text-muted-foreground">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.dailyBreakdown.slice().reverse().map(row => {
+                            const rowTotal = allTiers.reduce((s, t) => s + (row[t as keyof typeof row] as number ?? 0), 0);
+                            return (
+                              <tr key={row.date} className="border-b border-border/50 hover:bg-muted/30">
+                                <td className="py-1.5 pr-3 text-muted-foreground">{row.date}</td>
+                                {allTiers.map(t => (
+                                  <td key={t} className={`py-1.5 px-2 text-right ${(row[t as keyof typeof row] ?? 0) > 0 ? tierColors[t] ?? "" : "text-muted-foreground"}`}>
+                                    {(row[t as keyof typeof row] as number ?? 0) || "—"}
+                                  </td>
+                                ))}
+                                <td className="py-1.5 pl-2 text-right font-medium">{rowTotal || "—"}</td>
+                              </tr>
+                            );
+                          })}
+                          {/* Summary row */}
+                          <tr className="bg-muted/40 font-semibold">
+                            <td className="py-1.5 pr-3">Total</td>
+                            {allTiers.map(t => (
+                              <td key={t} className={`py-1.5 px-2 text-right ${tierColors[t] ?? ""}`}>
+                                {report.byTierWindow[t] ?? "—"}
+                              </td>
+                            ))}
+                            <td className="py-1.5 pl-2 text-right">{report.totalBlocksWindow || "—"}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-3">No block data for this period.</p>
+                  )}
+                </div>
+
+                {/* Cleanup History */}
+                {report.cleanupHistory.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1">
+                      <Trash2 className="w-3.5 h-3.5" /> Recent Cleanup Runs
+                    </p>
+                    <div className="space-y-1">
+                      {report.cleanupHistory.slice().reverse().map((entry, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                          <span className="text-muted-foreground">{formatRelativeTime(entry.timestamp)}</span>
+                          <span className={entry.deleted > 0 ? "text-amber-600 font-medium" : "text-muted-foreground"}>
+                            {entry.deleted > 0 ? `${entry.deleted} cart${entry.deleted === 1 ? "" : "s"} removed` : "Nothing to remove"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             ) : (
@@ -338,7 +488,7 @@ export default function AdminSecurity() {
               <Bell className="w-4 h-4" /> Attack Alert Email
             </CardTitle>
             <CardDescription className="text-xs">
-              Get an email when the number of rate-limit blocks in a 5-minute window exceeds your threshold.
+              Get an email when rate-limit blocks in a 5-minute window exceed your threshold.
               Leave email blank to disable alerts.
             </CardDescription>
           </CardHeader>
@@ -376,12 +526,7 @@ export default function AdminSecurity() {
                 />
               </div>
             </div>
-            <Button
-              size="sm"
-              onClick={() => saveAlertMutation.mutate()}
-              disabled={saveAlertMutation.isPending}
-              data-testid="button-save-alert-config"
-            >
+            <Button size="sm" onClick={() => saveAlertMutation.mutate()} disabled={saveAlertMutation.isPending} data-testid="button-save-alert-config">
               {saveAlertMutation.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
               ) : alertSaved ? (
@@ -403,8 +548,8 @@ export default function AdminSecurity() {
           <CardHeader>
             <CardTitle className="text-base">API Rate Limits</CardTitle>
             <CardDescription className="text-xs">
-              Control how many requests each IP address can make within a time window.
-              All changes take effect immediately after saving. Each tier can be saved independently.
+              Control how many requests each IP can make within a time window.
+              Changes take effect immediately. Each tier can be saved independently.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -413,7 +558,7 @@ export default function AdminSecurity() {
               testId="global" tier={rateLimitConfig.global}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, global: t } : c)}
               onSave={() => saveTier("global")}
-              isSaving={saveRateLimitMutation.isPending && savedTier === null}
+              isSaving={saveRateLimitMutation.isPending}
               saved={savedTier === "global"}
             />
             <TierCard
@@ -421,7 +566,7 @@ export default function AdminSecurity() {
               testId="moderate" tier={rateLimitConfig.moderate}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, moderate: t } : c)}
               onSave={() => saveTier("moderate")}
-              isSaving={saveRateLimitMutation.isPending && savedTier === null}
+              isSaving={saveRateLimitMutation.isPending}
               saved={savedTier === "moderate"}
             />
             <TierCard
@@ -429,7 +574,7 @@ export default function AdminSecurity() {
               testId="strict" tier={rateLimitConfig.strict}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, strict: t } : c)}
               onSave={() => saveTier("strict")}
-              isSaving={saveRateLimitMutation.isPending && savedTier === null}
+              isSaving={saveRateLimitMutation.isPending}
               saved={savedTier === "strict"}
             />
           </CardContent>

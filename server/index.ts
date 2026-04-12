@@ -26,6 +26,7 @@ import { notificationService } from "./providers/notification";
 import { createServer } from "http";
 import { setupOgMiddleware } from "./ogMiddleware";
 import { loadRateLimitConfig, getPendingBlockSnapshot, clearPendingBlocks } from "./middleware/rateLimiter";
+import { recordCleanupRun } from "./services/cleanupHistory";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -108,6 +109,8 @@ function startGuestCartCleanupScheduler() {
       if (!enabled) return;
 
       const deleted = await storage.pruneGuestCarts(retentionDays);
+      await recordCleanupRun(deleted);
+      try { await storage.pruneRateLimitStats(30); } catch {}
       if (deleted > 0) {
         log(`[guest-cart-cleanup] Pruned ${deleted} guest carts older than ${retentionDays} days`);
       }

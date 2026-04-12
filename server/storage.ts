@@ -166,6 +166,7 @@ export interface IStorage {
   getRateLimitStats(sinceHours: number): Promise<RateLimitStats[]>;
   pruneRateLimitStats(retentionDays: number): Promise<void>;
   getActiveCustomerSessionCount(): Promise<number>;
+  getRecentCustomerSignupCount(dayWindow: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1323,6 +1324,15 @@ export class DatabaseStorage implements IStorage {
       .select({ count: sql<number>`count(*)` })
       .from(customerSessions)
       .where(gt(customerSessions.expiresAt, new Date()));
+    return Number(result?.count ?? 0);
+  }
+
+  async getRecentCustomerSignupCount(dayWindow: number): Promise<number> {
+    const since = new Date(Date.now() - dayWindow * 24 * 60 * 60 * 1000);
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(customers)
+      .where(gt(customers.createdAt, since));
     return Number(result?.count ?? 0);
   }
 }

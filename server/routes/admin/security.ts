@@ -1,8 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
-import { requireAdmin, requireSuperAdmin, getAdminSessionCount } from "../../adminAuth";
+import { requireAdmin, requireSuperAdmin, getAdminSessionCount, getFailedLoginStats } from "../../adminAuth";
 import { getRateLimitConfig, saveRateLimitConfig, loadRateLimitConfig, type RateLimitConfig } from "../../middleware/rateLimiter";
 import { storage } from "../../storage";
+import { recordCleanupRun } from "../../services/cleanupHistory";
 
 const tierSchema = z.object({
   enabled: z.boolean(),
@@ -112,6 +113,7 @@ export function registerAdminSecurityRoutes(app: Express) {
       } catch {}
 
       const deleted = await storage.pruneGuestCarts(retentionDays);
+      await recordCleanupRun(deleted);
       res.json({ success: true, deleted });
     } catch (err) {
       console.error("Cart cleanup error:", err);
@@ -119,15 +121,31 @@ export function registerAdminSecurityRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/security-report", requireAdmin, requireSuperAdmin, async (_req: Request, res: Response) => {
+  app.get("/api/admin/security-report", requireAdmin, requireSuperAdmin, async (req: Request, res: Response) => {
     try {
-      const adminSessions = getAdminSessionCount();
-      const customerSessions = await storage.getActiveCustomerSessionCount();
-      const stats24h = await storage.getRateLimitStats(24);
-      const stats168h = await storage.getRateLimitStats(168);
+      const daysParam = parseInt((req.query.days as string) || "7", 10);
+      const days = daysParam === 30 ? 30 : 7;
+      const sinceHours = days * 24;
 
-      const totalBlocks24h = stats24h.reduce((s, r) => s + r.blockCount, 0);
-      const totalBlocks7d  = stats168h.reduce((s, r) => s + r.blockCount, 0);
+      const [adminSessions, customerSessions, newSignups7d, statsWindow, stats24h] = await Promise.all([
+        Promise.resolve(getAdminSessionCount()),
+        storage.getActiveCustomerSessionCount(),
+        storage.getRecentCustomerSignupCount(7),
+        storage.getRateLimitStats(sinceHours),
+        storage.getRateLimitStats(24),
+      ]);
+
+      const failedLogins = getFailedLoginStats();
+
+      let cleanupHistory: Array<{ timestamp: string; deleted: number }> = [];
+      try {
+        const record = await storage.getSiteConfig("cleanup-history");
+        if (record) cleanupHistory = JSON.parse(record.value);
+      } catch {}
+      const lastCleanup = cleanupHistory.length > 0 ? cleanupHistory[cleanupHistory.length - 1] : null;
+
+      const totalBlocksWindow = statsWindow.reduce((s, r) => s + r.blockCount, 0);
+      const totalBlocks24h    = stats24h.reduce((s, r) => s + r.blockCount, 0);
 
       const byTier24h: Record<string, number> = {};
       const byCategory24h: Record<string, number> = {};
@@ -136,20 +154,35 @@ export function registerAdminSecurityRoutes(app: Express) {
         byCategory24h[r.endpointCategory] = (byCategory24h[r.endpointCategory] ?? 0) + r.blockCount;
       }
 
-      const hourlyBuckets = stats24h.map(r => ({
-        hour: r.bucketHour,
-        tier: r.tier,
-        category: r.endpointCategory,
-        count: r.blockCount,
-      }));
+      const dailyMap = new Map<string, Record<string, number>>();
+      for (const r of statsWindow) {
+        const day = r.bucketHour.toISOString().slice(0, 10);
+        if (!dailyMap.has(day)) dailyMap.set(day, {});
+        const entry = dailyMap.get(day)!;
+        entry[r.tier] = (entry[r.tier] ?? 0) + r.blockCount;
+      }
+      const dailyBreakdown = Array.from(dailyMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, tiers]) => ({ date, ...tiers }));
+
+      const byTierWindow: Record<string, number> = {};
+      for (const r of statsWindow) {
+        byTierWindow[r.tier] = (byTierWindow[r.tier] ?? 0) + r.blockCount;
+      }
 
       res.json({
         liveSessions: { admin: adminSessions, customer: customerSessions },
+        newSignups7d,
+        failedLogins,
+        lastCleanup,
+        cleanupHistory: cleanupHistory.slice(-10),
         totalBlocks24h,
-        totalBlocks7d,
+        totalBlocksWindow,
         byTier24h,
         byCategory24h,
-        hourlyBuckets,
+        byTierWindow,
+        dailyBreakdown,
+        days,
       });
     } catch (err) {
       console.error("Security report error:", err);
