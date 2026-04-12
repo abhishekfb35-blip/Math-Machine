@@ -106,11 +106,12 @@ function startGuestCartCleanupScheduler() {
         }
       } catch {}
 
+      try { await storage.pruneRateLimitStats(30); } catch {}
+
       if (!enabled) return;
 
       const deleted = await storage.pruneGuestCarts(retentionDays);
       await recordCleanupRun(deleted);
-      try { await storage.pruneRateLimitStats(30); } catch {}
       if (deleted > 0) {
         log(`[guest-cart-cleanup] Pruned ${deleted} guest carts older than ${retentionDays} days`);
       }
