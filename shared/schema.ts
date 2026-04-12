@@ -292,8 +292,18 @@ export const pricingRules = pgTable("pricing_rules", {
   enabled: boolean("enabled").notNull().default(true),
 });
 
+export const rateLimitStats = pgTable("rate_limit_stats", {
+  id: text("id").primaryKey(),
+  tier: text("tier").notNull(),
+  endpointCategory: text("endpoint_category").notNull(),
+  bucketHour: timestamp("bucket_hour").notNull(),
+  blockCount: integer("block_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertCurrencyRateSchema = createInsertSchema(currencyRates).omit({ id: true });
 export const insertPricingRuleSchema = createInsertSchema(pricingRules).omit({ id: true });
+export const insertRateLimitStatsSchema = createInsertSchema(rateLimitStats).omit({ id: true, createdAt: true });
 
 export type {
   Category, InsertCategory,
@@ -314,4 +324,5 @@ export type {
   ProductVariant, InsertProductVariant,
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
+  RateLimitStats, InsertRateLimitStats,
 } from "./types";
