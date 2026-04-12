@@ -211,6 +211,14 @@ export function getAdminRole(req: Request): { username: string; isSuperAdmin: bo
   return { username: "unknown", isSuperAdmin: false, permissions: [] };
 }
 
+export function invalidateSessionsForUser(username: string): void {
+  for (const [token, session] of activeSessions.entries()) {
+    if (session.username === username) {
+      activeSessions.delete(token);
+    }
+  }
+}
+
 export async function generatePasswordHash(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }

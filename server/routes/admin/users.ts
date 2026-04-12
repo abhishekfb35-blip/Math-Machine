@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { storage } from "../../storage";
-import { requireSuperAdmin, getAdminUsername } from "../../adminAuth";
+import { requireSuperAdmin, getAdminUsername, invalidateSessionsForUser } from "../../adminAuth";
 
 const ALL_PERMISSIONS = [
   "catalog", "orders", "builder", "pages", "brand",
@@ -87,6 +87,10 @@ export function registerAdminUserRoutes(app: Express) {
       const updated = await storage.updateAdminUser(id, updateData);
       if (!updated) return res.status(404).json({ message: "User not found" });
 
+      if (data.permissions !== undefined || data.isActive !== undefined) {
+        invalidateSessionsForUser(updated.username);
+      }
+
       await storage.createAuditLog({
         entityType: "admin_user", entityId: id, entityName: updated.username,
         action: "updated",
@@ -115,6 +119,7 @@ export function registerAdminUserRoutes(app: Express) {
       const user = await storage.getAdminUserById(id);
       if (!user) return res.status(404).json({ message: "User not found" });
       await storage.updateAdminUser(id, { isActive: false });
+      invalidateSessionsForUser(user.username);
       await storage.createAuditLog({
         entityType: "admin_user", entityId: id, entityName: user.username,
         action: "deactivated", changes: JSON.stringify({ username: user.username }),
