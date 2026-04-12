@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Shield, Trash2, RefreshCw, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Shield, Trash2, RefreshCw, CheckCircle2, AlertCircle, Loader2, Lock } from "lucide-react";
 
 interface TierConfig {
   enabled: boolean;
@@ -25,10 +25,6 @@ interface SecurityConfig {
     enabled: boolean;
     retentionDays: number;
   };
-}
-
-function msToMinutes(ms: number) {
-  return Math.round(ms / 60_000);
 }
 
 function minutesToMs(m: number) {
@@ -90,7 +86,8 @@ function TierRow({
 }
 
 export default function AdminSecurity() {
-  const [saved, setSaved] = useState(false);
+  const [rateLimitSaved, setRateLimitSaved] = useState(false);
+  const [cleanupSaved, setCleanupSaved] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{ deleted: number } | null>(null);
 
   const { data, isLoading } = useQuery<SecurityConfig>({
@@ -102,28 +99,42 @@ export default function AdminSecurity() {
     },
   });
 
-  const [config, setConfig] = useState<SecurityConfig | null>(null);
+  const [rateLimitConfig, setRateLimitConfig] = useState<SecurityConfig["rateLimitConfig"] | null>(null);
+  const [guestCartCleanup, setGuestCartCleanup] = useState<SecurityConfig["guestCartCleanup"] | null>(null);
 
-  if (data && !config) {
-    setConfig(data);
+  if (data && !rateLimitConfig) {
+    setRateLimitConfig(data.rateLimitConfig);
+    setGuestCartCleanup(data.guestCartCleanup);
   }
 
-  const saveMutation = useMutation({
+  const saveRateLimitMutation = useMutation({
     mutationFn: async () => {
-      if (!config) return;
-      await apiRequest("POST", "/api/admin/security-config", config);
+      if (!rateLimitConfig) return;
+      await apiRequest("POST", "/api/admin/security-config", { rateLimitConfig });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setRateLimitSaved(true);
+      setTimeout(() => setRateLimitSaved(false), 3000);
+    },
+  });
+
+  const saveCleanupMutation = useMutation({
+    mutationFn: async () => {
+      if (!guestCartCleanup) return;
+      await apiRequest("POST", "/api/admin/security-config", { guestCartCleanup });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
+      setCleanupSaved(true);
+      setTimeout(() => setCleanupSaved(false), 3000);
     },
   });
 
   const cleanupMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/admin/security/run-cart-cleanup", {});
-      return res as unknown as { deleted: number };
+      return res.json() as Promise<{ deleted: number }>;
     },
     onSuccess: (result) => {
       setCleanupResult(result);
@@ -131,9 +142,7 @@ export default function AdminSecurity() {
     },
   });
 
-  const currentConfig = config ?? data;
-
-  if (isLoading || !currentConfig) {
+  if (isLoading || !rateLimitConfig || !guestCartCleanup) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 flex items-center justify-center min-h-64">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -151,7 +160,7 @@ export default function AdminSecurity() {
         </Link>
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <Shield className="w-5 h-5" /> Security & Rate Limiting
+            <Lock className="w-5 h-5" /> Security & Rate Limiting
           </h1>
           <p className="text-sm text-muted-foreground">Configure API rate limits and data cleanup</p>
         </div>
@@ -162,35 +171,50 @@ export default function AdminSecurity() {
           <CardHeader>
             <CardTitle className="text-base">API Rate Limits</CardTitle>
             <CardDescription className="text-xs">
-              Control how many requests each IP address can make within a time window. Changes take effect immediately.
-              Window duration changes require a server restart.
+              Control how many requests each IP address can make within a time window. Limit and enabled changes take effect immediately.
+              Window duration changes require a server restart to take effect.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <TierRow
               label="Global"
               description="All /api/* endpoints — broad protection"
-              tier={currentConfig.rateLimitConfig.global}
-              onChange={(t) =>
-                setConfig((c) => c ? { ...c, rateLimitConfig: { ...c.rateLimitConfig, global: t } } : c)
-              }
+              tier={rateLimitConfig.global}
+              onChange={(t) => setRateLimitConfig((c) => c ? { ...c, global: t } : c)}
             />
             <TierRow
               label="Moderate"
-              description="Cart and wishlist mutations"
-              tier={currentConfig.rateLimitConfig.moderate}
-              onChange={(t) =>
-                setConfig((c) => c ? { ...c, rateLimitConfig: { ...c.rateLimitConfig, moderate: t } } : c)
-              }
+              description="Cart mutations, wishlist writes, and review submissions"
+              tier={rateLimitConfig.moderate}
+              onChange={(t) => setRateLimitConfig((c) => c ? { ...c, moderate: t } : c)}
             />
             <TierRow
               label="Strict"
               description="OTP, checkout, payment, consent, discount — sensitive actions"
-              tier={currentConfig.rateLimitConfig.strict}
-              onChange={(t) =>
-                setConfig((c) => c ? { ...c, rateLimitConfig: { ...c.rateLimitConfig, strict: t } } : c)
-              }
+              tier={rateLimitConfig.strict}
+              onChange={(t) => setRateLimitConfig((c) => c ? { ...c, strict: t } : c)}
             />
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                onClick={() => saveRateLimitMutation.mutate()}
+                disabled={saveRateLimitMutation.isPending}
+                size="sm"
+                data-testid="button-save-rate-limits"
+              >
+                {saveRateLimitMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
+                ) : rateLimitSaved ? (
+                  <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
+                ) : (
+                  <><Shield className="w-4 h-4 mr-1" /> Save Rate Limits</>
+                )}
+              </Button>
+              {saveRateLimitMutation.isError && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> Failed to save
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -209,9 +233,9 @@ export default function AdminSecurity() {
                 <p className="text-xs text-muted-foreground">Runs daily in the background</p>
               </div>
               <Switch
-                checked={currentConfig.guestCartCleanup.enabled}
+                checked={guestCartCleanup.enabled}
                 onCheckedChange={(v) =>
-                  setConfig((c) => c ? { ...c, guestCartCleanup: { ...c.guestCartCleanup, enabled: v } } : c)
+                  setGuestCartCleanup((c) => c ? { ...c, enabled: v } : c)
                 }
                 data-testid="switch-guest-cart-cleanup-enabled"
               />
@@ -222,20 +246,30 @@ export default function AdminSecurity() {
                 type="number"
                 min={1}
                 max={365}
-                value={currentConfig.guestCartCleanup.retentionDays}
+                value={guestCartCleanup.retentionDays}
                 onChange={(e) =>
-                  setConfig((c) =>
-                    c
-                      ? { ...c, guestCartCleanup: { ...c.guestCartCleanup, retentionDays: parseInt(e.target.value) || 30 } }
-                      : c
-                  )
+                  setGuestCartCleanup((c) => c ? { ...c, retentionDays: parseInt(e.target.value) || 30 } : c)
                 }
                 className="h-8 text-sm"
                 data-testid="input-guest-cart-retention-days"
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                size="sm"
+                onClick={() => saveCleanupMutation.mutate()}
+                disabled={saveCleanupMutation.isPending}
+                data-testid="button-save-cleanup-config"
+              >
+                {saveCleanupMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
+                ) : cleanupSaved ? (
+                  <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
+                ) : (
+                  <><RefreshCw className="w-4 h-4 mr-1" /> Save Cleanup Config</>
+                )}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -249,42 +283,27 @@ export default function AdminSecurity() {
                   <><Trash2 className="w-4 h-4 mr-1" /> Run Cleanup Now</>
                 )}
               </Button>
-              {cleanupResult !== null && (
-                <p className="text-xs text-muted-foreground" data-testid="text-cleanup-result">
-                  {cleanupResult.deleted === 0
-                    ? "No guest carts to clean up."
-                    : `Removed ${cleanupResult.deleted} guest cart${cleanupResult.deleted === 1 ? "" : "s"}.`}
-                </p>
-              )}
-              {cleanupMutation.isError && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Cleanup failed
-                </p>
-              )}
             </div>
+
+            {cleanupResult !== null && (
+              <p className="text-xs text-muted-foreground" data-testid="text-cleanup-result">
+                {cleanupResult.deleted === 0
+                  ? "No guest carts to clean up."
+                  : `Removed ${cleanupResult.deleted} guest cart${cleanupResult.deleted === 1 ? "" : "s"}.`}
+              </p>
+            )}
+            {cleanupMutation.isError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Cleanup failed
+              </p>
+            )}
+            {saveCleanupMutation.isError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Failed to save cleanup config
+              </p>
+            )}
           </CardContent>
         </Card>
-
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            data-testid="button-save-security-config"
-          >
-            {saveMutation.isPending ? (
-              <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
-            ) : saved ? (
-              <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
-            ) : (
-              <><RefreshCw className="w-4 h-4 mr-1" /> Save & Apply</>
-            )}
-          </Button>
-          {saveMutation.isError && (
-            <p className="text-xs text-destructive flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" /> Failed to save
-            </p>
-          )}
-        </div>
       </div>
     </div>
   );

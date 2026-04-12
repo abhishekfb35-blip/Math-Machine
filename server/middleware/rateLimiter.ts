@@ -55,7 +55,7 @@ export function getRateLimitConfig(): RateLimitConfig {
 
 export async function loadRateLimitConfig(): Promise<void> {
   try {
-    const record = await storage.getSiteConfig("rate-limit-config");
+    const record = await storage.getSiteConfig("rate-limits");
     if (record) {
       const parsed = JSON.parse(record.value) as RateLimitConfig;
       currentConfig = { ...DEFAULT_CONFIG, ...parsed };
@@ -69,5 +69,5 @@ export async function loadRateLimitConfig(): Promise<void> {
 export async function saveRateLimitConfig(config: RateLimitConfig): Promise<void> {
   currentConfig = config;
   buildAllLimiters();
-  await storage.upsertSiteConfig("rate-limit-config", JSON.stringify(config));
+  await storage.upsertSiteConfig("rate-limits", JSON.stringify(config));
 }

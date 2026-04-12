@@ -33,6 +33,8 @@ export async function registerRoutes(
     "/api/wishlist",
   ], moderateLimiter);
 
+  app.post("/api/products/:id/reviews", moderateLimiter);
+
   app.use([
     "/api/auth/send-otp",
     "/api/auth/verify-otp",
