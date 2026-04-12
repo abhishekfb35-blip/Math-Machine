@@ -175,7 +175,7 @@ export function registerAdminSecurityRoutes(app: Express) {
         newSignups7d,
         failedLogins,
         lastCleanup,
-        cleanupHistory: cleanupHistory.slice(-10),
+        cleanupHistory: cleanupHistory.slice(-20),
         totalBlocks24h,
         totalBlocksWindow,
         byTier24h,
