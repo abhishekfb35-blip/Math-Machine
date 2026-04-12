@@ -25,6 +25,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
     -   **Admin DB Compare**: Tool to compare development and production database schemas and data for catalog tables.
     -   **Admin International Pricing**: Manages multi-currency exchange rates and pricing rules.
     -   **Admin Consent**: Configures and monitors consent popups and collected signups.
+    -   **Admin Security**: Configures API rate limiting (global/moderate/strict tiers) and guest cart cleanup. Superadmin-only.
 -   **Core UI Components**: Reusable components such as AnnouncementBar, Header (with CurrencySelector), BottomNav, Footer, ProductCardNew, QuickAddSheet for personalization, and a floating WhatsAppButton.
 -   **Multi-Currency Support**: Frontend displays prices in multiple currencies based on user selection or IP detection, with conversion and formatting handled by `CurrencyContext`.
 

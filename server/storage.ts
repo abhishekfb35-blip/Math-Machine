@@ -158,6 +158,8 @@ export interface IStorage {
   addToWishlist(customerId: string, productId: string): Promise<void>;
   removeFromWishlist(customerId: string, productId: string): Promise<void>;
   syncWishlist(customerId: string, productIds: string[]): Promise<void>;
+
+  pruneGuestCarts(retentionDays: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1258,6 +1260,24 @@ export class DatabaseStorage implements IStorage {
     if (productIds.length === 0) return;
     const values = productIds.map(productId => ({ id: createId(), customerId, productId }));
     await db.insert(wishlists).values(values).onConflictDoNothing();
+  }
+
+  async pruneGuestCarts(retentionDays: number): Promise<number> {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    const guestCarts = await db
+      .select({ id: carts.id })
+      .from(carts)
+      .where(
+        and(
+          sql`${carts.customerId} IS NULL`,
+          sql`${carts.createdAt} < ${cutoff}`
+        )
+      );
+    if (guestCarts.length === 0) return 0;
+    const ids = guestCarts.map(c => c.id);
+    await db.delete(cartItems).where(inArray(cartItems.cartId, ids));
+    await db.delete(carts).where(inArray(carts.id, ids));
+    return ids.length;
   }
 }
 

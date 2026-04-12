@@ -24,6 +24,7 @@ import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
 import { setupOgMiddleware } from "./ogMiddleware";
+import { loadRateLimitConfig } from "./middleware/rateLimiter";
 
 const app = express();
 const httpServer = createServer(app);
@@ -85,6 +86,37 @@ app.use((req, res, next) => {
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+function startGuestCartCleanupScheduler() {
+  const INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+  const run = async () => {
+    try {
+      let retentionDays = 30;
+      let enabled = true;
+      try {
+        const record = await storage.getSiteConfig("guest-cart-cleanup");
+        if (record) {
+          const parsed = JSON.parse(record.value);
+          retentionDays = parsed.retentionDays ?? 30;
+          enabled = parsed.enabled ?? true;
+        }
+      } catch {}
+
+      if (!enabled) return;
+
+      const deleted = await storage.pruneGuestCarts(retentionDays);
+      if (deleted > 0) {
+        log(`[guest-cart-cleanup] Pruned ${deleted} guest carts older than ${retentionDays} days`);
+      }
+    } catch (err: any) {
+      console.error("[guest-cart-cleanup] Scheduler error:", err.message);
+    }
+  };
+
+  setInterval(run, INTERVAL_MS);
+  log("[guest-cart-cleanup] Scheduler started — runs daily");
+}
 
 function startAbandonedCartScheduler() {
   const INTERVAL_MS = 15 * 60 * 1000;
@@ -195,8 +227,10 @@ function startAbandonedCartScheduler() {
           await nullifySwatchUploads();
           await ensureAdminUsersTable();
           await ensureWishlistsTable();
+          await loadRateLimitConfig();
           log("startup tasks complete");
           startAbandonedCartScheduler();
+          startGuestCartCleanupScheduler();
         } catch (err: any) {
           console.error("Startup task failed:", err.message);
         }

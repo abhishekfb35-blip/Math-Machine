@@ -15,7 +15,9 @@ import { registerAdminConsentRoutes } from "./admin/consent";
 import { registerAdminPricingRoutes } from "./admin/pricing";
 import { registerAdminCustomerRoutes } from "./admin/customers";
 import { registerAdminUserRoutes } from "./admin/users";
+import { registerAdminSecurityRoutes } from "./admin/security";
 import { registerWishlistRoutes } from "./wishlist";
+import { globalLimiter, moderateLimiter, strictLimiter } from "../middleware/rateLimiter";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -23,6 +25,23 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.use(compression());
+
+  app.use("/api", globalLimiter);
+
+  app.use([
+    "/api/cart",
+    "/api/wishlist",
+  ], moderateLimiter);
+
+  app.use([
+    "/api/auth/send-otp",
+    "/api/auth/verify-otp",
+    "/api/auth/google",
+    "/api/checkout",
+    "/api/razorpay/create-order",
+    "/api/consent",
+    "/api/discount/validate",
+  ], strictLimiter);
 
   registerSeoRoutes(app);
   registerHomeRoutes(app);
@@ -38,6 +57,7 @@ export async function registerRoutes(
   registerAdminPricingRoutes(app);
   registerAdminCustomerRoutes(app);
   registerAdminUserRoutes(app);
+  registerAdminSecurityRoutes(app);
   registerWishlistRoutes(app);
 
   return httpServer;

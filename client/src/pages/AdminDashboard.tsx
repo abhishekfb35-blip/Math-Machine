@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -127,14 +127,24 @@ const sections = [
   },
 ];
 
-const superAdminSection = {
-  title: "Admin Users",
-  description: "Manage sub-admin accounts and permissions",
-  href: "/admin/users",
-  icon: UserCog,
-  color: "text-slate-600 dark:text-slate-400",
-  bg: "bg-slate-50 dark:bg-slate-950/30",
-};
+const superAdminSections = [
+  {
+    title: "Admin Users",
+    description: "Manage sub-admin accounts and permissions",
+    href: "/admin/users",
+    icon: UserCog,
+    color: "text-slate-600 dark:text-slate-400",
+    bg: "bg-slate-50 dark:bg-slate-950/30",
+  },
+  {
+    title: "Security",
+    description: "Rate limiting, API protection, and data cleanup",
+    href: "/admin/security",
+    icon: Lock,
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-50 dark:bg-rose-950/30",
+  },
+];
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -223,7 +233,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[...sections.filter(s => authData?.isSuperAdmin || (authData?.permissions ?? []).includes(s.permission)), ...(authData?.isSuperAdmin ? [superAdminSection] : [])].map((section) => (
+        {[...sections.filter(s => authData?.isSuperAdmin || (authData?.permissions ?? []).includes(s.permission)), ...(authData?.isSuperAdmin ? superAdminSections : [])].map((section) => (
           <Link key={section.href} href={section.href}>
             <Card
               className="p-5 cursor-pointer hover:shadow-md transition-shadow h-full"
