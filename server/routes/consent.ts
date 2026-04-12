@@ -8,19 +8,10 @@ function generateDiscountCode(): string {
   return "TL10-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-const consentRateLimit = new Map<string, number>();
-
 export function registerConsentRoutes(app: Express) {
   app.post("/api/consent", async (req: Request, res: Response) => {
     try {
       const ip = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
-      const now = Date.now();
-      const lastRequest = consentRateLimit.get(ip) || 0;
-      if (now - lastRequest < 10000) {
-        return res.status(429).json({ message: "Please wait before trying again" });
-      }
-      consentRateLimit.set(ip, now);
-
       const { firstName, lastName, email, phone, consentType, consentGiven, pageUrl, consentText } = req.body;
 
       if (!consentType) {
@@ -135,14 +126,6 @@ export function registerConsentRoutes(app: Express) {
 
   app.post("/api/discount/validate", async (req: Request, res: Response) => {
     try {
-      const ip = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
-      const now = Date.now();
-      const lastAttempt = consentRateLimit.get(`discount_${ip}`) || 0;
-      if (now - lastAttempt < 2000) {
-        return res.status(429).json({ valid: false, message: "Please wait before trying again" });
-      }
-      consentRateLimit.set(`discount_${ip}`, now);
-
       const { code } = req.body;
       if (!code?.trim()) {
         return res.status(400).json({ valid: false, message: "Please enter a discount code" });

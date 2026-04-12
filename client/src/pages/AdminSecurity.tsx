@@ -15,37 +15,49 @@ interface TierConfig {
   max: number;
 }
 
+interface RateLimitConfig {
+  global: TierConfig;
+  moderate: TierConfig;
+  strict: TierConfig;
+}
+
+interface GuestCartCleanup {
+  enabled: boolean;
+  retentionDays: number;
+}
+
 interface SecurityConfig {
-  rateLimitConfig: {
-    global: TierConfig;
-    moderate: TierConfig;
-    strict: TierConfig;
-  };
-  guestCartCleanup: {
-    enabled: boolean;
-    retentionDays: number;
-  };
+  rateLimitConfig: RateLimitConfig;
+  guestCartCleanup: GuestCartCleanup;
 }
 
 function minutesToMs(m: number) {
   return m * 60_000;
 }
 
-function TierRow({
+function TierCard({
   label,
   description,
   tier,
   onChange,
+  onSave,
+  isSaving,
+  saved,
+  testId,
 }: {
   label: string;
   description: string;
   tier: TierConfig;
   onChange: (t: TierConfig) => void;
+  onSave: () => void;
+  isSaving: boolean;
+  saved: boolean;
+  testId: string;
 }) {
   const windowMinutes = Math.round(tier.windowMs / 60_000);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3" data-testid={`section-tier-${label.toLowerCase()}`}>
+    <div className="border rounded-lg p-4 space-y-3" data-testid={`section-tier-${testId}`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="font-medium text-sm">{label}</p>
@@ -54,7 +66,7 @@ function TierRow({
         <Switch
           checked={tier.enabled}
           onCheckedChange={(v) => onChange({ ...tier, enabled: v })}
-          data-testid={`switch-tier-${label.toLowerCase()}-enabled`}
+          data-testid={`switch-tier-${testId}-enabled`}
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -66,7 +78,7 @@ function TierRow({
             value={tier.max}
             onChange={(e) => onChange({ ...tier, max: parseInt(e.target.value) || 1 })}
             className="h-8 text-sm"
-            data-testid={`input-tier-${label.toLowerCase()}-max`}
+            data-testid={`input-tier-${testId}-max`}
           />
         </div>
         <div>
@@ -77,16 +89,30 @@ function TierRow({
             value={windowMinutes}
             onChange={(e) => onChange({ ...tier, windowMs: minutesToMs(parseInt(e.target.value) || 1) })}
             className="h-8 text-sm"
-            data-testid={`input-tier-${label.toLowerCase()}-window`}
+            data-testid={`input-tier-${testId}-window`}
           />
         </div>
       </div>
+      <Button
+        size="sm"
+        onClick={onSave}
+        disabled={isSaving}
+        data-testid={`button-save-tier-${testId}`}
+      >
+        {isSaving ? (
+          <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
+        ) : saved ? (
+          <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
+        ) : (
+          <><Shield className="w-4 h-4 mr-1" /> Save {label} Limit</>
+        )}
+      </Button>
     </div>
   );
 }
 
 export default function AdminSecurity() {
-  const [rateLimitSaved, setRateLimitSaved] = useState(false);
+  const [savedTier, setSavedTier] = useState<"global" | "moderate" | "strict" | null>(null);
   const [cleanupSaved, setCleanupSaved] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{ deleted: number } | null>(null);
 
@@ -99,23 +125,47 @@ export default function AdminSecurity() {
     },
   });
 
-  const [rateLimitConfig, setRateLimitConfig] = useState<SecurityConfig["rateLimitConfig"] | null>(null);
-  const [guestCartCleanup, setGuestCartCleanup] = useState<SecurityConfig["guestCartCleanup"] | null>(null);
+  const [rateLimitConfig, setRateLimitConfig] = useState<RateLimitConfig | null>(null);
+  const [guestCartCleanup, setGuestCartCleanup] = useState<GuestCartCleanup | null>(null);
 
   if (data && !rateLimitConfig) {
     setRateLimitConfig(data.rateLimitConfig);
     setGuestCartCleanup(data.guestCartCleanup);
   }
 
-  const saveRateLimitMutation = useMutation({
+  const saveGlobalMutation = useMutation({
     mutationFn: async () => {
       if (!rateLimitConfig) return;
       await apiRequest("POST", "/api/admin/security-config", { rateLimitConfig });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
-      setRateLimitSaved(true);
-      setTimeout(() => setRateLimitSaved(false), 3000);
+      setSavedTier("global");
+      setTimeout(() => setSavedTier(null), 3000);
+    },
+  });
+
+  const saveModerateMutation = useMutation({
+    mutationFn: async () => {
+      if (!rateLimitConfig) return;
+      await apiRequest("POST", "/api/admin/security-config", { rateLimitConfig });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
+      setSavedTier("moderate");
+      setTimeout(() => setSavedTier(null), 3000);
+    },
+  });
+
+  const saveStrictMutation = useMutation({
+    mutationFn: async () => {
+      if (!rateLimitConfig) return;
+      await apiRequest("POST", "/api/admin/security-config", { rateLimitConfig });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-config"] });
+      setSavedTier("strict");
+      setTimeout(() => setSavedTier(null), 3000);
     },
   });
 
@@ -171,50 +221,41 @@ export default function AdminSecurity() {
           <CardHeader>
             <CardTitle className="text-base">API Rate Limits</CardTitle>
             <CardDescription className="text-xs">
-              Control how many requests each IP address can make within a time window. Limit and enabled changes take effect immediately.
-              Window duration changes require a server restart to take effect.
+              Control how many requests each IP address can make within a time window.
+              All changes take effect immediately after saving. Each tier can be saved independently.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <TierRow
+            <TierCard
               label="Global"
               description="All /api/* endpoints — broad protection"
+              testId="global"
               tier={rateLimitConfig.global}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, global: t } : c)}
+              onSave={() => saveGlobalMutation.mutate()}
+              isSaving={saveGlobalMutation.isPending}
+              saved={savedTier === "global"}
             />
-            <TierRow
+            <TierCard
               label="Moderate"
               description="Cart mutations, wishlist writes, and review submissions"
+              testId="moderate"
               tier={rateLimitConfig.moderate}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, moderate: t } : c)}
+              onSave={() => saveModerateMutation.mutate()}
+              isSaving={saveModerateMutation.isPending}
+              saved={savedTier === "moderate"}
             />
-            <TierRow
+            <TierCard
               label="Strict"
               description="OTP, checkout, payment, consent, discount — sensitive actions"
+              testId="strict"
               tier={rateLimitConfig.strict}
               onChange={(t) => setRateLimitConfig((c) => c ? { ...c, strict: t } : c)}
+              onSave={() => saveStrictMutation.mutate()}
+              isSaving={saveStrictMutation.isPending}
+              saved={savedTier === "strict"}
             />
-            <div className="flex items-center gap-3 pt-2">
-              <Button
-                onClick={() => saveRateLimitMutation.mutate()}
-                disabled={saveRateLimitMutation.isPending}
-                size="sm"
-                data-testid="button-save-rate-limits"
-              >
-                {saveRateLimitMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>
-                ) : rateLimitSaved ? (
-                  <><CheckCircle2 className="w-4 h-4 mr-1 text-green-500" /> Saved</>
-                ) : (
-                  <><Shield className="w-4 h-4 mr-1" /> Save Rate Limits</>
-                )}
-              </Button>
-              {saveRateLimitMutation.isError && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Failed to save
-                </p>
-              )}
-            </div>
           </CardContent>
         </Card>
 
@@ -293,7 +334,7 @@ export default function AdminSecurity() {
               </p>
             )}
             {cleanupMutation.isError && (
-              <p className="text-xs text-destructive flex items-center gap-1">
+              <p className="text-xs text-destructive flex items-center gap-1" data-testid="text-cleanup-error">
                 <AlertCircle className="w-3 h-3" /> Cleanup failed
               </p>
             )}
