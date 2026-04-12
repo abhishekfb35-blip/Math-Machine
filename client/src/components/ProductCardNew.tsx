@@ -1,10 +1,11 @@
 import { Link } from "wouter";
-import { Plus, Star } from "lucide-react";
+import { Plus, Star, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useWishlist } from "@/hooks/useWishlist";
 import type { Product } from "@shared/types";
 
 interface ProductCardNewProps {
@@ -14,6 +15,9 @@ interface ProductCardNewProps {
 
 export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewProps) {
   const { formatPrice } = useCurrency();
+  const { isWishlisted, toggle } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
+
   return (
     <Card
       className="group overflow-visible relative"
@@ -36,6 +40,20 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
           </Badge>
         </div>
       </Link>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggle(product.id);
+        }}
+        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 dark:bg-gray-900/90 shadow flex items-center justify-center transition-transform hover:scale-110"
+        data-testid={`button-wishlist-${product.id}`}
+        aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <Heart
+          className={`w-3.5 h-3.5 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`}
+        />
+      </button>
       <div className="p-3 space-y-1.5">
         <Link href={`/product/${product.slug}`}>
           <h3

@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine } from "lucide-react";
+import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
@@ -24,6 +24,7 @@ import type { Product, Category, ProductImage, ProductReview, ProductVariantOpti
 import { useCurrency } from "@/context/CurrencyContext";
 import { useAuth } from "@/hooks/useAuth";
 import ShareButton from "@/components/ShareButton";
+import { useWishlist } from "@/hooks/useWishlist";
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -44,6 +45,7 @@ export default function ProductPage() {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const { customer, isAuthenticated } = useAuth();
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist();
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
@@ -660,8 +662,9 @@ export default function ProductPage() {
               </div>
             )}
 
+            <div className="flex gap-2">
             <Button
-              className="w-full"
+              className="flex-1"
               size="lg"
               onClick={() => {
                 const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
@@ -694,6 +697,17 @@ export default function ProductPage() {
                 </>
               )}
             </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="shrink-0 px-4"
+              onClick={() => product && toggleWishlist(product.id)}
+              data-testid="button-wishlist-product"
+              aria-label={product && isWishlisted(product.id) ? "Remove from wishlist" : "Save to wishlist"}
+            >
+              <Heart className={`w-5 h-5 transition-colors ${product && isWishlisted(product.id) ? "fill-rose-500 text-rose-500" : ""}`} />
+            </Button>
+            </div>
 
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">

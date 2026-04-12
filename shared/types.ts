@@ -434,6 +434,18 @@ export interface InsertPricingRule {
   enabled?: boolean;
 }
 
+export interface Wishlist {
+  id: string;
+  customerId: string;
+  productId: string;
+  createdAt: Date | null;
+}
+
+export interface InsertWishlist {
+  customerId: string;
+  productId: string;
+}
+
 export interface AdminUser {
   id: string;
   username: string;

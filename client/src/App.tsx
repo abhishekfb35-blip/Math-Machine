@@ -42,6 +42,7 @@ import AdminPricing from "@/pages/AdminPricing";
 import AdminCustomers from "@/pages/AdminCustomers";
 import AdminOffers from "@/pages/AdminOffers";
 import AdminUsers from "@/pages/AdminUsers";
+import WishlistPage from "@/pages/WishlistPage";
 import AdminGuard from "@/components/AdminGuard";
 import SuperAdminGuard from "@/components/SuperAdminGuard";
 import SignInPage from "@/pages/SignInPage";
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/admin/customers" component={() => <AdminGuard><AdminCustomers /></AdminGuard>} />
       <Route path="/admin/offers" component={() => <AdminGuard><AdminOffers /></AdminGuard>} />
       <Route path="/admin/users" component={() => <SuperAdminGuard><AdminUsers /></SuperAdminGuard>} />
+      <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />

@@ -15,6 +15,7 @@ import { registerAdminConsentRoutes } from "./admin/consent";
 import { registerAdminPricingRoutes } from "./admin/pricing";
 import { registerAdminCustomerRoutes } from "./admin/customers";
 import { registerAdminUserRoutes } from "./admin/users";
+import { registerWishlistRoutes } from "./wishlist";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -37,6 +38,7 @@ export async function registerRoutes(
   registerAdminPricingRoutes(app);
   registerAdminCustomerRoutes(app);
   registerAdminUserRoutes(app);
+  registerWishlistRoutes(app);
 
   return httpServer;
 }

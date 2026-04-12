@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { User, Package, MapPin, LogOut, ChevronRight, Loader2 } from "lucide-react";
+import { User, Package, MapPin, LogOut, ChevronRight, Loader2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -109,7 +109,7 @@ export default function AccountPage() {
         </Button>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         <Button
           variant={tab === "profile" ? "default" : "outline"}
           size="sm"
@@ -126,6 +126,11 @@ export default function AccountPage() {
         >
           <Package className="w-4 h-4 mr-1" /> Orders
         </Button>
+        <Link href="/wishlist">
+          <Button variant="outline" size="sm" data-testid="button-go-wishlist">
+            <Heart className="w-4 h-4 mr-1" /> Wishlist
+          </Button>
+        </Link>
       </div>
 
       {tab === "profile" ? (

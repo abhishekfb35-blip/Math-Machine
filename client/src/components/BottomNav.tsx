@@ -1,12 +1,14 @@
 import { useLocation, Link } from "wouter";
-import { Home, Search, ShoppingBag, Grid3X3, User } from "lucide-react";
+import { Home, ShoppingBag, Grid3X3, User, Heart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useWishlist } from "@/hooks/useWishlist";
 
 const tabs = [
   { label: "Home", icon: Home, path: "/" },
   { label: "Shop", icon: Grid3X3, path: "/shop" },
+  { label: "Wishlist", icon: Heart, path: "/wishlist" },
   { label: "Cart", icon: ShoppingBag, path: "/cart" },
   { label: "Account", icon: User, path: "/account" },
 ];
@@ -14,6 +16,7 @@ const tabs = [
 export default function BottomNav() {
   const [location] = useLocation();
   const { customer, isAuthenticated } = useAuth();
+  const { count: wishlistCount } = useWishlist();
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -29,17 +32,18 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-md md:hidden"
       data-testid="nav-bottom"
     >
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-16 px-1">
         {tabs.map((tab) => {
           const active = isActive(tab.path);
           const href = tab.label === "Account" && !isAuthenticated ? "/signin" : tab.path;
           const isAccountTab = tab.label === "Account";
+          const isWishlistTab = tab.label === "Wishlist";
           return (
             <Link key={tab.path} href={href}>
               <div
                 role="button"
                 aria-label={tab.label}
-                className={`flex flex-col items-center justify-center gap-0.5 w-16 h-full relative transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 w-14 h-full relative transition-colors ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
                 data-testid={`tab-${tab.label.toLowerCase()}`}
@@ -49,6 +53,8 @@ export default function BottomNav() {
                     <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">
                       {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
                     </div>
+                  ) : isWishlistTab && active ? (
+                    <Heart className="w-5 h-5 fill-current" />
                   ) : (
                     <tab.icon className="w-5 h-5" />
                   )}
@@ -58,6 +64,14 @@ export default function BottomNav() {
                       data-testid="badge-cart-count-bottom"
                     >
                       {cart.itemCount}
+                    </Badge>
+                  )}
+                  {isWishlistTab && wishlistCount > 0 && (
+                    <Badge
+                      className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
+                      data-testid="badge-wishlist-count"
+                    >
+                      {wishlistCount}
                     </Badge>
                   )}
                 </div>

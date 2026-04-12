@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -153,6 +153,11 @@ export interface IStorage {
   getAdminUserById(id: string): Promise<AdminUser | undefined>;
   createAdminUser(data: InsertAdminUser): Promise<AdminUser>;
   updateAdminUser(id: string, data: Partial<InsertAdminUser>): Promise<AdminUser | undefined>;
+
+  getWishlistProductIds(customerId: string): Promise<string[]>;
+  addToWishlist(customerId: string, productId: string): Promise<void>;
+  removeFromWishlist(customerId: string, productId: string): Promise<void>;
+  syncWishlist(customerId: string, productIds: string[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1228,6 +1233,31 @@ export class DatabaseStorage implements IStorage {
     };
     const [row] = await db.update(adminUsers).set(updateData).where(eq(adminUsers.id, id)).returning();
     return row ? this.coerceAdminUser(row) : undefined;
+  }
+
+  async getWishlistProductIds(customerId: string): Promise<string[]> {
+    const rows = await db.select({ productId: wishlists.productId })
+      .from(wishlists)
+      .where(eq(wishlists.customerId, customerId));
+    return rows.map(r => r.productId);
+  }
+
+  async addToWishlist(customerId: string, productId: string): Promise<void> {
+    await db.insert(wishlists)
+      .values({ id: createId(), customerId, productId })
+      .onConflictDoNothing();
+  }
+
+  async removeFromWishlist(customerId: string, productId: string): Promise<void> {
+    await db.delete(wishlists).where(
+      and(eq(wishlists.customerId, customerId), eq(wishlists.productId, productId))
+    );
+  }
+
+  async syncWishlist(customerId: string, productIds: string[]): Promise<void> {
+    if (productIds.length === 0) return;
+    const values = productIds.map(productId => ({ id: createId(), customerId, productId }));
+    await db.insert(wishlists).values(values).onConflictDoNothing();
   }
 }
 

@@ -255,6 +255,15 @@ export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
+export const wishlists = pgTable("wishlists", {
+  id: text("id").primaryKey(),
+  customerId: text("customer_id").notNull(),
+  productId: text("product_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWishlistSchema = createInsertSchema(wishlists).omit({ id: true, createdAt: true });
+
 export const adminUsers = pgTable("admin_users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),

@@ -19,6 +19,7 @@ import { initializeExchangeRateService } from "./services/exchangeRateService";
 import { restoreBrandLogosFromDB } from "./routes/admin/health";
 import { nullifySwatchUploads } from "./migrations/nullify-swatch-uploads";
 import { ensureAdminUsersTable } from "./migrations/admin-users-table";
+import { ensureWishlistsTable } from "./migrations/wishlists-table";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
@@ -193,6 +194,7 @@ function startAbandonedCartScheduler() {
           await restoreBrandLogosFromDB();
           await nullifySwatchUploads();
           await ensureAdminUsersTable();
+          await ensureWishlistsTable();
           log("startup tasks complete");
           startAbandonedCartScheduler();
         } catch (err: any) {
