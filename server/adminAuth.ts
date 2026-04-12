@@ -195,6 +195,33 @@ export function requirePermission(permission: string) {
   };
 }
 
+export function requireSnapshotAccess(req: Request, res: Response, next: NextFunction) {
+  const token = req.cookies?.[ADMIN_SESSION_COOKIE];
+  const compareToken = req.headers["x-db-compare-token"];
+  const snapshotToken = process.env.DB_COMPARE_TOKEN || "";
+
+  if (compareToken && snapshotToken && compareToken === snapshotToken) {
+    return next();
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+
+  const session = activeSessions.get(token);
+  if (!session || session.expiresAt < Date.now()) {
+    activeSessions.delete(token);
+    res.clearCookie(ADMIN_SESSION_COOKIE);
+    return res.status(401).json({ message: "Session expired" });
+  }
+
+  if (session.isSuperAdmin || session.permissions.includes("health")) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "Permission denied: requires 'health'" });
+}
+
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {

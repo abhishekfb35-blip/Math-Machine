@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
 import { storage } from "../../storage";
-import { requireAdmin, requirePermission, requireSuperAdmin } from "../../adminAuth";
+import { requireAdmin, requirePermission, requireSuperAdmin, requireSnapshotAccess } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { db } from "../../db";
@@ -1137,7 +1137,7 @@ export function registerAdminHealthRoutes(app: Express) {
   });
 
   // ── DB Snapshot (catalog tables only) ────────────────────────────────────
-  app.get("/api/admin/db-snapshot", requirePermission("health"), async (_req, res) => {
+  app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
       const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
@@ -1193,7 +1193,10 @@ export function registerAdminHealthRoutes(app: Express) {
           return { categories: cats.rows, products: prods.rows, tags: tgs.rows, productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows };
         })(),
         fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
-          headers: { "x-admin-password": adminPassword },
+          headers: {
+            "x-admin-password": adminPassword,
+            "x-db-compare-token": process.env.DB_COMPARE_TOKEN || "",
+          },
         }),
       ]);
 
