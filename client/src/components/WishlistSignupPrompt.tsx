@@ -36,18 +36,33 @@ function getLocalCount(): number {
   }
 }
 
+function isDismissed(): boolean {
+  try {
+    return !!sessionStorage.getItem(SESSION_KEY);
+  } catch {
+    return false;
+  }
+}
+
 export default function WishlistSignupPrompt() {
   const [location, navigate] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [config, setConfig] = useState<WishlistPromptConfig>(DEFAULTS);
-  const configLoaded = useRef(false);
+
+  const configRef = useRef<WishlistPromptConfig>(DEFAULTS);
+  const locationRef = useRef(location);
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  const authLoadingRef = useRef(authLoading);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => { configRef.current = config; }, [config]);
+  useEffect(() => { locationRef.current = location; }, [location]);
+  useEffect(() => { isAuthenticatedRef.current = isAuthenticated; }, [isAuthenticated]);
+  useEffect(() => { authLoadingRef.current = authLoading; }, [authLoading]);
+
   useEffect(() => {
-    if (configLoaded.current) return;
-    configLoaded.current = true;
     fetch(`/api/site-config/${CONFIG_KEY}`)
       .then(r => {
         if (!r.ok) throw new Error();
@@ -55,35 +70,34 @@ export default function WishlistSignupPrompt() {
       })
       .then(d => {
         if (d?.value) {
-          setConfig({ ...DEFAULTS, ...d.value });
+          const merged = { ...DEFAULTS, ...d.value };
+          setConfig(merged);
+          configRef.current = merged;
         }
       })
       .catch(() => {});
   }, []);
 
-  const isDismissed = () => !!sessionStorage.getItem(SESSION_KEY);
-
-  const shouldShow = () => {
+  const shouldShowNow = () => {
     if (isDismissed()) return false;
-    if (isAuthenticated) return false;
-    if (EXCLUDED_PREFIXES.some(p => location.startsWith(p))) return false;
-    if (!config.enabled) return false;
+    if (isAuthenticatedRef.current) return false;
+    if (authLoadingRef.current) return false;
+    if (EXCLUDED_PREFIXES.some(p => locationRef.current.startsWith(p))) return false;
+    if (!configRef.current.enabled) return false;
     return true;
   };
 
   useEffect(() => {
-    if (authLoading) return;
-
     const handleFirstAdd = () => {
-      if (!shouldShow()) return;
+      if (!shouldShowNow()) return;
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        if (!shouldShow()) return;
+        if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
         if (latestCount <= 0) return;
         setItemCount(latestCount);
         setVisible(true);
-      }, (config.delaySeconds ?? DEFAULTS.delaySeconds) * 1000);
+      }, (configRef.current.delaySeconds ?? DEFAULTS.delaySeconds) * 1000);
     };
 
     window.addEventListener("wishlist:first-add", handleFirstAdd);
@@ -91,11 +105,13 @@ export default function WishlistSignupPrompt() {
       window.removeEventListener("wishlist:first-add", handleFirstAdd);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [authLoading, isAuthenticated, location, config]);
+  }, []);
 
   const handleDismiss = () => {
     setVisible(false);
-    sessionStorage.setItem(SESSION_KEY, "dismissed");
+    try {
+      sessionStorage.setItem(SESSION_KEY, "dismissed");
+    } catch {}
   };
 
   const handleSignIn = () => {
@@ -110,9 +126,7 @@ export default function WishlistSignupPrompt() {
       className="fixed inset-x-0 bottom-0 z-[110] flex justify-center pointer-events-none"
       data-testid="wishlist-signup-prompt"
     >
-      <div
-        className="pointer-events-auto w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom duration-300 pb-safe"
-      >
+      <div className="pointer-events-auto w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom duration-300">
         <div className="p-5 pt-4">
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-11 h-11 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center">
@@ -136,7 +150,7 @@ export default function WishlistSignupPrompt() {
               </div>
 
               {itemCount > 0 && (
-                <p className="text-xs text-rose-500 font-medium mb-1">
+                <p className="text-xs text-rose-500 font-medium mb-1" data-testid="wishlist-prompt-count">
                   {itemCount} {itemCount === 1 ? "item" : "items"} saved
                 </p>
               )}
