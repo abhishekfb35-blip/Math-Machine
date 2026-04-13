@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import ConsentPopup from "@/components/ConsentPopup";
+import WishlistSignupPrompt from "@/components/WishlistSignupPrompt";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
@@ -130,6 +131,7 @@ function App() {
           <WhatsAppButton />
           <GoogleOneTap />
           <ConsentPopup />
+          <WishlistSignupPrompt />
           <Toaster />
         </TooltipProvider>
         </CurrencyProvider>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks } from "lucide-react";
+import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,22 @@ interface ConsentsResponse {
   totalPages: number;
 }
 
+interface WishlistPromptConfig {
+  enabled: boolean;
+  delaySeconds: number;
+  headline: string;
+  bodyText: string;
+  ctaText: string;
+}
+
+const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
+  enabled: true,
+  delaySeconds: 5,
+  headline: "Don't lose your picks!",
+  bodyText: "Create a free account to save your wishlist and pick up right where you left off.",
+  ctaText: "Save my wishlist",
+};
+
 function Toggle({ value, onChange, testId }: { value: boolean; onChange: (v: boolean) => void; testId?: string }) {
   return (
     <button
@@ -82,11 +98,21 @@ export default function AdminConsent() {
   const { toast } = useToast();
   const [page, setPage] = useState(1);
   const [settings, setSettings] = useState<ConsentSettings>(DEFAULT_SETTINGS);
+  const [wishlistPrompt, setWishlistPrompt] = useState<WishlistPromptConfig>(DEFAULT_WISHLIST_PROMPT);
 
   const { data: configData, isLoading: configLoading } = useQuery<{ key: string; value: ConsentSettings }>({
     queryKey: ["/api/site-config", "consent-popup"],
     queryFn: async () => {
       const res = await fetch("/api/site-config/consent-popup");
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const { data: wishlistConfigData, isLoading: wishlistConfigLoading } = useQuery<{ key: string; value: WishlistPromptConfig }>({
+    queryKey: ["/api/site-config", "wishlist-signup-prompt"],
+    queryFn: async () => {
+      const res = await fetch("/api/site-config/wishlist-signup-prompt");
       if (!res.ok) return null;
       return res.json();
     },
@@ -102,6 +128,12 @@ export default function AdminConsent() {
       setSettings({ ...DEFAULT_SETTINGS, ...saved, fields: mergedFields });
     }
   }, [configData]);
+
+  useEffect(() => {
+    if (wishlistConfigData?.value) {
+      setWishlistPrompt({ ...DEFAULT_WISHLIST_PROMPT, ...wishlistConfigData.value });
+    }
+  }, [wishlistConfigData]);
 
   const { data: consentsData, isLoading: consentsLoading } = useQuery<ConsentsResponse>({
     queryKey: ["/api/admin/consents", page],
@@ -124,8 +156,25 @@ export default function AdminConsent() {
     },
   });
 
+  const saveWishlistMutation = useMutation({
+    mutationFn: async (data: WishlistPromptConfig) => {
+      await apiRequest("POST", "/api/site-config/wishlist-signup-prompt", { value: data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config", "wishlist-signup-prompt"] });
+      toast({ title: "Wishlist prompt settings saved" });
+    },
+    onError: () => {
+      toast({ title: "Failed to save", variant: "destructive" });
+    },
+  });
+
   const handleSave = () => {
     saveMutation.mutate(settings);
+  };
+
+  const handleSaveWishlist = () => {
+    saveWishlistMutation.mutate(wishlistPrompt);
   };
 
   const updateField = (index: number, key: keyof FormFieldConfig, value: boolean | string) => {
@@ -328,6 +377,86 @@ export default function AdminConsent() {
                 Save Settings
               </Button>
             </>
+          )}
+        </Card>
+
+        <Separator />
+
+        <Card className="p-5 space-y-4" data-testid="card-wishlist-prompt">
+          <h2 className="font-semibold flex items-center gap-2">
+            <Heart className="w-4 h-4 text-rose-500" /> Wishlist Sign-up Prompt
+          </h2>
+          <p className="text-xs text-muted-foreground -mt-2">
+            A bottom-sheet nudge shown to guest users after they add their first wishlist item, encouraging them to create an account.
+          </p>
+
+          {wishlistConfigLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
+                <Toggle
+                  value={wishlistPrompt.enabled}
+                  onChange={v => setWishlistPrompt(s => ({ ...s, enabled: v }))}
+                  testId="toggle-wishlist-prompt-enabled"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {wishlistPrompt.enabled ? "Prompt is active" : "Prompt is hidden"}
+                </span>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Delay after first add (seconds)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={wishlistPrompt.delaySeconds}
+                  onChange={e => setWishlistPrompt(s => ({ ...s, delaySeconds: parseInt(e.target.value) || 0 }))}
+                  className="w-32"
+                  data-testid="input-wishlist-prompt-delay"
+                />
+                <p className="text-xs text-muted-foreground mt-1">How long to wait before showing the prompt</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Headline</label>
+                <Input
+                  value={wishlistPrompt.headline}
+                  onChange={e => setWishlistPrompt(s => ({ ...s, headline: e.target.value }))}
+                  placeholder="e.g. Don't lose your picks!"
+                  data-testid="input-wishlist-prompt-headline"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Body text</label>
+                <textarea
+                  value={wishlistPrompt.bodyText}
+                  onChange={e => setWishlistPrompt(s => ({ ...s, bodyText: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
+                  placeholder="Describe why they should sign up..."
+                  data-testid="input-wishlist-prompt-body"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Button label</label>
+                <Input
+                  value={wishlistPrompt.ctaText}
+                  onChange={e => setWishlistPrompt(s => ({ ...s, ctaText: e.target.value }))}
+                  placeholder="e.g. Save my wishlist"
+                  data-testid="input-wishlist-prompt-cta"
+                />
+              </div>
+
+              <Button onClick={handleSaveWishlist} disabled={saveWishlistMutation.isPending} data-testid="button-save-wishlist-prompt">
+                {saveWishlistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Wishlist Prompt
+              </Button>
+            </div>
           )}
         </Card>
 

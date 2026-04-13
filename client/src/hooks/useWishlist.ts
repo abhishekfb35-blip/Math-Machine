@@ -76,6 +76,9 @@ export function useWishlist() {
         next.delete(productId);
       } else {
         next.add(productId);
+        if (wishlistIds.size === 0) {
+          window.dispatchEvent(new CustomEvent("wishlist:first-add"));
+        }
       }
       setWishlistIds(next);
       setLocalIds([...next]);
