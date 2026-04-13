@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { showSignInModal } from "@/components/SignInModal";
 
 const SESSION_KEY = "tl_wishlist_prompt_dismissed";
 const CONFIG_KEY = "wishlist-signup-prompt";
@@ -45,7 +46,7 @@ function isDismissed(): boolean {
 }
 
 export default function WishlistSignupPrompt() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
@@ -140,7 +141,7 @@ export default function WishlistSignupPrompt() {
 
   const handleSignIn = () => {
     handleDismiss();
-    navigate("/signin");
+    showSignInModal();
   };
 
   if (!visible) return null;

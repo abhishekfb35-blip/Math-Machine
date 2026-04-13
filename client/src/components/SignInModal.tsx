@@ -3,18 +3,26 @@ import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-interface SignInModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+export const SIGNIN_MODAL_EVENT = "show:signin-modal";
+
+export function showSignInModal() {
+  window.dispatchEvent(new CustomEvent(SIGNIN_MODAL_EVENT));
 }
 
-export default function SignInModal({ open, onClose, onSuccess }: SignInModalProps) {
+export default function SignInModal() {
   const { toast } = useToast();
+  const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitialized = useRef(false);
+
+  useEffect(() => {
+    fetch("/api/auth/google-client-id")
+      .then(r => r.json())
+      .then(d => { if (d.clientId) setGoogleClientId(d.clientId); })
+      .catch(() => {});
+  }, []);
 
   const handleGoogleCredential = useCallback(async (response: any) => {
     if (!response.credential) return;
@@ -23,31 +31,24 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
       const res = await apiRequest("POST", "/api/auth/google", { credential: response.credential });
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
-      toast({ title: "Signed in!", description: "Placing your order..." });
-      onSuccess();
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setVisible(false);
+      toast({ title: "Welcome!", description: "Signed in successfully." });
     } catch (err: any) {
       toast({ title: "Sign-in failed", description: err.message || "Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [onSuccess, toast]);
+  }, [toast]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!visible) return;
     setLoading(false);
     googleInitialized.current = false;
-  }, [open]);
+  }, [visible]);
 
   useEffect(() => {
-    if (!open) return;
-    fetch("/api/auth/google-client-id")
-      .then(r => r.json())
-      .then(d => { if (d.clientId) setGoogleClientId(d.clientId); })
-      .catch(() => {});
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !googleClientId || !googleButtonRef.current || googleInitialized.current) return;
+    if (!visible || !googleClientId || !googleButtonRef.current || googleInitialized.current) return;
 
     const renderButton = () => {
       const google = (window as any).google;
@@ -60,7 +61,7 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
       google.accounts.id.renderButton(googleButtonRef.current, {
         theme: "outline",
         size: "large",
-        width: googleButtonRef.current.offsetWidth || 300,
+        width: googleButtonRef.current.offsetWidth || 280,
         text: "continue_with",
       });
       googleInitialized.current = true;
@@ -74,36 +75,77 @@ export default function SignInModal({ open, onClose, onSuccess }: SignInModalPro
       const timeout = setTimeout(() => clearInterval(interval), 5000);
       return () => { clearInterval(interval); clearTimeout(timeout); };
     }
-  }, [open, googleClientId, handleGoogleCredential]);
+  }, [visible, googleClientId, handleGoogleCredential]);
 
-  if (!open) return null;
+  useEffect(() => {
+    const handleShow = () => {
+      setVisible(true);
+    };
+    window.addEventListener(SIGNIN_MODAL_EVENT, handleShow);
+    return () => window.removeEventListener(SIGNIN_MODAL_EVENT, handleShow);
+  }, []);
+
+  const handleClose = () => {
+    try {
+      (window as any).google?.accounts?.id?.cancel();
+    } catch {}
+    setVisible(false);
+  };
+
+  if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" data-testid="signin-modal-overlay">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto shadow-xl animate-in slide-in-from-bottom duration-300" data-testid="signin-modal">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10" data-testid="signin-modal-close">
+    <div
+      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center"
+      data-testid="signin-modal-overlay"
+    >
+      <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
+
+      <div
+        className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-sm mx-auto p-6 shadow-xl animate-in slide-in-from-bottom duration-300"
+        data-testid="signin-modal"
+      >
+        <button
+          type="button"
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          data-testid="signin-modal-close"
+          aria-label="Close"
+        >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-6 space-y-5">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sign in to place your order</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Quick sign-in to complete your purchase
+        <div className="text-center space-y-4">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Sign in to TurtleLittle
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Save your wishlist and shop faster
             </p>
           </div>
 
-          {loading && (
+          {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
+          ) : (
+            <div
+              ref={googleButtonRef}
+              className="flex justify-center min-h-[44px]"
+              data-testid="signin-modal-google-btn"
+            />
           )}
 
-          <div ref={googleButtonRef} className="flex justify-center" data-testid="signin-modal-google" />
-
-          <p className="text-xs text-center text-gray-400 dark:text-gray-500">
-            By signing in, you agree to our terms of service and privacy policy.
+          <p className="text-xs text-muted-foreground">
+            By signing in, you agree to our{" "}
+            <a href="/terms" className="underline hover:text-foreground" onClick={handleClose}>
+              terms
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="underline hover:text-foreground" onClick={handleClose}>
+              privacy policy
+            </a>.
           </p>
         </div>
       </div>

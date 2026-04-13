@@ -17,7 +17,7 @@ import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
-import SignInModal from "@/components/SignInModal";
+import { showSignInModal } from "@/components/SignInModal";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
 
@@ -86,7 +86,6 @@ export default function CheckoutPage() {
   const { formatPrice, currency } = useCurrency();
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showSignInModal, setShowSignInModal] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
   const currencyRef = useRef(currency);
   useEffect(() => { currencyRef.current = currency; }, [currency]);
@@ -311,22 +310,19 @@ export default function CheckoutPage() {
   const onSubmit = (data: CheckoutInput) => {
     if (!customer) {
       pendingSubmitRef.current = data;
-      setShowSignInModal(true);
+      showSignInModal();
       return;
     }
     processOrder(data);
   };
 
-  const handleSignInSuccess = useCallback(() => {
-    setShowSignInModal(false);
-    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-    if (pendingSubmitRef.current) {
-      setTimeout(() => {
-        processOrder(pendingSubmitRef.current!);
-        pendingSubmitRef.current = null;
-      }, 300);
+  useEffect(() => {
+    if (customer && pendingSubmitRef.current) {
+      const pending = pendingSubmitRef.current;
+      pendingSubmitRef.current = null;
+      setTimeout(() => processOrder(pending), 300);
     }
-  }, [processOrder]);
+  }, [customer, processOrder]);
 
   const isPending = codCheckoutMutation.isPending || isProcessingPayment;
 
@@ -678,11 +674,6 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <SignInModal
-        open={showSignInModal}
-        onClose={() => setShowSignInModal(false)}
-        onSuccess={handleSignInSuccess}
-      />
     </div>
   );
 }
