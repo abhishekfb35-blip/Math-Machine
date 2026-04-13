@@ -76,11 +76,12 @@ export default function WishlistSignupPrompt() {
 
     const handleFirstAdd = () => {
       if (!shouldShow()) return;
-      const count = getLocalCount();
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         if (!shouldShow()) return;
-        setItemCount(getLocalCount() || count + 1);
+        const latestCount = getLocalCount();
+        if (latestCount <= 0) return;
+        setItemCount(latestCount);
         setVisible(true);
       }, (config.delaySeconds ?? DEFAULTS.delaySeconds) * 1000);
     };
