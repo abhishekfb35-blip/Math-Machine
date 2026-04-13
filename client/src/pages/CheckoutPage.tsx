@@ -87,6 +87,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
+  const checkoutSigninStartedRef = useRef(false);
   const currencyRef = useRef(currency);
   useEffect(() => { currencyRef.current = currency; }, [currency]);
 
@@ -310,6 +311,7 @@ export default function CheckoutPage() {
   const onSubmit = (data: CheckoutInput) => {
     if (!customer) {
       pendingSubmitRef.current = data;
+      checkoutSigninStartedRef.current = true;
       showSignInModal();
       return;
     }
@@ -317,7 +319,8 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    if (customer && pendingSubmitRef.current) {
+    if (customer && checkoutSigninStartedRef.current && pendingSubmitRef.current) {
+      checkoutSigninStartedRef.current = false;
       const pending = pendingSubmitRef.current;
       pendingSubmitRef.current = null;
       setTimeout(() => processOrder(pending), 300);

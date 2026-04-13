@@ -125,17 +125,18 @@ export default function SignInModal() {
             </p>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
+          <div className="relative min-h-[44px]">
             <div
               ref={googleButtonRef}
               className="flex justify-center min-h-[44px]"
               data-testid="signin-modal-google-btn"
             />
-          )}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
 
           <p className="text-xs text-muted-foreground">
             By signing in, you agree to our{" "}
