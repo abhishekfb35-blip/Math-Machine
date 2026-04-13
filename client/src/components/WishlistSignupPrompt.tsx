@@ -57,6 +57,11 @@ export default function WishlistSignupPrompt() {
   const authLoadingRef = useRef(authLoading);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const configLoadedRef = useRef(false);
+  const pendingFirstAddRef = useRef(false);
+
+  const triggerTimerRef = useRef<(() => void) | null>(null);
+
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { isAuthenticatedRef.current = isAuthenticated; }, [isAuthenticated]);
@@ -70,12 +75,20 @@ export default function WishlistSignupPrompt() {
       })
       .then(d => {
         if (d?.value) {
-          const merged = { ...DEFAULTS, ...d.value };
+          const merged: WishlistPromptConfig = { ...DEFAULTS, ...d.value };
+          merged.delaySeconds = Math.max(0, Number.isFinite(merged.delaySeconds) ? merged.delaySeconds : DEFAULTS.delaySeconds);
           setConfig(merged);
           configRef.current = merged;
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        configLoadedRef.current = true;
+        if (pendingFirstAddRef.current) {
+          pendingFirstAddRef.current = false;
+          triggerTimerRef.current?.();
+        }
+      });
   }, []);
 
   const shouldShowNow = () => {
@@ -88,16 +101,27 @@ export default function WishlistSignupPrompt() {
   };
 
   useEffect(() => {
-    const handleFirstAdd = () => {
+    const startTimer = () => {
       if (!shouldShowNow()) return;
       if (timerRef.current) clearTimeout(timerRef.current);
+      const delaySecs = Math.max(0, configRef.current.delaySeconds ?? DEFAULTS.delaySeconds);
       timerRef.current = setTimeout(() => {
         if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
         if (latestCount <= 0) return;
         setItemCount(latestCount);
         setVisible(true);
-      }, (configRef.current.delaySeconds ?? DEFAULTS.delaySeconds) * 1000);
+      }, delaySecs * 1000);
+    };
+
+    triggerTimerRef.current = startTimer;
+
+    const handleFirstAdd = () => {
+      if (!configLoadedRef.current) {
+        pendingFirstAddRef.current = true;
+        return;
+      }
+      startTimer();
     };
 
     window.addEventListener("wishlist:first-add", handleFirstAdd);
