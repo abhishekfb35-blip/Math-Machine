@@ -147,62 +147,58 @@ export default function WishlistSignupPrompt() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[110] flex justify-center pointer-events-none"
+      className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center"
       data-testid="wishlist-signup-prompt"
     >
-      <div className="pointer-events-auto w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom duration-300">
-        <div className="p-5 pt-4">
-          <div className="flex items-start gap-4">
-            <div className="shrink-0 w-11 h-11 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center">
-              <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
-            </div>
+      <div className="absolute inset-0 bg-black/40" onClick={handleDismiss} />
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-0.5">
-                <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">
-                  {config.headline}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDismiss}
-                  className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  data-testid="wishlist-prompt-dismiss-icon"
-                  aria-label="Dismiss"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6 shadow-xl animate-in slide-in-from-bottom duration-300">
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          data-testid="wishlist-prompt-dismiss-icon"
+          aria-label="Dismiss"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-              {itemCount > 0 && (
-                <p className="text-xs text-rose-500 font-medium mb-1" data-testid="wishlist-prompt-count">
-                  {itemCount} {itemCount === 1 ? "item" : "items"} saved
-                </p>
-              )}
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
+            <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
+          </div>
 
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                {config.bodyText}
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              {config.headline}
+            </h3>
+            {itemCount > 0 && (
+              <p className="text-sm font-medium text-rose-500" data-testid="wishlist-prompt-count">
+                You have {itemCount} {itemCount === 1 ? "item" : "items"} saved
               </p>
-            </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 mt-4">
-            <Button
-              size="sm"
-              className="flex-1"
-              onClick={handleSignIn}
-              data-testid="wishlist-prompt-signin"
-            >
-              {config.ctaText}
-            </Button>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0 px-2 py-1"
-              data-testid="wishlist-prompt-maybe-later"
-            >
-              Maybe later
-            </button>
-          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            {config.bodyText}
+          </p>
+
+          <Button
+            className="w-full"
+            onClick={handleSignIn}
+            data-testid="wishlist-prompt-signin"
+          >
+            {config.ctaText}
+          </Button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-1 transition-colors"
+            data-testid="wishlist-prompt-maybe-later"
+          >
+            Maybe later
+          </button>
         </div>
       </div>
     </div>
