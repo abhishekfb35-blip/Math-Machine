@@ -79,8 +79,8 @@ export function useWishlist() {
       }
       setWishlistIds(next);
       setLocalIds([...next]);
-      if (!currently && wishlistIds.size === 0) {
-        window.dispatchEvent(new CustomEvent("wishlist:first-add"));
+      if (!currently) {
+        window.dispatchEvent(new CustomEvent("wishlist:item-added"));
       }
       return;
     }

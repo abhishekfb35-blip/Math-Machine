@@ -59,7 +59,7 @@ export default function WishlistSignupPrompt() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const configLoadedRef = useRef(false);
-  const pendingFirstAddRef = useRef(false);
+  const pendingItemAddRef = useRef(false);
 
   const triggerTimerRef = useRef<(() => void) | null>(null);
 
@@ -85,8 +85,8 @@ export default function WishlistSignupPrompt() {
       .catch(() => {})
       .finally(() => {
         configLoadedRef.current = true;
-        if (pendingFirstAddRef.current) {
-          pendingFirstAddRef.current = false;
+        if (pendingItemAddRef.current) {
+          pendingItemAddRef.current = false;
           triggerTimerRef.current?.();
         }
       });
@@ -117,18 +117,28 @@ export default function WishlistSignupPrompt() {
 
     triggerTimerRef.current = startTimer;
 
-    const handleFirstAdd = () => {
+    const handleItemAdd = () => {
       if (!configLoadedRef.current) {
-        pendingFirstAddRef.current = true;
+        pendingItemAddRef.current = true;
         return;
       }
       startTimer();
     };
 
-    window.addEventListener("wishlist:first-add", handleFirstAdd);
+    window.addEventListener("wishlist:item-added", handleItemAdd);
+
+    const sessionTimer = setTimeout(() => {
+      if (!shouldShowNow()) return;
+      const count = getLocalCount();
+      if (count <= 0) return;
+      setItemCount(count);
+      setVisible(true);
+    }, 20 * 1000);
+
     return () => {
-      window.removeEventListener("wishlist:first-add", handleFirstAdd);
+      window.removeEventListener("wishlist:item-added", handleItemAdd);
       if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimeout(sessionTimer);
     };
   }, []);
 
