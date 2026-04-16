@@ -120,6 +120,12 @@ export function registerAdminPricingRoutes(app: Express) {
   app.post("/api/admin/pricing-rules/refresh-rates", requirePermission("pricing"), async (_req, res) => {
     try {
       await fetchAndStoreRates();
+    } catch (err: any) {
+      const message = err?.message ?? "Failed to fetch rates from upstream";
+      console.error("[ExchangeRate] Manual refresh failed:", message);
+      return res.status(502).json({ message: `Exchange rate fetch failed: ${message}` });
+    }
+    try {
       const [rules, rates] = await Promise.all([
         storage.getPricingRules(),
         storage.getCurrencyRates(),

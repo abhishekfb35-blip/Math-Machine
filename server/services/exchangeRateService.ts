@@ -3,7 +3,15 @@ import { storage } from "../storage";
 const FRANKFURTER_API = "https://api.frankfurter.app/latest";
 const FRANKFURTER_CURRENCIES = ["GBP", "USD", "EUR", "SGD", "AUD", "CAD"];
 const AED_USD_PEG = 3.6725;
-const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+const DEFAULT_SYNC_HOURS = 24;
+
+function getSyncIntervalMs(): number {
+  const hours = parseInt(process.env.EXCHANGE_RATE_SYNC_INTERVAL_HOURS ?? "", 10);
+  if (!isNaN(hours) && hours > 0) {
+    return hours * 60 * 60 * 1000;
+  }
+  return DEFAULT_SYNC_HOURS * 60 * 60 * 1000;
+}
 
 const DEFAULT_PRICING_RULES = [
   { currency: "GBP", symbol: "£", displayName: "British Pound", markupPercent: 0, roundingRule: "nearest", enabled: true },
@@ -58,7 +66,7 @@ export async function fetchAndStoreRates(): Promise<void> {
     console.log("[ExchangeRate] Rates updated from frankfurter.app, date:", lastFetchDateStr);
   } catch (err: any) {
     lastFetchError = err?.message ?? "Unknown error";
-    console.error("[ExchangeRate] Failed to fetch rates:", lastFetchError);
+    throw err;
   }
 }
 
@@ -76,9 +84,18 @@ async function seedDefaultPricingRules(): Promise<void> {
   }
 }
 
-async function maybeRefreshDaily(): Promise<void> {
-  if (!isFetchedToday()) {
-    await fetchAndStoreRates();
+function shouldRefreshNow(): boolean {
+  if (!lastFetchAt) return true;
+  return Date.now() - lastFetchAt.getTime() >= getSyncIntervalMs();
+}
+
+async function maybeRefreshScheduled(): Promise<void> {
+  if (shouldRefreshNow()) {
+    try {
+      await fetchAndStoreRates();
+    } catch (err: any) {
+      console.error("[ExchangeRate] Scheduled fetch failed:", lastFetchError);
+    }
   }
 }
 
@@ -96,29 +113,36 @@ export async function initializeExchangeRateService(): Promise<void> {
     }
   } catch {}
 
-  await maybeRefreshDaily();
+  await maybeRefreshScheduled();
 
+  const intervalMs = getSyncIntervalMs();
   if (!refreshTimer) {
-    refreshTimer = setInterval(maybeRefreshDaily, TWENTY_FOUR_HOURS);
+    refreshTimer = setInterval(maybeRefreshScheduled, intervalMs);
+    console.log(`[ExchangeRate] Auto-refresh scheduled every ${intervalMs / 3600000}h`);
   }
 }
 
 export function getRateServiceStatus(): {
   fetchedToday: boolean;
+  isFresh: boolean;
   lastFetchedAt: string | null;
   lastFetchDateStr: string | null;
   lastFetchError: string | null;
   nextRefreshAt: string | null;
+  syncIntervalHours: number;
 } {
+  const intervalMs = getSyncIntervalMs();
   const nextRefreshAt = lastFetchAt
-    ? new Date(lastFetchAt.getTime() + TWENTY_FOUR_HOURS).toISOString()
+    ? new Date(lastFetchAt.getTime() + intervalMs).toISOString()
     : null;
   return {
     fetchedToday: isFetchedToday(),
+    isFresh: !shouldRefreshNow(),
     lastFetchedAt: lastFetchAt?.toISOString() ?? null,
     lastFetchDateStr,
     lastFetchError,
     nextRefreshAt,
+    syncIntervalHours: intervalMs / 3600000,
   };
 }
 

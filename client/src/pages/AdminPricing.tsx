@@ -25,10 +25,12 @@ interface PricingRuleRow {
 
 interface RateStatus {
   fetchedToday: boolean;
+  isFresh: boolean;
   lastFetchedAt: string | null;
   lastFetchDateStr: string | null;
   lastFetchError: string | null;
   nextRefreshAt: string | null;
+  syncIntervalHours: number;
 }
 
 interface PricingData {
@@ -209,17 +211,17 @@ export default function AdminPricing() {
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <div className="text-xs text-muted-foreground mb-1">Today's Rates</div>
+                  <div className="text-xs text-muted-foreground mb-1">Rates Freshness</div>
                   <div className="flex items-center gap-1.5">
                     {status?.lastFetchedAt == null ? (
                       <>
                         <AlertCircle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground">Never fetched</span>
                       </>
-                    ) : status?.fetchedToday ? (
+                    ) : (status?.isFresh ?? status?.fetchedToday) ? (
                       <>
                         <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                        <span className="text-green-600 dark:text-green-400">Fetched</span>
+                        <span className="text-green-600 dark:text-green-400">Fresh</span>
                       </>
                     ) : (
                       <>
@@ -239,6 +241,9 @@ export default function AdminPricing() {
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Next Refresh</div>
                   <span className="text-xs">{formatTs(status?.nextRefreshAt ?? null)}</span>
+                  {status?.syncIntervalHours != null && (
+                    <div className="text-xs text-muted-foreground mt-0.5">every {status.syncIntervalHours}h</div>
+                  )}
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Currencies</div>
@@ -308,7 +313,7 @@ export default function AdminPricing() {
         <CardHeader>
           <CardTitle className="text-base">Currency Pricing Rules</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Set per-currency markup % and rounding. Rates auto-refresh daily from frankfurter.app (AED pegged to USD).
+            Set per-currency markup % and rounding. Rates auto-refresh every {data?.status?.syncIntervalHours ?? 24}h from frankfurter.app (AED pegged to USD). Override with EXCHANGE_RATE_SYNC_INTERVAL_HOURS env var.
           </p>
         </CardHeader>
         <CardContent>
