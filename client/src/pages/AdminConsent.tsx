@@ -294,7 +294,7 @@ export default function AdminConsent() {
                       type="number"
                       min={0}
                       value={settings.triggerDelaySecs}
-                      onChange={e => setSettings(s => ({ ...s, triggerDelaySecs: parseInt(e.target.value) || 0 }))}
+                      onChange={e => setSettings(s => ({ ...s, triggerDelaySecs: Math.max(0, parseInt(e.target.value) || 0) }))}
                       className="w-32"
                       data-testid="input-popup-trigger-delay"
                     />
