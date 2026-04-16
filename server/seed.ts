@@ -1,8 +1,10 @@
 import crypto from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 import { db } from "./db";
 import {
   categories, products, siteConfig, productImages, productReviews, tags, productTags,
-  currencyRates, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
+  currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
 } from "@shared/schema";
 import { and, eq, like } from "drizzle-orm";
 import seedData from "./seed-data.json";
@@ -41,6 +43,34 @@ async function storeHash(tableName: string, hash: string): Promise<void> {
 export async function seedDatabase() {
   try {
     const data = seedData as any;
+
+    // ── 0a. Restore bundled swatch images ─────────────────────────────────────
+    // Use process.cwd() (always the project root) so paths work in both dev
+    // (tsx) and production (compiled dist) environments.
+    const swatchesSrcDir = path.join(process.cwd(), "server/seed-assets/swatches");
+    const swatchesDestDir = path.join(process.cwd(), "client/public/images/swatches");
+
+    if (fs.existsSync(swatchesSrcDir)) {
+      if (!fs.existsSync(swatchesDestDir)) {
+        fs.mkdirSync(swatchesDestDir, { recursive: true });
+      }
+      const swatchFiles = fs.readdirSync(swatchesSrcDir);
+      let swatchesCopied = 0;
+      for (const filename of swatchFiles) {
+        const destPath = path.join(swatchesDestDir, filename);
+        if (!fs.existsSync(destPath)) {
+          fs.copyFileSync(path.join(swatchesSrcDir, filename), destPath);
+          swatchesCopied++;
+        }
+      }
+      if (swatchesCopied > 0) {
+        console.log(`[seed] swatches: copied ${swatchesCopied} files to public/images/swatches/`);
+      } else {
+        console.log(`[seed] swatches: all files already present`);
+      }
+    } else {
+      console.log(`[seed] swatches: seed-assets/swatches not found, skipping`);
+    }
 
     const tableData = {
       categories:     (data.categories     || []) as any[],
@@ -308,6 +338,47 @@ export async function seedDatabase() {
       console.log(`[seed] currencyRates: synced ${crSynced} entries`);
     } else {
       console.log(`[seed] currencyRates: all entries up to date`);
+    }
+
+    // ── 5a. pricingRules: upsert by currency ──────────────────────────────────
+    const prEntries: any[] = (data.pricingRules || []);
+    let prSynced = 0;
+    for (const pr of prEntries) {
+      const [existing] = await db.select().from(pricingRules).where(eq(pricingRules.currency, pr.currency));
+      if (!existing) {
+        await db.insert(pricingRules).values({
+          id: pr.id,
+          currency: pr.currency,
+          symbol: pr.symbol,
+          displayName: pr.displayName ?? null,
+          markupPercent: pr.markupPercent ?? "0",
+          roundingRule: pr.roundingRule ?? "nearest",
+          enabled: pr.enabled !== false,
+        });
+        prSynced++;
+      } else {
+        const changed =
+          existing.symbol !== pr.symbol ||
+          existing.displayName !== (pr.displayName ?? null) ||
+          String(existing.markupPercent) !== String(pr.markupPercent ?? "0") ||
+          existing.roundingRule !== (pr.roundingRule ?? "nearest") ||
+          existing.enabled !== (pr.enabled !== false);
+        if (changed) {
+          await db.update(pricingRules).set({
+            symbol: pr.symbol,
+            displayName: pr.displayName ?? null,
+            markupPercent: pr.markupPercent ?? "0",
+            roundingRule: pr.roundingRule ?? "nearest",
+            enabled: pr.enabled !== false,
+          }).where(eq(pricingRules.currency, pr.currency));
+          prSynced++;
+        }
+      }
+    }
+    if (prSynced > 0) {
+      console.log(`[seed] pricingRules: synced ${prSynced} entries`);
+    } else {
+      console.log(`[seed] pricingRules: all entries up to date`);
     }
 
     // ── 6. categoryTagVariantConfigs: upsert by (categoryId, tagId) ──────────

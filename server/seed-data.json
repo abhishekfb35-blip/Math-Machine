@@ -37400,11 +37400,11 @@
     },
     {
       "key": "seed-hash-productImages",
-      "value": "79dc1d535e3da7beb62fb95f6affe7a6ea7dda6b1213757f8686b54d3d738fdd"
+      "value": "312d7230c7a8342c366a26ac928bd2abde094ea945880c941609ccb5f140c743"
     },
     {
       "key": "seed-hash-productReviews",
-      "value": "3c5ebd047f1d433ca7a8b02c4a4332548c187c02781477026efa167150259ca1"
+      "value": "6504180c963d2101269927bc8306f5669c6394732b388f74af59ba5bbd1b227d"
     },
     {
       "key": "seed-hash-productTags",
@@ -37805,6 +37805,108 @@
       "swatchUrl": "/images/swatches/1776015256753-302c33074862.jpg",
       "blurOnFront": false,
       "sortOrder": 5
+    }
+  ],
+  "currencyRates": [
+    {
+      "id": "areo97vgmhji0y6aooerlf0r",
+      "currency": "AED",
+      "rateFromInr": "0.039222"
+    },
+    {
+      "id": "lkojlaycg2x7k4lv31kbn89j",
+      "currency": "AUD",
+      "rateFromInr": "0.015110"
+    },
+    {
+      "id": "dly9xbqt8mx5iwew44n9gt1n",
+      "currency": "CAD",
+      "rateFromInr": "0.014650"
+    },
+    {
+      "id": "fjchlp46qf0qmcy2qjoru08d",
+      "currency": "EUR",
+      "rateFromInr": "0.009240"
+    },
+    {
+      "id": "lfhgv2bgfc6msxk19uex8e25",
+      "currency": "GBP",
+      "rateFromInr": "0.007990"
+    },
+    {
+      "id": "lqbiu2aztljnowd9fosrlkkm",
+      "currency": "SGD",
+      "rateFromInr": "0.013670"
+    },
+    {
+      "id": "vm31e274ch378a72nsi3uba9",
+      "currency": "USD",
+      "rateFromInr": "0.010680"
+    }
+  ],
+  "pricingRules": [
+    {
+      "id": "frgks8otdqom3bcps4jvag8d",
+      "currency": "AED",
+      "symbol": "AED",
+      "displayName": "UAE Dirham",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "kdyus0ftk5bnlzejnk9zn3jz",
+      "currency": "AUD",
+      "symbol": "A$",
+      "displayName": "Australian Dollar",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "c7506mel8qpfxd28jz30uwxp",
+      "currency": "CAD",
+      "symbol": "C$",
+      "displayName": "Canadian Dollar",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "xvlglt819tgfsexs6z8vwsrb",
+      "currency": "EUR",
+      "symbol": "€",
+      "displayName": "Euro",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "p7mwz7vpfix5a527uill3rak",
+      "currency": "GBP",
+      "symbol": "£",
+      "displayName": "British Pound",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "gba0k16ncsvntmlj5qy056mp",
+      "currency": "SGD",
+      "symbol": "S$",
+      "displayName": "Singapore Dollar",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
+    },
+    {
+      "id": "bob500fl1obay76j1w68nvi8",
+      "currency": "USD",
+      "symbol": "$",
+      "displayName": "US Dollar",
+      "markupPercent": "0.00",
+      "roundingRule": "nearest",
+      "enabled": true
     }
   ]
 }

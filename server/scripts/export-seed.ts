@@ -1,11 +1,12 @@
 import { db } from "../db";
 import {
   categories, products, productImages, productReviews, tags, productTags, siteConfig,
-  categoryTagVariantConfigs, variantSizes, variantColors,
+  categoryTagVariantConfigs, variantSizes, variantColors, currencyRates, pricingRules,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
+import * as crypto from "crypto";
 
 async function exportSeed() {
   console.log("Exporting seed data from dev DB...");
@@ -87,6 +88,54 @@ async function exportSeed() {
   const vsList = await db.select().from(variantSizes).orderBy(variantSizes.sortOrder);
 
   const vcList = await db.select().from(variantColors).orderBy(variantColors.sortOrder);
+
+  const crList = await db.select().from(currencyRates).orderBy(currencyRates.currency);
+
+  const prList = await db.select().from(pricingRules).orderBy(pricingRules.currency);
+
+  // ── Bundle swatch images ────────────────────────────────────────────────────
+  const swatchesSrcDir = path.join(process.cwd(), "client/public/images/swatches");
+  const swatchesDestDir = path.join(process.cwd(), "server/seed-assets/swatches");
+
+  if (!fs.existsSync(swatchesDestDir)) {
+    fs.mkdirSync(swatchesDestDir, { recursive: true });
+    console.log(`Created directory: server/seed-assets/swatches/`);
+  }
+
+  let swatchesCopied = 0;
+  let swatchesSkipped = 0;
+
+  const swatchUrls = [...new Set(
+    vcList
+      .map(vc => vc.swatchUrl)
+      .filter((url): url is string => !!url)
+  )];
+
+  for (const swatchUrl of swatchUrls) {
+    const filename = path.basename(swatchUrl);
+    const srcPath = path.join(swatchesSrcDir, filename);
+    const destPath = path.join(swatchesDestDir, filename);
+
+    if (!fs.existsSync(srcPath)) {
+      console.warn(`  [swatches] Source file not found, skipping: ${filename}`);
+      continue;
+    }
+
+    // Skip if destination already exists and has identical content (hash check)
+    if (fs.existsSync(destPath)) {
+      const srcHash = crypto.createHash("md5").update(fs.readFileSync(srcPath)).digest("hex");
+      const destHash = crypto.createHash("md5").update(fs.readFileSync(destPath)).digest("hex");
+      if (srcHash === destHash) {
+        swatchesSkipped++;
+        continue;
+      }
+    }
+
+    fs.copyFileSync(srcPath, destPath);
+    swatchesCopied++;
+  }
+
+  console.log(`  swatches: copied ${swatchesCopied}, skipped (identical) ${swatchesSkipped}`);
 
   const seedData = {
     categories: cats.map(c => ({
@@ -178,6 +227,20 @@ async function exportSeed() {
       blurOnFront: vc.blurOnFront,
       sortOrder: vc.sortOrder,
     })),
+    currencyRates: crList.map(cr => ({
+      id: cr.id,
+      currency: cr.currency,
+      rateFromInr: cr.rateFromInr,
+    })),
+    pricingRules: prList.map(pr => ({
+      id: pr.id,
+      currency: pr.currency,
+      symbol: pr.symbol,
+      displayName: pr.displayName,
+      markupPercent: pr.markupPercent,
+      roundingRule: pr.roundingRule,
+      enabled: pr.enabled,
+    })),
   };
 
   const outputPath = path.join(process.cwd(), "server/seed-data.json");
@@ -194,6 +257,8 @@ async function exportSeed() {
   console.log(`  categoryTagVariantConfigs: ${seedData.categoryTagVariantConfigs.length}`);
   console.log(`  variantSizes:              ${seedData.variantSizes.length}`);
   console.log(`  variantColors:             ${seedData.variantColors.length}`);
+  console.log(`  currencyRates:             ${seedData.currencyRates.length}`);
+  console.log(`  pricingRules:              ${seedData.pricingRules.length}`);
 
   process.exit(0);
 }
