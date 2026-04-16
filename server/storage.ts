@@ -1,4 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
+import fs from "fs";
+import path from "path";
 import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats } from "@shared/schema";
 import type {
   Category, InsertCategory,
@@ -1087,6 +1089,33 @@ export class DatabaseStorage implements IStorage {
     return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
   }
 
+  private async cleanupSwatchFiles(urls: (string | null | undefined)[]): Promise<void> {
+    const swatchPrefix = "/images/swatches/";
+    const uniqueUrls = [...new Set(urls.filter((u): u is string => typeof u === "string" && u.startsWith(swatchPrefix)))];
+    if (uniqueUrls.length === 0) return;
+    const isProduction = __dirname.endsWith("/dist") || __dirname.endsWith("\\dist");
+    const swatchesDir = isProduction
+      ? path.resolve(__dirname, "public", "images", "swatches")
+      : path.resolve(process.cwd(), "client", "public", "images", "swatches");
+    for (const url of uniqueUrls) {
+      const rawFilename = url.slice(swatchPrefix.length);
+      const safeFilename = path.basename(rawFilename);
+      if (!safeFilename || safeFilename !== rawFilename) continue;
+      const filePath = path.resolve(swatchesDir, safeFilename);
+      if (!filePath.startsWith(swatchesDir + path.sep) && filePath !== swatchesDir) continue;
+      const still = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.swatchUrl, url)).limit(1);
+      if (still.length === 0) {
+        try {
+          await fs.promises.unlink(filePath);
+        } catch (err: any) {
+          if (err?.code !== "ENOENT") {
+            console.warn(`[swatch-cleanup] Failed to delete ${safeFilename}: ${err?.message}`);
+          }
+        }
+      }
+    }
+  }
+
   async upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
     name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
@@ -1096,9 +1125,14 @@ export class DatabaseStorage implements IStorage {
     );
 
     let configId: string;
+    let oldSwatchUrls: (string | null)[] = [];
     if (existing) {
       configId = existing.id;
       const existingSizeIds = (await db.select().from(variantSizes).where(eq(variantSizes.configId, configId))).map(s => s.id);
+      if (existingSizeIds.length > 0) {
+        const oldColors = await db.select({ swatchUrl: variantColors.swatchUrl }).from(variantColors).where(inArray(variantColors.sizeId, existingSizeIds));
+        oldSwatchUrls = oldColors.map(c => c.swatchUrl);
+      }
       for (const sizeId of existingSizeIds) {
         await db.delete(variantColors).where(eq(variantColors.sizeId, sizeId));
       }
@@ -1132,16 +1166,23 @@ export class DatabaseStorage implements IStorage {
         });
       }
     }
+    await this.cleanupSwatchFiles(oldSwatchUrls);
     return configId;
   }
 
   async deleteVariantConfig(id: string): Promise<void> {
     const existingSizeIds = (await db.select().from(variantSizes).where(eq(variantSizes.configId, id))).map(s => s.id);
+    let oldSwatchUrls: (string | null)[] = [];
+    if (existingSizeIds.length > 0) {
+      const oldColors = await db.select({ swatchUrl: variantColors.swatchUrl }).from(variantColors).where(inArray(variantColors.sizeId, existingSizeIds));
+      oldSwatchUrls = oldColors.map(c => c.swatchUrl);
+    }
     for (const sizeId of existingSizeIds) {
       await db.delete(variantColors).where(eq(variantColors.sizeId, sizeId));
     }
     await db.delete(variantSizes).where(eq(variantSizes.configId, id));
     await db.delete(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, id));
+    await this.cleanupSwatchFiles(oldSwatchUrls);
   }
 
   private coerceCurrencyRate(r: any): CurrencyRate {
