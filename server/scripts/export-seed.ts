@@ -94,6 +94,9 @@ async function exportSeed() {
   const prList = await db.select().from(pricingRules).orderBy(pricingRules.currency);
 
   // ── Bundle swatch images ────────────────────────────────────────────────────
+  // Only referenced swatches are copied (files not referenced by any variantColor.swatchUrl
+  // are intentionally excluded). To remove orphaned files from client/public/images/swatches/,
+  // run: node server/scripts/cleanup-swatches.ts
   const swatchesSrcDir = path.join(process.cwd(), "client/public/images/swatches");
   const swatchesDestDir = path.join(process.cwd(), "server/seed-assets/swatches");
 
