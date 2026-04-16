@@ -304,9 +304,9 @@ export default function AdminConsent() {
                     <label className="text-sm font-medium block mb-1">Scroll count to trigger</label>
                     <Input
                       type="number"
-                      min={1}
+                      min={0}
                       value={settings.triggerScrollCount}
-                      onChange={e => setSettings(s => ({ ...s, triggerScrollCount: parseInt(e.target.value) || 1 }))}
+                      onChange={e => setSettings(s => ({ ...s, triggerScrollCount: Math.max(0, parseInt(e.target.value) || 0) }))}
                       className="w-32"
                       data-testid="input-popup-trigger-scroll"
                     />
