@@ -34,8 +34,6 @@ const DEFAULT_FIELDS: FormFieldConfig[] = [
   { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
 ];
 
-const DEFAULT_TRIGGER_DELAY_SECS = 5;
-const DEFAULT_TRIGGER_SCROLL_COUNT = 5;
 
 interface PopupSettings {
   enabled: boolean;
@@ -89,8 +87,8 @@ export default function ConsentPopup() {
           buttonText: d.value?.buttonText || "",
           discountPercent: d.value?.discountPercent ?? DEFAULT_DISCOUNT_PERCENT,
           fields: mergedFields,
-          triggerDelaySecs: d.value?.triggerDelaySecs ?? DEFAULT_TRIGGER_DELAY_SECS,
-          triggerScrollCount: d.value?.triggerScrollCount ?? DEFAULT_TRIGGER_SCROLL_COUNT,
+          triggerDelaySecs: d.value?.triggerDelaySecs ?? 0,
+          triggerScrollCount: d.value?.triggerScrollCount ?? 0,
         });
       })
       .catch(() => {
@@ -102,8 +100,8 @@ export default function ConsentPopup() {
           buttonText: "",
           discountPercent: DEFAULT_DISCOUNT_PERCENT,
           fields: DEFAULT_FIELDS,
-          triggerDelaySecs: DEFAULT_TRIGGER_DELAY_SECS,
-          triggerScrollCount: DEFAULT_TRIGGER_SCROLL_COUNT,
+          triggerDelaySecs: 0,
+          triggerScrollCount: 0,
         });
       });
   }, []);
@@ -166,27 +164,34 @@ export default function ConsentPopup() {
     if (authLoading || !settings) return;
     if (!shouldShow()) return;
 
-    const delaySecs = settings.triggerDelaySecs ?? DEFAULT_TRIGGER_DELAY_SECS;
-    const scrollThreshold = settings.triggerScrollCount ?? DEFAULT_TRIGGER_SCROLL_COUNT;
+    const delaySecs = settings.triggerDelaySecs ?? 0;
+    const scrollThreshold = settings.triggerScrollCount ?? 0;
 
-    const timer = setTimeout(() => {
-      triggerPopup();
-    }, delaySecs * 1000);
-
-    const handleScroll = () => {
-      scrollCount.current += 1;
-      if (scrollCount.current >= scrollThreshold) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (delaySecs > 0) {
+      timer = setTimeout(() => {
         triggerPopup();
-      }
-    };
+      }, delaySecs * 1000);
+    }
 
-    window.addEventListener("wheel", handleScroll, { passive: true });
-    window.addEventListener("touchmove", handleScroll, { passive: true });
+    let handleScroll: (() => void) | undefined;
+    if (scrollThreshold > 0) {
+      handleScroll = () => {
+        scrollCount.current += 1;
+        if (scrollCount.current >= scrollThreshold) {
+          triggerPopup();
+        }
+      };
+      window.addEventListener("wheel", handleScroll, { passive: true });
+      window.addEventListener("touchmove", handleScroll, { passive: true });
+    }
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener("wheel", handleScroll);
-      window.removeEventListener("touchmove", handleScroll);
+      if (timer !== undefined) clearTimeout(timer);
+      if (handleScroll) {
+        window.removeEventListener("wheel", handleScroll);
+        window.removeEventListener("touchmove", handleScroll);
+      }
     };
   }, [authLoading, settings, shouldShow, triggerPopup]);
 

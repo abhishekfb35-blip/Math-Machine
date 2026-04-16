@@ -48,8 +48,8 @@ const DEFAULT_SETTINGS: ConsentSettings = {
   buttonText: "",
   discountPercent: 10,
   fields: DEFAULT_FIELDS,
-  triggerDelaySecs: 5,
-  triggerScrollCount: 5,
+  triggerDelaySecs: 0,
+  triggerScrollCount: 0,
 };
 
 interface ConsentsResponse {
