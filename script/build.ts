@@ -34,11 +34,11 @@ const allowlist = [
 ];
 
 async function buildAll() {
-  console.log("syncing site config from dev database to seed-data.json...");
+  console.log("syncing all seed data from dev database to seed-data.json...");
   try {
-    execSync("npx tsx server/sync-site-config.ts", { stdio: "inherit" });
+    execSync("npx tsx server/scripts/export-seed.ts", { stdio: "inherit" });
   } catch (err) {
-    console.warn("Warning: Could not sync site config, continuing build...");
+    console.warn("Warning: Could not sync seed data, continuing build...");
   }
 
   await rm("dist", { recursive: true, force: true });
