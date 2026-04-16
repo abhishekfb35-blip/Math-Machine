@@ -102,7 +102,7 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  const SWATCHES_DIR = path.join(process.cwd(), "client", "public", "images", "swatches");
+  const SWATCHES_DIR = path.join(getPublicDir(), "images", "swatches");
   if (!fs.existsSync(SWATCHES_DIR)) fs.mkdirSync(SWATCHES_DIR, { recursive: true });
 
   app.post("/api/upload-swatch", requirePermission("catalog"), upload.single("image"), async (req: Request, res: Response) => {
