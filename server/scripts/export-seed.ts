@@ -1,5 +1,8 @@
 import { db } from "../db";
-import { categories, products, productImages, productReviews, tags, productTags, siteConfig } from "@shared/schema";
+import {
+  categories, products, productImages, productReviews, tags, productTags, siteConfig,
+  categoryTagVariantConfigs, variantSizes, variantColors,
+} from "@shared/schema";
 import { eq } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
@@ -72,6 +75,19 @@ async function exportSeed() {
 
   const config = await db.select().from(siteConfig).orderBy(siteConfig.key);
 
+  const ctvcList = await db.select({
+    id: categoryTagVariantConfigs.id,
+    categorySlug: categories.slug,
+    tagId: categoryTagVariantConfigs.tagId,
+    sortOrder: categoryTagVariantConfigs.sortOrder,
+  }).from(categoryTagVariantConfigs)
+    .leftJoin(categories, eq(categoryTagVariantConfigs.categoryId, categories.id))
+    .orderBy(categoryTagVariantConfigs.id);
+
+  const vsList = await db.select().from(variantSizes).orderBy(variantSizes.sortOrder);
+
+  const vcList = await db.select().from(variantColors).orderBy(variantColors.sortOrder);
+
   const seedData = {
     categories: cats.map(c => ({
       id: c.id,
@@ -137,19 +153,47 @@ async function exportSeed() {
       key: sc.key,
       value: sc.value,
     })),
+    categoryTagVariantConfigs: ctvcList.map(c => ({
+      id: c.id,
+      categorySlug: c.categorySlug,
+      tagId: c.tagId,
+      sortOrder: c.sortOrder,
+    })),
+    variantSizes: vsList.map(vs => ({
+      id: vs.id,
+      configId: vs.configId,
+      name: vs.name,
+      description: vs.description,
+      descriptionFontSize: vs.descriptionFontSize,
+      priceAdd: vs.priceAdd,
+      isDefault: vs.isDefault,
+      blurOnFront: vs.blurOnFront,
+      sortOrder: vs.sortOrder,
+    })),
+    variantColors: vcList.map(vc => ({
+      id: vc.id,
+      sizeId: vc.sizeId,
+      name: vc.name,
+      swatchUrl: vc.swatchUrl,
+      blurOnFront: vc.blurOnFront,
+      sortOrder: vc.sortOrder,
+    })),
   };
 
   const outputPath = path.join(process.cwd(), "server/seed-data.json");
   fs.writeFileSync(outputPath, JSON.stringify(seedData, null, 2));
 
   console.log(`\nExported to ${outputPath}`);
-  console.log(`  categories:     ${seedData.categories.length}`);
-  console.log(`  products:       ${seedData.products.length}`);
-  console.log(`  productImages:  ${seedData.productImages.length}`);
-  console.log(`  productReviews: ${seedData.productReviews.length}`);
-  console.log(`  tags:           ${seedData.tags.length}`);
-  console.log(`  productTags:    ${seedData.productTags.length}`);
-  console.log(`  siteConfig:     ${seedData.siteConfig.length}`);
+  console.log(`  categories:                ${seedData.categories.length}`);
+  console.log(`  products:                  ${seedData.products.length}`);
+  console.log(`  productImages:             ${seedData.productImages.length}`);
+  console.log(`  productReviews:            ${seedData.productReviews.length}`);
+  console.log(`  tags:                      ${seedData.tags.length}`);
+  console.log(`  productTags:               ${seedData.productTags.length}`);
+  console.log(`  siteConfig:                ${seedData.siteConfig.length}`);
+  console.log(`  categoryTagVariantConfigs: ${seedData.categoryTagVariantConfigs.length}`);
+  console.log(`  variantSizes:              ${seedData.variantSizes.length}`);
+  console.log(`  variantColors:             ${seedData.variantColors.length}`);
 
   process.exit(0);
 }
