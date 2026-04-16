@@ -5,8 +5,8 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
-# Uploaded product & swatch images (large binary files — re-uploaded per environment)
-client/public/images/
+# Product images are large binary files — re-uploaded per environment
+client/public/images/products/
 
 # Generated PWA icons (auto-generated from brand assets on startup)
 client/public/icon-192.png
