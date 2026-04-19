@@ -1,7 +1,6 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
-import { execSync } from "child_process";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -34,12 +33,12 @@ const allowlist = [
 ];
 
 async function buildAll() {
-  console.log("syncing all seed data from dev database to seed-data.json...");
-  try {
-    execSync("npx tsx server/scripts/export-seed.ts", { stdio: "inherit" });
-  } catch (err) {
-    console.warn("Warning: Could not sync seed data, continuing build...");
-  }
+  // NOTE: seed-data.json is committed from the dev DB and must NOT be
+  // re-exported here. The production build environment connects to the
+  // production DATABASE_URL, which would overwrite seed-data.json with
+  // stale production data (e.g. null swatch URLs) and break the seed.
+  // To update seed-data.json, run: npx tsx server/scripts/export-seed.ts
+  // from your dev environment and commit the result.
 
   await rm("dist", { recursive: true, force: true });
 
