@@ -148,12 +148,11 @@ export default function ShopPage() {
       const tagLower = s.tag.toLowerCase();
       const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
       return { ...s, all, shown: all.slice(0, s.maxShown) };
-    }).filter(s => s.all.length > 0);
+    });
   }, [products]);
 
-  const isAllView      = activeFilter === "all" && !activeTag && !searchQuery.trim();
-  const isTagView      = !!activeTag && !searchQuery.trim();
-  const isAudienceView = !isAllView && !isTagView;
+  const isAllView = activeFilter === "all" && !activeTag && !searchQuery.trim();
+  const isTagView = !!activeTag && !searchQuery.trim();
 
   const tagLabel = TAG_SECTIONS.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
@@ -165,7 +164,6 @@ export default function ShopPage() {
         path="/shop"
       />
 
-      {/* ── Sticky filter bar ── */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
           <div className="relative">
@@ -209,11 +207,8 @@ export default function ShopPage() {
         {isLoading ? (
           isAllView ? <TagSectionsSkeleton /> : <GridSkeleton />
         ) : isAllView ? (
-          /* ════════════════════════════════════════
-             "All" default view — tag section rows
-             ════════════════════════════════════════ */
           <div className="space-y-8">
-            {tagSections.length === 0 ? (
+            {tagSections.every(s => s.all.length === 0) ? (
               <div className="text-center py-16">
                 <p className="text-muted-foreground">No products found.</p>
               </div>
@@ -221,8 +216,8 @@ export default function ShopPage() {
               <section
                 key={section.tag}
                 data-testid={`section-${section.tag.replace(/\s+/g, "-")}`}
+                className={section.all.length === 0 ? "hidden" : undefined}
               >
-                {/* Heading row */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <h2
@@ -250,7 +245,6 @@ export default function ShopPage() {
                   )}
                 </div>
 
-                {/* Horizontal scroll row */}
                 <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-2">
                   {section.shown.map(product => (
                     <div key={product.id} className="shrink-0 w-44 sm:w-52">
@@ -258,7 +252,6 @@ export default function ShopPage() {
                     </div>
                   ))}
 
-                  {/* "More" ghost slot at end of row */}
                   {section.all.length > section.maxShown && (
                     <div className="shrink-0 w-28 flex items-center justify-center">
                       <button
@@ -280,28 +273,19 @@ export default function ShopPage() {
             ))}
           </div>
         ) : isTagView ? (
-          /* ════════════════════════════════
-             Tag drill-down — full flat grid
-             ════════════════════════════════ */
           <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <button
-                  onClick={handleBackToAll}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-                  data-testid="button-back-to-all"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  All
-                </button>
-                <span className="text-muted-foreground">/</span>
-                <span className="font-semibold text-foreground" data-testid="text-tag-view-heading">
-                  {tagLabel}
-                </span>
-              </div>
-              <span className="text-xs text-muted-foreground" data-testid="text-tag-view-count">
-                {tagProducts.length} products
-              </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBackToAll}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="button-back-to-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                All
+              </button>
+              <h2 className="text-base font-semibold" data-testid="text-tag-view-heading">
+                {tagLabel} — {tagProducts.length} products
+              </h2>
             </div>
 
             {tagProducts.length === 0 ? (
@@ -317,9 +301,6 @@ export default function ShopPage() {
             )}
           </div>
         ) : (
-          /* ═══════════════════════════════════════════
-             Audience filter or search — existing grid
-             ═══════════════════════════════════════════ */
           flatProducts.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground">
