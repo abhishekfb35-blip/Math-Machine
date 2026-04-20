@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearch } from "wouter";
-import { SlidersHorizontal, Search, X } from "lucide-react";
+import { useSearch, useLocation } from "wouter";
+import { SlidersHorizontal, Search, X, ChevronRight, ArrowLeft } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,27 +10,28 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
-import kidsBanner from "@/assets/images/kids-banner.png";
-import couplesBanner from "@/assets/images/couples-banner.png";
-import blanketsBanner from "@/assets/images/blankets-banner.png";
-import type { Category, Product } from "@shared/types";
+import type { Product } from "@shared/types";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
 
-const categoryBanners: Record<string, { image: string; label: string; description: string }> = {
-  "towels": { image: kidsBanner, label: "Towels", description: "Personalised embroidered luxury towels for everyone" },
-  "bathrobes": { image: couplesBanner, label: "Bathrobes", description: "Plush personalised bathrobes for all ages" },
-  "blankets": { image: blanketsBanner, label: "Blankets", description: "Soft personalised AC blankets for kids" },
-};
+const TAG_SECTIONS: { label: string; tag: string; maxShown: number }[] = [
+  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8 },
+  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8 },
+  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8 },
+  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8 },
+  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8 },
+  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8 },
+  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8 },
+];
 
-const filters: { label: string; value: AudienceFilter }[] = [
-  { label: "All", value: "all" },
-  { label: "Kids", value: "kids" },
-  { label: "Adults", value: "adults" },
+const AUDIENCE_FILTERS: { label: string; value: AudienceFilter }[] = [
+  { label: "All",     value: "all"     },
+  { label: "Kids",    value: "kids"    },
+  { label: "Adults",  value: "adults"  },
   { label: "Couples", value: "couples" },
 ];
 
-function ProductGridSkeleton() {
+function GridSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {Array.from({ length: 8 }).map((_, i) => (
@@ -46,71 +47,125 @@ function ProductGridSkeleton() {
   );
 }
 
+function TagSectionsSkeleton() {
+  return (
+    <div className="space-y-8">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, j) => (
+              <Card key={j} className="shrink-0 w-44 overflow-hidden">
+                <Skeleton className="aspect-square" />
+                <div className="p-2 space-y-2">
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const searchString = useSearch();
-  const params = new URLSearchParams(searchString);
-  const initialFilter = (params.get("filter") as AudienceFilter) || "all";
+  const [, navigate] = useLocation();
 
-  const initialSearch = params.get("q") || "";
-  const [activeFilter, setActiveFilter] = useState<AudienceFilter>(initialFilter);
+  const [activeFilter, setActiveFilter] = useState<AudienceFilter>("all");
+  const [activeTag,    setActiveTag]    = useState<string>("");
+  const [searchQuery,  setSearchQuery]  = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState(initialSearch);
 
+  // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
-    const f = p.get("filter") as AudienceFilter;
-    if (f && filters.some(fl => fl.value === f)) {
-      setActiveFilter(f);
-    }
-    const q = p.get("q");
-    if (q) {
-      setSearchQuery(q);
-      setActiveFilter("all");
-    }
+    const f = (p.get("filter") as AudienceFilter) || "all";
+    setActiveFilter(AUDIENCE_FILTERS.some(x => x.value === f) ? f : "all");
+    const t = p.get("tag") || "";
+    setActiveTag(t);
+    const q = p.get("q") || "";
+    setSearchQuery(q);
   }, [searchString]);
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-  });
+  // Write state → URL
+  const pushURL = useCallback((filter: AudienceFilter, tag: string, query: string) => {
+    const p = new URLSearchParams();
+    if (filter !== "all") p.set("filter", filter);
+    if (tag)   p.set("tag", tag);
+    if (query) p.set("q", query);
+    const qs = p.toString();
+    navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
+  }, [navigate]);
 
-  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
+  const handleFilterChange = (f: AudienceFilter) => pushURL(f, "", searchQuery);
+  const handleTagDrillDown = (tag: string)        => pushURL("all", tag, "");
+  const handleBackToAll    = ()                   => pushURL("all", "", "");
+  const handleSearchChange = (q: string) => {
+    pushURL(activeFilter, q ? "" : activeTag, q);
+  };
+
+  const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
-  const isLoading = categoriesLoading || productsLoading;
-
-  const filteredProducts = useMemo(() => {
+  // Products for audience-filtered / search views
+  const flatProducts = useMemo(() => {
     if (!products) return [];
     let result = products;
     if (activeFilter !== "all") {
-      const tagKeywordMap: Record<string, string> = { kids: "kids", adults: "adult", couples: "couple" };
-      const keyword = tagKeywordMap[activeFilter] || activeFilter;
-      result = result.filter((p) =>
-        p.tagNames?.some((t) => t.toLowerCase().includes(keyword))
-      );
+      const kw: Record<string, string> = { kids: "kids", adults: "adult", couples: "couple" };
+      const keyword = kw[activeFilter] || activeFilter;
+      result = result.filter(p => p.tagNames?.some(t => t.toLowerCase().includes(keyword)));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      result = result.filter((p) =>
+      result = result.filter(p =>
         p.name.toLowerCase().includes(q) ||
-        (p.sku && p.sku.toLowerCase().includes(q)) ||
+        (p.sku         && p.sku.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q))
       );
     }
     return result;
   }, [products, activeFilter, searchQuery]);
 
-  const groupedByCategory = useMemo(() => {
-    if (!categories) return [];
-    return categories.map((cat) => ({
-      category: cat,
-      products: filteredProducts.filter((p) => p.categoryId === cat.id),
-    })).filter(g => g.products.length > 0);
-  }, [categories, filteredProducts]);
+  // Products for tag drill-down
+  const tagProducts = useMemo(() => {
+    if (!products || !activeTag) return [];
+    const tagLower = activeTag.toLowerCase();
+    return products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+  }, [products, activeTag]);
+
+  // Compute tag sections (all + shown slice)
+  const tagSections = useMemo(() => {
+    if (!products) return [];
+    return TAG_SECTIONS.map(s => {
+      const tagLower = s.tag.toLowerCase();
+      const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+      return { ...s, all, shown: all.slice(0, s.maxShown) };
+    }).filter(s => s.all.length > 0);
+  }, [products]);
+
+  const isAllView      = activeFilter === "all" && !activeTag && !searchQuery.trim();
+  const isTagView      = !!activeTag && !searchQuery.trim();
+  const isAudienceView = !isAllView && !isTagView;
+
+  const tagLabel = TAG_SECTIONS.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
   return (
     <div className="pb-20 md:pb-8">
-      <SEO title="Shop All Products" description="Browse our complete collection of personalised luxury towels, blankets & bathrobes. Buy 2 Get 1 Free." path="/shop" />
+      <SEO
+        title="Shop All Products"
+        description="Browse our complete collection of personalised luxury towels, blankets & bathrobes. Buy 2 Get 1 Free."
+        path="/shop"
+      />
+
+      {/* ── Sticky filter bar ── */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
           <div className="relative">
@@ -118,13 +173,13 @@ export default function ShopPage() {
             <Input
               placeholder="Search products by name, SKU..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => handleSearchChange(e.target.value)}
               className="pl-9 pr-9"
               data-testid="input-search-products"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => handleSearchChange("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 data-testid="button-clear-search"
               >
@@ -134,12 +189,12 @@ export default function ShopPage() {
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {filters.map((f) => (
+            {AUDIENCE_FILTERS.map(f => (
               <Button
                 key={f.value}
-                variant={activeFilter === f.value ? "default" : "outline"}
+                variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
                 size="sm"
-                onClick={() => setActiveFilter(f.value)}
+                onClick={() => handleFilterChange(f.value)}
                 className="shrink-0"
                 data-testid={`filter-${f.value}`}
               >
@@ -150,70 +205,143 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         {isLoading ? (
-          <ProductGridSkeleton />
-        ) : groupedByCategory.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">
-              {searchQuery.trim() ? `No products found for "${searchQuery}"` : "No products found for this filter."}
-            </p>
-          </div>
-        ) : (
-          groupedByCategory.map(({ category, products: catProducts }) => {
-            const banner = categoryBanners[category.slug];
-            return (
-              <section key={category.id} id={category.slug} className="space-y-3">
-                {banner && (
-                  <div className="relative rounded-md overflow-hidden" data-testid={`banner-${category.slug}`}>
-                    <img
-                      src={banner.image}
-                      alt={category.name}
-                      className="w-full h-28 md:h-40 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-4 space-y-0.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-lg md:text-xl font-bold text-white" data-testid={`text-shop-section-${category.slug}`}>
-                          {category.name}
-                        </h2>
-                        <Badge className="no-default-hover-elevate no-default-active-elevate bg-white/20 text-white border-white/30 text-xs" data-testid={`badge-count-${category.slug}`}>
-                          {catProducts.length} items
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-white/70">{banner.description}</p>
-                    </div>
-                  </div>
-                )}
-                {!banner && (
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <h2 className="text-lg font-bold" data-testid={`text-shop-section-${category.slug}`}>
-                      {category.name}
+          isAllView ? <TagSectionsSkeleton /> : <GridSkeleton />
+        ) : isAllView ? (
+          /* ════════════════════════════════════════
+             "All" default view — tag section rows
+             ════════════════════════════════════════ */
+          <div className="space-y-8">
+            {tagSections.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">No products found.</p>
+              </div>
+            ) : tagSections.map(section => (
+              <section
+                key={section.tag}
+                data-testid={`section-${section.tag.replace(/\s+/g, "-")}`}
+              >
+                {/* Heading row */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <h2
+                      className="text-base font-semibold"
+                      data-testid={`text-section-${section.tag.replace(/\s+/g, "-")}`}
+                    >
+                      {section.label}
                     </h2>
-                    <span className="text-xs text-muted-foreground" data-testid={`text-count-${category.slug}`}>
-                      {catProducts.length} products
-                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs no-default-hover-elevate no-default-active-elevate"
+                    >
+                      {section.all.length}
+                    </Badge>
                   </div>
-                )}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {catProducts.map((product) => (
-                    <ProductCardNew
-                      key={product.id}
-                      product={product}
-                      onQuickAdd={setQuickAddProduct}
-                    />
+                  {section.all.length > section.maxShown && (
+                    <button
+                      onClick={() => handleTagDrillDown(section.tag)}
+                      className="flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
+                      data-testid={`link-see-all-${section.tag.replace(/\s+/g, "-")}`}
+                    >
+                      See all {section.all.length}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Horizontal scroll row */}
+                <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-2">
+                  {section.shown.map(product => (
+                    <div key={product.id} className="shrink-0 w-44 sm:w-52">
+                      <ProductCardNew product={product} onQuickAdd={setQuickAddProduct} />
+                    </div>
                   ))}
+
+                  {/* "More" ghost slot at end of row */}
+                  {section.all.length > section.maxShown && (
+                    <div className="shrink-0 w-28 flex items-center justify-center">
+                      <button
+                        onClick={() => handleTagDrillDown(section.tag)}
+                        className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                        data-testid={`card-see-more-${section.tag.replace(/\s+/g, "-")}`}
+                      >
+                        <div className="w-11 h-11 rounded-full border-2 border-current flex items-center justify-center">
+                          <ChevronRight className="w-4.5 h-4.5" />
+                        </div>
+                        <span className="text-xs font-medium text-center leading-tight">
+                          +{section.all.length - section.maxShown} more
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
-            );
-          })
+            ))}
+          </div>
+        ) : isTagView ? (
+          /* ════════════════════════════════
+             Tag drill-down — full flat grid
+             ════════════════════════════════ */
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <button
+                  onClick={handleBackToAll}
+                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="button-back-to-all"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  All
+                </button>
+                <span className="text-muted-foreground">/</span>
+                <span className="font-semibold text-foreground" data-testid="text-tag-view-heading">
+                  {tagLabel}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground" data-testid="text-tag-view-count">
+                {tagProducts.length} products
+              </span>
+            </div>
+
+            {tagProducts.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">No products found.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {tagProducts.map(product => (
+                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ═══════════════════════════════════════════
+             Audience filter or search — existing grid
+             ═══════════════════════════════════════════ */
+          flatProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">
+                {searchQuery.trim()
+                  ? `No products found for "${searchQuery}"`
+                  : "No products found for this filter."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {flatProducts.map(product => (
+                <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
+              ))}
+            </div>
+          )
         )}
       </div>
 
       <QuickAddSheet
         product={quickAddProduct}
         open={!!quickAddProduct}
-        onOpenChange={(open) => !open && setQuickAddProduct(null)}
+        onOpenChange={open => !open && setQuickAddProduct(null)}
       />
     </div>
   );
