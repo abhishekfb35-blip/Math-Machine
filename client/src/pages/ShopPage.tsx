@@ -11,18 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product } from "@shared/types";
+import { defaultShopSections, type ShopSection } from "@/lib/siteConfigDefaults";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
-
-const TAG_SECTIONS: { label: string; tag: string; maxShown: number }[] = [
-  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8 },
-  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8 },
-  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8 },
-  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8 },
-  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8 },
-  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8 },
-  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8 },
-];
 
 const AUDIENCE_FILTERS: { label: string; value: AudienceFilter }[] = [
   { label: "All",     value: "all"     },
@@ -114,6 +105,15 @@ export default function ShopPage() {
     queryKey: ["/api/products"],
   });
 
+  const { data: shopSectionsConfig } = useQuery<{ value: string }>({
+    queryKey: ["/api/site-config", "shop-sections"],
+    queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
+  });
+  const shopSections: ShopSection[] = (() => {
+    if (!shopSectionsConfig?.value) return defaultShopSections;
+    try { return JSON.parse(shopSectionsConfig.value); } catch { return defaultShopSections; }
+  })();
+
   // Products for audience-filtered / search views
   const flatProducts = useMemo(() => {
     if (!products) return [];
@@ -144,17 +144,17 @@ export default function ShopPage() {
   // Compute tag sections (all + shown slice)
   const tagSections = useMemo(() => {
     if (!products) return [];
-    return TAG_SECTIONS.map(s => {
+    return shopSections.filter(s => s.enabled).map(s => {
       const tagLower = s.tag.toLowerCase();
       const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
       return { ...s, all, shown: all.slice(0, s.maxShown) };
     });
-  }, [products]);
+  }, [products, shopSections]);
 
   const isAllView = activeFilter === "all" && !activeTag && !searchQuery.trim();
   const isTagView = !!activeTag && !searchQuery.trim();
 
-  const tagLabel = TAG_SECTIONS.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
+  const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
   return (
     <div className="pb-20 md:pb-8">

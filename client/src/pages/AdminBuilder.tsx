@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Accordion,
@@ -24,13 +25,13 @@ import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
   defaultStats, defaultFooter, defaultFeaturedSections, defaultHomepageCollections,
-  defaultPwaInstall, defaultSeo,
+  defaultPwaInstall, defaultSeo, defaultShopSections,
   type AnnouncementConfig, type HeroConfig, type HeaderConfig,
   type PromiseConfig, type CollectionsConfig, type ProductTypesConfig,
   type PromoConfig, type TestimonialsConfig, type StatsConfig,
   type FooterConfig, type FeaturedSectionsConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
-  type PwaInstallConfig, type SeoConfig,
+  type PwaInstallConfig, type SeoConfig, type ShopSection,
 } from "@/lib/siteConfigDefaults";
 
 import heroBanner from "@/assets/images/hero-banner.png";
@@ -873,6 +874,84 @@ function InstallBannerSection({ data }: { data: PwaInstallConfig }) {
   );
 }
 
+function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
+  const [sections, setSections] = useState<ShopSection[]>(data);
+  const save = useSaveConfig("shop-sections");
+
+  const move = (index: number, dir: "up" | "down") => {
+    const next = [...sections];
+    const swap = dir === "up" ? index - 1 : index + 1;
+    if (swap < 0 || swap >= next.length) return;
+    [next[index], next[swap]] = [next[swap], next[index]];
+    setSections(next);
+  };
+
+  const update = (index: number, field: keyof ShopSection, value: string | number | boolean) => {
+    const next = [...sections];
+    next[index] = { ...next[index], [field]: value };
+    setSections(next);
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Control which tag-based sections appear on the Shop page, in what order, and how many products each shows.
+      </p>
+      {sections.map((s, i) => (
+        <Card key={i} className="p-4 space-y-3" data-testid={`card-shop-section-${i}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={s.enabled}
+                onCheckedChange={(v) => update(i, "enabled", v)}
+                data-testid={`switch-shop-section-enabled-${i}`}
+              />
+              <span className="text-sm font-medium">{s.label || `Section ${i + 1}`}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button size="icon" variant="ghost" onClick={() => move(i, "up")} disabled={i === 0} data-testid={`button-shop-section-up-${i}`}>
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => move(i, "down")} disabled={i === sections.length - 1} data-testid={`button-shop-section-down-${i}`}>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Display Label</Label>
+              <Input
+                value={s.label}
+                onChange={(e) => update(i, "label", e.target.value)}
+                placeholder="e.g. Kids Towels"
+                data-testid={`input-shop-section-label-${i}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Tag (read-only)</Label>
+              <Input value={s.tag} readOnly className="bg-muted/40 text-muted-foreground cursor-not-allowed" data-testid={`input-shop-section-tag-${i}`} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Max Products Shown</Label>
+              <Input
+                type="number"
+                min={1}
+                max={24}
+                value={s.maxShown}
+                onChange={(e) => update(i, "maxShown", Math.max(1, parseInt(e.target.value) || 1))}
+                data-testid={`input-shop-section-max-${i}`}
+              />
+            </div>
+          </div>
+        </Card>
+      ))}
+      <Button onClick={() => save.mutate(sections)} disabled={save.isPending} data-testid="button-save-shop-sections">
+        <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Shop Sections"}
+      </Button>
+    </div>
+  );
+}
+
 export default function AdminBuilder() {
   const { data: allConfig, isLoading } = useQuery<Record<string, any>>({
     queryKey: ["/api/site-config"],
@@ -881,6 +960,12 @@ export default function AdminBuilder() {
   const getConfig = <T,>(key: string, defaultVal: T): T => {
     if (allConfig && allConfig[key]) return { ...defaultVal, ...allConfig[key] } as T;
     return defaultVal;
+  };
+
+  const getShopSections = (): ShopSection[] => {
+    const raw = allConfig?.["shop-sections"];
+    if (Array.isArray(raw) && raw.length > 0) return raw as ShopSection[];
+    return defaultShopSections;
   };
 
   const getHomepageCollections = (): HomepageCollectionsConfig => {
@@ -1017,6 +1102,15 @@ export default function AdminBuilder() {
               </AccordionTrigger>
               <AccordionContent>
                 <FeaturedSectionsEditor data={getConfig("featuredSections", defaultFeaturedSections)} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="shopSections" className="border rounded-md px-4">
+              <AccordionTrigger data-testid="accordion-shop-sections">
+                <SectionHeader icon={Package} title="Shop Page Sections" />
+              </AccordionTrigger>
+              <AccordionContent>
+                <ShopSectionsEditor data={getShopSections()} />
               </AccordionContent>
             </AccordionItem>
 

@@ -410,6 +410,23 @@ export const defaultShippingPage: ShippingPageConfig = {
   ],
 };
 
+export interface ShopSection {
+  label: string;
+  tag: string;
+  maxShown: number;
+  enabled: boolean;
+}
+
+export const defaultShopSections: ShopSection[] = [
+  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true },
+  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true },
+  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true },
+  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true },
+  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true },
+  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true },
+  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true },
+];
+
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
   kids: { title: "Popular for Kids Towels", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
   couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/collection/couples" },

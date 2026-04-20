@@ -515,6 +515,27 @@ export async function seedDatabase() {
       console.log(`[seed] productVariants: all entries up to date`);
     }
 
+    // ── 10. Default shop-sections config (first-time seed only) ──────────────
+    const [existingShopSections] = await db
+      .select({ key: siteConfig.key })
+      .from(siteConfig)
+      .where(eq(siteConfig.key, "shop-sections"));
+    if (!existingShopSections) {
+      const defaultSections = JSON.stringify([
+        { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true },
+        { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true },
+        { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true },
+        { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true },
+        { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true },
+        { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true },
+        { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true },
+      ]);
+      await db.insert(siteConfig).values({ key: "shop-sections", value: defaultSections });
+      console.log("[seed] shop-sections: inserted default 7 sections");
+    } else {
+      console.log("[seed] shop-sections: already present, skipping");
+    }
+
   } catch (error) {
     console.error("Error seeding database:", error);
   }
