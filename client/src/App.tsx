@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -117,6 +118,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <CurrencyProvider>
+        <WishlistProvider>
         <TooltipProvider>
           <div className="min-h-screen flex flex-col">
             <AnnouncementBar />
@@ -136,6 +138,7 @@ function App() {
           <SignInModal />
           <Toaster />
         </TooltipProvider>
+        </WishlistProvider>
         </CurrencyProvider>
       </QueryClientProvider>
     </ThemeProvider>
