@@ -892,6 +892,14 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     setSections(next);
   };
 
+  const addSection = () => {
+    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true }]);
+  };
+
+  const removeSection = (index: number) => {
+    setSections(sections.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
@@ -915,6 +923,9 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               <Button size="icon" variant="ghost" onClick={() => move(i, "down")} disabled={i === sections.length - 1} data-testid={`button-shop-section-down-${i}`}>
                 <ChevronDown className="w-4 h-4" />
               </Button>
+              <Button size="icon" variant="ghost" onClick={() => removeSection(i)} data-testid={`button-shop-section-delete-${i}`}>
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -928,8 +939,13 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Tag (read-only)</Label>
-              <Input value={s.tag} readOnly className="bg-muted/40 text-muted-foreground cursor-not-allowed" data-testid={`input-shop-section-tag-${i}`} />
+              <Label className="text-xs">Tag Slug</Label>
+              <Input
+                value={s.tag}
+                onChange={(e) => update(i, "tag", e.target.value)}
+                placeholder="e.g. kids towels"
+                data-testid={`input-shop-section-tag-${i}`}
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Max Products Shown</Label>
@@ -945,9 +961,14 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
           </div>
         </Card>
       ))}
-      <Button onClick={() => save.mutate(sections)} disabled={save.isPending} data-testid="button-save-shop-sections">
-        <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Shop Sections"}
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={addSection} data-testid="button-add-shop-section">
+          <Plus className="w-4 h-4 mr-2" /> Add Section
+        </Button>
+        <Button onClick={() => save.mutate(sections)} disabled={save.isPending} data-testid="button-save-shop-sections">
+          <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Shop Sections"}
+        </Button>
+      </div>
     </div>
   );
 }
