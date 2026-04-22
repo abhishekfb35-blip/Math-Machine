@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -184,24 +184,27 @@ export default function AdminDashboard() {
     window.location.reload();
   };
 
-  useQuery({
+  const { data: bccRaw } = useQuery<string | null>({
     queryKey: ["/api/site-config/notification-bcc-config"],
     queryFn: async () => {
       const res = await fetch("/api/site-config/notification-bcc-config");
       if (!res.ok) return null;
       const data = await res.json();
       const raw = (typeof data.value === "string" ? data.value : "").replace(/^"|"$/g, "").trim();
-      if (!raw) return null;
-      try {
-        const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
-        setBccInput(parsed.email ?? "");
-        if (parsed.types) {
-          setBccTypes(prev => ({ ...prev, ...parsed.types } as Record<BccTypeKey, boolean>));
-        }
-      } catch { /* ignore malformed */ }
-      return raw;
+      return raw || null;
     },
   });
+
+  useEffect(() => {
+    if (!bccRaw) return;
+    try {
+      const parsed = JSON.parse(bccRaw) as { email?: string; types?: Record<string, boolean> };
+      setBccInput(parsed.email ?? "");
+      if (parsed.types) {
+        setBccTypes(prev => ({ ...prev, ...parsed.types } as Record<BccTypeKey, boolean>));
+      }
+    } catch { /* ignore malformed */ }
+  }, [bccRaw]);
 
   const anyTypeChecked = Object.values(bccTypes).some(Boolean);
   const bccError = bccInput.trim() !== "" && !anyTypeChecked
