@@ -1106,11 +1106,27 @@ export class DatabaseStorage implements IStorage {
       if (!filePath.startsWith(swatchesDir + path.sep) && filePath !== swatchesDir) continue;
       const still = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.swatchUrl, url)).limit(1);
       if (still.length === 0) {
+        let deleted = false;
         try {
           await fs.promises.unlink(filePath);
+          deleted = true;
         } catch (err: any) {
           if (err?.code !== "ENOENT") {
             console.warn(`[swatch-cleanup] Failed to delete ${safeFilename}: ${err?.message}`);
+          }
+        }
+        if (deleted) {
+          try {
+            await this.createAuditLog({
+              entityType: "swatch-file",
+              entityId: safeFilename,
+              entityName: safeFilename,
+              action: "deleted",
+              changes: JSON.stringify({ filename: safeFilename, url }),
+              username: "system",
+            });
+          } catch (err: any) {
+            console.warn(`[swatch-cleanup] Failed to log deletion of ${safeFilename}: ${err?.message}`);
           }
         }
       }

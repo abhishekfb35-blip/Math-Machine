@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ChevronLeft, ChevronDown, ChevronRight, Clock, User, Package, FolderOpen, Tag as TagIcon, Settings, Hash, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronRight, Clock, User, Package, FolderOpen, Tag as TagIcon, Settings, Hash, Loader2, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ const ENTITY_TYPE_META: Record<string, { label: string; pluralLabel: string; ico
   product: { label: "Product", pluralLabel: "Products", icon: Package },
   tag: { label: "Tag", pluralLabel: "Tags", icon: TagIcon },
   "site-config": { label: "Site Config", pluralLabel: "Site Config", icon: Settings },
+  "swatch-file": { label: "Swatch File", pluralLabel: "Swatch Files", icon: ImageOff },
 };
 
 const ACTION_COLORS: Record<string, string> = {
