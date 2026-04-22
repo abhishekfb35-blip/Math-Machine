@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
-import { SlidersHorizontal, Search, X, ChevronRight, ArrowLeft } from "lucide-react";
+import { SlidersHorizontal, Search, X, ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,64 @@ function TagSectionsSkeleton() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ScrollRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
+  }, [update]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative">
+      {canLeft && (
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 border shadow-md flex items-center justify-center hover:bg-muted transition-colors"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      )}
+      <div
+        ref={ref}
+        className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-2"
+      >
+        {children}
+      </div>
+      {canRight && (
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 border shadow-md flex items-center justify-center hover:bg-muted transition-colors"
+          aria-label="Scroll right"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -244,7 +302,7 @@ export default function ShopPage() {
                   )}
                 </div>
 
-                <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-2">
+                <ScrollRow>
                   {section.shown.map(product => (
                     <div key={product.id} className="shrink-0 w-44 sm:w-52">
                       <ProductCardNew product={product} onQuickAdd={setQuickAddProduct} />
@@ -267,7 +325,7 @@ export default function ShopPage() {
                       </button>
                     </div>
                   )}
-                </div>
+                </ScrollRow>
               </section>
             ))}
           </div>
