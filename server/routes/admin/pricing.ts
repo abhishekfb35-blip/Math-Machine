@@ -117,6 +117,33 @@ export function registerAdminPricingRoutes(app: Express) {
     }
   });
 
+  app.get("/api/admin/exchange-rate-alert-config", requirePermission("pricing"), async (_req, res) => {
+    try {
+      const record = await storage.getSiteConfig("exchange-rate-alert-config");
+      const cfg = record
+        ? JSON.parse(record.value)
+        : { alertEmail: "", staleHoursThreshold: 48, cooldownHours: 24 };
+      res.json(cfg);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch alert config" });
+    }
+  });
+
+  app.put("/api/admin/exchange-rate-alert-config", requirePermission("pricing"), async (req, res) => {
+    try {
+      const { alertEmail, staleHoursThreshold, cooldownHours } = req.body;
+      const cfg = {
+        alertEmail: typeof alertEmail === "string" ? alertEmail.trim() : "",
+        staleHoursThreshold: typeof staleHoursThreshold === "number" ? staleHoursThreshold : 48,
+        cooldownHours: typeof cooldownHours === "number" ? cooldownHours : 24,
+      };
+      await storage.upsertSiteConfig("exchange-rate-alert-config", JSON.stringify(cfg));
+      res.json(cfg);
+    } catch {
+      res.status(500).json({ message: "Failed to save alert config" });
+    }
+  });
+
   app.post("/api/admin/pricing-rules/refresh-rates", requirePermission("pricing"), async (_req, res) => {
     try {
       await fetchAndStoreRates();

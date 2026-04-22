@@ -1,4 +1,5 @@
 import { storage } from "../storage";
+import { notificationService } from "../providers/notification";
 
 const FRANKFURTER_API = "https://api.frankfurter.app/latest";
 const FRANKFURTER_CURRENCIES = ["GBP", "USD", "EUR", "SGD", "AUD", "CAD"];
@@ -27,6 +28,7 @@ let lastFetchAt: Date | null = null;
 let lastFetchError: string | null = null;
 let lastFetchDateStr: string | null = null;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
+let lastExchangeRateAlertAt = 0;
 
 function isFetchedToday(): boolean {
   if (!lastFetchAt) return false;
@@ -89,12 +91,49 @@ function shouldRefreshNow(): boolean {
   return Date.now() - lastFetchAt.getTime() >= getSyncIntervalMs();
 }
 
+async function maybeFireStaleAlert(): Promise<void> {
+  try {
+    const cfgRecord = await storage.getSiteConfig("exchange-rate-alert-config");
+    const cfg = cfgRecord ? JSON.parse(cfgRecord.value) : {};
+    const alertEmail: string = cfg.alertEmail?.trim() || "";
+    const staleHours: number = typeof cfg.staleHoursThreshold === "number" ? cfg.staleHoursThreshold : 48;
+    const cooldownHours: number = typeof cfg.cooldownHours === "number" ? cfg.cooldownHours : 24;
+    const cooldownMs = cooldownHours * 60 * 60 * 1000;
+
+    if (!alertEmail) return;
+
+    const staleSinceMs = lastFetchAt ? Date.now() - lastFetchAt.getTime() : Infinity;
+    const staleThresholdMs = staleHours * 60 * 60 * 1000;
+    if (staleSinceMs < staleThresholdMs) return;
+
+    const now = Date.now();
+    if (now - lastExchangeRateAlertAt < cooldownMs) return;
+
+    lastExchangeRateAlertAt = now;
+    const result = await notificationService.sendExchangeRateAlert({
+      toEmail: alertEmail,
+      lastSuccessAt: lastFetchAt?.toISOString() ?? null,
+      staleHoursThreshold: staleHours,
+      lastError: lastFetchError,
+    });
+
+    if (result.success) {
+      console.log(`[ExchangeRate] Stale rate alert sent to ${alertEmail}`);
+    } else {
+      console.error(`[ExchangeRate] Alert send failed: ${result.error}`);
+    }
+  } catch (e: any) {
+    console.error("[ExchangeRate] Alert check error:", e.message);
+  }
+}
+
 async function maybeRefreshScheduled(): Promise<void> {
   if (shouldRefreshNow()) {
     try {
       await fetchAndStoreRates();
     } catch (err: any) {
       console.error("[ExchangeRate] Scheduled fetch failed:", lastFetchError);
+      await maybeFireStaleAlert();
     }
   }
 }

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, X, Bell } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,122 @@ interface RateStatus {
 interface PricingData {
   rules: PricingRuleRow[];
   status: RateStatus;
+}
+
+interface AlertConfig {
+  alertEmail: string;
+  staleHoursThreshold: number;
+  cooldownHours: number;
+}
+
+function AlertConfigCard() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery<AlertConfig>({
+    queryKey: ["/api/admin/exchange-rate-alert-config"],
+  });
+
+  const [email, setEmail] = useState("");
+  const [staleHours, setStaleHours] = useState("48");
+  const [cooldownHours, setCooldownHours] = useState("24");
+
+  useEffect(() => {
+    if (data) {
+      setEmail(data.alertEmail ?? "");
+      setStaleHours(String(data.staleHoursThreshold ?? 48));
+      setCooldownHours(String(data.cooldownHours ?? 24));
+    }
+  }, [data]);
+
+  const mutation = useMutation({
+    mutationFn: () => apiRequest("PUT", "/api/admin/exchange-rate-alert-config", {
+      alertEmail: email,
+      staleHoursThreshold: parseFloat(staleHours) || 48,
+      cooldownHours: parseFloat(cooldownHours) || 24,
+    }),
+    onSuccess: () => {
+      toast({ title: "Saved", description: "Exchange rate alert settings updated." });
+      qc.invalidateQueries({ queryKey: ["/api/admin/exchange-rate-alert-config"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to save alert settings.", variant: "destructive" }),
+  });
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Bell className="w-4 h-4 text-amber-500" />
+          <CardTitle className="text-base">Stale Rate Alert</CardTitle>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Send an email alert if exchange rates haven't updated successfully within the configured threshold.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1">
+                <Label htmlFor="alert-email" className="text-xs mb-1.5 block">Notification Email</Label>
+                <Input
+                  id="alert-email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="h-8 text-sm"
+                  data-testid="input-alert-email"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Leave blank to disable alerts.</p>
+              </div>
+              <div>
+                <Label htmlFor="stale-hours" className="text-xs mb-1.5 block">Alert After (hours stale)</Label>
+                <Select value={staleHours} onValueChange={setStaleHours}>
+                  <SelectTrigger id="stale-hours" className="h-8 text-sm" data-testid="select-stale-hours">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24">24 hours</SelectItem>
+                    <SelectItem value="48">48 hours</SelectItem>
+                    <SelectItem value="72">72 hours</SelectItem>
+                    <SelectItem value="96">96 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="cooldown-hours" className="text-xs mb-1.5 block">Alert Cooldown</Label>
+                <Select value={cooldownHours} onValueChange={setCooldownHours}>
+                  <SelectTrigger id="cooldown-hours" className="h-8 text-sm" data-testid="select-cooldown-hours">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="6">6 hours</SelectItem>
+                    <SelectItem value="12">12 hours</SelectItem>
+                    <SelectItem value="24">24 hours</SelectItem>
+                    <SelectItem value="48">48 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Minimum time between repeated alerts.</p>
+              </div>
+            </div>
+            <div>
+              <Button
+                size="sm"
+                onClick={() => mutation.mutate()}
+                disabled={mutation.isPending}
+                data-testid="button-save-alert-config"
+              >
+                {mutation.isPending ? "Saving..." : "Save Alert Settings"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function formatTs(ts: string | null) {
@@ -308,6 +425,8 @@ export default function AdminPricing() {
           )}
         </CardContent>
       </Card>
+
+      <AlertConfigCard />
 
       <Card>
         <CardHeader>

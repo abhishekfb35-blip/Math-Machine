@@ -47,6 +47,13 @@ export interface SecurityAlertPayload {
   siteUrl?: string;
 }
 
+export interface ExchangeRateAlertPayload {
+  toEmail: string;
+  lastSuccessAt: string | null;
+  staleHoursThreshold: number;
+  lastError: string | null;
+}
+
 export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
@@ -56,6 +63,7 @@ export interface INotificationService {
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
   sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult>;
   sendSecurityAlert(payload: SecurityAlertPayload): Promise<NotificationResult>;
+  sendExchangeRateAlert(payload: ExchangeRateAlertPayload): Promise<NotificationResult>;
 }
 
 function formatCurrency(amount: number): string {
@@ -505,6 +513,11 @@ export class ConsoleNotificationService implements INotificationService {
     console.log(`[Security Alert] ${payload.totalBlocks} blocks in ${payload.windowMinutes}min — sending to ${payload.toEmail}`);
     return { success: true, channel: "console" };
   }
+
+  async sendExchangeRateAlert(payload: ExchangeRateAlertPayload): Promise<NotificationResult> {
+    console.log(`[Exchange Rate Alert] Rates stale >${payload.staleHoursThreshold}h — last success: ${payload.lastSuccessAt} — error: ${payload.lastError} — sending to ${payload.toEmail}`);
+    return { success: true, channel: "console" };
+  }
 }
 
 function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], cartUrl: string): string {
@@ -784,6 +797,48 @@ export class ResendNotificationService implements INotificationService {
       return { success: true, channel: "resend" };
     } catch (err) {
       console.error("Resend abandoned cart error:", err);
+      return { success: false, channel: "resend", error: String(err) };
+    }
+  }
+
+  async sendExchangeRateAlert(payload: ExchangeRateAlertPayload): Promise<NotificationResult> {
+    try {
+      const lastSuccessFormatted = payload.lastSuccessAt
+        ? new Date(payload.lastSuccessAt).toLocaleString("en-IN", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Kolkata" })
+        : "Never";
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;border:2px solid #d97706;overflow:hidden;">
+  <div style="background:#d97706;padding:16px 24px;">
+    <h1 style="color:#fff;margin:0;font-size:18px;">⚠️ Exchange Rate Alert — TurtleLittle</h1>
+  </div>
+  <div style="padding:24px;">
+    <p style="font-size:15px;color:#1a1a1a;margin:0 0 12px;">Live exchange rates have <strong>not updated successfully for more than ${payload.staleHoursThreshold} hours</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+      <tr style="background:#fef9f0;">
+        <td style="padding:8px 12px;color:#666;border:1px solid #f0f0f0;width:40%;">Last Successful Fetch</td>
+        <td style="padding:8px 12px;color:#1a1a1a;font-weight:600;border:1px solid #f0f0f0;">${lastSuccessFormatted}</td>
+      </tr>
+      ${payload.lastError ? `<tr>
+        <td style="padding:8px 12px;color:#666;border:1px solid #f0f0f0;">Last Error</td>
+        <td style="padding:8px 12px;color:#dc2626;font-family:monospace;font-size:12px;border:1px solid #f0f0f0;">${payload.lastError}</td>
+      </tr>` : ""}
+    </table>
+    <p style="font-size:13px;color:#666;margin:0 0 16px;">Customers may be seeing stale exchange rates. Please check connectivity to <strong>frankfurter.app</strong> or refresh rates manually from the admin panel.</p>
+    <p style="font-size:12px;color:#999;margin:0;">Manage exchange rates at <strong>/admin/pricing</strong>.</p>
+  </div>
+</div>
+</body></html>`;
+      await this.resend.emails.send({
+        from: this.fromEmail,
+        to: payload.toEmail,
+        subject: `⚠️ Exchange Rate Alert: Rates stale for >${payload.staleHoursThreshold}h — TurtleLittle`,
+        html,
+      });
+      return { success: true, channel: "resend" };
+    } catch (err) {
+      console.error("Resend exchange rate alert error:", err);
       return { success: false, channel: "resend", error: String(err) };
     }
   }
