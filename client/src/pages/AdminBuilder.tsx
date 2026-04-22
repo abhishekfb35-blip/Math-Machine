@@ -878,6 +878,11 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   const [sections, setSections] = useState<ShopSection[]>(data);
   const save = useSaveConfig("shop-sections");
 
+  const { data: allTags } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["/api/admin/tags"],
+    queryFn: () => fetch("/api/admin/tags").then(r => r.ok ? r.json() : []),
+  });
+
   const move = (index: number, dir: "up" | "down") => {
     const next = [...sections];
     const swap = dir === "up" ? index - 1 : index + 1;
@@ -939,13 +944,21 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Tag Slug</Label>
-              <Input
+              <Label className="text-xs">Tag</Label>
+              <select
                 value={s.tag}
                 onChange={(e) => update(i, "tag", e.target.value)}
-                placeholder="e.g. kids towels"
-                data-testid={`input-shop-section-tag-${i}`}
-              />
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                data-testid={`select-shop-section-tag-${i}`}
+              >
+                <option value="">— select a tag —</option>
+                {(allTags ?? []).map(t => (
+                  <option key={t.id} value={t.name}>{t.name}</option>
+                ))}
+                {s.tag && !(allTags ?? []).some(t => t.name === s.tag) && (
+                  <option value={s.tag}>{s.tag} (saved)</option>
+                )}
+              </select>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Max Products Shown</Label>
