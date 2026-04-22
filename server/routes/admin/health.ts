@@ -1468,4 +1468,14 @@ export function registerAdminHealthRoutes(app: Express) {
       res.status(500).json({ message: err.message || "Failed to export seed" });
     }
   });
+
+  app.post("/api/admin/cleanup-swatches", requirePermission("health"), async (_req: Request, res: Response) => {
+    try {
+      const result = await storage.cleanupOrphanedSwatches();
+      res.json({ success: true, deleted: result.deleted, filenames: result.filenames });
+    } catch (err: any) {
+      console.error("cleanup-swatches error:", err.message);
+      res.status(500).json({ message: err.message || "Failed to clean up swatch files" });
+    }
+  });
 }

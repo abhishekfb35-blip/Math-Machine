@@ -169,6 +169,7 @@ export interface IStorage {
   pruneRateLimitStats(retentionDays: number): Promise<void>;
   getActiveCustomerSessionCount(): Promise<number>;
   getRecentCustomerSignupCount(dayWindow: number): Promise<number>;
+  cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1366,6 +1367,44 @@ export class DatabaseStorage implements IStorage {
       .from(customerSessions)
       .where(gt(customerSessions.expiresAt, new Date()));
     return Number(result?.count ?? 0);
+  }
+
+  async cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }> {
+    const isProduction = __dirname.endsWith("/dist") || __dirname.endsWith("\\dist");
+    const swatchesDir = isProduction
+      ? path.resolve(__dirname, "public", "images", "swatches")
+      : path.resolve(process.cwd(), "client", "public", "images", "swatches");
+
+    let files: string[];
+    try {
+      files = await fs.promises.readdir(swatchesDir);
+    } catch (err: any) {
+      if (err?.code === "ENOENT") return { deleted: 0, filenames: [] };
+      throw err;
+    }
+
+    const deleted: string[] = [];
+    for (const filename of files) {
+      const filePath = path.resolve(swatchesDir, filename);
+      if (!filePath.startsWith(swatchesDir + path.sep)) continue;
+      const swatchUrl = `/images/swatches/${filename}`;
+      const refs = await db
+        .select({ id: variantColors.id })
+        .from(variantColors)
+        .where(eq(variantColors.swatchUrl, swatchUrl))
+        .limit(1);
+      if (refs.length === 0) {
+        try {
+          await fs.promises.unlink(filePath);
+          deleted.push(filename);
+        } catch (err: any) {
+          if (err?.code !== "ENOENT") {
+            console.warn(`[swatch-cleanup] Failed to delete ${filename}: ${err?.message}`);
+          }
+        }
+      }
+    }
+    return { deleted: deleted.length, filenames: deleted };
   }
 
   async getRecentCustomerSignupCount(dayWindow: number): Promise<number> {
