@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product } from "@shared/types";
-import { defaultShopSections, type ShopSection } from "@/lib/siteConfigDefaults";
+import type { ShopSection } from "@/lib/siteConfigDefaults";
 
 type AudienceFilter = "all" | "kids" | "adults" | "couples";
 
@@ -105,14 +105,13 @@ export default function ShopPage() {
     queryKey: ["/api/products"],
   });
 
-  const { data: shopSectionsConfig } = useQuery<{ value: string }>({
+  const { data: shopSectionsConfig } = useQuery<{ value: ShopSection[] }>({
     queryKey: ["/api/site-config", "shop-sections"],
     queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
   });
-  const shopSections: ShopSection[] = (() => {
-    if (!shopSectionsConfig?.value) return defaultShopSections;
-    try { return JSON.parse(shopSectionsConfig.value); } catch { return defaultShopSections; }
-  })();
+  const shopSections: ShopSection[] = Array.isArray(shopSectionsConfig?.value)
+    ? shopSectionsConfig.value
+    : [];
 
   // Products for audience-filtered / search views
   const flatProducts = useMemo(() => {
