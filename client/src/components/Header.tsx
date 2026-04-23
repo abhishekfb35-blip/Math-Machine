@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Bath, Shirt, Layers } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +27,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 
-const categories = [
-  { label: "Towels", href: "/shop#towels", icon: Bath },
-  { label: "Bathrobes", href: "/shop#bathrobes", icon: Shirt },
-  { label: "Blankets", href: "/shop#blankets", icon: Layers },
-];
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -42,21 +37,8 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [currentHash, setCurrentHash] = useState(() =>
-    typeof window !== "undefined" ? window.location.hash : ""
-  );
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
-
-  useEffect(() => {
-    const onHashChange = () => setCurrentHash(window.location.hash);
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-
-  useEffect(() => {
-    setCurrentHash(window.location.hash);
-  }, [location]);
 
   const { data: cart } = useQuery<{ itemCount: number }>({
     queryKey: ["/api/cart"],
@@ -71,12 +53,7 @@ export default function Header() {
     }
   };
 
-  const isCategoryActive = (href: string) => {
-    const slug = href.split("#")[1];
-    return location.startsWith("/shop") && currentHash === `#${slug}`;
-  };
-
-  const isShopActive = location.startsWith("/shop") && !categories.some(c => isCategoryActive(c.href));
+  const isShopActive = location.startsWith("/shop");
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
@@ -121,16 +98,6 @@ export default function Header() {
                 <Grid3X3 className="w-4 h-4 mr-1" /> Shop
               </Button>
             </Link>
-            {categories.map((cat) => (
-              <a key={cat.href} href={cat.href} data-testid={`link-nav-${cat.label.toLowerCase()}`}>
-                <Button
-                  variant={isCategoryActive(cat.href) ? "secondary" : "ghost"}
-                  size="sm"
-                >
-                  {cat.label}
-                </Button>
-              </a>
-            ))}
           </nav>
 
           <div className="flex items-center gap-1">
@@ -265,21 +232,6 @@ export default function Header() {
               </a>
             </SheetClose>
 
-            <div className="px-5 pt-4 pb-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Shop by Category</p>
-            </div>
-            {categories.map((cat) => (
-              <SheetClose key={cat.href} asChild>
-                <a
-                  href={cat.href}
-                  className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${isCategoryActive(cat.href) ? "text-primary bg-accent/50" : "text-foreground"}`}
-                  data-testid={`drawer-link-${cat.label.toLowerCase()}`}
-                >
-                  <cat.icon className="w-4 h-4 shrink-0" />
-                  {cat.label}
-                </a>
-              </SheetClose>
-            ))}
 
             <div className="border-t mt-2 pt-2">
               <SheetClose asChild>
