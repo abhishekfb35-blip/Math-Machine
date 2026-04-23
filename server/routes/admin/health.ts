@@ -1439,6 +1439,16 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY vc.sort_order, vc.id`
       );
 
+      // Export site_config — exclude base64 brand images and runtime-only keys
+      const scResult = await pool.query(
+        `SELECT key, value FROM site_config
+         WHERE key NOT LIKE 'brand-logo-%'
+           AND key NOT LIKE 'brand-pwa-%'
+           AND key NOT LIKE 'seed-hash-%'
+           AND key NOT IN ('cleanup-history', 'stats')
+         ORDER BY key`
+      );
+
       const updated = {
         ...existing,
         categories:    catsResult.rows,
@@ -1447,6 +1457,7 @@ export function registerAdminHealthRoutes(app: Express) {
         productImages: imgsResult.rows,
         productTags:   ptagsResult.rows,
         variantColors: vcResult.rows,
+        siteConfig:    scResult.rows,
       };
 
       fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
@@ -1460,6 +1471,7 @@ export function registerAdminHealthRoutes(app: Express) {
           productImages: imgsResult.rowCount,
           productTags:   ptagsResult.rowCount,
           variantColors: vcResult.rowCount,
+          siteConfig:    scResult.rowCount,
         },
         message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
       });
