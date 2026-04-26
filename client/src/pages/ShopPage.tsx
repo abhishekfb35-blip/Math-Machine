@@ -198,17 +198,21 @@ export default function ShopPage() {
     return products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
   }, [products, activeTag]);
 
-  // Compute tag sections (all + shown slice)
+  // Compute tag sections (all + shown slice), filtered by active audience
   const tagSections = useMemo(() => {
     if (!products) return [];
-    return shopSections.filter(s => s.enabled).map(s => {
-      const tagLower = s.tag.toLowerCase();
-      const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
-      return { ...s, all, shown: all.slice(0, s.maxShown) };
-    });
-  }, [products, shopSections]);
+    return shopSections
+      .filter(s => s.enabled)
+      .filter(s => activeFilter === "all" || (s.audiences ?? []).includes(activeFilter))
+      .map(s => {
+        const tagLower = s.tag.toLowerCase();
+        const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+        return { ...s, all, shown: all.slice(0, s.maxShown) };
+      });
+  }, [products, shopSections, activeFilter]);
 
-  const isAllView = activeFilter === "all" && !activeTag && !searchQuery.trim();
+  // Sections view: any audience tab (All / Kids / Adults / Couples) with no drilldown or search
+  const isAllView = !activeTag && !searchQuery.trim();
   const isTagView = !!activeTag && !searchQuery.trim();
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;

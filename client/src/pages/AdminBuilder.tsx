@@ -897,8 +897,20 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     setSections(next);
   };
 
+  const toggleAudience = (index: number, audience: string) => {
+    const next = [...sections];
+    const current = next[index].audiences ?? [];
+    next[index] = {
+      ...next[index],
+      audiences: current.includes(audience)
+        ? current.filter(a => a !== audience)
+        : [...current, audience],
+    };
+    setSections(next);
+  };
+
   const addSection = () => {
-    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true }]);
+    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audiences: [] }]);
   };
 
   const removeSection = (index: number) => {
@@ -970,6 +982,26 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
                 onChange={(e) => update(i, "maxShown", Math.max(1, parseInt(e.target.value) || 1))}
                 data-testid={`input-shop-section-max-${i}`}
               />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Show under filter tabs</Label>
+            <div className="flex items-center gap-4">
+              {(["kids", "adults", "couples"] as const).map(aud => (
+                <label key={aud} className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={(s.audiences ?? []).includes(aud)}
+                    onChange={() => toggleAudience(i, aud)}
+                    className="w-3.5 h-3.5 rounded"
+                    data-testid={`checkbox-audience-${aud}-${i}`}
+                  />
+                  <span className="text-sm capitalize">{aud}</span>
+                </label>
+              ))}
+              {(s.audiences ?? []).length === 0 && (
+                <span className="text-xs text-muted-foreground italic">Shows under "All" only</span>
+              )}
             </div>
           </div>
         </Card>
