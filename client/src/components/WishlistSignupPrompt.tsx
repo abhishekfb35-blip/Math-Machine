@@ -267,7 +267,7 @@ export default function WishlistSignupPrompt() {
                 <img
                   src={getProductImageUrl(previewImage ?? previewProduct.imageUrl ?? "", "large")}
                   alt={previewProduct.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                 />
               </div>
