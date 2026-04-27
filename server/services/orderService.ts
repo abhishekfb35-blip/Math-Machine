@@ -2,7 +2,7 @@ import type { IStorage } from "../storage";
 import type { Order } from "@shared/types";
 import type { IPaymentProvider } from "../providers/payment";
 import type { INotificationService, OrderItemDetail } from "../providers/notification";
-import { calculateDiscount, computeNumFree, defaultOfferTiers, defaultDeliveryTiers, type OfferTier, type DeliveryTier } from "./discountService";
+import type { CartDetails, EnrichedCartItem } from "./cartService";
 
 export interface CheckoutInput {
   customerId?: string | null;
@@ -41,55 +41,18 @@ export class OrderService {
     private notificationService: INotificationService,
   ) {}
 
-  private async loadOfferTiers(): Promise<OfferTier[]> {
-    try {
-      const config = await this.storage.getSiteConfig("offer-tiers");
-      if (config) {
-        const parsed = JSON.parse(config.value);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return defaultOfferTiers;
-  }
-
-  private async loadDeliveryTiers(): Promise<DeliveryTier[]> {
-    try {
-      const config = await this.storage.getSiteConfig("delivery-tiers");
-      if (config) {
-        const parsed = JSON.parse(config.value);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return defaultDeliveryTiers;
-  }
-
-  async checkout(sessionId: string, input: CheckoutInput): Promise<CheckoutResult> {
-    const cart = await this.storage.getOrCreateCart(sessionId);
-    const items = await this.storage.getCartItems(cart.id);
-
-    if (items.length === 0) {
+  /**
+   * COD checkout. Receives pre-computed CartDetails from CartService —
+   * no pricing recalculation here.
+   */
+  async checkout(cartDetails: CartDetails, input: CheckoutInput): Promise<CheckoutResult> {
+    if (cartDetails.items.length === 0) {
       throw new EmptyCartError("Cart is empty");
     }
 
-    const itemsWithProducts = await Promise.all(
-      items.map(async (item) => {
-        const product = await this.storage.getProductById(item.productId);
-        return { ...item, product };
-      })
-    );
-
-    const priceItems = itemsWithProducts
-      .filter(i => i.product)
-      .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-
-    const offerTiers = await this.loadOfferTiers();
-    const deliveryTiers = await this.loadDeliveryTiers();
-    const isDomestic = !input.currency || input.currency.toUpperCase() === "INR";
-    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
-
     const couponDiscount = input.couponDiscount || 0;
-    const finalTotal = Math.max(0, pricing.total - couponDiscount);
-    const totalDiscount = pricing.discount + couponDiscount;
+    const finalTotal = Math.max(0, cartDetails.total - couponDiscount);
+    const totalDiscount = cartDetails.discount + couponDiscount;
 
     const payment = await this.paymentProvider.createPaymentOrder({
       orderId: "",
@@ -109,9 +72,9 @@ export class OrderService {
       shippingCity: input.shippingCity,
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      shippingFee: pricing.shippingFee,
+      shippingFee: cartDetails.shippingFee,
       total: finalTotal,
       status: payment.status === "cod" ? "confirmed" : "pending",
       paymentStatus: payment.status,
@@ -120,8 +83,8 @@ export class OrderService {
       currency: input.currency || "INR",
     });
 
-    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts, offerTiers);
-    await this.storage.clearCart(cart.id);
+    const orderItemDetails = await this.createOrderItems(order.id, cartDetails);
+    await this.storage.clearCart(cartDetails.id);
 
     this.notificationService.sendOrderConfirmation({
       orderId: order.id,
@@ -129,9 +92,9 @@ export class OrderService {
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
       total: finalTotal,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
+      itemCount: cartDetails.itemCount,
       items: orderItemDetails,
       shippingAddress: input.shippingAddress,
       shippingCity: input.shippingCity,
@@ -142,41 +105,26 @@ export class OrderService {
 
     return {
       orderId: order.id,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      shippingFee: pricing.shippingFee,
+      shippingFee: cartDetails.shippingFee,
       couponDiscount,
       total: finalTotal,
     };
   }
 
-  async checkoutWithPayment(sessionId: string, input: PaidCheckoutInput): Promise<CheckoutResult> {
-    const cart = await this.storage.getOrCreateCart(sessionId);
-    const items = await this.storage.getCartItems(cart.id);
-
-    if (items.length === 0) {
+  /**
+   * Razorpay checkout. Receives pre-computed CartDetails from CartService —
+   * no pricing recalculation here.
+   */
+  async checkoutWithPayment(cartDetails: CartDetails, input: PaidCheckoutInput): Promise<CheckoutResult> {
+    if (cartDetails.items.length === 0) {
       throw new EmptyCartError("Cart is empty");
     }
 
-    const itemsWithProducts = await Promise.all(
-      items.map(async (item) => {
-        const product = await this.storage.getProductById(item.productId);
-        return { ...item, product };
-      })
-    );
-
-    const priceItems = itemsWithProducts
-      .filter(i => i.product)
-      .map(i => ({ price: i.product!.price, quantity: i.quantity }));
-
-    const offerTiers = await this.loadOfferTiers();
-    const deliveryTiers = await this.loadDeliveryTiers();
-    const isDomestic = !input.currency || input.currency.toUpperCase() === "INR";
-    const pricing = calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
-
     const couponDiscount = input.couponDiscount || 0;
-    const finalTotal = Math.max(0, pricing.total - couponDiscount);
-    const totalDiscount = pricing.discount + couponDiscount;
+    const finalTotal = Math.max(0, cartDetails.total - couponDiscount);
+    const totalDiscount = cartDetails.discount + couponDiscount;
 
     const order = await this.storage.createOrder({
       customerId: input.customerId || null,
@@ -187,9 +135,9 @@ export class OrderService {
       shippingCity: input.shippingCity,
       shippingState: input.shippingState,
       shippingPincode: input.shippingPincode,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      shippingFee: pricing.shippingFee,
+      shippingFee: cartDetails.shippingFee,
       total: finalTotal,
       status: "confirmed",
       paymentStatus: "paid",
@@ -199,8 +147,8 @@ export class OrderService {
       currency: input.currency || "INR",
     });
 
-    const orderItemDetails = await this.createOrderItems(order.id, itemsWithProducts, offerTiers);
-    await this.storage.clearCart(cart.id);
+    const orderItemDetails = await this.createOrderItems(order.id, cartDetails);
+    await this.storage.clearCart(cartDetails.id);
 
     this.notificationService.sendOrderConfirmation({
       orderId: order.id,
@@ -208,9 +156,9 @@ export class OrderService {
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
       total: finalTotal,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      itemCount: itemsWithProducts.reduce((sum, i) => sum + i.quantity, 0),
+      itemCount: cartDetails.itemCount,
       items: orderItemDetails,
       shippingAddress: input.shippingAddress,
       shippingCity: input.shippingCity,
@@ -221,9 +169,9 @@ export class OrderService {
 
     return {
       orderId: order.id,
-      subtotal: pricing.subtotal,
+      subtotal: cartDetails.subtotal,
       discount: totalDiscount,
-      shippingFee: pricing.shippingFee,
+      shippingFee: cartDetails.shippingFee,
       couponDiscount,
       total: finalTotal,
     };
@@ -236,37 +184,37 @@ export class OrderService {
     return { ...order, items };
   }
 
+  /**
+   * Expands cart items by quantity, sorts by effectivePrice desc (cheapest get free),
+   * and saves one order_items row per unit. Uses CartDetails.freeIndices.length to
+   * determine the number of free items — same value that CartService calculated for
+   * the discount — so there is no separate computeNumFree call here.
+   */
   private async createOrderItems(
     orderId: string,
-    itemsWithProducts: { quantity: number; personalizationName: string | null; selectedColor?: string | null; selectedSize?: string | null; product: any }[],
-    offerTiers: OfferTier[],
+    cartDetails: CartDetails,
   ): Promise<OrderItemDetail[]> {
-    const expanded: { product: any; personalizationName: string | null; selectedColor: string | null; selectedSize: string | null }[] = [];
-    itemsWithProducts.forEach(item => {
+    const expanded: { item: EnrichedCartItem; effectivePrice: number }[] = [];
+    for (const item of cartDetails.items) {
       for (let i = 0; i < item.quantity; i++) {
-        expanded.push({
-          product: item.product,
-          personalizationName: item.personalizationName,
-          selectedColor: item.selectedColor || null,
-          selectedSize: item.selectedSize || null,
-        });
+        expanded.push({ item, effectivePrice: item.effectivePrice });
       }
-    });
-    expanded.sort((a, b) => (b.product?.price || 0) - (a.product?.price || 0));
+    }
+    expanded.sort((a, b) => b.effectivePrice - a.effectivePrice);
 
     const totalCount = expanded.length;
-    const numFree = computeNumFree(totalCount, offerTiers);
+    const numFree = cartDetails.freeIndices.length;
     const details: OrderItemDetail[] = [];
 
     for (let i = 0; i < expanded.length; i++) {
-      const item = expanded[i];
+      const { item, effectivePrice } = expanded[i];
       if (!item.product) continue;
       const isFree = i >= totalCount - numFree;
       await this.storage.createOrderItem({
         orderId,
         productId: item.product.id,
         productName: item.product.name,
-        productPrice: item.product.price,
+        productPrice: effectivePrice,
         quantity: 1,
         personalizationName: item.personalizationName,
         selectedColor: item.selectedColor,
@@ -275,7 +223,7 @@ export class OrderService {
       });
       details.push({
         productName: item.product.name,
-        productPrice: item.product.price,
+        productPrice: effectivePrice,
         quantity: 1,
         personalizationName: item.personalizationName,
         isFree,

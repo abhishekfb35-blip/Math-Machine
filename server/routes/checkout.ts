@@ -84,6 +84,15 @@ export function registerCheckoutRoutes(app: Express) {
       const customer = await getAuthenticatedCustomer(req);
       const customerId = customer?.id || null;
 
+      // Single pricing calculation — CartService is the sole source of truth.
+      // This result flows unchanged into payment creation, order storage, and email.
+      const isDomestic = !paymentCurrency || (paymentCurrency as string).toUpperCase() === "INR";
+      const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
+
+      if (cartDetails.items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+
       let couponDiscount = 0;
       let validatedDiscountCode: string | null = null;
       let consentId: string | null = null;
@@ -93,9 +102,7 @@ export function registerCheckoutRoutes(app: Express) {
         if (consent && !consent.discountUsed) {
           validatedDiscountCode = consent.discountCode;
           consentId = consent.id;
-          const couponIsDomestic = !paymentCurrency || (paymentCurrency as string).toUpperCase() === "INR";
-          const couponPricing = await cartService.getCartDetails(sessionId, couponIsDomestic);
-          couponDiscount = Math.round(couponPricing.total * 0.10);
+          couponDiscount = Math.round(cartDetails.total * 0.10);
         }
       }
 
@@ -115,7 +122,7 @@ export function registerCheckoutRoutes(app: Express) {
         }
 
         const razorpayOrderService = new OrderService(storage, razorpay, notificationService);
-        const result = await razorpayOrderService.checkoutWithPayment(sessionId, {
+        const result = await razorpayOrderService.checkoutWithPayment(cartDetails, {
           ...input,
           customerId,
           discountCode: validatedDiscountCode,
@@ -129,7 +136,7 @@ export function registerCheckoutRoutes(app: Express) {
         return res.status(201).json(result);
       }
 
-      const result = await orderService.checkout(sessionId, { ...input, customerId, discountCode: validatedDiscountCode, couponDiscount, currency: paymentCurrency || "INR" });
+      const result = await orderService.checkout(cartDetails, { ...input, customerId, discountCode: validatedDiscountCode, couponDiscount, currency: paymentCurrency || "INR" });
       if (consentId) await storage.markConsentDiscountUsed(consentId);
       res.status(201).json(result);
     } catch (err) {
