@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showSignInModal } from "@/components/SignInModal";
+import { getProductImageUrl } from "@/lib/imageUtils";
 
 interface WishlistProduct {
   id: string;
@@ -229,7 +230,7 @@ export default function WishlistSignupPrompt() {
                     <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 absolute inset-0" />
                     {p.imageUrl && (
                       <img
-                        src={p.imageUrl}
+                        src={getProductImageUrl(p.imageUrl, "small")}
                         alt={p.name}
                         className="w-10 h-10 rounded-md object-cover absolute inset-0"
                         onError={(e) => { e.currentTarget.style.display = "none"; }}
