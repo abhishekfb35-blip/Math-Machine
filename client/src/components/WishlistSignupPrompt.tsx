@@ -11,6 +11,7 @@ interface WishlistProduct {
   name: string;
   slug: string;
   imageUrl: string | null;
+  galleryImages: string[];
 }
 
 const SESSION_KEY = "tl_wishlist_prompt_dismissed";
@@ -58,11 +59,13 @@ function isDismissed(): boolean {
 }
 
 export default function WishlistSignupPrompt() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [products, setProducts] = useState<WishlistProduct[]>([]);
+  const [previewProduct, setPreviewProduct] = useState<WishlistProduct | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [config, setConfig] = useState<WishlistPromptConfig>(DEFAULTS);
 
   const configRef = useRef<WishlistPromptConfig>(DEFAULTS);
@@ -81,6 +84,10 @@ export default function WishlistSignupPrompt() {
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { isAuthenticatedRef.current = isAuthenticated; }, [isAuthenticated]);
   useEffect(() => { authLoadingRef.current = authLoading; }, [authLoading]);
+
+  useEffect(() => {
+    if (previewProduct) setPreviewImage(previewProduct.imageUrl);
+  }, [previewProduct]);
 
   useEffect(() => {
     fetch(`/api/site-config/${CONFIG_KEY}`)
@@ -186,12 +193,18 @@ export default function WishlistSignupPrompt() {
     showSignInModal();
   };
 
-  const handleProductClick = (slug: string) => {
-    handleDismiss();
-    navigate(`/product/${slug}`);
+  const handleRowInteract = (p: WishlistProduct) => {
+    setPreviewProduct(prev => (prev?.id === p.id ? prev : p));
   };
 
   if (!visible) return null;
+
+  const allPreviewUrls = previewProduct
+    ? [previewProduct.imageUrl, ...previewProduct.galleryImages]
+        .filter((u): u is string => !!u)
+        .filter((u, i, arr) => arr.indexOf(u) === i)
+        .slice(0, 6)
+    : [];
 
   return (
     <div
@@ -227,14 +240,63 @@ export default function WishlistSignupPrompt() {
             )}
           </div>
 
+          {/* Inline image preview — shown when a row is hovered/tapped */}
+          {previewProduct && (
+            <div className="space-y-2 animate-in fade-in duration-200" data-testid="wishlist-prompt-preview">
+              <div className="w-full aspect-square max-h-48 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <img
+                  src={getProductImageUrl(previewImage ?? previewProduct.imageUrl ?? "", "large")}
+                  alt={previewProduct.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              </div>
+
+              {allPreviewUrls.length > 1 && (
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin justify-center">
+                  {allPreviewUrls.map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPreviewImage(url)}
+                      className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
+                        (previewImage ?? previewProduct.imageUrl) === url
+                          ? "border-rose-400"
+                          : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                      }`}
+                      data-testid={`wishlist-preview-thumb-${i}`}
+                    >
+                      <img
+                        src={getProductImageUrl(url, "small")}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 text-left line-clamp-1">
+                {previewProduct.name}
+              </p>
+            </div>
+          )}
+
+          {/* Scrollable product list */}
           {products.length > 0 && (
-            <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
+            <div className="max-h-40 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
               {products.map(p => (
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => handleProductClick(p.slug)}
-                  className="flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg px-1 py-0.5 transition-colors"
+                  onMouseEnter={() => handleRowInteract(p)}
+                  onClick={() => handleRowInteract(p)}
+                  className={`flex items-center gap-3 w-full text-left rounded-lg px-1 py-0.5 transition-colors ${
+                    previewProduct?.id === p.id
+                      ? "bg-rose-50 dark:bg-rose-900/20"
+                      : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  }`}
                   data-testid={`wishlist-prompt-product-${p.id}`}
                 >
                   <div className="relative w-10 h-10 flex-shrink-0">

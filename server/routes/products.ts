@@ -30,11 +30,16 @@ export function registerProductRoutes(app: Express) {
     const raw = req.body?.ids;
     if (!Array.isArray(raw)) return res.status(400).json({ message: "ids must be an array" });
     const ids: string[] = [...new Set(raw.filter((x: unknown) => typeof x === "string"))].slice(0, 20) as string[];
-    const results = await Promise.all(ids.map(id => storage.getProductById(id).catch(() => null)));
-    const prods = results
-      .filter((p): p is NonNullable<typeof p> => p != null)
-      .map(p => ({ id: p.id, name: p.name, slug: p.slug, imageUrl: p.imageUrl ?? null }));
-    res.json(prods);
+    const results = await Promise.all(
+      ids.map(async id => {
+        const p = await storage.getProductById(id).catch(() => null);
+        if (!p) return null;
+        const imgs = await storage.getProductImages(id).catch(() => []);
+        const galleryImages = imgs.slice(0, 5).map(i => i.imageUrl);
+        return { id: p.id, name: p.name, slug: p.slug, imageUrl: p.imageUrl ?? null, galleryImages };
+      })
+    );
+    res.json(results.filter(Boolean));
   });
 
   app.get("/api/products/search", async (req, res) => {
