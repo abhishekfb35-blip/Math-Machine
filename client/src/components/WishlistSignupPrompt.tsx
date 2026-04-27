@@ -222,7 +222,7 @@ export default function WishlistSignupPrompt() {
           </div>
 
           {products.length > 0 && (
-            <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1" data-testid="wishlist-prompt-products">
+            <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
               {products.map(p => (
                 <div key={p.id} className="flex items-center gap-3">
                   {p.imageUrl ? (
