@@ -163,6 +163,15 @@ export default function WishlistSignupPrompt() {
         if (res.ok) {
           const data: WishlistProduct[] = await res.json();
           setProducts(data);
+          if (data.length > 0) setPreviewProduct(data[0]);
+          data.forEach(p => {
+            [p.imageUrl, ...p.galleryImages]
+              .filter(Boolean)
+              .forEach(url => {
+                const img = new Image();
+                img.src = getProductImageUrl(url!, "large");
+              });
+          });
         }
       }
     } catch {}
