@@ -225,15 +225,17 @@ export default function WishlistSignupPrompt() {
             <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
               {products.map(p => (
                 <div key={p.id} className="flex items-center gap-3">
-                  {p.imageUrl ? (
-                    <img
-                      src={p.imageUrl}
-                      alt={p.name}
-                      className="w-10 h-10 rounded-md object-cover flex-shrink-0 bg-gray-100 dark:bg-gray-800"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-md flex-shrink-0 bg-gray-100 dark:bg-gray-800" />
-                  )}
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 absolute inset-0" />
+                    {p.imageUrl && (
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-10 h-10 rounded-md object-cover absolute inset-0"
+                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                      />
+                    )}
+                  </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
                     {p.name}
                   </span>
