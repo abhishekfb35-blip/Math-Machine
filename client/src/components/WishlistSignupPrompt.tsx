@@ -58,7 +58,7 @@ function isDismissed(): boolean {
 }
 
 export default function WishlistSignupPrompt() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
@@ -186,6 +186,11 @@ export default function WishlistSignupPrompt() {
     showSignInModal();
   };
 
+  const handleProductClick = (slug: string) => {
+    handleDismiss();
+    navigate(`/product/${slug}`);
+  };
+
   if (!visible) return null;
 
   return (
@@ -225,7 +230,13 @@ export default function WishlistSignupPrompt() {
           {products.length > 0 && (
             <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
               {products.map(p => (
-                <div key={p.id} className="flex items-center gap-3">
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleProductClick(p.slug)}
+                  className="flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg px-1 py-0.5 transition-colors"
+                  data-testid={`wishlist-prompt-product-${p.id}`}
+                >
                   <div className="relative w-10 h-10 flex-shrink-0">
                     <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 absolute inset-0" />
                     {p.imageUrl && (
@@ -240,7 +251,7 @@ export default function WishlistSignupPrompt() {
                   <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
                     {p.name}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
