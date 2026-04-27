@@ -26,6 +26,17 @@ export function registerProductRoutes(app: Express) {
     res.json(prods);
   });
 
+  app.post("/api/products/batch", async (req, res) => {
+    const raw = req.body?.ids;
+    if (!Array.isArray(raw)) return res.status(400).json({ message: "ids must be an array" });
+    const ids: string[] = [...new Set(raw.filter((x: unknown) => typeof x === "string"))].slice(0, 20) as string[];
+    const results = await Promise.all(ids.map(id => storage.getProductById(id).catch(() => null)));
+    const products = results
+      .filter((p): p is NonNullable<typeof p> => p != null)
+      .map(p => ({ id: p.id, name: p.name, slug: p.slug, imageUrl: p.imageUrl ?? null }));
+    res.json(products);
+  });
+
   app.get("/api/products/search", async (req, res) => {
     const q = (req.query.q as string || "").trim();
     if (!q) return res.json([]);

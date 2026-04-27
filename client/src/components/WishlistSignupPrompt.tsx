@@ -5,6 +5,13 @@ import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showSignInModal } from "@/components/SignInModal";
 
+interface WishlistProduct {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+}
+
 const SESSION_KEY = "tl_wishlist_prompt_dismissed";
 const CONFIG_KEY = "wishlist-signup-prompt";
 
@@ -26,15 +33,19 @@ const DEFAULTS: WishlistPromptConfig = {
   ctaText: "Save my wishlist",
 };
 
-function getLocalCount(): number {
+function getLocalIds(): string[] {
   try {
     const raw = localStorage.getItem("tl_wishlist");
-    if (!raw) return 0;
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.length : 0;
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return 0;
+    return [];
   }
+}
+
+function getLocalCount(): number {
+  return getLocalIds().length;
 }
 
 function isDismissed(): boolean {
@@ -50,6 +61,7 @@ export default function WishlistSignupPrompt() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
+  const [products, setProducts] = useState<WishlistProduct[]>([]);
   const [config, setConfig] = useState<WishlistPromptConfig>(DEFAULTS);
 
   const configRef = useRef<WishlistPromptConfig>(DEFAULTS);
@@ -95,8 +107,7 @@ export default function WishlistSignupPrompt() {
             if (!shouldShowNow()) return;
             const count = getLocalCount();
             if (count <= 0) return;
-            setItemCount(count);
-            setVisible(true);
+            void fetchProductsAndShow(count);
           }, 20 * 1000);
         }
       });
@@ -111,6 +122,25 @@ export default function WishlistSignupPrompt() {
     return true;
   };
 
+  const fetchProductsAndShow = async (count: number) => {
+    setItemCount(count);
+    try {
+      const ids = getLocalIds();
+      if (ids.length > 0) {
+        const res = await fetch("/api/products/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        if (res.ok) {
+          const data: WishlistProduct[] = await res.json();
+          setProducts(data);
+        }
+      }
+    } catch {}
+    setVisible(true);
+  };
+
   useEffect(() => {
     const startTimer = () => {
       if (!shouldShowNow()) return;
@@ -120,8 +150,7 @@ export default function WishlistSignupPrompt() {
         if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
         if (latestCount <= 0) return;
-        setItemCount(latestCount);
-        setVisible(true);
+        void fetchProductsAndShow(latestCount);
       }, delaySecs * 1000);
     };
 
@@ -191,6 +220,27 @@ export default function WishlistSignupPrompt() {
               </p>
             )}
           </div>
+
+          {products.length > 0 && (
+            <div className="max-h-40 overflow-y-auto space-y-2 text-left pr-1" data-testid="wishlist-prompt-products">
+              {products.map(p => (
+                <div key={p.id} className="flex items-center gap-3">
+                  {p.imageUrl ? (
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      className="w-10 h-10 rounded-md object-cover flex-shrink-0 bg-gray-100 dark:bg-gray-800"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-md flex-shrink-0 bg-gray-100 dark:bg-gray-800" />
+                  )}
+                  <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
+                    {p.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
             {config.bodyText}
