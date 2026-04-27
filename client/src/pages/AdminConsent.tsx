@@ -452,10 +452,20 @@ export default function AdminConsent() {
                 />
               </div>
 
-              <Button onClick={handleSaveWishlist} disabled={saveWishlistMutation.isPending} data-testid="button-save-wishlist-prompt">
-                {saveWishlistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Wishlist Prompt
-              </Button>
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={handleSaveWishlist} disabled={saveWishlistMutation.isPending} data-testid="button-save-wishlist-prompt">
+                  {saveWishlistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                  Save Wishlist Prompt
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("wishlist:force-preview"))}
+                  data-testid="button-preview-wishlist-prompt"
+                >
+                  Preview Popup
+                </Button>
+              </div>
             </div>
           )}
         </Card>

@@ -80,6 +80,26 @@ export default function WishlistSignupPrompt() {
 
   const triggerTimerRef = useRef<(() => void) | null>(null);
 
+  useEffect(() => {
+    const handler = () => {
+      try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+      setVisible(false);
+      setTimeout(() => {
+        const count = getLocalCount();
+        if (count > 0) {
+          void fetchProductsAndShow(count);
+        } else {
+          setItemCount(0);
+          setProducts([]);
+          setPreviewProduct(null);
+          setVisible(true);
+        }
+      }, 80);
+    };
+    window.addEventListener("wishlist:force-preview", handler);
+    return () => window.removeEventListener("wishlist:force-preview", handler);
+  }, []);
+
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { locationRef.current = location; }, [location]);
   useEffect(() => { isAuthenticatedRef.current = isAuthenticated; }, [isAuthenticated]);
