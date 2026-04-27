@@ -252,7 +252,7 @@ export default function WishlistSignupPrompt() {
                 />
               </div>
 
-              {allPreviewUrls.length > 1 && (
+              {previewProduct.galleryImages.length > 0 && (
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin justify-center">
                   {allPreviewUrls.map((url, i) => (
                     <button
