@@ -10,6 +10,7 @@ import { db } from "../../db";
 import { siteConfig } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { seedDatabase } from "../../seed";
+import { Resend } from "resend";
 
 const BRAND_SLOTS: Record<string, string> = {
   desktop: "logo-desktop.png",
@@ -1488,6 +1489,59 @@ export function registerAdminHealthRoutes(app: Express) {
     } catch (err: any) {
       console.error("cleanup-swatches error:", err.message);
       res.status(500).json({ message: err.message || "Failed to clean up swatch files" });
+    }
+  });
+
+  app.post("/api/admin/email/test-bcc", requirePermission("health"), async (_req: Request, res: Response) => {
+    try {
+      const config = await storage.getSiteConfig("notification-bcc-config");
+      if (!config?.value) {
+        return res.status(400).json({ success: false, message: "No BCC config saved yet." });
+      }
+
+      let bccEmail = "";
+      try {
+        const raw = config.value.replace(/^"|"$/g, "").trim();
+        const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
+        bccEmail = parsed.email?.trim() ?? "";
+      } catch {
+        return res.status(400).json({ success: false, message: "BCC config is malformed. Please re-save it." });
+      }
+
+      if (!bccEmail) {
+        return res.status(400).json({ success: false, message: "No BCC email address configured." });
+      }
+
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ success: false, message: "RESEND_API_KEY is not set on this server." });
+      }
+
+      const resend = new Resend(apiKey);
+
+      const adminConfig = await storage.getSiteConfig("admin-emails");
+      const fromDomain = (adminConfig?.value ?? "").replace(/^"|"$/g, "").trim() || "hello@turtlelittle.com";
+      const fromEmail = `Turtle Little <${fromDomain.includes(",") ? fromDomain.split(",")[0].trim() : fromDomain}>`;
+
+      const result = await resend.emails.send({
+        from: fromEmail,
+        to: bccEmail,
+        subject: "✅ Test BCC — Turtle Little Email Monitoring",
+        html: `<p>This is a <strong>test email</strong> from your Turtle Little admin panel.</p>
+               <p>If you received this, your BCC monitoring address (<strong>${bccEmail}</strong>) is correctly set up and Resend is delivering to it.</p>
+               <p style="color:#888;font-size:12px">Sent via Admin › Email Monitoring › Send Test</p>`,
+      });
+
+      if (result.error) {
+        console.error("[test-bcc] Resend error:", result.error);
+        return res.status(502).json({ success: false, message: `Resend rejected the email: ${result.error.message}`, error: result.error });
+      }
+
+      console.log("[test-bcc] Test email sent to", bccEmail, "id:", result.data?.id);
+      res.json({ success: true, message: `Test email sent to ${bccEmail}. Check your inbox (and spam).`, id: result.data?.id });
+    } catch (err: any) {
+      console.error("[test-bcc] Unexpected error:", err.message);
+      res.status(500).json({ success: false, message: err.message || "Unexpected error sending test email." });
     }
   });
 }

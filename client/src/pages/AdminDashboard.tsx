@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -177,6 +177,7 @@ export default function AdminDashboard() {
   });
   const [bccSaved, setBccSaved] = useState(false);
   const [bccEditing, setBccEditing] = useState(false);
+  const [bccTestResult, setBccTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const handleLogout = async () => {
     await apiRequest("POST", "/api/admin/logout");
@@ -222,6 +223,22 @@ export default function AdminDashboard() {
       setBccSaved(true);
       setBccEditing(false);
       setTimeout(() => setBccSaved(false), 3000);
+    },
+  });
+
+  const sendTestBcc = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/email/test-bcc");
+      return res as { success: boolean; message: string };
+    },
+    onSuccess: (data) => {
+      setBccTestResult({ ok: true, message: data.message });
+      setTimeout(() => setBccTestResult(null), 8000);
+    },
+    onError: (err: any) => {
+      const msg = err?.message || "Failed to send test email";
+      setBccTestResult({ ok: false, message: msg });
+      setTimeout(() => setBccTestResult(null), 8000);
     },
   });
 
@@ -344,6 +361,30 @@ export default function AdminDashboard() {
         )}
         {!bccError && bccInput.trim() === "" && (
           <p className="text-xs text-muted-foreground mt-3">No monitoring address set — BCC will not be sent regardless of the selections above.</p>
+        )}
+
+        {bccInput.trim() && !bccEditing && (
+          <div className="mt-4 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => { setBccTestResult(null); sendTestBcc.mutate(); }}
+              disabled={sendTestBcc.isPending}
+              data-testid="button-send-test-bcc"
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" />
+              {sendTestBcc.isPending ? "Sending…" : "Send test email to BCC address"}
+            </Button>
+            {bccTestResult && (
+              <p
+                className={`text-xs mt-1 ${bccTestResult.ok ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
+                data-testid="text-bcc-test-result"
+              >
+                {bccTestResult.ok ? "✅ " : "❌ "}{bccTestResult.message}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
