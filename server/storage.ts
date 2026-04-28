@@ -67,7 +67,7 @@ export interface IStorage {
   updateOrderPayment(orderId: string, paymentId: string, paymentStatus: string): Promise<Order | undefined>;
   getAllOrders(filters?: { status?: string; search?: string; limit?: number; offset?: number }): Promise<Order[]>;
   getOrderCount(filters?: { status?: string; search?: string }): Promise<number>;
-  updateOrderStatus(orderId: string, status: string): Promise<Order | undefined>;
+  updateOrderStatus(orderId: string, status: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<Order | undefined>;
   updateOrderNotes(orderId: string, notes: string): Promise<Order | undefined>;
 
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
@@ -506,9 +506,13 @@ export class DatabaseStorage implements IStorage {
     return Number(result.count);
   }
 
-  async updateOrderStatus(orderId: string, status: string): Promise<Order | undefined> {
+  async updateOrderStatus(orderId: string, status: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<Order | undefined> {
+    const setFields: Record<string, unknown> = { status, updatedAt: new Date() };
+    if (shippingInfo?.courierPartner !== undefined) setFields.courierPartner = shippingInfo.courierPartner;
+    if (shippingInfo?.serviceType !== undefined) setFields.serviceType = shippingInfo.serviceType;
+    if (shippingInfo?.trackingNumber !== undefined) setFields.trackingNumber = shippingInfo.trackingNumber;
     const [updated] = await db.update(orders)
-      .set({ status, updatedAt: new Date() })
+      .set(setFields)
       .where(eq(orders.id, orderId))
       .returning();
     return updated;

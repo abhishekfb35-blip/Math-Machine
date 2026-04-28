@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   ChevronLeft, Search, Package, Truck, CheckCircle, XCircle, Clock,
-  MapPin, Phone, Mail, User, StickyNote, ChevronRight, Loader2, RefreshCw
+  MapPin, Phone, Mail, User, StickyNote, ChevronRight, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
@@ -79,14 +81,18 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
   const { toast } = useToast();
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
+  const [shipModalOpen, setShipModalOpen] = useState(false);
+  const [courierPartner, setCourierPartner] = useState("");
+  const [serviceType, setServiceType] = useState<"land" | "air">("land");
+  const [trackingNumber, setTrackingNumber] = useState("");
 
   const { data: order, isLoading } = useQuery<OrderWithItems>({
     queryKey: ["/api/admin/orders", orderId],
   });
 
   const statusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
-      await apiRequest("PATCH", `/api/admin/orders/${orderId}/status`, { status: newStatus });
+    mutationFn: async (payload: { status: string; courierPartner?: string; serviceType?: string; trackingNumber?: string }) => {
+      await apiRequest("PATCH", `/api/admin/orders/${orderId}/status`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders", orderId] });
@@ -97,6 +103,23 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
       toast({ title: "Failed to update status", variant: "destructive" });
     },
   });
+
+  function handleStatusChange(val: string) {
+    if (val === "shipped") {
+      setCourierPartner("");
+      setServiceType("land");
+      setTrackingNumber("");
+      setShipModalOpen(true);
+    } else {
+      statusMutation.mutate({ status: val });
+    }
+  }
+
+  function handleShipConfirm() {
+    if (!courierPartner.trim() || !trackingNumber.trim()) return;
+    statusMutation.mutate({ status: "shipped", courierPartner: courierPartner.trim(), serviceType, trackingNumber: trackingNumber.trim() });
+    setShipModalOpen(false);
+  }
 
   const notesMutation = useMutation({
     mutationFn: async (notes: string) => {
@@ -254,7 +277,7 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
           <h3 className="font-semibold text-sm mb-3">Update Status</h3>
           <Select
             value={order.status}
-            onValueChange={(val) => statusMutation.mutate(val)}
+            onValueChange={handleStatusChange}
             disabled={statusMutation.isPending}
           >
             <SelectTrigger data-testid="select-order-status">
@@ -277,6 +300,28 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
             Changing to Shipped, Delivered, or Cancelled will notify the customer by email.
           </p>
         </Card>
+
+        {(order.status === "shipped" || order.status === "delivered") && order.courierPartner && (
+          <Card className="p-4">
+            <h3 className="font-semibold text-sm mb-3 flex items-center gap-1.5">
+              <Truck className="w-4 h-4" /> Shipping Info
+            </h3>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-32 shrink-0">Courier Partner</span>
+                <span className="font-medium" data-testid="text-courier-partner">{order.courierPartner}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-32 shrink-0">Service Type</span>
+                <span className="font-medium capitalize" data-testid="text-service-type">{order.serviceType === "air" ? "Air" : "Land"}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-32 shrink-0">Tracking Number</span>
+                <span className="font-mono font-medium" data-testid="text-tracking-number">{order.trackingNumber}</span>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -332,6 +377,83 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
           )}
         </div>
       </Card>
+
+      <Dialog open={shipModalOpen} onOpenChange={(open) => !statusMutation.isPending && setShipModalOpen(open)}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-ship-order">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="w-5 h-5" /> Mark as Shipped
+            </DialogTitle>
+            <DialogDescription>
+              Enter the shipping details below. These will be included in the email sent to your customer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="courier-partner">Courier Partner</Label>
+              <Input
+                id="courier-partner"
+                placeholder="e.g. Delhivery, BlueDart, DTDC..."
+                value={courierPartner}
+                onChange={(e) => setCourierPartner(e.target.value)}
+                data-testid="input-courier-partner"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Service Type</Label>
+              <div className="flex gap-3">
+                {(["land", "air"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setServiceType(type)}
+                    data-testid={`radio-service-${type}`}
+                    className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
+                      serviceType === type
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background text-foreground hover:border-foreground/50"
+                    }`}
+                  >
+                    {type === "land" ? "🚛  Land" : "✈️  Air"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="tracking-number">Tracking Number</Label>
+              <Input
+                id="tracking-number"
+                placeholder="e.g. DL7492019283"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                data-testid="input-tracking-number"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShipModalOpen(false)}
+              disabled={statusMutation.isPending}
+              data-testid="button-ship-cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleShipConfirm}
+              disabled={!courierPartner.trim() || !trackingNumber.trim() || statusMutation.isPending}
+              data-testid="button-ship-confirm"
+            >
+              {statusMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Truck className="w-4 h-4 mr-2" />}
+              Mark as Shipped
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

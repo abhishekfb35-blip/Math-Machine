@@ -80,6 +80,9 @@ export const orders = pgTable("orders", {
   currency: varchar("currency", { length: 3 }).default("INR"),
   notes: text("notes"),
   emailStatus: jsonb("email_status"),
+  courierPartner: text("courier_partner"),
+  serviceType: text("service_type"),
+  trackingNumber: text("tracking_number"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

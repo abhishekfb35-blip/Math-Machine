@@ -58,7 +58,7 @@ export interface INotificationService {
   readonly name: string;
   sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult>;
   sendOrderConfirmed(notification: OrderNotification): Promise<NotificationResult>;
-  sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult>;
+  sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
   sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult>;
@@ -488,8 +488,8 @@ export class ConsoleNotificationService implements INotificationService {
     return { success: true, channel: "console" };
   }
 
-  async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult> {
-    console.log(`[Order Update] Order #${orderId} → ${status} (${customerEmail})`);
+  async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<NotificationResult> {
+    console.log(`[Order Update] Order #${orderId} → ${status} (${customerEmail})`, shippingInfo ?? "");
     return { success: true, channel: "console" };
   }
 
@@ -701,25 +701,103 @@ export class ResendNotificationService implements INotificationService {
     }
   }
 
-  async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string): Promise<NotificationResult> {
+  async sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<NotificationResult> {
     try {
-      const statusMessages: Record<string, string> = {
-        shipped: "Your order has been shipped! You'll receive tracking details shortly.",
-        delivered: "Your order has been delivered! We hope you love your personalised TurtleLittle products.",
-        cancelled: "Your order has been cancelled. If payment was made, a refund will be processed within 7-10 business days.",
-      };
-
-      const message = statusMessages[status] || `Your order status has been updated to: ${status}`;
+      const shortId = orderId.slice(-8).toUpperCase();
       const typeKey = status === "shipped" ? "order-shipped" : status === "delivered" ? "order-delivered" : status === "cancelled" ? "order-cancelled" : `order-${status}`;
       const bcc = await this.getBccForType(typeKey);
+
+      let subject: string;
+      let bodyHtml: string;
+
+      if (status === "shipped" && shippingInfo?.courierPartner && shippingInfo?.trackingNumber) {
+        const serviceLabel = shippingInfo.serviceType === "air" ? "Air" : "Land";
+        subject = `Your TurtleLittle order is on its way! — #${shortId}`;
+        bodyHtml = `
+<div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px;">
+  <h2 style="color: #1a1a1a; margin: 0 0 8px; text-align: center;">Your order is on its way!</h2>
+  <p style="color: #666; font-size: 14px; text-align: center; margin: 0 0 24px;">Order #${shortId}</p>
+
+  <p style="font-size: 15px; color: #1a1a1a; line-height: 1.6; margin: 0 0 20px;">
+    Great news — your order has been shipped and is heading your way!
+  </p>
+
+  <div style="background: #f4f4f4; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+    <p style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin: 0 0 12px;">Shipping Details</p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <tr>
+        <td style="color: #666; padding: 5px 0; width: 44%;">Courier Partner</td>
+        <td style="color: #1a1a1a; font-weight: 600; padding: 5px 0;">${shippingInfo.courierPartner}</td>
+      </tr>
+      <tr>
+        <td style="color: #666; padding: 5px 0;">Service Type</td>
+        <td style="color: #1a1a1a; font-weight: 600; padding: 5px 0;">${serviceLabel}</td>
+      </tr>
+      <tr>
+        <td style="color: #666; padding: 5px 0;">Tracking Number</td>
+        <td style="color: #1a1a1a; font-weight: 600; padding: 5px 0; font-family: monospace;">${shippingInfo.trackingNumber}</td>
+      </tr>
+    </table>
+  </div>
+
+  <p style="font-size: 14px; color: #444; line-height: 1.7; margin: 0 0 8px;">
+    You can track your order on the courier's website using the tracking number above.
+  </p>
+
+  <div style="background: #fafafa; border-left: 3px solid #ddd; padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 16px 0 24px;">
+    <p style="font-size: 13px; font-weight: 600; color: #1a1a1a; margin: 0 0 6px;">Estimated Delivery</p>
+    <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.7;">
+      Metro cities (Delhi, Mumbai, Bangalore, etc.) — 2–4 business days<br/>
+      Other cities &amp; towns — 4–7 business days<br/>
+      Remote areas — 7–10 business days
+    </p>
+  </div>
+
+  <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+    Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
+  </p>
+</div>`;
+      } else if (status === "shipped") {
+        subject = `Your TurtleLittle order is on its way! — #${shortId}`;
+        bodyHtml = `
+<div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; text-align: center;">
+  <h2 style="color: #1a1a1a; margin: 0 0 8px;">Your order is on its way!</h2>
+  <p style="color: #666; font-size: 14px;">Order #${shortId}</p>
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 16px 0;">
+    <p style="font-size: 14px; color: #1a1a1a; margin: 0; line-height: 1.6;">
+      Your order has been shipped! Tracking details will be shared with you shortly.
+    </p>
+  </div>
+  <p style="color: #999; font-size: 12px; margin-top: 24px;">
+    Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
+  </p>
+</div>`;
+      } else {
+        const statusMessages: Record<string, string> = {
+          delivered: "Your order has been delivered! We hope you love your personalised TurtleLittle products.",
+          cancelled: "Your order has been cancelled. If payment was made, a refund will be processed within 7–10 business days.",
+        };
+        const message = statusMessages[status] || `Your order status has been updated to: ${status}.`;
+        subject = `Order Update — #${shortId} | TurtleLittle`;
+        bodyHtml = `
+<div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; text-align: center;">
+  <h2 style="color: #1a1a1a; margin: 0 0 8px;">Order Update</h2>
+  <p style="color: #666; font-size: 14px;">Order #${shortId}</p>
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 16px 0;">
+    <p style="font-size: 14px; color: #1a1a1a; margin: 0; line-height: 1.6;">${message}</p>
+  </div>
+  <p style="color: #999; font-size: 12px; margin-top: 24px;">
+    Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
+  </p>
+</div>`;
+      }
 
       await this.resend.emails.send({
         from: this.fromEmail,
         to: customerEmail,
         bcc: bcc.length ? bcc : undefined,
-        subject: `Order Update — #${orderId.slice(-8).toUpperCase()} | TurtleLittle`,
-        html: `
-<!DOCTYPE html>
+        subject,
+        html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
@@ -727,16 +805,7 @@ export class ResendNotificationService implements INotificationService {
     <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
       <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TurtleLittle</h1>
     </div>
-    <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; text-align: center;">
-      <h2 style="color: #1a1a1a; margin: 0 0 8px;">Order Update</h2>
-      <p style="color: #666; font-size: 14px;">Order #${orderId.slice(-8).toUpperCase()}</p>
-      <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 16px 0;">
-        <p style="font-size: 14px; color: #1a1a1a; margin: 0; line-height: 1.6;">${message}</p>
-      </div>
-      <p style="color: #999; font-size: 12px; margin-top: 24px;">
-        Questions? WhatsApp us at <a href="https://wa.me/919990079722" style="color: #1a1a1a;">+91 99900 79722</a>
-      </p>
-    </div>
+    ${bodyHtml}
   </div>
 </body>
 </html>`,

@@ -151,6 +151,9 @@ export interface Order {
   currency: string | null;
   notes: string | null;
   emailStatus: unknown | null;
+  courierPartner: string | null;
+  serviceType: string | null;
+  trackingNumber: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }

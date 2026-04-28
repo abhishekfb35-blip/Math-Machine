@@ -7,6 +7,9 @@ import { notificationService } from "../../providers/notification";
 
 const orderStatusSchema = z.object({
   status: z.enum(["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]),
+  courierPartner: z.string().optional(),
+  serviceType: z.enum(["land", "air"]).optional(),
+  trackingNumber: z.string().optional(),
 });
 
 const orderNotesSchema = z.object({
@@ -52,10 +55,11 @@ export function registerAdminOrderRoutes(app: Express) {
   app.patch("/api/admin/orders/:id/status", requirePermission("orders"), async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
-      const { status } = orderStatusSchema.parse(req.body);
+      const { status, courierPartner, serviceType, trackingNumber } = orderStatusSchema.parse(req.body);
       const order = await storage.getOrderById(id);
       if (!order) return res.status(404).json({ message: "Order not found" });
-      const updated = await storage.updateOrderStatus(id, status);
+      const shippingInfo = status === "shipped" ? { courierPartner, serviceType, trackingNumber } : undefined;
+      const updated = await storage.updateOrderStatus(id, status, shippingInfo);
       await storage.createAuditLog({
         entityType: "order",
         entityId: id,
@@ -82,7 +86,7 @@ export function registerAdminOrderRoutes(app: Express) {
           })),
         }).catch(err => console.error("Order confirmed notification error:", err));
       } else if (["shipped", "delivered", "cancelled"].includes(status) && order.customerEmail) {
-        notificationService.sendOrderStatusUpdate(id, status, order.customerEmail)
+        notificationService.sendOrderStatusUpdate(id, status, order.customerEmail, shippingInfo)
           .catch(err => console.error("Status notification error:", err));
       }
       res.json(updated);
