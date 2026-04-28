@@ -62,6 +62,7 @@ interface ConsentsResponse {
 interface WishlistPromptConfig {
   enabled: boolean;
   delaySeconds: number;
+  sessionDelaySeconds: number;
   headline: string;
   bodyText: string;
   ctaText: string;
@@ -70,6 +71,7 @@ interface WishlistPromptConfig {
 const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
   enabled: true,
   delaySeconds: 5,
+  sessionDelaySeconds: 20,
   headline: "Don't lose your picks!",
   bodyText: "Create a free account to save your wishlist and pick up right where you left off.",
   ctaText: "Save my wishlist",
@@ -418,7 +420,20 @@ export default function AdminConsent() {
                   className="w-32"
                   data-testid="input-wishlist-prompt-delay"
                 />
-                <p className="text-xs text-muted-foreground mt-1">How long to wait before showing the prompt</p>
+                <p className="text-xs text-muted-foreground mt-1">How long to wait before showing the prompt after an item is added</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Delay on page revisit (seconds)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={wishlistPrompt.sessionDelaySeconds}
+                  onChange={e => setWishlistPrompt(s => ({ ...s, sessionDelaySeconds: parseInt(e.target.value) || 0 }))}
+                  className="w-32"
+                  data-testid="input-wishlist-prompt-session-delay"
+                />
+                <p className="text-xs text-muted-foreground mt-1">How long to wait before showing the prompt when a returning visitor already has wishlist items</p>
               </div>
 
               <div>

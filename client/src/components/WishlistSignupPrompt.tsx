@@ -22,6 +22,7 @@ const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 interface WishlistPromptConfig {
   enabled: boolean;
   delaySeconds: number;
+  sessionDelaySeconds: number;
   headline: string;
   bodyText: string;
   ctaText: string;
@@ -30,6 +31,7 @@ interface WishlistPromptConfig {
 const DEFAULTS: WishlistPromptConfig = {
   enabled: true,
   delaySeconds: 5,
+  sessionDelaySeconds: 20,
   headline: "Don't lose your picks!",
   bodyText:
     "Create a free account to save your wishlist and pick up right where you left off.",
@@ -137,6 +139,12 @@ export default function WishlistSignupPrompt() {
               ? merged.delaySeconds
               : DEFAULTS.delaySeconds,
           );
+          merged.sessionDelaySeconds = Math.max(
+            0,
+            Number.isFinite(merged.sessionDelaySeconds)
+              ? merged.sessionDelaySeconds
+              : DEFAULTS.sessionDelaySeconds,
+          );
           setConfig(merged);
           configRef.current = merged;
         }
@@ -149,12 +157,18 @@ export default function WishlistSignupPrompt() {
           triggerTimerRef.current?.();
         }
         if (getLocalCount() > 0) {
+          const sessionDelaySecs = Math.max(
+            0,
+            Number.isFinite(configRef.current.sessionDelaySeconds)
+              ? configRef.current.sessionDelaySeconds
+              : DEFAULTS.sessionDelaySeconds,
+          );
           sessionTimerRef.current = setTimeout(() => {
             if (!shouldShowNow()) return;
             const count = getLocalCount();
             if (count <= 0) return;
             void fetchProductsAndShow(count);
-          }, 20 * 1000);
+          }, sessionDelaySecs * 1000);
         }
       });
   }, []);
