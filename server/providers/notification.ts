@@ -605,20 +605,40 @@ export class ResendNotificationService implements INotificationService {
   private async getBccForType(type: string): Promise<string[]> {
     try {
       const config = await storage.getSiteConfig("notification-bcc-config");
-      if (!config?.value) return [];
-      const raw = config.value.replace(/^"|"$/g, "").trim();
-      if (!raw) return [];
-      const parsed = JSON.parse(raw) as { email?: string; types?: Record<string, boolean> };
-      if (!parsed.email?.trim()) return [];
-      if (!parsed.types?.[type]) return [];
-      return parsed.email.split(",").map(e => e.trim()).filter(Boolean);
-    } catch {
+      if (!config?.value) {
+        console.log(`[BCC] No config for type="${type}"`);
+        return [];
+      }
+      // The value is stored double-encoded (the save endpoint JSON.stringifies
+      // a string that was already JSON.stringified by the frontend).
+      // Parse once to get the inner JSON string, parse again to get the object.
+      let step1: unknown;
+      try {
+        step1 = JSON.parse(config.value);
+      } catch {
+        step1 = config.value;
+      }
+      const parsed = (typeof step1 === "string" ? JSON.parse(step1) : step1) as { email?: string; types?: Record<string, boolean> };
+      if (!parsed?.email?.trim()) {
+        console.log(`[BCC] No email in config for type="${type}"`);
+        return [];
+      }
+      if (!parsed.types?.[type]) {
+        console.log(`[BCC] type="${type}" disabled in config`);
+        return [];
+      }
+      const addrs = parsed.email.split(",").map(e => e.trim()).filter(Boolean);
+      console.log(`[BCC] type="${type}" → ${addrs.join(", ")}`);
+      return addrs;
+    } catch (err) {
+      console.error(`[BCC] Parse error for type="${type}":`, err);
       return [];
     }
   }
 
   async sendOrderConfirmation(notification: OrderNotification): Promise<NotificationResult> {
     try {
+      console.log(`[Email] sendOrderConfirmation order=${notification.orderId} customer=${notification.customerEmail}`);
       const bcc = await this.getBccForType("order-placed");
       const [customerResult, adminResult] = await Promise.allSettled([
         this.resend.emails.send({
@@ -640,8 +660,18 @@ export class ResendNotificationService implements INotificationService {
       const customerOk = customerResult.status === "fulfilled";
       const adminOk = adminResult.status === "fulfilled";
 
-      if (!customerOk) console.error("Failed to send customer email:", (customerResult as PromiseRejectedResult).reason);
-      if (!adminOk) console.error("Failed to send admin email:", (adminResult as PromiseRejectedResult).reason);
+      if (customerOk) {
+        const id = (customerResult as PromiseFulfilledResult<any>).value?.data?.id;
+        console.log(`[Email] Customer email sent id=${id} bcc=${bcc.length ? bcc.join(",") : "none"}`);
+      } else {
+        console.error("[Email] Failed to send customer email:", (customerResult as PromiseRejectedResult).reason);
+      }
+      if (adminOk) {
+        const id = (adminResult as PromiseFulfilledResult<any>).value?.data?.id;
+        console.log(`[Email] Admin email sent id=${id}`);
+      } else {
+        console.error("[Email] Failed to send admin email:", (adminResult as PromiseRejectedResult).reason);
+      }
 
       return {
         success: customerOk,
