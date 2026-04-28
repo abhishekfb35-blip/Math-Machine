@@ -22,7 +22,6 @@ const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 interface WishlistPromptConfig {
   enabled: boolean;
   delaySeconds: number;
-  sessionDelaySeconds: number;
   headline: string;
   bodyText: string;
   ctaText: string;
@@ -30,8 +29,7 @@ interface WishlistPromptConfig {
 
 const DEFAULTS: WishlistPromptConfig = {
   enabled: true,
-  delaySeconds: 0,
-  sessionDelaySeconds: 0,
+  delaySeconds: 5,
   headline: "Don't lose your picks!",
   bodyText:
     "Create a free account to save your wishlist and pick up right where you left off.",
@@ -133,8 +131,12 @@ export default function WishlistSignupPrompt() {
       .then((d) => {
         if (d?.value) {
           const merged: WishlistPromptConfig = { ...DEFAULTS, ...d.value };
-          merged.delaySeconds = Number.isFinite(merged.delaySeconds) ? Math.max(0, merged.delaySeconds) : 0;
-          merged.sessionDelaySeconds = Number.isFinite(merged.sessionDelaySeconds) ? Math.max(0, merged.sessionDelaySeconds) : 0;
+          merged.delaySeconds = Math.max(
+            0,
+            Number.isFinite(merged.delaySeconds)
+              ? merged.delaySeconds
+              : DEFAULTS.delaySeconds,
+          );
           setConfig(merged);
           configRef.current = merged;
         }
@@ -147,15 +149,12 @@ export default function WishlistSignupPrompt() {
           triggerTimerRef.current?.();
         }
         if (getLocalCount() > 0) {
-          const sessionDelaySecs = Number.isFinite(configRef.current.sessionDelaySeconds)
-            ? Math.max(0, configRef.current.sessionDelaySeconds)
-            : 0;
           sessionTimerRef.current = setTimeout(() => {
             if (!shouldShowNow()) return;
             const count = getLocalCount();
             if (count <= 0) return;
             void fetchProductsAndShow(count);
-          }, sessionDelaySecs * 1000);
+          }, 20 * 1000);
         }
       });
   }, []);
@@ -200,9 +199,10 @@ export default function WishlistSignupPrompt() {
     const startTimer = () => {
       if (!shouldShowNow()) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      const delaySecs = Number.isFinite(configRef.current.delaySeconds)
-        ? Math.max(0, configRef.current.delaySeconds)
-        : 0;
+      const delaySecs = Math.max(
+        0,
+        configRef.current.delaySeconds ?? DEFAULTS.delaySeconds,
+      );
       timerRef.current = setTimeout(() => {
         if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
