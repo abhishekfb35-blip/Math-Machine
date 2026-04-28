@@ -313,9 +313,9 @@ export default function WishlistSignupPrompt() {
               </div>
             )}
 
-            {/* Scrollable product list — shows 2.5 items before scroll */}
+            {/* Scrollable product list — shows ~2⅓ items before scroll */}
             {products.length > 0 && (
-              <div className="max-h-[130px] overflow-y-auto space-y-0.5 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
+              <div className="max-h-[104px] overflow-y-auto space-y-0.5 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
                 {products.map(p => (
                   <button
                     key={p.id}
