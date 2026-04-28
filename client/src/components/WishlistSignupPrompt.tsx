@@ -31,7 +31,8 @@ const DEFAULTS: WishlistPromptConfig = {
   enabled: true,
   delaySeconds: 5,
   headline: "Don't lose your picks!",
-  bodyText: "Create a free account to save your wishlist and pick up right where you left off.",
+  bodyText:
+    "Create a free account to save your wishlist and pick up right where you left off.",
   ctaText: "Save my wishlist",
 };
 
@@ -64,7 +65,9 @@ export default function WishlistSignupPrompt() {
   const [visible, setVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [products, setProducts] = useState<WishlistProduct[]>([]);
-  const [previewProduct, setPreviewProduct] = useState<WishlistProduct | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<WishlistProduct | null>(
+    null,
+  );
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [config, setConfig] = useState<WishlistPromptConfig>(DEFAULTS);
 
@@ -82,7 +85,9 @@ export default function WishlistSignupPrompt() {
 
   useEffect(() => {
     const handler = () => {
-      try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch {}
       setVisible(false);
       setTimeout(() => {
         const count = getLocalCount();
@@ -100,10 +105,18 @@ export default function WishlistSignupPrompt() {
     return () => window.removeEventListener("wishlist:force-preview", handler);
   }, []);
 
-  useEffect(() => { configRef.current = config; }, [config]);
-  useEffect(() => { locationRef.current = location; }, [location]);
-  useEffect(() => { isAuthenticatedRef.current = isAuthenticated; }, [isAuthenticated]);
-  useEffect(() => { authLoadingRef.current = authLoading; }, [authLoading]);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+  useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+  useEffect(() => {
+    authLoadingRef.current = authLoading;
+  }, [authLoading]);
 
   useEffect(() => {
     if (previewProduct) setPreviewImage(previewProduct.imageUrl);
@@ -111,14 +124,19 @@ export default function WishlistSignupPrompt() {
 
   useEffect(() => {
     fetch(`/api/site-config/${CONFIG_KEY}`)
-      .then(r => {
+      .then((r) => {
         if (!r.ok) throw new Error();
         return r.json();
       })
-      .then(d => {
+      .then((d) => {
         if (d?.value) {
           const merged: WishlistPromptConfig = { ...DEFAULTS, ...d.value };
-          merged.delaySeconds = Math.max(0, Number.isFinite(merged.delaySeconds) ? merged.delaySeconds : DEFAULTS.delaySeconds);
+          merged.delaySeconds = Math.max(
+            0,
+            Number.isFinite(merged.delaySeconds)
+              ? merged.delaySeconds
+              : DEFAULTS.delaySeconds,
+          );
           setConfig(merged);
           configRef.current = merged;
         }
@@ -145,7 +163,8 @@ export default function WishlistSignupPrompt() {
     if (isDismissed()) return false;
     if (isAuthenticatedRef.current) return false;
     if (authLoadingRef.current) return false;
-    if (EXCLUDED_PREFIXES.some(p => locationRef.current.startsWith(p))) return false;
+    if (EXCLUDED_PREFIXES.some((p) => locationRef.current.startsWith(p)))
+      return false;
     if (!configRef.current.enabled) return false;
     return true;
   };
@@ -164,13 +183,11 @@ export default function WishlistSignupPrompt() {
           const data: WishlistProduct[] = await res.json();
           setProducts(data);
           if (data.length > 0) setPreviewProduct(data[0]);
-          data.forEach(p => {
-            [p.imageUrl, ...p.galleryImages]
-              .filter(Boolean)
-              .forEach(url => {
-                const img = new Image();
-                img.src = getProductImageUrl(url!, "large");
-              });
+          data.forEach((p) => {
+            [p.imageUrl, ...p.galleryImages].filter(Boolean).forEach((url) => {
+              const img = new Image();
+              img.src = getProductImageUrl(url!, "large");
+            });
           });
         }
       }
@@ -182,7 +199,10 @@ export default function WishlistSignupPrompt() {
     const startTimer = () => {
       if (!shouldShowNow()) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      const delaySecs = Math.max(0, configRef.current.delaySeconds ?? DEFAULTS.delaySeconds);
+      const delaySecs = Math.max(
+        0,
+        configRef.current.delaySeconds ?? DEFAULTS.delaySeconds,
+      );
       timerRef.current = setTimeout(() => {
         if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
@@ -223,7 +243,7 @@ export default function WishlistSignupPrompt() {
   };
 
   const handleRowInteract = (p: WishlistProduct) => {
-    setPreviewProduct(prev => (prev?.id === p.id ? prev : p));
+    setPreviewProduct((prev) => (prev?.id === p.id ? prev : p));
   };
 
   if (!visible) return null;
@@ -264,21 +284,33 @@ export default function WishlistSignupPrompt() {
                 {config.headline}
               </h3>
               {itemCount > 0 && (
-                <p className="text-sm font-medium text-rose-500" data-testid="wishlist-prompt-count">
-                  You have {itemCount} {itemCount === 1 ? "item" : "items"} saved
+                <p
+                  className="text-sm font-medium text-rose-500"
+                  data-testid="wishlist-prompt-count"
+                >
+                  You have {itemCount} {itemCount === 1 ? "item" : "items"}{" "}
+                  saved
                 </p>
               )}
             </div>
 
             {/* Inline image preview — shown when a row is hovered/tapped */}
             {previewProduct && (
-              <div className="space-y-1.5 animate-in fade-in duration-200" data-testid="wishlist-prompt-preview">
+              <div
+                className="space-y-1.5 animate-in fade-in duration-200"
+                data-testid="wishlist-prompt-preview"
+              >
                 <div className="w-full h-32 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <img
-                    src={getProductImageUrl(previewImage ?? previewProduct.imageUrl ?? "", "large")}
+                    src={getProductImageUrl(
+                      previewImage ?? previewProduct.imageUrl ?? "",
+                      "large",
+                    )}
                     alt={previewProduct.name}
                     className="w-full h-full object-contain"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 </div>
 
@@ -300,7 +332,9 @@ export default function WishlistSignupPrompt() {
                           src={getProductImageUrl(url, "small")}
                           alt=""
                           className="w-full h-full object-cover"
-                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       </button>
                     ))}
@@ -315,8 +349,11 @@ export default function WishlistSignupPrompt() {
 
             {/* Scrollable product list — shows ~2⅓ items before scroll */}
             {products.length > 0 && (
-              <div className="max-h-[104px] overflow-y-auto space-y-0.5 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
-                {products.map(p => (
+              <div
+                className="max-h-[110px] overflow-y-auto space-y-0.5 text-left pr-1 scrollbar-thin"
+                data-testid="wishlist-prompt-products"
+              >
+                {products.map((p) => (
                   <button
                     key={p.id}
                     type="button"
@@ -336,7 +373,9 @@ export default function WishlistSignupPrompt() {
                           src={getProductImageUrl(p.imageUrl, "small")}
                           alt={p.name}
                           className="w-9 h-9 rounded-md object-cover absolute inset-0"
-                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                         />
                       )}
                     </div>
