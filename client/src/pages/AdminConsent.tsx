@@ -70,8 +70,8 @@ interface WishlistPromptConfig {
 
 const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
   enabled: true,
-  delaySeconds: 5,
-  sessionDelaySeconds: 20,
+  delaySeconds: 0,
+  sessionDelaySeconds: 0,
   headline: "Don't lose your picks!",
   bodyText: "Create a free account to save your wishlist and pick up right where you left off.",
   ctaText: "Save my wishlist",

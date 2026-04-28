@@ -30,8 +30,8 @@ interface WishlistPromptConfig {
 
 const DEFAULTS: WishlistPromptConfig = {
   enabled: true,
-  delaySeconds: 5,
-  sessionDelaySeconds: 20,
+  delaySeconds: 0,
+  sessionDelaySeconds: 0,
   headline: "Don't lose your picks!",
   bodyText:
     "Create a free account to save your wishlist and pick up right where you left off.",
@@ -133,18 +133,8 @@ export default function WishlistSignupPrompt() {
       .then((d) => {
         if (d?.value) {
           const merged: WishlistPromptConfig = { ...DEFAULTS, ...d.value };
-          merged.delaySeconds = Math.max(
-            0,
-            Number.isFinite(merged.delaySeconds)
-              ? merged.delaySeconds
-              : DEFAULTS.delaySeconds,
-          );
-          merged.sessionDelaySeconds = Math.max(
-            0,
-            Number.isFinite(merged.sessionDelaySeconds)
-              ? merged.sessionDelaySeconds
-              : DEFAULTS.sessionDelaySeconds,
-          );
+          merged.delaySeconds = Number.isFinite(merged.delaySeconds) ? Math.max(0, merged.delaySeconds) : 0;
+          merged.sessionDelaySeconds = Number.isFinite(merged.sessionDelaySeconds) ? Math.max(0, merged.sessionDelaySeconds) : 0;
           setConfig(merged);
           configRef.current = merged;
         }
@@ -157,12 +147,9 @@ export default function WishlistSignupPrompt() {
           triggerTimerRef.current?.();
         }
         if (getLocalCount() > 0) {
-          const sessionDelaySecs = Math.max(
-            0,
-            Number.isFinite(configRef.current.sessionDelaySeconds)
-              ? configRef.current.sessionDelaySeconds
-              : DEFAULTS.sessionDelaySeconds,
-          );
+          const sessionDelaySecs = Number.isFinite(configRef.current.sessionDelaySeconds)
+            ? Math.max(0, configRef.current.sessionDelaySeconds)
+            : 0;
           sessionTimerRef.current = setTimeout(() => {
             if (!shouldShowNow()) return;
             const count = getLocalCount();
@@ -213,10 +200,9 @@ export default function WishlistSignupPrompt() {
     const startTimer = () => {
       if (!shouldShowNow()) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      const delaySecs = Math.max(
-        0,
-        configRef.current.delaySeconds ?? DEFAULTS.delaySeconds,
-      );
+      const delaySecs = Number.isFinite(configRef.current.delaySeconds)
+        ? Math.max(0, configRef.current.delaySeconds)
+        : 0;
       timerRef.current = setTimeout(() => {
         if (!shouldShowNow()) return;
         const latestCount = getLocalCount();
