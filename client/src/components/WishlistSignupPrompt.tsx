@@ -242,131 +242,133 @@ export default function WishlistSignupPrompt() {
     >
       <div className="absolute inset-0 bg-black/40" onClick={handleDismiss} />
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto p-6 shadow-xl animate-in slide-in-from-bottom duration-300">
+      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto shadow-xl animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[88vh]">
         <button
           type="button"
           onClick={handleDismiss}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="absolute top-3 right-3 z-10 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           data-testid="wishlist-prompt-dismiss-icon"
           aria-label="Dismiss"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
-            <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
-          </div>
+        <div className="overflow-y-auto flex-1 p-5 pt-4">
+          <div className="text-center space-y-3">
+            <div className="mx-auto w-11 h-11 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
+              <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
+            </div>
 
-          <div className="space-y-1">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-              {config.headline}
-            </h3>
-            {itemCount > 0 && (
-              <p className="text-sm font-medium text-rose-500" data-testid="wishlist-prompt-count">
-                You have {itemCount} {itemCount === 1 ? "item" : "items"} saved
-              </p>
-            )}
-          </div>
-
-          {/* Inline image preview — shown when a row is hovered/tapped */}
-          {previewProduct && (
-            <div className="space-y-2 animate-in fade-in duration-200" data-testid="wishlist-prompt-preview">
-              <div className="w-full aspect-square max-h-48 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <img
-                  src={getProductImageUrl(previewImage ?? previewProduct.imageUrl ?? "", "large")}
-                  alt={previewProduct.name}
-                  className="w-full h-full object-contain"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                />
-              </div>
-
-              {previewProduct.galleryImages.length > 0 && (
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin justify-center">
-                  {allPreviewUrls.map((url, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setPreviewImage(url)}
-                      className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
-                        (previewImage ?? previewProduct.imageUrl) === url
-                          ? "border-rose-400"
-                          : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
-                      }`}
-                      data-testid={`wishlist-preview-thumb-${i}`}
-                    >
-                      <img
-                        src={getProductImageUrl(url, "small")}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }}
-                      />
-                    </button>
-                  ))}
-                </div>
+            <div className="space-y-0.5">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {config.headline}
+              </h3>
+              {itemCount > 0 && (
+                <p className="text-sm font-medium text-rose-500" data-testid="wishlist-prompt-count">
+                  You have {itemCount} {itemCount === 1 ? "item" : "items"} saved
+                </p>
               )}
-
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 text-left line-clamp-1">
-                {previewProduct.name}
-              </p>
             </div>
-          )}
 
-          {/* Scrollable product list */}
-          {products.length > 0 && (
-            <div className="max-h-40 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
-              {products.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onMouseEnter={() => handleRowInteract(p)}
-                  onClick={() => handleRowInteract(p)}
-                  className={`flex items-center gap-3 w-full text-left rounded-lg px-1 py-0.5 transition-colors ${
-                    previewProduct?.id === p.id
-                      ? "bg-rose-50 dark:bg-rose-900/20"
-                      : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                  }`}
-                  data-testid={`wishlist-prompt-product-${p.id}`}
-                >
-                  <div className="relative w-10 h-10 flex-shrink-0">
-                    <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 absolute inset-0" />
-                    {p.imageUrl && (
-                      <img
-                        src={getProductImageUrl(p.imageUrl, "small")}
-                        alt={p.name}
-                        className="w-10 h-10 rounded-md object-cover absolute inset-0"
-                        onError={(e) => { e.currentTarget.style.display = "none"; }}
-                      />
-                    )}
+            {/* Inline image preview — shown when a row is hovered/tapped */}
+            {previewProduct && (
+              <div className="space-y-1.5 animate-in fade-in duration-200" data-testid="wishlist-prompt-preview">
+                <div className="w-full h-32 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <img
+                    src={getProductImageUrl(previewImage ?? previewProduct.imageUrl ?? "", "large")}
+                    alt={previewProduct.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                </div>
+
+                {previewProduct.galleryImages.length > 0 && (
+                  <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-thin justify-center">
+                    {allPreviewUrls.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setPreviewImage(url)}
+                        className={`flex-shrink-0 w-10 h-10 rounded-md overflow-hidden border-2 transition-colors ${
+                          (previewImage ?? previewProduct.imageUrl) === url
+                            ? "border-rose-400"
+                            : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                        }`}
+                        data-testid={`wishlist-preview-thumb-${i}`}
+                      >
+                        <img
+                          src={getProductImageUrl(url, "small")}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      </button>
+                    ))}
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
-                    {p.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+                )}
 
-          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            {config.bodyText}
-          </p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 text-left line-clamp-1">
+                  {previewProduct.name}
+                </p>
+              </div>
+            )}
 
-          <Button
-            className="w-full"
-            onClick={handleSignIn}
-            data-testid="wishlist-prompt-signin"
-          >
-            {config.ctaText}
-          </Button>
+            {/* Scrollable product list — shows 2.5 items before scroll */}
+            {products.length > 0 && (
+              <div className="max-h-[130px] overflow-y-auto space-y-0.5 text-left pr-1 scrollbar-thin" data-testid="wishlist-prompt-products">
+                {products.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onMouseEnter={() => handleRowInteract(p)}
+                    onClick={() => handleRowInteract(p)}
+                    className={`flex items-center gap-2.5 w-full text-left rounded-lg px-1 py-1 transition-colors ${
+                      previewProduct?.id === p.id
+                        ? "bg-rose-50 dark:bg-rose-900/20"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    }`}
+                    data-testid={`wishlist-prompt-product-${p.id}`}
+                  >
+                    <div className="relative w-9 h-9 flex-shrink-0">
+                      <div className="w-9 h-9 rounded-md bg-gray-100 dark:bg-gray-800 absolute inset-0" />
+                      {p.imageUrl && (
+                        <img
+                          src={getProductImageUrl(p.imageUrl, "small")}
+                          alt={p.name}
+                          className="w-9 h-9 rounded-md object-cover absolute inset-0"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-tight">
+                      {p.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <button
-            type="button"
-            onClick={handleDismiss}
-            className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-1 transition-colors"
-            data-testid="wishlist-prompt-maybe-later"
-          >
-            Maybe later
-          </button>
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              {config.bodyText}
+            </p>
+
+            <Button
+              className="w-full"
+              onClick={handleSignIn}
+              data-testid="wishlist-prompt-signin"
+            >
+              {config.ctaText}
+            </Button>
+
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-1 transition-colors"
+              data-testid="wishlist-prompt-maybe-later"
+            >
+              Maybe later
+            </button>
+          </div>
         </div>
       </div>
     </div>
