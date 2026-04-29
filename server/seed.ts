@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { db } from "./db";
 import {
-  categories, products, siteConfig, productImages, productReviews, tags, productTags,
+  categories, products, siteConfig, productImages, productReviews, tags, tagTypes, productTags,
   currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
 } from "@shared/schema";
 import { and, eq, like } from "drizzle-orm";
@@ -73,6 +73,7 @@ export async function seedDatabase() {
     }
 
     const tableData = {
+      tagTypes:       (data.tagTypes       || []) as any[],
       categories:     (data.categories     || []) as any[],
       tags:           (data.tags           || []) as any[],
       products:       (data.products       || []) as any[],
@@ -82,7 +83,7 @@ export async function seedDatabase() {
     };
 
     // ── 0. Validate all IDs are present — abort immediately if any are missing ─
-    const catalogTableNames = ["categories", "tags", "products", "productImages", "productReviews", "productTags"] as const;
+    const catalogTableNames = ["tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags"] as const;
     let idErrors = 0;
     for (const table of catalogTableNames) {
       const rows: any[] = tableData[table];
@@ -105,6 +106,7 @@ export async function seedDatabase() {
 
     // ── 1. Check per-table hashes ─────────────────────────────────────────────
     const changed = {
+      tagTypes:       computeHash(tableData.tagTypes)       !== await getStoredHash("tagTypes"),
       categories:     computeHash(tableData.categories)     !== await getStoredHash("categories"),
       tags:           computeHash(tableData.tags)           !== await getStoredHash("tags"),
       products:       computeHash(tableData.products)       !== await getStoredHash("products"),
@@ -116,8 +118,9 @@ export async function seedDatabase() {
     // Cascade: if a parent changes, all its children must also be re-seeded
     // (children were wiped when parent was wiped, so they need re-inserting)
     const effective = {
+      tagTypes:       changed.tagTypes,
       categories:     changed.categories,
-      tags:           changed.tags,
+      tags:           changed.tags           || changed.tagTypes,
       products:       changed.products       || changed.categories,
       productImages:  changed.productImages  || changed.products || changed.categories,
       productReviews: changed.productReviews || changed.products || changed.categories,
@@ -148,8 +151,24 @@ export async function seedDatabase() {
       if (effective.products)       await db.delete(products);
       if (effective.categories)     await db.delete(categories);
       if (effective.tags)           await db.delete(tags);
+      if (effective.tagTypes)       await db.delete(tagTypes);
 
       // ── 3. Re-insert in dependency order ────────────────────────────────────
+
+      // Tag Types (must come before Tags)
+      if (effective.tagTypes) {
+        if (tableData.tagTypes.length > 0) {
+          await db.insert(tagTypes).values(tableData.tagTypes.map((tt: any) => ({
+            id: tt.id,
+            name: tt.name,
+            slug: tt.slug,
+            description: tt.description ?? null,
+            sortOrder: tt.sortOrder ?? 0,
+          })));
+          console.log(`[seed] tagTypes: inserted ${tableData.tagTypes.length}`);
+        }
+        await storeHash("tagTypes", computeHash(tableData.tagTypes));
+      }
 
       // Categories
       if (effective.categories) {
@@ -167,13 +186,15 @@ export async function seedDatabase() {
         await storeHash("categories", computeHash(tableData.categories));
       }
 
-      // Tags
+      // Tags (must come after tagTypes due to FK)
       if (effective.tags) {
         if (tableData.tags.length > 0) {
           await db.insert(tags).values(tableData.tags.map((t: any) => ({
             id: t.id,
             name: t.name,
             description: t.description ?? null,
+            tagTypeId: t.tagTypeId ?? null,
+            sortOrder: t.sortOrder ?? 0,
           })));
           console.log(`[seed] tags: inserted ${tableData.tags.length}`);
         }
@@ -208,10 +229,10 @@ export async function seedDatabase() {
             bulletPoints: p.bulletPoints ?? null,
             searchKeywords: p.searchKeywords ?? null,
             productType: p.productType ?? "towel",
-            ageGroup: (p as any).ageGroup ?? (p as any).audience ?? "kids",
-            gender: (p as any).gender ?? "unisex",
-            themes: (p as any).themes ?? null,
-            styles: (p as any).styles ?? null,
+            ageGroup: p.ageGroup ?? "kids",
+            gender: p.gender ?? "unisex",
+            themes: p.themes ?? null,
+            styles: p.styles ?? null,
             active: p.active !== false,
             sortOrder: p.sortOrder ?? 0,
           }));
