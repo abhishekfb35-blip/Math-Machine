@@ -170,16 +170,19 @@ export default function ShopPage() {
     ? shopSectionsConfig.value
     : [];
 
+  // Shared predicate: filter products by the active audience (age group)
+  const ageFilteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (activeFilter === "all") return products;
+    return products.filter(p => {
+      const groups = (p.ageGroup ?? "").split(",").map(v => v.trim()).filter(Boolean);
+      return groups.includes(activeFilter);
+    });
+  }, [products, activeFilter]);
+
   // Products for audience-filtered / search views
   const flatProducts = useMemo(() => {
-    if (!products) return [];
-    let result = products;
-    if (activeFilter !== "all") {
-      result = result.filter(p => {
-        const groups = (p.ageGroup ?? "").split(",").map(v => v.trim()).filter(Boolean);
-        return groups.includes(activeFilter);
-      });
-    }
+    let result = ageFilteredProducts;
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter(p =>
@@ -189,7 +192,7 @@ export default function ShopPage() {
       );
     }
     return result;
-  }, [products, activeFilter, searchQuery]);
+  }, [ageFilteredProducts, searchQuery]);
 
   // Products for tag drill-down
   const tagProducts = useMemo(() => {
@@ -198,7 +201,7 @@ export default function ShopPage() {
     return products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
   }, [products, activeTag]);
 
-  // Compute tag sections (all + shown slice), filtered by active audience
+  // Compute tag sections (all + shown slice), filtered by active audience via ageGroup
   const tagSections = useMemo(() => {
     if (!products) return [];
     return shopSections
@@ -206,10 +209,10 @@ export default function ShopPage() {
       .filter(s => activeFilter === "all" || (s.audiences ?? []).includes(activeFilter))
       .map(s => {
         const tagLower = s.tag.toLowerCase();
-        const all = products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+        const all = ageFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
         return { ...s, all, shown: all.slice(0, s.maxShown) };
       });
-  }, [products, shopSections, activeFilter]);
+  }, [ageFilteredProducts, shopSections, activeFilter]);
 
   // Sections view: any audience tab (All / Kids / Adults / Couples) with no drilldown or search
   const isAllView = !activeTag && !searchQuery.trim();
