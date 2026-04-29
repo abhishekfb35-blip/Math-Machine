@@ -38,6 +38,34 @@ export function registerAdminAttributeRoutes(app: Express) {
     res.json({ success: true });
   });
 
+  // ── Per-type GET handlers ────────────────────────────────────────────────────
+  app.get("/api/admin/attributes/age-groups", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getAgeGroups());
+  });
+  app.get("/api/admin/attributes/genders", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getGenders());
+  });
+  app.get("/api/admin/attributes/themes", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getThemes());
+  });
+  app.get("/api/admin/attributes/styles", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getStyles());
+  });
+
+  // ── Short aliases (/api/admin/{type}) with real handlers (not redirects) ────
+  app.get("/api/admin/age-groups", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getAgeGroups());
+  });
+  app.get("/api/admin/genders", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getGenders());
+  });
+  app.get("/api/admin/themes", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getThemes());
+  });
+  app.get("/api/admin/styles", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.getStyles());
+  });
+
   // ── Age Groups CRUD ──────────────────────────────────────────────────────────
   app.post("/api/admin/attributes/age-groups", requirePermission("catalog"), async (req, res) => {
     try {
@@ -198,21 +226,72 @@ export function registerAdminAttributeRoutes(app: Express) {
     res.status(204).send();
   });
 
-  // ── Convenience aliases (/api/admin/{type} → /api/admin/attributes/{type}) ─
-  const aliasTypes = ["age-groups", "genders", "themes", "styles"] as const;
-  for (const t of aliasTypes) {
-    const canonical = t === "age-groups" ? "age-groups" : t;
-    app.get(`/api/admin/${t}`, requirePermission("catalog"), async (_req, res) => {
-      res.redirect(307, `/api/admin/attributes/${canonical}`);
-    });
-    app.post(`/api/admin/${t}`, requirePermission("catalog"), async (req, res) => {
-      res.redirect(307, `/api/admin/attributes/${canonical}`);
-    });
-    app.patch(`/api/admin/${t}/:id`, requirePermission("catalog"), async (req, res) => {
-      res.redirect(307, `/api/admin/attributes/${canonical}/${req.params.id}`);
-    });
-    app.delete(`/api/admin/${t}/:id`, requirePermission("catalog"), async (req, res) => {
-      res.redirect(307, `/api/admin/attributes/${canonical}/${req.params.id}`);
-    });
-  }
+  // ── Short-alias POST/DELETE (/api/admin/{type}) ──────────────────────────────
+  app.post("/api/admin/age-groups", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertAgeGroupSchema.parse(req.body);
+      const created = await storage.createAgeGroup(data);
+      await storage.createAuditLog({ entityType: "attribute", entityId: created.id, entityName: created.name, action: "created", changes: JSON.stringify(data), username: getAdminUsername(req) });
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "An age group with that name already exists" });
+      res.status(500).json({ message: "Failed to create age group" });
+    }
+  });
+  app.delete("/api/admin/age-groups/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteAgeGroup(req.params.id as string);
+    res.status(204).send();
+  });
+
+  app.post("/api/admin/genders", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertGenderSchema.parse(req.body);
+      const created = await storage.createGender(data);
+      await storage.createAuditLog({ entityType: "attribute", entityId: created.id, entityName: created.name, action: "created", changes: JSON.stringify(data), username: getAdminUsername(req) });
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A gender with that name already exists" });
+      res.status(500).json({ message: "Failed to create gender" });
+    }
+  });
+  app.delete("/api/admin/genders/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteGender(req.params.id as string);
+    res.status(204).send();
+  });
+
+  app.post("/api/admin/themes", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertThemeSchema.parse(req.body);
+      const created = await storage.createTheme(data);
+      await storage.createAuditLog({ entityType: "attribute", entityId: created.id, entityName: created.name, action: "created", changes: JSON.stringify(data), username: getAdminUsername(req) });
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A theme with that name already exists" });
+      res.status(500).json({ message: "Failed to create theme" });
+    }
+  });
+  app.delete("/api/admin/themes/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteTheme(req.params.id as string);
+    res.status(204).send();
+  });
+
+  app.post("/api/admin/styles", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertStyleSchema.parse(req.body);
+      const created = await storage.createStyle(data);
+      await storage.createAuditLog({ entityType: "attribute", entityId: created.id, entityName: created.name, action: "created", changes: JSON.stringify(data), username: getAdminUsername(req) });
+      res.status(201).json(created);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A style with that name already exists" });
+      res.status(500).json({ message: "Failed to create style" });
+    }
+  });
+  app.delete("/api/admin/styles/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteStyle(req.params.id as string);
+    res.status(204).send();
+  });
 }
