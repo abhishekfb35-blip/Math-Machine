@@ -1087,6 +1087,7 @@ export default function AdminCatalog() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
       setNewTagTypeName("");
       setNewTagTypeSlug("");
       setNewTagTypeDescription("");
@@ -1103,6 +1104,7 @@ export default function AdminCatalog() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
       toast({ title: "Tag type deleted" });
     },
     onError: () => {
