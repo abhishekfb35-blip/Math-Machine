@@ -36,7 +36,10 @@ export interface Product {
   bulletPoints: string | null;
   searchKeywords: string | null;
   productType: string | null;
-  audience: string | null;
+  ageGroup: string | null;
+  gender: string | null;
+  themes: string | null;
+  styles: string | null;
   active: boolean | null;
   sortOrder: number | null;
   createdAt: Date | null;
@@ -66,7 +69,10 @@ export interface InsertProduct {
   bulletPoints?: string | null;
   searchKeywords?: string | null;
   productType?: string | null;
-  audience?: string | null;
+  ageGroup?: string | null;
+  gender?: string | null;
+  themes?: string | null;
+  styles?: string | null;
   active?: boolean | null;
   sortOrder?: number | null;
 }
@@ -257,15 +263,59 @@ export interface InsertProductReview {
   verifiedPurchase?: boolean | null;
 }
 
+export interface TagType {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  sortOrder: number | null;
+}
+
+export interface InsertTagType {
+  name: string;
+  slug: string;
+  description?: string | null;
+  sortOrder?: number | null;
+}
+
 export interface Tag {
   id: string;
   name: string;
   description: string | null;
+  tagTypeId: string | null;
+  sortOrder: number | null;
 }
 
 export interface InsertTag {
   name: string;
   description?: string | null;
+  tagTypeId?: string | null;
+  sortOrder?: number | null;
+}
+
+export interface Occasion {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  boostTags: Record<string, number> | null;
+  penaltyTags: Record<string, number> | null;
+  preferredStyles: string | null;
+  preferredThemes: string | null;
+  active: boolean | null;
+  sortOrder: number | null;
+}
+
+export interface InsertOccasion {
+  name: string;
+  slug: string;
+  description?: string | null;
+  boostTags?: Record<string, number> | null;
+  penaltyTags?: Record<string, number> | null;
+  preferredStyles?: string | null;
+  preferredThemes?: string | null;
+  active?: boolean | null;
+  sortOrder?: number | null;
 }
 
 export interface ProductTag {

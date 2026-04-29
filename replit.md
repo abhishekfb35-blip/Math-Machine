@@ -53,9 +53,11 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
 -   **Type**: PostgreSQL, with separate databases for development and production environments.
 -   **ORM**: Drizzle ORM.
 -   **ID Strategy**: Uses CUID2 string IDs for all tables.
--   **Key Tables**: `categories`, `products`, `tags`, `product_images`, `carts`, `orders`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, `pricing_rules`, `category_variant_options`, `product_variants`, `customers`, `customer_otps`, `customer_sessions`.
+-   **Key Tables**: `categories`, `products`, `tag_types`, `tags`, `product_tags`, `occasions`, `product_images`, `carts`, `orders`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, `pricing_rules`, `category_variant_options`, `product_variants`, `customers`, `customer_otps`, `customer_sessions`.
 -   **Audit Log**: Tracks all administrative changes with entity-specific details and auto-pruning.
--   **Product Categorization**: Consolidated into 'Towels', 'Bathrobes', and 'Blankets' with audience and product type filtering.
+-   **Product Categorization**: Products have `age_group` (kids/teens/adults/infant), `gender` (male/female/unisex), `themes` (comma-separated: animals/florals/etc), and `styles` (comma-separated: minimal/initials/etc) columns replacing the old flat `audience` field.
+-   **Tag System**: `tag_types` table holds 6 admin-managed types (Merchandising, Occasion-fit, Risk/Suitability, Operational, Experimental/Growth, Use-Case/Structure). `tags` are internal merchandising signals (best_seller, bundle_friendly, etc.) — not user-facing filters. 25 initial tags seeded.
+-   **Occasions**: `occasions` table stores merchandising engine config (boost/penalty tag weights, preferred themes/styles) for curating and ranking products externally.
 -   **Discount Logic**: Implements an automatic "Buy 2 Get 1 Free" discount on cart items.
 
 ## Key Features

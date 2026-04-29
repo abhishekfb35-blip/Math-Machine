@@ -31,7 +31,10 @@ export const products = pgTable("products", {
   bulletPoints: text("bullet_points"),
   searchKeywords: text("search_keywords"),
   productType: text("product_type").default("towel"),
-  audience: text("audience").default("kids"),
+  ageGroup: text("age_group").default("kids"),
+  gender: text("gender").default("unisex"),
+  themes: text("themes"),
+  styles: text("styles"),
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
   variantColors: text("variant_colors").default("[]").notNull(),
@@ -128,10 +131,20 @@ export const productReviews = pgTable("product_reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [uniqueIndex("product_reviews_product_customer_uniq").on(t.productId, t.customerId)]);
 
+export const tagTypes = pgTable("tag_types", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  sortOrder: integer("sort_order").default(0),
+});
+
 export const tags = pgTable("tags", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
+  tagTypeId: text("tag_type_id").references(() => tagTypes.id, { onDelete: "set null" }),
+  sortOrder: integer("sort_order").default(0),
 });
 
 export const productTags = pgTable("product_tags", {
@@ -139,6 +152,19 @@ export const productTags = pgTable("product_tags", {
   productId: text("product_id").notNull(),
   tagId: text("tag_id").notNull(),
 }, (t) => [uniqueIndex("product_tags_product_tag_uniq").on(t.productId, t.tagId)]);
+
+export const occasions = pgTable("occasions", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  boostTags: jsonb("boost_tags").default({}),
+  penaltyTags: jsonb("penalty_tags").default({}),
+  preferredStyles: text("preferred_styles"),
+  preferredThemes: text("preferred_themes"),
+  active: boolean("active").default(true),
+  sortOrder: integer("sort_order").default(0),
+});
 
 export const productVariants = pgTable("product_variants", {
   id: text("id").primaryKey(),
@@ -254,8 +280,10 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: t
 export const insertSiteConfigSchema = createInsertSchema(siteConfig);
 export const insertProductImageSchema = createInsertSchema(productImages).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProductReviewSchema = createInsertSchema(productReviews).omit({ id: true, createdAt: true });
+export const insertTagTypeSchema = createInsertSchema(tagTypes).omit({ id: true });
 export const insertTagSchema = createInsertSchema(tags).omit({ id: true });
 export const insertProductTagSchema = createInsertSchema(productTags).omit({ id: true });
+export const insertOccasionSchema = createInsertSchema(occasions).omit({ id: true });
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
 export const wishlists = pgTable("wishlists", {
@@ -318,8 +346,10 @@ export type {
   SiteConfig, InsertSiteConfig,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
+  TagType, InsertTagType,
   Tag, InsertTag,
   ProductTag, InsertProductTag,
+  Occasion, InsertOccasion,
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,

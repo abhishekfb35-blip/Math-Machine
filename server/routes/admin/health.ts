@@ -373,7 +373,10 @@ export function registerAdminHealthRoutes(app: Express) {
           { column: "bullet_points", type: "text", nullable: true },
           { column: "search_keywords", type: "text", nullable: true },
           { column: "product_type", type: "text", nullable: true },
-          { column: "audience", type: "text", nullable: true },
+          { column: "age_group", type: "text", nullable: true },
+          { column: "gender", type: "text", nullable: true },
+          { column: "themes", type: "text", nullable: true },
+          { column: "styles", type: "text", nullable: true },
           { column: "active", type: "boolean", nullable: true },
           { column: "sort_order", type: "integer", nullable: true },
           { column: "created_at", type: "timestamp without time zone", nullable: true },
@@ -721,7 +724,7 @@ export function registerAdminHealthRoutes(app: Express) {
         }
       }
 
-      const completenessFields = ["sku", "material", "color", "dimensions", "audience", "product_type"];
+      const completenessFields = ["sku", "material", "color", "dimensions", "age_group", "product_type"];
       const dataCompleteness: { field: string; actualType: string; expectedType: string; totalProducts: number; nullCount: number; populatedCount: number; status: "pass" | "warn" }[] = [];
       try {
         const totalProducts = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products`)).rows[0].cnt;
@@ -1405,7 +1408,8 @@ export function registerAdminHealthRoutes(app: Express) {
                 p.bullet_points AS "bulletPoints",
                 p.search_keywords AS "searchKeywords",
                 p.product_type AS "productType",
-                p.audience, p.active, p.sort_order AS "sortOrder"
+                p.age_group AS "ageGroup", p.gender, p.themes, p.styles,
+                p.active, p.sort_order AS "sortOrder"
          FROM products p
          JOIN categories c ON c.id = p.category_id
          ORDER BY p.sort_order, p.id`

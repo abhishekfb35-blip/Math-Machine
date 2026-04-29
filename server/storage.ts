@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tags, productTags, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -12,8 +12,10 @@ import type {
   SiteConfig,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
+  TagType, InsertTagType,
   Tag, InsertTag,
   ProductTag, InsertProductTag,
+  Occasion, InsertOccasion,
   AuditLog, InsertAuditLog,
   Customer, InsertCustomer,
   CustomerConsent, InsertCustomerConsent,
@@ -88,10 +90,21 @@ export interface IStorage {
   updateProductReview(id: string, data: Partial<InsertProductReview>): Promise<ProductReview>;
   deleteProductReview(id: string): Promise<void>;
 
+  getTagTypes(): Promise<TagType[]>;
+  createTagType(data: InsertTagType): Promise<TagType>;
+  updateTagType(id: string, data: Partial<InsertTagType>): Promise<TagType | undefined>;
+  deleteTagType(id: string): Promise<void>;
+
   getTags(): Promise<Tag[]>;
   createTag(tag: InsertTag): Promise<Tag>;
   updateTag(id: string, data: Partial<InsertTag>): Promise<Tag | undefined>;
   deleteTag(id: string): Promise<void>;
+
+  getOccasions(activeOnly?: boolean): Promise<Occasion[]>;
+  getOccasionBySlug(slug: string): Promise<Occasion | undefined>;
+  createOccasion(data: InsertOccasion): Promise<Occasion>;
+  updateOccasion(id: string, data: Partial<InsertOccasion>): Promise<Occasion | undefined>;
+  deleteOccasion(id: string): Promise<void>;
 
   getProductTags(productId: string): Promise<Tag[]>;
   setProductTags(productId: string, tagIds: string[]): Promise<void>;
@@ -648,8 +661,27 @@ export class DatabaseStorage implements IStorage {
     await db.delete(productReviews).where(eq(productReviews.id, id));
   }
 
+  async getTagTypes(): Promise<TagType[]> {
+    return await db.select().from(tagTypes).orderBy(tagTypes.sortOrder, tagTypes.name);
+  }
+
+  async createTagType(data: InsertTagType): Promise<TagType> {
+    const [created] = await db.insert(tagTypes).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updateTagType(id: string, data: Partial<InsertTagType>): Promise<TagType | undefined> {
+    const [updated] = await db.update(tagTypes).set(data).where(eq(tagTypes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTagType(id: string): Promise<void> {
+    await db.update(tags).set({ tagTypeId: null }).where(eq(tags.tagTypeId, id));
+    await db.delete(tagTypes).where(eq(tagTypes.id, id));
+  }
+
   async getTags(): Promise<Tag[]> {
-    return await db.select().from(tags).orderBy(tags.name);
+    return await db.select().from(tags).orderBy(tags.tagTypeId, tags.sortOrder, tags.name);
   }
 
   async createTag(tag: InsertTag): Promise<Tag> {
@@ -667,9 +699,35 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tags).where(eq(tags.id, id));
   }
 
+  async getOccasions(activeOnly = false): Promise<Occasion[]> {
+    if (activeOnly) {
+      return await db.select().from(occasions).where(eq(occasions.active, true)).orderBy(occasions.sortOrder, occasions.name);
+    }
+    return await db.select().from(occasions).orderBy(occasions.sortOrder, occasions.name);
+  }
+
+  async getOccasionBySlug(slug: string): Promise<Occasion | undefined> {
+    const [occ] = await db.select().from(occasions).where(eq(occasions.slug, slug));
+    return occ as Occasion | undefined;
+  }
+
+  async createOccasion(data: InsertOccasion): Promise<Occasion> {
+    const [created] = await db.insert(occasions).values({ id: createId(), ...data }).returning();
+    return created as Occasion;
+  }
+
+  async updateOccasion(id: string, data: Partial<InsertOccasion>): Promise<Occasion | undefined> {
+    const [updated] = await db.update(occasions).set(data).where(eq(occasions.id, id)).returning();
+    return updated as Occasion | undefined;
+  }
+
+  async deleteOccasion(id: string): Promise<void> {
+    await db.delete(occasions).where(eq(occasions.id, id));
+  }
+
   async getProductTags(productId: string): Promise<Tag[]> {
     const rows = await db
-      .select({ id: tags.id, name: tags.name, description: tags.description })
+      .select({ id: tags.id, name: tags.name, description: tags.description, tagTypeId: tags.tagTypeId, sortOrder: tags.sortOrder })
       .from(productTags)
       .innerJoin(tags, eq(productTags.tagId, tags.id))
       .where(eq(productTags.productId, productId));
