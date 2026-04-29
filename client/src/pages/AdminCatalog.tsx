@@ -3216,7 +3216,11 @@ export default function AdminCatalog() {
                   variant="ghost"
                   className="h-7 w-7"
                   onClick={() => {
-                    if (confirm(`Delete tag type "${tagType.name}"? Tags under this type will become untyped.`)) {
+                    const count = allTags?.filter(t => t.tagTypeId === tagType.id).length ?? 0;
+                    const msg = count > 0
+                      ? `Delete tag type "${tagType.name}"? This type has ${count} tag${count === 1 ? "" : "s"} — they will become untyped.`
+                      : `Delete tag type "${tagType.name}"?`;
+                    if (confirm(msg)) {
                       deleteTagTypeMutation.mutate(tagType.id);
                     }
                   }}
