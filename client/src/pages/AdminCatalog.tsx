@@ -28,8 +28,8 @@ import type { Category, Product, ProductImage, ProductReview, Tag, TagType, Cate
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
 const AGE_GROUP_OPTIONS = ["infant", "kids", "teens", "adults"] as const;
-const THEME_OPTIONS = ["animals", "florals", "nature", "abstract", "geometric", "traditional", "sports", "pop-culture"] as const;
-const STYLE_OPTIONS = ["minimal", "initials", "monogram", "typographic", "illustrative", "floral-frame", "bold-graphic"] as const;
+const THEME_OPTIONS = ["animals", "superheroes", "princess", "florals", "vehicles", "space", "dinosaurs", "abstract"] as const;
+const STYLE_OPTIONS = ["minimal", "bold", "classic", "initials", "elegant"] as const;
 
 function toggleCsvValue(csv: string | null | undefined, value: string): string {
   const vals = (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
