@@ -36865,7 +36865,7 @@
     },
     {
       "id": "jbm38fz4f9hwfttj0h63gvgh",
-      "name": "Risk / Suitability",
+      "name": "Risk/Suitability",
       "slug": "risk-suitability",
       "description": "Buyer confidence and safety signals",
       "sortOrder": 3
@@ -36879,14 +36879,14 @@
     },
     {
       "id": "m1jmc4n2iqd7l25b7fcmrzsy",
-      "name": "Experimental / Growth",
+      "name": "Experimental/Growth",
       "slug": "experimental-growth",
       "description": "Testing and seasonal signals",
       "sortOrder": 5
     },
     {
       "id": "hezlv1bhytd61jmwgvoy26zk",
-      "name": "Use-Case / Structure",
+      "name": "Use-Case/Structure",
       "slug": "use-case-structure",
       "description": "Product format and set signals",
       "sortOrder": 6

@@ -22,6 +22,10 @@ import { db } from "../db";
 import { tags, productTags, tagTypes } from "@shared/schema";
 import { inArray, sql } from "drizzle-orm";
 
+function rows(res: unknown): unknown[] {
+  return Array.isArray(res) ? res : ((res as { rows?: unknown[] }).rows ?? []);
+}
+
 async function main() {
   console.log("[migrate] Starting catalog schema migration…");
 
@@ -35,16 +39,16 @@ async function main() {
   `);
   console.log("[migrate] products: ensured age_group/gender/themes/styles columns exist");
 
-  // ── 2. Backfill age_group from audience (only if audience column still exists) ──
-  const audienceExists = await db.execute<{ exists: boolean }>(sql`
-    SELECT EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'products' AND column_name = 'audience'
-    ) AS exists;
+  // ── 2. Backfill age_group/gender (only when audience column still exists) ──
+  // Check whether audience column is present before attempting to read it.
+  const audienceCheck = await db.execute(sql`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_name = 'products' AND column_name = 'audience';
   `);
-  const hasAudience = (audienceExists.rows[0] as any)?.exists === true;
+  const hasAudience = rows(audienceCheck).length > 0;
 
   if (hasAudience) {
+    // Map audience → age_group. "couples" → "adults"; anything unknown → "kids".
     await db.execute(sql`
       UPDATE products
       SET
@@ -56,12 +60,14 @@ async function main() {
         gender = 'unisex'
       WHERE age_group IS NULL;
     `);
-    console.log("[migrate] products: backfilled age_group/gender from audience");
+    console.log("[migrate] products: backfilled age_group/gender from audience column");
   } else {
+    // audience already dropped — default any remaining NULLs defensively.
     await db.execute(sql`
-      UPDATE products SET age_group = 'kids', gender = 'unisex' WHERE age_group IS NULL;
+      UPDATE products SET age_group = 'kids', gender = 'unisex'
+      WHERE age_group IS NULL OR gender IS NULL;
     `);
-    console.log("[migrate] products: defaulted remaining NULL age_group rows");
+    console.log("[migrate] products: audience column absent — defaulted NULL age_group rows");
   }
 
   // ── 3. Create tag_types table (idempotent) ────────────────────────────────
@@ -119,32 +125,37 @@ async function main() {
 
   if (legacyTagRows.length > 0) {
     const legacyIds = legacyTagRows.map((r) => r.id);
-    const ptDel = await db.delete(productTags).where(inArray(productTags.tagId, legacyIds));
-    const tDel  = await db.delete(tags).where(inArray(tags.id, legacyIds));
-    console.log(
-      `[migrate] legacy tags: deleted ${legacyTagRows.length} tags and their product_tag associations`
-    );
+    await db.delete(productTags).where(inArray(productTags.tagId, legacyIds));
+    await db.delete(tags).where(inArray(tags.id, legacyIds));
+    console.log(`[migrate] legacy tags: deleted ${legacyTagRows.length} tags and their product_tag associations`);
   } else {
     console.log("[migrate] legacy tags: already removed, skipping");
   }
 
-  // ── 7. Seed tag types (idempotent via ON CONFLICT DO NOTHING) ─────────────
+  // ── 7. Seed tag types (upsert — updates names on existing rows too) ───────
   const tagTypeRows = [
-    { id: "n7k4y0t47ddlv81ocw0uh0g5", name: "Merchandising",         slug: "merchandising",       description: "Selling and ranking signals",              sortOrder: 1 },
-    { id: "aetcsgfd4ds0127a5ugkxgm9", name: "Occasion-fit",          slug: "occasion-fit",        description: "Soft signals for occasion-based ranking",  sortOrder: 2 },
-    { id: "jbm38fz4f9hwfttj0h63gvgh", name: "Risk / Suitability",    slug: "risk-suitability",    description: "Buyer confidence and safety signals",      sortOrder: 3 },
-    { id: "mfp285l1s0f1f357ytju67bv", name: "Operational",           slug: "operational",         description: "Fulfillment and production signals",       sortOrder: 4 },
-    { id: "m1jmc4n2iqd7l25b7fcmrzsy", name: "Experimental / Growth", slug: "experimental-growth", description: "Testing and seasonal signals",             sortOrder: 5 },
-    { id: "hezlv1bhytd61jmwgvoy26zk", name: "Use-Case / Structure",  slug: "use-case-structure",  description: "Product format and set signals",           sortOrder: 6 },
+    { id: "n7k4y0t47ddlv81ocw0uh0g5", name: "Merchandising",      slug: "merchandising",       description: "Selling and ranking signals",             sortOrder: 1 },
+    { id: "aetcsgfd4ds0127a5ugkxgm9", name: "Occasion-fit",       slug: "occasion-fit",        description: "Soft signals for occasion-based ranking", sortOrder: 2 },
+    { id: "jbm38fz4f9hwfttj0h63gvgh", name: "Risk/Suitability",   slug: "risk-suitability",    description: "Buyer confidence and safety signals",     sortOrder: 3 },
+    { id: "mfp285l1s0f1f357ytju67bv", name: "Operational",        slug: "operational",         description: "Fulfillment and production signals",      sortOrder: 4 },
+    { id: "m1jmc4n2iqd7l25b7fcmrzsy", name: "Experimental/Growth",slug: "experimental-growth", description: "Testing and seasonal signals",            sortOrder: 5 },
+    { id: "hezlv1bhytd61jmwgvoy26zk", name: "Use-Case/Structure", slug: "use-case-structure",  description: "Product format and set signals",          sortOrder: 6 },
   ];
 
   await db
     .insert(tagTypes)
     .values(tagTypeRows)
-    .onConflictDoNothing();
-  console.log(`[migrate] tag_types: seeded ${tagTypeRows.length} types`);
+    .onConflictDoUpdate({
+      target: tagTypes.id,
+      set: {
+        name:      sql`excluded.name`,
+        slug:      sql`excluded.slug`,
+        sortOrder: sql`excluded.sort_order`,
+      },
+    });
+  console.log(`[migrate] tag_types: upserted ${tagTypeRows.length} types`);
 
-  // ── 8. Seed 25 internal merchandising tags ────────────────────────────────
+  // ── 8. Seed 25 internal merchandising tags (upsert) ───────────────────────
   const M = "n7k4y0t47ddlv81ocw0uh0g5";
   const O = "aetcsgfd4ds0127a5ugkxgm9";
   const R = "jbm38fz4f9hwfttj0h63gvgh";
@@ -185,7 +196,10 @@ async function main() {
     .values(newTags)
     .onConflictDoUpdate({
       target: tags.id,
-      set: { tagTypeId: sql`excluded.tag_type_id`, sortOrder: sql`excluded.sort_order` },
+      set: {
+        tagTypeId: sql`excluded.tag_type_id`,
+        sortOrder: sql`excluded.sort_order`,
+      },
     });
   console.log(`[migrate] tags: upserted ${newTags.length} typed tags`);
 
@@ -193,7 +207,7 @@ async function main() {
   await db.execute(sql`
     ALTER TABLE products DROP COLUMN IF EXISTS audience;
   `);
-  console.log("[migrate] products: audience column dropped (or was already gone)");
+  console.log("[migrate] products: audience column dropped (or was already absent)");
 
   console.log("[migrate] Migration complete.");
   process.exit(0);
