@@ -31,10 +31,6 @@ export const products = pgTable("products", {
   bulletPoints: text("bullet_points"),
   searchKeywords: text("search_keywords"),
   productType: text("product_type").default("towel"),
-  ageGroup: text("age_group").default("kids"),
-  gender: text("gender").default("unisex"),
-  themes: text("themes"),
-  styles: text("styles"),
   active: boolean("active").default(true),
   sortOrder: integer("sort_order").default(0),
   variantColors: text("variant_colors").default("[]").notNull(),
@@ -42,6 +38,58 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// ── Attribute lookup tables ──────────────────────────────────────────────────
+
+export const ageGroups = pgTable("age_groups", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const genders = pgTable("genders", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const themes = pgTable("themes", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const styles = pgTable("styles", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").default(0),
+});
+
+// ── Attribute junction tables ────────────────────────────────────────────────
+
+export const productAgeGroups = pgTable("product_age_groups", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  ageGroupId: text("age_group_id").notNull().references(() => ageGroups.id, { onDelete: "cascade" }),
+}, (t) => [uniqueIndex("product_age_groups_uniq").on(t.productId, t.ageGroupId)]);
+
+export const productGenders = pgTable("product_genders", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  genderId: text("gender_id").notNull().references(() => genders.id, { onDelete: "cascade" }),
+}, (t) => [uniqueIndex("product_genders_uniq").on(t.productId, t.genderId)]);
+
+export const productThemes = pgTable("product_themes", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  themeId: text("theme_id").notNull().references(() => themes.id, { onDelete: "cascade" }),
+}, (t) => [uniqueIndex("product_themes_uniq").on(t.productId, t.themeId)]);
+
+export const productStyles = pgTable("product_styles", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  styleId: text("style_id").notNull().references(() => styles.id, { onDelete: "cascade" }),
+}, (t) => [uniqueIndex("product_styles_uniq").on(t.productId, t.styleId)]);
 
 export const carts = pgTable("carts", {
   id: text("id").primaryKey(),
@@ -204,6 +252,10 @@ export const variantColors = pgTable("variant_colors", {
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAgeGroupSchema = createInsertSchema(ageGroups).omit({ id: true });
+export const insertGenderSchema = createInsertSchema(genders).omit({ id: true });
+export const insertThemeSchema = createInsertSchema(themes).omit({ id: true });
+export const insertStyleSchema = createInsertSchema(styles).omit({ id: true });
 export const insertCartSchema = createInsertSchema(carts).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 export const auditLogs = pgTable("audit_logs", {
@@ -339,6 +391,11 @@ export const insertRateLimitStatsSchema = createInsertSchema(rateLimitStats).omi
 export type {
   Category, InsertCategory,
   Product, InsertProduct,
+  AgeGroup, InsertAgeGroup,
+  Gender, InsertGender,
+  Theme, InsertTheme,
+  Style, InsertStyle,
+  Attributes,
   Cart, InsertCart,
   CartItem, InsertCartItem,
   Order, InsertOrder,

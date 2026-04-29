@@ -15,6 +15,57 @@ export interface InsertCategory {
   sortOrder?: number | null;
 }
 
+export interface AgeGroup {
+  id: string;
+  name: string;
+  sortOrder: number | null;
+}
+
+export interface InsertAgeGroup {
+  name: string;
+  sortOrder?: number | null;
+}
+
+export interface Gender {
+  id: string;
+  name: string;
+  sortOrder: number | null;
+}
+
+export interface InsertGender {
+  name: string;
+  sortOrder?: number | null;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  sortOrder: number | null;
+}
+
+export interface InsertTheme {
+  name: string;
+  sortOrder?: number | null;
+}
+
+export interface Style {
+  id: string;
+  name: string;
+  sortOrder: number | null;
+}
+
+export interface InsertStyle {
+  name: string;
+  sortOrder?: number | null;
+}
+
+export interface Attributes {
+  ageGroups: AgeGroup[];
+  genders: Gender[];
+  themes: Theme[];
+  styles: Style[];
+}
+
 export interface Product {
   id: string;
   sku: string | null;
@@ -36,10 +87,10 @@ export interface Product {
   bulletPoints: string | null;
   searchKeywords: string | null;
   productType: string | null;
-  ageGroup: string | null;
-  gender: string | null;
-  themes: string | null;
-  styles: string | null;
+  ageGroups: string[];
+  genders: string[];
+  themes: string[];
+  styles: string[];
   active: boolean | null;
   sortOrder: number | null;
   createdAt: Date | null;
@@ -69,10 +120,6 @@ export interface InsertProduct {
   bulletPoints?: string | null;
   searchKeywords?: string | null;
   productType?: string | null;
-  ageGroup?: string | null;
-  gender?: string | null;
-  themes?: string | null;
-  styles?: string | null;
   active?: boolean | null;
   sortOrder?: number | null;
 }

@@ -5,7 +5,38 @@ import { db } from "./db";
 import {
   categories, products, siteConfig, productImages, productReviews, tags, tagTypes, productTags,
   currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
+  ageGroups, genders, themes, styles, productAgeGroups, productGenders, productThemes, productStyles,
 } from "@shared/schema";
+
+// ── Starter attribute values (source of truth — only seeded here) ─────────────
+const STARTER_AGE_GROUPS = [
+  { name: "infant",  sortOrder: 0 },
+  { name: "kids",    sortOrder: 1 },
+  { name: "teens",   sortOrder: 2 },
+  { name: "adults",  sortOrder: 3 },
+];
+const STARTER_GENDERS = [
+  { name: "male",    sortOrder: 0 },
+  { name: "female",  sortOrder: 1 },
+  { name: "unisex",  sortOrder: 2 },
+];
+const STARTER_THEMES = [
+  { name: "animals",     sortOrder: 0 },
+  { name: "superheroes", sortOrder: 1 },
+  { name: "princess",    sortOrder: 2 },
+  { name: "florals",     sortOrder: 3 },
+  { name: "vehicles",    sortOrder: 4 },
+  { name: "space",       sortOrder: 5 },
+  { name: "dinosaurs",   sortOrder: 6 },
+  { name: "abstract",    sortOrder: 7 },
+];
+const STARTER_STYLES = [
+  { name: "minimal",   sortOrder: 0 },
+  { name: "bold",      sortOrder: 1 },
+  { name: "classic",   sortOrder: 2 },
+  { name: "initials",  sortOrder: 3 },
+  { name: "elegant",   sortOrder: 4 },
+];
 import { and, eq, like } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
@@ -537,6 +568,104 @@ export async function seedDatabase() {
       console.log(`[seed] productVariants: synced ${pvSynced}`);
     } else {
       console.log(`[seed] productVariants: all entries up to date`);
+    }
+
+    // ── 9b. Attribute lookup tables (idempotent upsert by name) ─────────────
+    async function seedLookup<T extends { id: string; name: string }>(
+      table: any, starter: { name: string; sortOrder: number }[], label: string
+    ) {
+      const existing = await db.select({ id: table.id, name: table.name }).from(table);
+      const existingNames = new Set(existing.map((r: any) => r.name));
+      let synced = 0;
+      for (const item of starter) {
+        if (!existingNames.has(item.name)) {
+          await db.insert(table).values({ id: createId(), ...item });
+          synced++;
+        }
+      }
+      if (synced > 0) console.log(`[seed] ${label}: inserted ${synced} entries`);
+      else console.log(`[seed] ${label}: all entries up to date`);
+    }
+    const { createId } = await import("@paralleldrive/cuid2");
+    await seedLookup(ageGroups, STARTER_AGE_GROUPS, "ageGroups");
+    await seedLookup(genders, STARTER_GENDERS, "genders");
+    await seedLookup(themes, STARTER_THEMES, "themes");
+    await seedLookup(styles, STARTER_STYLES, "styles");
+
+    // ── 9c. Product junction tables (ageGroup/gender from seed data) ─────────
+    {
+      const allAg = await db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups);
+      const allGen = await db.select({ id: genders.id, name: genders.name }).from(genders);
+      const agByName = Object.fromEntries(allAg.map((r: any) => [r.name, r.id]));
+      const genByName = Object.fromEntries(allGen.map((r: any) => [r.name, r.id]));
+
+      const prods = await db.select({ id: products.id }).from(products);
+      const prodIds = prods.map((p: any) => p.id);
+
+      // Build map of productId -> seed record
+      const seedProds: any[] = (seedData as any).products || [];
+      const allCats = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
+      const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
+
+      // Fetch existing junction rows so we don't re-insert
+      const existingAg = await db.select({ productId: productAgeGroups.productId, ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups);
+      const existingGen = await db.select({ productId: productGenders.productId, genderId: productGenders.genderId }).from(productGenders);
+      const existingAgSet = new Set(existingAg.map((r: any) => `${r.productId}:${r.ageGroupId}`));
+      const existingGenSet = new Set(existingGen.map((r: any) => `${r.productId}:${r.genderId}`));
+
+      // To find productId from seed slug, we need product slugs
+      const dbProds = await db.select({ id: products.id, slug: products.slug }).from(products);
+      const slugToId: Record<string, string> = Object.fromEntries(dbProds.map((p: any) => [p.slug, p.id]));
+
+      let jSynced = 0;
+      for (const sp of seedProds) {
+        const productId = slugToId[sp.slug];
+        if (!productId) continue;
+
+        if (sp.ageGroup && agByName[sp.ageGroup]) {
+          const ageGroupId = agByName[sp.ageGroup];
+          const key = `${productId}:${ageGroupId}`;
+          if (!existingAgSet.has(key)) {
+            await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId }).onConflictDoNothing();
+            existingAgSet.add(key);
+            jSynced++;
+          }
+        }
+        if (sp.gender && genByName[sp.gender]) {
+          const genderId = genByName[sp.gender];
+          const key = `${productId}:${genderId}`;
+          if (!existingGenSet.has(key)) {
+            await db.insert(productGenders).values({ id: createId(), productId, genderId }).onConflictDoNothing();
+            existingGenSet.add(key);
+            jSynced++;
+          }
+        }
+        // themes/styles from seed are null, so skip for now
+        if (sp.themes && typeof sp.themes === "string") {
+          const allThemes = await db.select({ id: themes.id, name: themes.name }).from(themes);
+          const thByName = Object.fromEntries(allThemes.map((r: any) => [r.name, r.id]));
+          const themeNames = sp.themes.split(",").map((t: string) => t.trim()).filter(Boolean);
+          for (const tn of themeNames) {
+            if (thByName[tn]) {
+              await db.insert(productThemes).values({ id: createId(), productId, themeId: thByName[tn] }).onConflictDoNothing();
+              jSynced++;
+            }
+          }
+        }
+        if (sp.styles && typeof sp.styles === "string") {
+          const allStyles = await db.select({ id: styles.id, name: styles.name }).from(styles);
+          const stByName = Object.fromEntries(allStyles.map((r: any) => [r.name, r.id]));
+          const styleNames = sp.styles.split(",").map((s: string) => s.trim()).filter(Boolean);
+          for (const sn of styleNames) {
+            if (stByName[sn]) {
+              await db.insert(productStyles).values({ id: createId(), productId, styleId: stByName[sn] }).onConflictDoNothing();
+              jSynced++;
+            }
+          }
+        }
+      }
+      if (jSynced > 0) console.log(`[seed] product junction attrs: inserted ${jSynced} rows`);
+      else console.log(`[seed] product junction attrs: all up to date`);
     }
 
     // ── 10. Default shop-sections config (first-time seed only) ──────────────

@@ -27,6 +27,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
     -   **Admin Consent**: Configures and monitors consent popups and collected signups.
     -   **Admin Security**: Configures API rate limiting (global/moderate/strict tiers) and guest cart cleanup. Superadmin-only.
     -   **Admin Occasions**: CRUD management for merchandising occasions (boost/penalty tags, preferred themes/styles). Routes: `GET/POST /api/admin/occasions`, `PATCH/DELETE /api/admin/occasions/:id`. Public: `GET /api/occasions`.
+    -   **Admin Attributes**: CRUD management for product attribute lookup tables (age groups, genders, themes, styles). Routes: `GET/POST /api/admin/attributes/:type`, `PATCH/DELETE /api/admin/attributes/:type/:id`. Public: `GET /api/attributes`.
 -   **Core UI Components**: Reusable components such as AnnouncementBar, Header (with CurrencySelector), BottomNav, Footer, ProductCardNew, QuickAddSheet for personalization, and a floating WhatsAppButton.
 -   **Multi-Currency Support**: Frontend displays prices in multiple currencies based on user selection or IP detection, with conversion and formatting handled by `CurrencyContext`.
 
@@ -54,9 +55,9 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
 -   **Type**: PostgreSQL, with separate databases for development and production environments.
 -   **ORM**: Drizzle ORM.
 -   **ID Strategy**: Uses CUID2 string IDs for all tables.
--   **Key Tables**: `categories`, `products`, `tag_types`, `tags`, `product_tags`, `occasions`, `product_images`, `carts`, `orders`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, `pricing_rules`, `category_variant_options`, `product_variants`, `customers`, `customer_otps`, `customer_sessions`.
+-   **Key Tables**: `categories`, `products`, `tag_types`, `tags`, `product_tags`, `occasions`, `product_images`, `carts`, `orders`, `site_config`, `audit_logs`, `customer_consents`, `currency_rates`, `pricing_rules`, `category_variant_options`, `product_variants`, `customers`, `customer_otps`, `customer_sessions`, `age_groups`, `genders`, `themes`, `styles`, `product_age_groups`, `product_genders`, `product_themes`, `product_styles`.
 -   **Audit Log**: Tracks all administrative changes with entity-specific details and auto-pruning.
--   **Product Categorization**: Products have `age_group` (kids/teens/adults/infant), `gender` (male/female/unisex), `themes` (comma-separated: animals/florals/etc), and `styles` (comma-separated: minimal/initials/etc) columns replacing the old flat `audience` field.
+-   **Product Attributes (normalized)**: Products no longer store flat `age_group`/`gender`/`themes`/`styles` text columns. Instead: 4 lookup tables (`age_groups`, `genders`, `themes`, `styles`) hold the valid values; 4 junction tables (`product_age_groups`, `product_genders`, `product_themes`, `product_styles`) link products to their attributes. Products are enriched at query time to return `ageGroups`/`genders`/`themes`/`styles` as string-name arrays. Managed via `AdminAttributes` page (`/admin/attributes`). No values are hardcoded in the UI — all options are fetched from `GET /api/attributes`.
 -   **Tag System**: `tag_types` table holds 6 admin-managed types (Merchandising, Occasion-fit, Risk/Suitability, Operational, Experimental/Growth, Use-Case/Structure). `tags` are internal merchandising signals (best_seller, bundle_friendly, etc.) — not user-facing filters. 25 initial tags seeded.
 -   **Occasions**: `occasions` table stores merchandising engine config (boost/penalty tag weights, preferred themes/styles) for curating and ranking products externally. Managed via `AdminOccasions` page (`/admin/occasions`).
 -   **Discount Logic**: Implements an automatic "Buy 2 Get 1 Free" discount on cart items.

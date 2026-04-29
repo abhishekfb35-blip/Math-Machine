@@ -14,9 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Occasion } from "@shared/types";
 
-const THEME_OPTIONS = ["animals", "superheroes", "princess", "florals", "vehicles", "space", "dinosaurs", "abstract"] as const;
-const STYLE_OPTIONS = ["minimal", "bold", "classic", "initials", "elegant"] as const;
-
 function parseCsv(val: string | null | undefined): string[] {
   if (!val) return [];
   return val.split(",").map(v => v.trim()).filter(Boolean);
@@ -149,6 +146,12 @@ function OccasionForm({
   const [form, setForm] = useState<FormState>(initial);
   const [slugManual, setSlugManual] = useState(false);
 
+  const { data: attributes } = useQuery<{ themes: { id: string; name: string }[]; styles: { id: string; name: string }[] }>({
+    queryKey: ["/api/attributes"],
+  });
+  const themeOptions = attributes?.themes?.map(t => t.name) ?? [];
+  const styleOptions = attributes?.styles?.map(s => s.name) ?? [];
+
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -223,7 +226,7 @@ function OccasionForm({
       <div className="space-y-2">
         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferred Themes</Label>
         <div className="flex flex-wrap gap-3">
-          {THEME_OPTIONS.map(opt => (
+          {themeOptions.map(opt => (
             <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
               <Checkbox
                 checked={parseCsv(form.preferredThemes).includes(opt)}
@@ -239,7 +242,7 @@ function OccasionForm({
       <div className="space-y-2">
         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferred Styles</Label>
         <div className="flex flex-wrap gap-3">
-          {STYLE_OPTIONS.map(opt => (
+          {styleOptions.map(opt => (
             <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
               <Checkbox
                 checked={parseCsv(form.preferredStyles).includes(opt)}

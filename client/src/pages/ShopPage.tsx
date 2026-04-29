@@ -174,10 +174,7 @@ export default function ShopPage() {
   const ageFilteredProducts = useMemo(() => {
     if (!products) return [];
     if (activeFilter === "all") return products;
-    return products.filter(p => {
-      const groups = (p.ageGroup ?? "").split(",").map(v => v.trim()).filter(Boolean);
-      return groups.includes(activeFilter);
-    });
+    return products.filter(p => (p.ageGroups ?? []).includes(activeFilter));
   }, [products, activeFilter]);
 
   // Products for audience-filtered / search views

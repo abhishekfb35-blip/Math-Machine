@@ -373,10 +373,6 @@ export function registerAdminHealthRoutes(app: Express) {
           { column: "bullet_points", type: "text", nullable: true },
           { column: "search_keywords", type: "text", nullable: true },
           { column: "product_type", type: "text", nullable: true },
-          { column: "age_group", type: "text", nullable: true },
-          { column: "gender", type: "text", nullable: true },
-          { column: "themes", type: "text", nullable: true },
-          { column: "styles", type: "text", nullable: true },
           { column: "active", type: "boolean", nullable: true },
           { column: "sort_order", type: "integer", nullable: true },
           { column: "created_at", type: "timestamp without time zone", nullable: true },
@@ -498,6 +494,46 @@ export function registerAdminHealthRoutes(app: Express) {
           { column: "token", type: "text", nullable: false },
           { column: "expires_at", type: "timestamp without time zone", nullable: false },
           { column: "created_at", type: "timestamp without time zone", nullable: true },
+        ],
+        age_groups: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "sort_order", type: "integer", nullable: true },
+        ],
+        genders: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "sort_order", type: "integer", nullable: true },
+        ],
+        themes: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "sort_order", type: "integer", nullable: true },
+        ],
+        styles: [
+          { column: "id", type: "text", nullable: false },
+          { column: "name", type: "text", nullable: false },
+          { column: "sort_order", type: "integer", nullable: true },
+        ],
+        product_age_groups: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "age_group_id", type: "text", nullable: false },
+        ],
+        product_genders: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "gender_id", type: "text", nullable: false },
+        ],
+        product_themes: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "theme_id", type: "text", nullable: false },
+        ],
+        product_styles: [
+          { column: "id", type: "text", nullable: false },
+          { column: "product_id", type: "text", nullable: false },
+          { column: "style_id", type: "text", nullable: false },
         ],
       };
 

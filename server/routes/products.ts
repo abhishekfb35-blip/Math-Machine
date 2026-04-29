@@ -31,6 +31,11 @@ export function registerProductRoutes(app: Express) {
     res.json(occs);
   });
 
+  app.get("/api/attributes", async (_req, res) => {
+    const attrs = await storage.getAttributes();
+    res.json(attrs);
+  });
+
   app.post("/api/products/batch", async (req, res) => {
     const raw = req.body?.ids;
     if (!Array.isArray(raw)) return res.status(400).json({ message: "ids must be an array" });

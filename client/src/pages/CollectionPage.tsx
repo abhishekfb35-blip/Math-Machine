@@ -232,8 +232,7 @@ export default function CollectionPage() {
     if (!products) return [];
     const ageGroupValue = audience === "couples" ? "adults" : audience;
     let filtered = products.filter((p) => {
-      const groups = (p.ageGroup ?? "").split(",").map((v) => v.trim()).filter(Boolean);
-      return groups.includes(ageGroupValue);
+      return (p.ageGroups ?? []).includes(ageGroupValue);
     });
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => detectGender(p) === genderFilter);

@@ -1,10 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, ageGroups, genders, themes, styles, productAgeGroups, productGenders, productThemes, productStyles } from "@shared/schema";
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
+  AgeGroup, InsertAgeGroup,
+  Gender, InsertGender,
+  Theme, InsertTheme,
+  Style, InsertStyle,
+  Attributes,
   Cart, InsertCart,
   CartItem, InsertCartItem,
   Order, InsertOrder,
@@ -183,6 +188,29 @@ export interface IStorage {
   getActiveCustomerSessionCount(): Promise<number>;
   getRecentCustomerSignupCount(dayWindow: number): Promise<number>;
   cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }>;
+
+  getAttributes(): Promise<Attributes>;
+  getAgeGroups(): Promise<AgeGroup[]>;
+  createAgeGroup(data: InsertAgeGroup): Promise<AgeGroup>;
+  updateAgeGroup(id: string, data: Partial<InsertAgeGroup>): Promise<AgeGroup | undefined>;
+  deleteAgeGroup(id: string): Promise<void>;
+  getGenders(): Promise<Gender[]>;
+  createGender(data: InsertGender): Promise<Gender>;
+  updateGender(id: string, data: Partial<InsertGender>): Promise<Gender | undefined>;
+  deleteGender(id: string): Promise<void>;
+  getThemes(): Promise<Theme[]>;
+  createTheme(data: InsertTheme): Promise<Theme>;
+  updateTheme(id: string, data: Partial<InsertTheme>): Promise<Theme | undefined>;
+  deleteTheme(id: string): Promise<void>;
+  getStyles(): Promise<Style[]>;
+  createStyle(data: InsertStyle): Promise<Style>;
+  updateStyle(id: string, data: Partial<InsertStyle>): Promise<Style | undefined>;
+  deleteStyle(id: string): Promise<void>;
+  setProductAgeGroups(productId: string, ageGroupIds: string[]): Promise<void>;
+  setProductGenders(productId: string, genderIds: string[]): Promise<void>;
+  setProductThemes(productId: string, themeIds: string[]): Promise<void>;
+  setProductStyles(productId: string, styleIds: string[]): Promise<void>;
+  getProductAttributeIds(productId: string): Promise<{ ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -218,7 +246,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  private async withReviewStats(prods: Product[]): Promise<Product[]> {
+  private async withReviewStats(prods: any[]): Promise<any[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const stats = await db.select({
@@ -235,7 +263,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  private async withTagNames(prods: Product[]): Promise<Product[]> {
+  private async withTagNames(prods: any[]): Promise<any[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const tagRows = await db.select({
@@ -252,9 +280,49 @@ export class DatabaseStorage implements IStorage {
     return prods.map(p => ({ ...p, tagNames: tagMap.get(p.id) ?? [] }));
   }
 
-  private async withEnriched(prods: Product[]): Promise<Product[]> {
+  private async withAttributes(prods: any[]): Promise<Product[]> {
+    if (prods.length === 0) return prods;
+    const ids = prods.map(p => p.id);
+
+    const [agRows, genRows, themeRows, styleRows] = await Promise.all([
+      db.select({ productId: productAgeGroups.productId, name: ageGroups.name })
+        .from(productAgeGroups).innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
+        .where(inArray(productAgeGroups.productId, ids)),
+      db.select({ productId: productGenders.productId, name: genders.name })
+        .from(productGenders).innerJoin(genders, eq(productGenders.genderId, genders.id))
+        .where(inArray(productGenders.productId, ids)),
+      db.select({ productId: productThemes.productId, name: themes.name })
+        .from(productThemes).innerJoin(themes, eq(productThemes.themeId, themes.id))
+        .where(inArray(productThemes.productId, ids)),
+      db.select({ productId: productStyles.productId, name: styles.name })
+        .from(productStyles).innerJoin(styles, eq(productStyles.styleId, styles.id))
+        .where(inArray(productStyles.productId, ids)),
+    ]);
+
+    const agMap = new Map<string, string[]>();
+    const genMap = new Map<string, string[]>();
+    const themeMap = new Map<string, string[]>();
+    const styleMap = new Map<string, string[]>();
+
+    for (const r of agRows) { if (!agMap.has(r.productId)) agMap.set(r.productId, []); agMap.get(r.productId)!.push(r.name); }
+    for (const r of genRows) { if (!genMap.has(r.productId)) genMap.set(r.productId, []); genMap.get(r.productId)!.push(r.name); }
+    for (const r of themeRows) { if (!themeMap.has(r.productId)) themeMap.set(r.productId, []); themeMap.get(r.productId)!.push(r.name); }
+    for (const r of styleRows) { if (!styleMap.has(r.productId)) styleMap.set(r.productId, []); styleMap.get(r.productId)!.push(r.name); }
+
+    return prods.map(p => {
+      const base = { ageGroups: [] as string[], genders: [] as string[], themes: [] as string[], styles: [] as string[], ...p };
+      base.ageGroups = agMap.get(p.id) ?? [];
+      base.genders = genMap.get(p.id) ?? [];
+      base.themes = themeMap.get(p.id) ?? [];
+      base.styles = styleMap.get(p.id) ?? [];
+      return base as Product;
+    });
+  }
+
+  private async withEnriched(prods: any[]): Promise<Product[]> {
     const withStats = await this.withReviewStats(prods);
-    return this.withTagNames(withStats);
+    const withTags = await this.withTagNames(withStats);
+    return this.withAttributes(withTags);
   }
 
   async getProducts(): Promise<Product[]> {
@@ -293,12 +361,12 @@ export class DatabaseStorage implements IStorage {
         )
       ))
       .orderBy(products.sortOrder, products.name);
-    return this.withTagNames(prods);
+    return this.withEnriched(prods);
   }
 
   async searchAllProducts(query: string): Promise<Product[]> {
     const pattern = `%${query}%`;
-    return await db.select().from(products)
+    const prods = await db.select().from(products)
       .where(
         or(
           ilike(products.name, pattern),
@@ -307,19 +375,20 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(products.sortOrder, products.name);
+    return this.withAttributes(prods);
   }
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
     const [prod] = await db.select().from(products).where(eq(products.slug, slug));
     if (!prod) return undefined;
-    const [enriched] = await this.withTagNames([prod]);
+    const [enriched] = await this.withEnriched([prod]);
     return enriched;
   }
 
   async getProductById(id: string): Promise<Product | undefined> {
     const [prod] = await db.select().from(products).where(eq(products.id, id));
     if (!prod) return undefined;
-    const [enriched] = await this.withTagNames([prod]);
+    const [enriched] = await this.withEnriched([prod]);
     return enriched;
   }
 
@@ -331,12 +400,14 @@ export class DatabaseStorage implements IStorage {
 
   async createProduct(prod: InsertProduct): Promise<Product> {
     const [created] = await db.insert(products).values({ id: createId(), ...prod }).returning();
-    return created;
+    return { ...created, ageGroups: [], genders: [], themes: [], styles: [] };
   }
 
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
     const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
-    return updated;
+    if (!updated) return undefined;
+    const [enriched] = await this.withAttributes([{ ...updated, ageGroups: [], genders: [], themes: [], styles: [] }]);
+    return enriched;
   }
 
   async deleteProduct(id: string): Promise<void> {
@@ -777,7 +848,8 @@ export class DatabaseStorage implements IStorage {
     const prods = await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder, products.name);
-    return this.withReviewStats(prods);
+    const withStats = await this.withReviewStats(prods);
+    return this.withAttributes(withStats);
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
@@ -1492,6 +1564,141 @@ export class DatabaseStorage implements IStorage {
       .from(customers)
       .where(gt(customers.createdAt, since));
     return Number(result?.count ?? 0);
+  }
+
+  // ── Attribute CRUD ──────────────────────────────────────────────────────────
+
+  async getAttributes(): Promise<Attributes> {
+    const [ag, gen, th, st] = await Promise.all([
+      db.select().from(ageGroups).orderBy(ageGroups.sortOrder, ageGroups.name),
+      db.select().from(genders).orderBy(genders.sortOrder, genders.name),
+      db.select().from(themes).orderBy(themes.sortOrder, themes.name),
+      db.select().from(styles).orderBy(styles.sortOrder, styles.name),
+    ]);
+    return { ageGroups: ag, genders: gen, themes: th, styles: st };
+  }
+
+  async getAgeGroups(): Promise<AgeGroup[]> {
+    return db.select().from(ageGroups).orderBy(ageGroups.sortOrder, ageGroups.name);
+  }
+
+  async createAgeGroup(data: InsertAgeGroup): Promise<AgeGroup> {
+    const [created] = await db.insert(ageGroups).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updateAgeGroup(id: string, data: Partial<InsertAgeGroup>): Promise<AgeGroup | undefined> {
+    const [updated] = await db.update(ageGroups).set(data).where(eq(ageGroups.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAgeGroup(id: string): Promise<void> {
+    await db.delete(ageGroups).where(eq(ageGroups.id, id));
+  }
+
+  async getGenders(): Promise<Gender[]> {
+    return db.select().from(genders).orderBy(genders.sortOrder, genders.name);
+  }
+
+  async createGender(data: InsertGender): Promise<Gender> {
+    const [created] = await db.insert(genders).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updateGender(id: string, data: Partial<InsertGender>): Promise<Gender | undefined> {
+    const [updated] = await db.update(genders).set(data).where(eq(genders.id, id)).returning();
+    return updated;
+  }
+
+  async deleteGender(id: string): Promise<void> {
+    await db.delete(genders).where(eq(genders.id, id));
+  }
+
+  async getThemes(): Promise<Theme[]> {
+    return db.select().from(themes).orderBy(themes.sortOrder, themes.name);
+  }
+
+  async createTheme(data: InsertTheme): Promise<Theme> {
+    const [created] = await db.insert(themes).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updateTheme(id: string, data: Partial<InsertTheme>): Promise<Theme | undefined> {
+    const [updated] = await db.update(themes).set(data).where(eq(themes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTheme(id: string): Promise<void> {
+    await db.delete(themes).where(eq(themes.id, id));
+  }
+
+  async getStyles(): Promise<Style[]> {
+    return db.select().from(styles).orderBy(styles.sortOrder, styles.name);
+  }
+
+  async createStyle(data: InsertStyle): Promise<Style> {
+    const [created] = await db.insert(styles).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updateStyle(id: string, data: Partial<InsertStyle>): Promise<Style | undefined> {
+    const [updated] = await db.update(styles).set(data).where(eq(styles.id, id)).returning();
+    return updated;
+  }
+
+  async deleteStyle(id: string): Promise<void> {
+    await db.delete(styles).where(eq(styles.id, id));
+  }
+
+  async setProductAgeGroups(productId: string, ageGroupIds: string[]): Promise<void> {
+    await db.delete(productAgeGroups).where(eq(productAgeGroups.productId, productId));
+    if (ageGroupIds.length > 0) {
+      await db.insert(productAgeGroups).values(
+        ageGroupIds.map(ageGroupId => ({ id: createId(), productId, ageGroupId }))
+      ).onConflictDoNothing();
+    }
+  }
+
+  async setProductGenders(productId: string, genderIds: string[]): Promise<void> {
+    await db.delete(productGenders).where(eq(productGenders.productId, productId));
+    if (genderIds.length > 0) {
+      await db.insert(productGenders).values(
+        genderIds.map(genderId => ({ id: createId(), productId, genderId }))
+      ).onConflictDoNothing();
+    }
+  }
+
+  async setProductThemes(productId: string, themeIds: string[]): Promise<void> {
+    await db.delete(productThemes).where(eq(productThemes.productId, productId));
+    if (themeIds.length > 0) {
+      await db.insert(productThemes).values(
+        themeIds.map(themeId => ({ id: createId(), productId, themeId }))
+      ).onConflictDoNothing();
+    }
+  }
+
+  async setProductStyles(productId: string, styleIds: string[]): Promise<void> {
+    await db.delete(productStyles).where(eq(productStyles.productId, productId));
+    if (styleIds.length > 0) {
+      await db.insert(productStyles).values(
+        styleIds.map(styleId => ({ id: createId(), productId, styleId }))
+      ).onConflictDoNothing();
+    }
+  }
+
+  async getProductAttributeIds(productId: string): Promise<{ ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }> {
+    const [agRows, genRows, themeRows, styleRows] = await Promise.all([
+      db.select({ ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups).where(eq(productAgeGroups.productId, productId)),
+      db.select({ genderId: productGenders.genderId }).from(productGenders).where(eq(productGenders.productId, productId)),
+      db.select({ themeId: productThemes.themeId }).from(productThemes).where(eq(productThemes.productId, productId)),
+      db.select({ styleId: productStyles.styleId }).from(productStyles).where(eq(productStyles.productId, productId)),
+    ]);
+    return {
+      ageGroupIds: agRows.map(r => r.ageGroupId),
+      genderIds: genRows.map(r => r.genderId),
+      themeIds: themeRows.map(r => r.themeId),
+      styleIds: styleRows.map(r => r.styleId),
+    };
   }
 }
 

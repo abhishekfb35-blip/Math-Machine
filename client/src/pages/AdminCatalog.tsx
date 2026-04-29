@@ -23,22 +23,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor, Attributes } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
-
-const AGE_GROUP_OPTIONS = ["infant", "kids", "teens", "adults"] as const;
-const THEME_OPTIONS = ["animals", "superheroes", "princess", "florals", "vehicles", "space", "dinosaurs", "abstract"] as const;
-const STYLE_OPTIONS = ["minimal", "bold", "classic", "initials", "elegant"] as const;
-
-function toggleCsvValue(csv: string | null | undefined, value: string): string {
-  const vals = (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
-  if (vals.includes(value)) return vals.filter(v => v !== value).join(",");
-  return [...vals, value].join(",");
-}
-function parseCsv(csv: string | null | undefined): string[] {
-  return (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
-}
 
 function ProductTagSelector({ productId, categoryId, allTags, initialTags }: { productId: string; categoryId: string; allTags: Tag[]; initialTags: Tag[] }) {
   const { toast } = useToast();
@@ -736,6 +723,10 @@ export default function AdminCatalog() {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [editingAgeGroupIds, setEditingAgeGroupIds] = useState<string[]>([]);
+  const [editingGenderIds, setEditingGenderIds] = useState<string[]>([]);
+  const [editingThemeIds, setEditingThemeIds] = useState<string[]>([]);
+  const [editingStyleIds, setEditingStyleIds] = useState<string[]>([]);
   const [newTagTypeName, setNewTagTypeName] = useState("");
   const [newTagTypeSlug, setNewTagTypeSlug] = useState("");
   const [newTagTypeDescription, setNewTagTypeDescription] = useState("");
@@ -793,6 +784,10 @@ export default function AdminCatalog() {
 
   const { data: allProducts } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+  });
+
+  const { data: attributes } = useQuery<Attributes>({
+    queryKey: ["/api/attributes"],
   });
 
   const productCountByCategory = useMemo(() => {
@@ -983,19 +978,54 @@ export default function AdminCatalog() {
 
   const closeAfterSaveRef = React.useRef(false);
 
+  useEffect(() => {
+    if (!editingProduct?.id || isNew) {
+      setEditingAgeGroupIds([]);
+      setEditingGenderIds([]);
+      setEditingThemeIds([]);
+      setEditingStyleIds([]);
+      return;
+    }
+    fetch(`/api/admin/products/${editingProduct.id}/attributes`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setEditingAgeGroupIds(data.ageGroupIds ?? []);
+          setEditingGenderIds(data.genderIds ?? []);
+          setEditingThemeIds(data.themeIds ?? []);
+          setEditingStyleIds(data.styleIds ?? []);
+        }
+      })
+      .catch(() => {});
+  }, [editingProduct?.id, isNew]);
+
   const saveProductMutation = useMutation({
     mutationFn: async (data: Partial<Product>) => {
       if (data.id) {
         const res = await apiRequest("PUT", `/api/admin/products/${data.id}`, data);
         const product = await res.json();
-        await apiRequest("PUT", `/api/admin/products/${data.id}/tags`, { tagIds: selectedTagIds });
+        await Promise.all([
+          apiRequest("PUT", `/api/admin/products/${data.id}/tags`, { tagIds: selectedTagIds }),
+          apiRequest("PUT", `/api/admin/products/${data.id}/attributes`, {
+            ageGroupIds: editingAgeGroupIds,
+            genderIds: editingGenderIds,
+            themeIds: editingThemeIds,
+            styleIds: editingStyleIds,
+          }),
+        ]);
         return product;
       } else {
         const res = await apiRequest("POST", "/api/admin/products", data);
         const product = await res.json();
-        if (product.id && selectedTagIds.length > 0) {
-          await apiRequest("PUT", `/api/admin/products/${product.id}/tags`, { tagIds: selectedTagIds });
-        }
+        await Promise.all([
+          selectedTagIds.length > 0 && apiRequest("PUT", `/api/admin/products/${product.id}/tags`, { tagIds: selectedTagIds }),
+          apiRequest("PUT", `/api/admin/products/${product.id}/attributes`, {
+            ageGroupIds: editingAgeGroupIds,
+            genderIds: editingGenderIds,
+            themeIds: editingThemeIds,
+            styleIds: editingStyleIds,
+          }),
+        ].filter(Boolean));
         return product;
       }
     },
@@ -1833,8 +1863,6 @@ export default function AdminCatalog() {
                   material: "Cotton",
                   gsm: 500,
                   dimensions: "120 x 60 cm",
-                  ageGroup: "kids",
-                  gender: "unisex",
                   productType: "towel",
                 });
                 setView("edit-product");
@@ -2860,49 +2888,55 @@ export default function AdminCatalog() {
             <div>
               <Label className="mb-1.5 block">Age Group</Label>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                {AGE_GROUP_OPTIONS.map(opt => (
-                  <div key={opt} className="flex items-center gap-1.5">
+                {(attributes?.ageGroups ?? []).map(ag => (
+                  <div key={ag.id} className="flex items-center gap-1.5">
                     <Checkbox
-                      id={`edit-age-${opt}`}
-                      checked={parseCsv(editingProduct.ageGroup).includes(opt)}
-                      onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, ageGroup: toggleCsvValue(prev?.ageGroup, opt) }))}
-                      data-testid={`checkbox-age-${opt}`}
+                      id={`edit-age-${ag.id}`}
+                      checked={editingAgeGroupIds.includes(ag.id)}
+                      onCheckedChange={() => setEditingAgeGroupIds(prev =>
+                        prev.includes(ag.id) ? prev.filter(x => x !== ag.id) : [...prev, ag.id]
+                      )}
+                      data-testid={`checkbox-age-${ag.name}`}
                     />
-                    <Label htmlFor={`edit-age-${opt}`} className="text-sm font-normal cursor-pointer capitalize">{opt}</Label>
+                    <Label htmlFor={`edit-age-${ag.id}`} className="text-sm font-normal cursor-pointer capitalize">{ag.name}</Label>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-prod-gender">Gender</Label>
-              <Select
-                value={editingProduct.gender || "unisex"}
-                onValueChange={(v) => setEditingProduct(prev => ({ ...prev!, gender: v }))}
-              >
-                <SelectTrigger id="edit-prod-gender" data-testid="select-gender">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="unisex">Unisex</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="mb-1.5 block">Gender</Label>
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                {(attributes?.genders ?? []).map(g => (
+                  <div key={g.id} className="flex items-center gap-1.5">
+                    <Checkbox
+                      id={`edit-gender-${g.id}`}
+                      checked={editingGenderIds.includes(g.id)}
+                      onCheckedChange={() => setEditingGenderIds(prev =>
+                        prev.includes(g.id) ? prev.filter(x => x !== g.id) : [...prev, g.id]
+                      )}
+                      data-testid={`checkbox-gender-${g.name}`}
+                    />
+                    <Label htmlFor={`edit-gender-${g.id}`} className="text-sm font-normal cursor-pointer capitalize">{g.name}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           <div>
             <Label className="mb-1.5 block">Themes</Label>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-              {THEME_OPTIONS.map(opt => (
-                <div key={opt} className="flex items-center gap-1.5">
+              {(attributes?.themes ?? []).map(th => (
+                <div key={th.id} className="flex items-center gap-1.5">
                   <Checkbox
-                    id={`edit-theme-${opt}`}
-                    checked={parseCsv(editingProduct.themes).includes(opt)}
-                    onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, themes: toggleCsvValue(prev?.themes, opt) }))}
-                    data-testid={`checkbox-theme-${opt}`}
+                    id={`edit-theme-${th.id}`}
+                    checked={editingThemeIds.includes(th.id)}
+                    onCheckedChange={() => setEditingThemeIds(prev =>
+                      prev.includes(th.id) ? prev.filter(x => x !== th.id) : [...prev, th.id]
+                    )}
+                    data-testid={`checkbox-theme-${th.name}`}
                   />
-                  <Label htmlFor={`edit-theme-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                  <Label htmlFor={`edit-theme-${th.id}`} className="text-sm font-normal cursor-pointer capitalize">{th.name}</Label>
                 </div>
               ))}
             </div>
@@ -2911,15 +2945,17 @@ export default function AdminCatalog() {
           <div>
             <Label className="mb-1.5 block">Styles</Label>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-              {STYLE_OPTIONS.map(opt => (
-                <div key={opt} className="flex items-center gap-1.5">
+              {(attributes?.styles ?? []).map(st => (
+                <div key={st.id} className="flex items-center gap-1.5">
                   <Checkbox
-                    id={`edit-style-${opt}`}
-                    checked={parseCsv(editingProduct.styles).includes(opt)}
-                    onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, styles: toggleCsvValue(prev?.styles, opt) }))}
-                    data-testid={`checkbox-style-${opt}`}
+                    id={`edit-style-${st.id}`}
+                    checked={editingStyleIds.includes(st.id)}
+                    onCheckedChange={() => setEditingStyleIds(prev =>
+                      prev.includes(st.id) ? prev.filter(x => x !== st.id) : [...prev, st.id]
+                    )}
+                    data-testid={`checkbox-style-${st.name}`}
                   />
-                  <Label htmlFor={`edit-style-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                  <Label htmlFor={`edit-style-${st.id}`} className="text-sm font-normal cursor-pointer capitalize">{st.name}</Label>
                 </div>
               ))}
             </div>
