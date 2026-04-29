@@ -1,18 +1,17 @@
 /**
- * Migration: Catalog schema overhaul (Task #109)
+ * Migration: Catalog schema overhaul (Task #109, updated Task #117)
  *
- * Replaces the flat `products.audience` column with multi-dimensional fields:
- *   - age_group  (kids | teens | adults | infant)
- *   - gender     (male | female | unisex)
- *   - themes     (comma-separated: animals, florals, ...)
- *   - styles     (comma-separated: minimal, initials, ...)
+ * Originally replaced the flat `products.audience` column with multi-dimensional
+ * flat text fields (age_group, gender, themes, styles). Task #117 subsequently
+ * normalised those fields into lookup + junction tables:
+ *   age_groups / product_age_groups
+ *   genders    / product_genders
+ *   themes     / product_themes
+ *   styles     / product_styles
  *
- * Also:
- *   - Creates `tag_types` table for structured tag classification
- *   - Adds `tag_type_id` and `sort_order` columns to `tags`
- *   - Creates `occasions` table for merchandising engine
- *   - Deletes legacy audience-based tags and their product associations
- *   - Seeds 6 tag types and 25 internal merchandising tags
+ * The flat text columns are now fully removed from `products`. Steps 1–2 below
+ * are preserved as comments for historical context only; they are skipped at
+ * runtime because the columns no longer exist.
  *
  * This script is IDEMPOTENT — safe to run multiple times.
  * Run with: npx tsx server/scripts/migrate-catalog-schema.ts
@@ -29,63 +28,12 @@ function rows(res: unknown): unknown[] {
 async function main() {
   console.log("[migrate] Starting catalog schema migration…");
 
-  // ── 1. Add new product columns (idempotent via IF NOT EXISTS) ────────────
-  await db.execute(sql`
-    ALTER TABLE products
-      ADD COLUMN IF NOT EXISTS age_group text,
-      ADD COLUMN IF NOT EXISTS gender    text,
-      ADD COLUMN IF NOT EXISTS themes    text,
-      ADD COLUMN IF NOT EXISTS styles    text;
-  `);
-  console.log("[migrate] products: ensured age_group/gender/themes/styles columns exist");
-
-  // ── 2. Backfill age_group/gender from audience (when column still exists) ───
-  // IMPORTANT: age_group has a schema default of 'kids', so db:push will have
-  // already set all rows to 'kids' before this script runs. We must map from
-  // audience for ALL rows (not just NULLs) to preserve adults/couples semantics.
-  const audienceCheck = await db.execute(sql`
-    SELECT column_name FROM information_schema.columns
-    WHERE table_name = 'products' AND column_name = 'audience';
-  `);
-  const hasAudience = rows(audienceCheck).length > 0;
-
-  if (hasAudience) {
-    // Always re-derive age_group from audience regardless of current age_group value.
-    // This handles db:push pre-populating age_group='kids' for all rows.
-    await db.execute(sql`
-      UPDATE products
-      SET
-        age_group = CASE
-          WHEN audience = 'couples' THEN 'adults'
-          WHEN audience IN ('kids', 'teens', 'adults', 'infant') THEN audience
-          ELSE 'kids'
-        END,
-        gender = COALESCE(gender, 'unisex')
-      WHERE audience IS NOT NULL;
-    `);
-    // Set gender for any rows where it's still NULL (unknown audience rows)
-    await db.execute(sql`
-      UPDATE products SET gender = 'unisex' WHERE gender IS NULL;
-    `);
-    console.log("[migrate] products: backfilled age_group/gender from audience column");
-
-    // Post-backfill sanity check
-    const counts = await db.execute(sql`
-      SELECT age_group, COUNT(*) as cnt FROM products GROUP BY age_group ORDER BY age_group;
-    `);
-    const countRows = rows(counts) as { age_group: string; cnt: string }[];
-    console.log("[migrate] products: age_group distribution after backfill:", countRows.map(r => `${r.age_group}=${r.cnt}`).join(", "));
-  } else {
-    // audience already dropped — ensure no NULLs remain (defensive)
-    await db.execute(sql`
-      UPDATE products
-      SET
-        age_group = COALESCE(age_group, 'kids'),
-        gender    = COALESCE(gender, 'unisex')
-      WHERE age_group IS NULL OR gender IS NULL;
-    `);
-    console.log("[migrate] products: audience column absent — ensured no NULL age_group/gender rows");
-  }
+  // ── 1 & 2. Flat attribute columns (SKIPPED — superseded by Task #117) ─────
+  // The age_group, gender, themes, styles flat text columns previously added to
+  // `products` have been fully removed and replaced by lookup + junction tables
+  // (age_groups/genders/themes/styles + product_age_groups/product_genders/
+  // product_themes/product_styles). Do not re-add them.
+  console.log("[migrate] products: flat attribute columns superseded by junction tables (Task #117) — skipping steps 1 & 2");
 
   // ── 3. Create tag_types table (idempotent) ────────────────────────────────
   await db.execute(sql`

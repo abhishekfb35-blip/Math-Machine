@@ -760,7 +760,7 @@ export function registerAdminHealthRoutes(app: Express) {
         }
       }
 
-      const completenessFields = ["sku", "material", "color", "dimensions", "age_group", "product_type"];
+      const completenessFields = ["sku", "material", "color", "dimensions", "product_type"];
       const dataCompleteness: { field: string; actualType: string; expectedType: string; totalProducts: number; nullCount: number; populatedCount: number; status: "pass" | "warn" }[] = [];
       try {
         const totalProducts = (await pool.query(`SELECT COUNT(*)::int as cnt FROM products`)).rows[0].cnt;
@@ -1433,7 +1433,7 @@ export function registerAdminHealthRoutes(app: Express) {
         `SELECT id, name, description FROM tags ORDER BY name`
       );
 
-      // Export products (with categorySlug via JOIN)
+      // Export products (with categorySlug via JOIN; attributes via junction subqueries)
       const prodsResult = await pool.query(
         `SELECT p.id, p.sku, p.name, p.slug, p.description,
                 p.price, p.mrp, p.image_url AS "imageUrl",
@@ -1446,7 +1446,10 @@ export function registerAdminHealthRoutes(app: Express) {
                 p.bullet_points AS "bulletPoints",
                 p.search_keywords AS "searchKeywords",
                 p.product_type AS "productType",
-                p.age_group AS "ageGroup", p.gender, p.themes, p.styles,
+                COALESCE((SELECT string_agg(ag.name,',') FROM product_age_groups pag JOIN age_groups ag ON ag.id=pag.age_group_id WHERE pag.product_id=p.id),'') AS "ageGroup",
+                COALESCE((SELECT string_agg(g.name,',')  FROM product_genders   pg  JOIN genders     g  ON g.id=pg.gender_id     WHERE pg.product_id=p.id),'')  AS "gender",
+                COALESCE((SELECT string_agg(t.name,',')  FROM product_themes    pt  JOIN themes      t  ON t.id=pt.theme_id      WHERE pt.product_id=p.id),'')  AS "themes",
+                COALESCE((SELECT string_agg(s.name,',')  FROM product_styles    ps  JOIN styles      s  ON s.id=ps.style_id      WHERE ps.product_id=p.id),'')  AS "styles",
                 p.active, p.sort_order AS "sortOrder"
          FROM products p
          JOIN categories c ON c.id = p.category_id

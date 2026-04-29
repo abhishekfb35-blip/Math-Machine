@@ -207,12 +207,12 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
+    // "couples" is a URL alias for the "adults" age group in the product DB model
+    // (couples gift sets are drawn from adult-range products).
+    const dbAudience = audience === "couples" ? "adults" : audience;
     const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name);
-    // Only filter if the URL audience param matches an existing DB age group.
-    // If there is no matching DB entry (e.g. DB is empty or no "couples" group),
-    // return an empty set — no silent fallback substitution.
-    if (!dbAgeGroupNames.includes(audience)) return [];
-    let filtered = products.filter((p) => (p.ageGroups ?? []).includes(audience));
+    if (!dbAgeGroupNames.includes(dbAudience)) return [];
+    let filtered = products.filter((p) => (p.ageGroups ?? []).includes(dbAudience));
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
     }

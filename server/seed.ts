@@ -10,11 +10,10 @@ import {
 
 // ── Starter attribute values (source of truth — only seeded here) ─────────────
 const STARTER_AGE_GROUPS = [
-  { name: "infant",  sortOrder: 0 },
-  { name: "kids",    sortOrder: 1 },
-  { name: "teens",   sortOrder: 2 },
-  { name: "adults",  sortOrder: 3 },
-  { name: "couples", sortOrder: 4 },
+  { name: "infant", sortOrder: 0 },
+  { name: "kids",   sortOrder: 1 },
+  { name: "teens",  sortOrder: 2 },
+  { name: "adults", sortOrder: 3 },
 ];
 const STARTER_GENDERS = [
   { name: "male",    sortOrder: 0 },
@@ -629,16 +628,6 @@ export async function seedDatabase() {
             await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId }).onConflictDoNothing();
             existingAgSet.add(key);
             jSynced++;
-          }
-          // "adults" products are also tagged as "couples" (couples are adult-range products)
-          if (sp.ageGroup === "adults" && agByName["couples"]) {
-            const couplesId = agByName["couples"];
-            const couplesKey = `${productId}:${couplesId}`;
-            if (!existingAgSet.has(couplesKey)) {
-              await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId: couplesId }).onConflictDoNothing();
-              existingAgSet.add(couplesKey);
-              jSynced++;
-            }
           }
         }
         if (sp.gender && genByName[sp.gender]) {
