@@ -69,8 +69,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions || selectedSizeName) return;
     const sizes = variantOptions.sizes;
-    const isKidsBathrobe = product?.productType === "bathrobe" && (product?.ageGroups ?? []).includes("kids");
-    if (sizes.length > 0 && !isKidsBathrobe) {
+    if (sizes.length > 0) {
       const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
       setSelectedSizeName(def.name);
       setSelectedColorName(getFirstSelectableColor(def.name));

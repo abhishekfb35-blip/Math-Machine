@@ -167,8 +167,7 @@ export default function ProductPage() {
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions) return;
     const sizes = variantOptions.sizes;
-    const isKidsBathrobe = product?.productType === "bathrobe" && (product?.ageGroups ?? []).includes("kids");
-    if (sizes.length > 0 && !selectedSize && !isKidsBathrobe) {
+    if (sizes.length > 0 && !selectedSize) {
       const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
       setSelectedSize(def.name);
       setSelectedColor(getFirstSelectableColor(def.name));

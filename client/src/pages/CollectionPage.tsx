@@ -207,7 +207,14 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    const ageGroupValue = audience === "couples" ? "adults" : audience;
+    const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name);
+    // If the URL audience param directly matches a DB age group name, use it.
+    // Otherwise (e.g. "couples" which has no dedicated DB entry), fall back to
+    // the last age group returned from DB — seed.ts orders by sortOrder with
+    // children groups first and adult groups last.
+    const ageGroupValue = dbAgeGroupNames.includes(audience)
+      ? audience
+      : dbAgeGroupNames[dbAgeGroupNames.length - 1] ?? audience;
     let filtered = products.filter((p) => {
       return (p.ageGroups ?? []).includes(ageGroupValue);
     });
@@ -215,7 +222,7 @@ export default function CollectionPage() {
       filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
     }
     return filtered;
-  }, [products, audience, genderFilter]);
+  }, [products, attributes, audience, genderFilter]);
 
   const productTypeSections = useMemo(() => {
     const categoryOrder = ["towels", "blankets", "bathrobes"];
