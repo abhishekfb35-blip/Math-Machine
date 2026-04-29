@@ -1,23 +1,28 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
-import { insertAgeGroupSchema, insertGenderSchema, insertThemeSchema, insertStyleSchema } from "@shared/schema";
-import { z, ZodSchema } from "zod";
+import {
+  insertAgeGroupSchema, insertGenderSchema, insertThemeSchema, insertStyleSchema,
+  type InsertAgeGroup, type InsertGender, type InsertTheme, type InsertStyle,
+} from "@shared/schema";
+import type { AgeGroup, Gender, Theme, Style } from "@shared/types";
+import { z } from "zod";
+import type { ZodObject, ZodRawShape } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 
-// ── Shared handler builders ───────────────────────────────────────────────────
+// ── Shared handler builder ────────────────────────────────────────────────────
 
-type GetListFn  = () => Promise<any[]>;
-type CreateFn   = (data: any) => Promise<any>;
-type UpdateFn   = (id: string, data: any) => Promise<any | undefined>;
-type DeleteFn   = (id: string) => Promise<void>;
+interface NamedRow { id: string; name: string }
 
-function makeHandlers(opts: {
-  label: string;
-  getList:  GetListFn;
-  create:   CreateFn;
-  update:   UpdateFn;
-  delete:   DeleteFn;
-  insertSchema: ZodSchema<any>;
+function makeHandlers<
+  TRow extends NamedRow,
+  TInsert extends object,
+  TShape extends ZodRawShape,
+>(opts: {
+  getList:  () => Promise<TRow[]>;
+  create:   (data: TInsert) => Promise<TRow>;
+  update:   (id: string, data: Partial<TInsert>) => Promise<TRow | undefined>;
+  delete:   (id: string) => Promise<void>;
+  schema:   ZodObject<TShape>;
   duplicateMsg: string;
   notFoundMsg:  string;
   failCreate:   string;
@@ -29,23 +34,24 @@ function makeHandlers(opts: {
     },
     create: async (req: Request, res: Response) => {
       try {
-        const data = opts.insertSchema.parse(req.body);
+        const data = opts.schema.parse(req.body) as TInsert;
         const created = await opts.create(data);
         await storage.createAuditLog({
           entityType: "attribute", entityId: created.id, entityName: created.name,
           action: "created", changes: JSON.stringify(data), username: getAdminUsername(req),
         });
         res.status(201).json(created);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-        if (err.code === "23505") return res.status(409).json({ message: opts.duplicateMsg });
+        if (typeof err === "object" && err !== null && "code" in err && (err as { code: unknown }).code === "23505")
+          return res.status(409).json({ message: opts.duplicateMsg });
         res.status(500).json({ message: opts.failCreate });
       }
     },
     update: async (req: Request, res: Response) => {
       const id = req.params.id as string;
       try {
-        const data = opts.insertSchema.partial().parse(req.body);
+        const data = opts.schema.partial().parse(req.body) as Partial<TInsert>;
         const updated = await opts.update(id, data);
         if (!updated) return res.status(404).json({ message: opts.notFoundMsg });
         await storage.createAuditLog({
@@ -53,9 +59,10 @@ function makeHandlers(opts: {
           action: "updated", changes: JSON.stringify(data), username: getAdminUsername(req),
         });
         res.json(updated);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-        if (err.code === "23505") return res.status(409).json({ message: opts.duplicateMsg });
+        if (typeof err === "object" && err !== null && "code" in err && (err as { code: unknown }).code === "23505")
+          return res.status(409).json({ message: opts.duplicateMsg });
         res.status(500).json({ message: opts.failUpdate });
       }
     },
@@ -66,54 +73,50 @@ function makeHandlers(opts: {
   };
 }
 
-// ── Per-type handler sets ─────────────────────────────────────────────────────
+// ── Per-type handler sets (shared between canonical and alias paths) ───────────
 
-const ageGroupHandlers = makeHandlers({
-  label: "age group",
+const ageGroupHandlers = makeHandlers<AgeGroup, InsertAgeGroup, ZodRawShape>({
   getList:  () => storage.getAgeGroups(),
   create:   (d) => storage.createAgeGroup(d),
   update:   (id, d) => storage.updateAgeGroup(id, d),
   delete:   (id) => storage.deleteAgeGroup(id),
-  insertSchema: insertAgeGroupSchema,
+  schema:   insertAgeGroupSchema as unknown as ZodObject<ZodRawShape>,
   duplicateMsg: "An age group with that name already exists",
   notFoundMsg:  "Age group not found",
   failCreate:   "Failed to create age group",
   failUpdate:   "Failed to update age group",
 });
 
-const genderHandlers = makeHandlers({
-  label: "gender",
+const genderHandlers = makeHandlers<Gender, InsertGender, ZodRawShape>({
   getList:  () => storage.getGenders(),
   create:   (d) => storage.createGender(d),
   update:   (id, d) => storage.updateGender(id, d),
   delete:   (id) => storage.deleteGender(id),
-  insertSchema: insertGenderSchema,
+  schema:   insertGenderSchema as unknown as ZodObject<ZodRawShape>,
   duplicateMsg: "A gender with that name already exists",
   notFoundMsg:  "Gender not found",
   failCreate:   "Failed to create gender",
   failUpdate:   "Failed to update gender",
 });
 
-const themeHandlers = makeHandlers({
-  label: "theme",
+const themeHandlers = makeHandlers<Theme, InsertTheme, ZodRawShape>({
   getList:  () => storage.getThemes(),
   create:   (d) => storage.createTheme(d),
   update:   (id, d) => storage.updateTheme(id, d),
   delete:   (id) => storage.deleteTheme(id),
-  insertSchema: insertThemeSchema,
+  schema:   insertThemeSchema as unknown as ZodObject<ZodRawShape>,
   duplicateMsg: "A theme with that name already exists",
   notFoundMsg:  "Theme not found",
   failCreate:   "Failed to create theme",
   failUpdate:   "Failed to update theme",
 });
 
-const styleHandlers = makeHandlers({
-  label: "style",
+const styleHandlers = makeHandlers<Style, InsertStyle, ZodRawShape>({
   getList:  () => storage.getStyles(),
   create:   (d) => storage.createStyle(d),
   update:   (id, d) => storage.updateStyle(id, d),
   delete:   (id) => storage.deleteStyle(id),
-  insertSchema: insertStyleSchema,
+  schema:   insertStyleSchema as unknown as ZodObject<ZodRawShape>,
   duplicateMsg: "A style with that name already exists",
   notFoundMsg:  "Style not found",
   failCreate:   "Failed to create style",
@@ -139,7 +142,9 @@ export function registerAdminAttributeRoutes(app: Express) {
   app.put("/api/admin/products/:id/attributes", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
-    const { ageGroupIds = [], genderIds = [], themeIds = [], styleIds = [] } = req.body;
+    const { ageGroupIds = [], genderIds = [], themeIds = [], styleIds = [] } = req.body as {
+      ageGroupIds?: string[]; genderIds?: string[]; themeIds?: string[]; styleIds?: string[];
+    };
     await Promise.all([
       storage.setProductAgeGroups(id, ageGroupIds),
       storage.setProductGenders(id, genderIds),
@@ -154,8 +159,7 @@ export function registerAdminAttributeRoutes(app: Express) {
     res.json({ success: true });
   });
 
-  // Per-type CRUD — canonical paths at /api/admin/attributes/:type
-  // Aliases at /api/admin/:type share the same handler instances (no duplication)
+  // Per-type CRUD — canonical paths and short aliases share the same handler instances
   const guard = requirePermission("catalog");
 
   for (const [slug, h] of [
@@ -164,15 +168,14 @@ export function registerAdminAttributeRoutes(app: Express) {
     ["themes",     themeHandlers],
     ["styles",     styleHandlers],
   ] as const) {
-    app.get(`/api/admin/attributes/${slug}`,      guard, h.list);
-    app.post(`/api/admin/attributes/${slug}`,     guard, h.create);
-    app.put(`/api/admin/attributes/${slug}/:id`,  guard, h.update);
+    app.get(`/api/admin/attributes/${slug}`,        guard, h.list);
+    app.post(`/api/admin/attributes/${slug}`,       guard, h.create);
+    app.put(`/api/admin/attributes/${slug}/:id`,    guard, h.update);
     app.delete(`/api/admin/attributes/${slug}/:id`, guard, h.del);
 
-    // Short aliases share the same handler references — no code duplication
-    app.get(`/api/admin/${slug}`,      guard, h.list);
-    app.post(`/api/admin/${slug}`,     guard, h.create);
-    app.put(`/api/admin/${slug}/:id`,  guard, h.update);
+    app.get(`/api/admin/${slug}`,        guard, h.list);
+    app.post(`/api/admin/${slug}`,       guard, h.create);
+    app.put(`/api/admin/${slug}/:id`,    guard, h.update);
     app.delete(`/api/admin/${slug}/:id`, guard, h.del);
   }
 }

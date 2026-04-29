@@ -152,9 +152,9 @@ async function main() {
     console.log(`[migrate-attribute-tables] Products: ${allProducts.length} total, ${coveredIds.size} covered, ${orphaned.length} orphaned`);
 
     if (orphaned.length > 0) {
-      const data = seedData as any;
-      const seedProds: any[] = data.products ?? [];
-      const seedBySlug: Record<string, any> = Object.fromEntries(seedProds.map(p => [p.slug, p]));
+      type SeedProduct = { slug: string; ageGroup?: string; age_group?: string; gender?: string; themes?: string; styles?: string };
+      const seedProds = ((seedData as unknown as { products?: SeedProduct[] }).products ?? []);
+      const seedBySlug: Record<string, SeedProduct> = Object.fromEntries(seedProds.map(p => [p.slug, p]));
       let backfilled = 0;
       let notInSeed  = 0;
 
