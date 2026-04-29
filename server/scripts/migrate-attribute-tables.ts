@@ -24,6 +24,15 @@
  *    2. Back-fills from seed-data.json by slug match.
  *    3. Reports products still without attributes (manual Admin Catalog action needed).
  *
+ * PRODUCTION RUNBOOK (MODE B check)
+ * ───────────────────────────────────
+ * After running this script, review the "Coverage after migration" output block
+ * at the end of the log. For each junction table (age_groups, genders, themes,
+ * styles) it prints the count of products assigned. Any products not covered will
+ * be listed under "Products still missing age_group junction rows" — these need
+ * manual assignment via Admin Catalog → product edit → Attributes tab before
+ * those products appear correctly in Shop/Collection filtering.
+ *
  * Safe to run multiple times (fully idempotent).
  */
 
