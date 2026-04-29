@@ -43,39 +43,18 @@ const productTypeConfigs: Record<string, ProductTypeConfig> = {
 };
 
 
-const genderFilters: { label: string; value: GenderFilter }[] = [
-  { label: "All", value: "all" },
-  { label: "Boys", value: "boys" },
-  { label: "Girls", value: "girls" },
-  { label: "Unisex", value: "unisex" },
+const genderFilters: { label: string; value: GenderFilter; dbValues: string[] }[] = [
+  { label: "All", value: "all", dbValues: [] },
+  { label: "Boys", value: "boys", dbValues: ["male"] },
+  { label: "Girls", value: "girls", dbValues: ["female"] },
+  { label: "Unisex", value: "unisex", dbValues: ["unisex"] },
 ];
 
-const boysKeywords = [
-  "boy", "boys", "superhero", "spider", "batman", "avenger", "iron man", "captain america",
-  "car ", "cars", "racing", "truck", "dinosaur", "dino", "dragon", "monster", "pirate",
-  "football", "cricket", "soccer", "sports", "bike", "cycle", "rocket", "space",
-  "shark", "crocodile", "lion", "tiger", "robot", "ninja", "army", "soldier",
-  "king crown", "mr ", "mr.", "his", "men", "man", "gentleman",
-];
-
-const girlsKeywords = [
-  "girl", "girls", "princess", "fairy", "unicorn", "pony", "ballerina", "ballet",
-  "butterfly", "flower", "floral", "mermaid", "barbie", "doll", "kitty", "hello kitty",
-  "rainbow", "heart", "tiara", "crown queen", "queen crown",
-  "ladies", "women", "mrs", "her ", "she ", "lady",
-];
-
-function detectGender(product: Product): GenderFilter {
-  const name = product.name.toLowerCase();
-  const slug = product.slug.toLowerCase();
-  const text = `${name} ${slug}`;
-
-  const isBoys = boysKeywords.some((kw) => text.includes(kw));
-  const isGirls = girlsKeywords.some((kw) => text.includes(kw));
-
-  if (isBoys && !isGirls) return "boys";
-  if (isGirls && !isBoys) return "girls";
-  return "unisex";
+function matchesGenderFilter(product: Product, filter: GenderFilter): boolean {
+  if (filter === "all") return true;
+  const dbValues = genderFilters.find(f => f.value === filter)?.dbValues ?? [];
+  const productGenders = product.genders ?? [];
+  return dbValues.some(v => productGenders.includes(v));
 }
 
 const PRODUCTS_PER_ROW = 10;
@@ -235,7 +214,7 @@ export default function CollectionPage() {
       return (p.ageGroups ?? []).includes(ageGroupValue);
     });
     if (genderFilter !== "all") {
-      filtered = filtered.filter((p) => detectGender(p) === genderFilter);
+      filtered = filtered.filter((p) => matchesGenderFilter(p, genderFilter));
     }
     return filtered;
   }, [products, audience, genderFilter]);

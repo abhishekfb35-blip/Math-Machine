@@ -100,7 +100,7 @@ export default function AdminProductEdit() {
     enabled: !!productId,
   });
 
-  const { data: attributes } = useQuery<Attributes>({
+  const { data: attributes, isLoading: isAttributesLoading } = useQuery<Attributes>({
     queryKey: ["/api/attributes"],
   });
 
@@ -502,6 +502,7 @@ export default function AdminProductEdit() {
           <div>
             <Label className="mb-1.5 block">Age Group</Label>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
               {(attributes?.ageGroups ?? []).map(ag => (
                 <div key={ag.id} className="flex items-center gap-1.5">
                   <Checkbox

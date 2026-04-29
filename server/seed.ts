@@ -260,10 +260,6 @@ export async function seedDatabase() {
             bulletPoints: p.bulletPoints ?? null,
             searchKeywords: p.searchKeywords ?? null,
             productType: p.productType ?? "towel",
-            ageGroup: p.ageGroup ?? "kids",
-            gender: p.gender ?? "unisex",
-            themes: p.themes ?? null,
-            styles: p.styles ?? null,
             active: p.active !== false,
             sortOrder: p.sortOrder ?? 0,
           }));
