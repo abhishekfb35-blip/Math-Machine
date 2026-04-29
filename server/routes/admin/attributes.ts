@@ -6,23 +6,26 @@ import {
 } from "@shared/schema";
 import type { AgeGroup, Gender, Theme, Style } from "@shared/types";
 import { z } from "zod";
-import type { ZodObject, ZodRawShape } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 
 // ── Shared handler builder ────────────────────────────────────────────────────
 
 interface NamedRow { id: string; name: string }
 
+interface ParseableSchema<T extends object> {
+  parse: (data: unknown) => T;
+  partial: () => { parse: (data: unknown) => Partial<T> };
+}
+
 function makeHandlers<
   TRow extends NamedRow,
   TInsert extends object,
-  TShape extends ZodRawShape,
 >(opts: {
   getList:  () => Promise<TRow[]>;
   create:   (data: TInsert) => Promise<TRow>;
   update:   (id: string, data: Partial<TInsert>) => Promise<TRow | undefined>;
   delete:   (id: string) => Promise<void>;
-  schema:   ZodObject<TShape>;
+  schema:   ParseableSchema<TInsert>;
   duplicateMsg: string;
   notFoundMsg:  string;
   failCreate:   string;
@@ -34,7 +37,7 @@ function makeHandlers<
     },
     create: async (req: Request, res: Response) => {
       try {
-        const data = opts.schema.parse(req.body) as TInsert;
+        const data = opts.schema.parse(req.body);
         const created = await opts.create(data);
         await storage.createAuditLog({
           entityType: "attribute", entityId: created.id, entityName: created.name,
@@ -51,7 +54,7 @@ function makeHandlers<
     update: async (req: Request, res: Response) => {
       const id = req.params.id as string;
       try {
-        const data = opts.schema.partial().parse(req.body) as Partial<TInsert>;
+        const data = opts.schema.partial().parse(req.body);
         const updated = await opts.update(id, data);
         if (!updated) return res.status(404).json({ message: opts.notFoundMsg });
         await storage.createAuditLog({
@@ -75,48 +78,48 @@ function makeHandlers<
 
 // ── Per-type handler sets (shared between canonical and alias paths) ───────────
 
-const ageGroupHandlers = makeHandlers<AgeGroup, InsertAgeGroup, ZodRawShape>({
+const ageGroupHandlers = makeHandlers<AgeGroup, InsertAgeGroup>({
   getList:  () => storage.getAgeGroups(),
   create:   (d) => storage.createAgeGroup(d),
   update:   (id, d) => storage.updateAgeGroup(id, d),
   delete:   (id) => storage.deleteAgeGroup(id),
-  schema:   insertAgeGroupSchema as unknown as ZodObject<ZodRawShape>,
+  schema:   insertAgeGroupSchema,
   duplicateMsg: "An age group with that name already exists",
   notFoundMsg:  "Age group not found",
   failCreate:   "Failed to create age group",
   failUpdate:   "Failed to update age group",
 });
 
-const genderHandlers = makeHandlers<Gender, InsertGender, ZodRawShape>({
+const genderHandlers = makeHandlers<Gender, InsertGender>({
   getList:  () => storage.getGenders(),
   create:   (d) => storage.createGender(d),
   update:   (id, d) => storage.updateGender(id, d),
   delete:   (id) => storage.deleteGender(id),
-  schema:   insertGenderSchema as unknown as ZodObject<ZodRawShape>,
+  schema:   insertGenderSchema,
   duplicateMsg: "A gender with that name already exists",
   notFoundMsg:  "Gender not found",
   failCreate:   "Failed to create gender",
   failUpdate:   "Failed to update gender",
 });
 
-const themeHandlers = makeHandlers<Theme, InsertTheme, ZodRawShape>({
+const themeHandlers = makeHandlers<Theme, InsertTheme>({
   getList:  () => storage.getThemes(),
   create:   (d) => storage.createTheme(d),
   update:   (id, d) => storage.updateTheme(id, d),
   delete:   (id) => storage.deleteTheme(id),
-  schema:   insertThemeSchema as unknown as ZodObject<ZodRawShape>,
+  schema:   insertThemeSchema,
   duplicateMsg: "A theme with that name already exists",
   notFoundMsg:  "Theme not found",
   failCreate:   "Failed to create theme",
   failUpdate:   "Failed to update theme",
 });
 
-const styleHandlers = makeHandlers<Style, InsertStyle, ZodRawShape>({
+const styleHandlers = makeHandlers<Style, InsertStyle>({
   getList:  () => storage.getStyles(),
   create:   (d) => storage.createStyle(d),
   update:   (id, d) => storage.updateStyle(id, d),
   delete:   (id) => storage.deleteStyle(id),
-  schema:   insertStyleSchema as unknown as ZodObject<ZodRawShape>,
+  schema:   insertStyleSchema,
   duplicateMsg: "A style with that name already exists",
   notFoundMsg:  "Style not found",
   failCreate:   "Failed to create style",

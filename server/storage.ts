@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
 import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, ageGroups, genders, themes, styles, productAgeGroups, productGenders, productThemes, productStyles } from "@shared/schema";
+
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
@@ -35,6 +36,10 @@ import type {
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
+
+// Intermediate type: a DB product row before attribute junction enrichment.
+// After withAttributes() runs, ageGroups/genders/themes/styles are filled in → Product.
+type RawProductRow = Omit<Product, 'ageGroups' | 'genders' | 'themes' | 'styles'>;
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -246,7 +251,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  private async withReviewStats(prods: any[]): Promise<any[]> {
+  private async withReviewStats(prods: RawProductRow[]): Promise<RawProductRow[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const stats = await db.select({
@@ -263,7 +268,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  private async withTagNames(prods: any[]): Promise<any[]> {
+  private async withTagNames(prods: RawProductRow[]): Promise<RawProductRow[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const tagRows = await db.select({
@@ -280,8 +285,8 @@ export class DatabaseStorage implements IStorage {
     return prods.map(p => ({ ...p, tagNames: tagMap.get(p.id) ?? [] }));
   }
 
-  private async withAttributes(prods: any[]): Promise<Product[]> {
-    if (prods.length === 0) return prods;
+  private async withAttributes(prods: RawProductRow[]): Promise<Product[]> {
+    if (prods.length === 0) return [];
     const ids = prods.map(p => p.id);
 
     const [agRows, genRows, themeRows, styleRows] = await Promise.all([
@@ -309,19 +314,18 @@ export class DatabaseStorage implements IStorage {
     for (const r of themeRows) { if (!themeMap.has(r.productId)) themeMap.set(r.productId, []); themeMap.get(r.productId)!.push(r.name); }
     for (const r of styleRows) { if (!styleMap.has(r.productId)) styleMap.set(r.productId, []); styleMap.get(r.productId)!.push(r.name); }
 
-    return prods.map(p => {
-      const base = { ageGroups: [] as string[], genders: [] as string[], themes: [] as string[], styles: [] as string[], ...p };
-      base.ageGroups = agMap.get(p.id) ?? [];
-      base.genders = genMap.get(p.id) ?? [];
-      base.themes = themeMap.get(p.id) ?? [];
-      base.styles = styleMap.get(p.id) ?? [];
-      return base as Product;
-    });
+    return prods.map(p => ({
+      ...p,
+      ageGroups: agMap.get(p.id) ?? [],
+      genders:   genMap.get(p.id) ?? [],
+      themes:    themeMap.get(p.id) ?? [],
+      styles:    styleMap.get(p.id) ?? [],
+    }));
   }
 
-  private async withEnriched(prods: any[]): Promise<Product[]> {
+  private async withEnriched(prods: RawProductRow[]): Promise<Product[]> {
     const withStats = await this.withReviewStats(prods);
-    const withTags = await this.withTagNames(withStats);
+    const withTags  = await this.withTagNames(withStats);
     return this.withAttributes(withTags);
   }
 
@@ -406,7 +410,7 @@ export class DatabaseStorage implements IStorage {
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
     const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     if (!updated) return undefined;
-    const [enriched] = await this.withAttributes([{ ...updated, ageGroups: [], genders: [], themes: [], styles: [] }]);
+    const [enriched] = await this.withAttributes([updated]);
     return enriched;
   }
 

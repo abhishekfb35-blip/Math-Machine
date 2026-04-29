@@ -175,20 +175,33 @@ async function main() {
     }
   }
 
-  // ── Final coverage report ────────────────────────────────────────────────
+  // ── Final coverage report (all 4 junction tables) ───────────────────────
   const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
-  const finalRows = await db.select({ productId: productAgeGroups.productId }).from(productAgeGroups);
-  const finalCovered = new Set(finalRows.map(r => r.productId));
-  const stillOrphaned = allProducts.filter(p => !finalCovered.has(p.id));
+  const [finalAg, finalGen, finalTheme, finalStyle] = await Promise.all([
+    db.select({ productId: productAgeGroups.productId }).from(productAgeGroups),
+    db.select({ productId: productGenders.productId }).from(productGenders),
+    db.select({ productId: productThemes.productId }).from(productThemes),
+    db.select({ productId: productStyles.productId }).from(productStyles),
+  ]);
+  const coveredAg    = new Set(finalAg.map(r => r.productId));
+  const coveredGen   = new Set(finalGen.map(r => r.productId));
+  const coveredTheme = new Set(finalTheme.map(r => r.productId));
+  const coveredStyle = new Set(finalStyle.map(r => r.productId));
 
-  console.log(`\n[migrate-attribute-tables] Final: ${finalCovered.size}/${allProducts.length} products have age_group assignment`);
+  const total = allProducts.length;
+  console.log(`\n[migrate-attribute-tables] Final coverage (${total} products total):`);
+  console.log(`  age_groups : ${coveredAg.size}/${total}`);
+  console.log(`  genders    : ${coveredGen.size}/${total}`);
+  console.log(`  themes     : ${coveredTheme.size}/${total}`);
+  console.log(`  styles     : ${coveredStyle.size}/${total}`);
 
-  if (stillOrphaned.length === 0) {
-    console.log("[migrate-attribute-tables] ✓ All products fully attributed. Migration complete.");
+  const untaggedAg = allProducts.filter(p => !coveredAg.has(p.id));
+  if (untaggedAg.length === 0) {
+    console.log("[migrate-attribute-tables] ✓ All products have age_group assignment. Migration complete.");
   } else {
-    console.warn(`[migrate-attribute-tables] ⚠ ${stillOrphaned.length} product(s) still untagged — use Admin Catalog to assign attributes`);
-    for (const p of stillOrphaned.slice(0, 10)) console.warn(`  - ${p.slug}`);
-    if (stillOrphaned.length > 10) console.warn(`  ... and ${stillOrphaned.length - 10} more`);
+    console.warn(`[migrate-attribute-tables] ⚠ ${untaggedAg.length} product(s) missing age_group — use Admin Catalog to assign`);
+    for (const p of untaggedAg.slice(0, 10)) console.warn(`  - ${p.slug}`);
+    if (untaggedAg.length > 10) console.warn(`  ... and ${untaggedAg.length - 10} more`);
   }
 
   process.exit(0);

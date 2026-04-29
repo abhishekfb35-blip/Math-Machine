@@ -14,6 +14,7 @@ const STARTER_AGE_GROUPS = [
   { name: "kids",    sortOrder: 1 },
   { name: "teens",   sortOrder: 2 },
   { name: "adults",  sortOrder: 3 },
+  { name: "couples", sortOrder: 4 },
 ];
 const STARTER_GENDERS = [
   { name: "male",    sortOrder: 0 },
@@ -44,7 +45,7 @@ const BATCH = 100;
 
 // ─── Hash helpers (stored in site_config as seed-hash-<table>) ───────────────
 
-function computeHash(data: any[]): string {
+function computeHash(data: unknown[]): string {
   return crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
 }
 
@@ -73,8 +74,6 @@ async function storeHash(tableName: string, hash: string): Promise<void> {
 
 export async function seedDatabase() {
   try {
-    const data = seedData as any;
-
     // ── 0a. Restore bundled swatch images ─────────────────────────────────────
     // Use process.cwd() (always the project root) so paths work in both dev
     // (tsx) and production (compiled dist) environments.
@@ -103,29 +102,31 @@ export async function seedDatabase() {
       console.log(`[seed] swatches: seed-assets/swatches not found, skipping`);
     }
 
+    type SeedProductTag = { id: string; productSlug: string; tagName: string };
     const tableData = {
-      tagTypes:       (data.tagTypes       || []) as any[],
-      categories:     (data.categories     || []) as any[],
-      tags:           (data.tags           || []) as any[],
-      products:       (data.products       || []) as any[],
-      productImages:  (data.productImages  || []) as any[],
-      productReviews: (data.productReviews || []) as any[],
-      productTags:    (data.productTags    || []) as any[],
+      tagTypes:       seedData.tagTypes       ?? [],
+      categories:     seedData.categories     ?? [],
+      tags:           seedData.tags           ?? [],
+      products:       seedData.products       ?? [],
+      productImages:  seedData.productImages  ?? [],
+      productReviews: seedData.productReviews ?? [],
+      productTags:    (seedData.productTags   ?? []) as SeedProductTag[],
     };
 
     // ── 0. Validate all IDs are present — abort immediately if any are missing ─
     const catalogTableNames = ["tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags"] as const;
     let idErrors = 0;
     for (const table of catalogTableNames) {
-      const rows: any[] = tableData[table];
+      const rows = tableData[table];
       rows.forEach((row, i) => {
         if (!row.id) {
-          console.error(`[seed] ERROR: seed-data.json → ${table}[${i}] is missing an "id" field (name/slug: ${row.name || row.slug || row.productSlug || "?"})`);
+          const r = row as { name?: string; slug?: string; productSlug?: string };
+          console.error(`[seed] ERROR: seed-data.json → ${table}[${i}] is missing an "id" field (name/slug: ${r.name || r.slug || r.productSlug || "?"})`);
           idErrors++;
         }
       });
     }
-    tableData.products.forEach((p: any, i: number) => {
+    tableData.products.forEach((p, i: number) => {
       if (!p.sku) {
         console.error(`[seed] ERROR: seed-data.json → products[${i}] slug="${p.slug || "?"}" is missing a "sku" field`);
         idErrors++;
@@ -189,7 +190,7 @@ export async function seedDatabase() {
       // Tag Types (must come before Tags)
       if (effective.tagTypes) {
         if (tableData.tagTypes.length > 0) {
-          await db.insert(tagTypes).values(tableData.tagTypes.map((tt: any) => ({
+          await db.insert(tagTypes).values(tableData.tagTypes.map((tt) => ({
             id: tt.id,
             name: tt.name,
             slug: tt.slug,
@@ -204,7 +205,7 @@ export async function seedDatabase() {
       // Categories
       if (effective.categories) {
         if (tableData.categories.length > 0) {
-          await db.insert(categories).values(tableData.categories.map((c: any) => ({
+          await db.insert(categories).values(tableData.categories.map((c) => ({
             id: c.id,
             name: c.name,
             slug: c.slug,
@@ -220,7 +221,7 @@ export async function seedDatabase() {
       // Tags (must come after tagTypes due to FK)
       if (effective.tags) {
         if (tableData.tags.length > 0) {
-          await db.insert(tags).values(tableData.tags.map((t: any) => ({
+          await db.insert(tags).values(tableData.tags.map((t) => ({
             id: t.id,
             name: t.name,
             description: t.description ?? null,
@@ -238,8 +239,8 @@ export async function seedDatabase() {
         const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
 
         const prodEntries = tableData.products
-          .filter((p: any) => catSlugToId[p.categorySlug])
-          .map((p: any) => ({
+          .filter((p) => catSlugToId[p.categorySlug])
+          .map((p) => ({
             id: p.id,
             sku: p.sku,
             name: p.name,
@@ -281,8 +282,8 @@ export async function seedDatabase() {
           const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
 
           const imgEntries = tableData.productImages
-            .filter((img: any) => prodSlugToId[img.productSlug])
-            .map((img: any) => ({
+            .filter((img) => prodSlugToId[img.productSlug])
+            .map((img) => ({
               id: img.id,
               productId: prodSlugToId[img.productSlug],
               imageUrl: img.imageUrl,
@@ -305,8 +306,8 @@ export async function seedDatabase() {
           const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
 
           const revEntries = tableData.productReviews
-            .filter((r: any) => prodSlugToId[r.productSlug])
-            .map((r: any) => ({
+            .filter((r) => prodSlugToId[r.productSlug])
+            .map((r) => ({
               id: r.id,
               productId: prodSlugToId[r.productSlug],
               reviewerName: r.reviewerName,
@@ -337,8 +338,8 @@ export async function seedDatabase() {
           const tagNameToId: Record<string, string> = Object.fromEntries(allTagsList.map(t => [t.name, t.id]));
 
           const ptEntries = tableData.productTags
-            .filter((pt: any) => prodSlugToId[pt.productSlug] && tagNameToId[pt.tagName])
-            .map((pt: any) => ({
+            .filter((pt) => prodSlugToId[pt.productSlug] && tagNameToId[pt.tagName])
+            .map((pt) => ({
               id: pt.id,
               productId: prodSlugToId[pt.productSlug],
               tagId: tagNameToId[pt.tagName],
@@ -354,7 +355,7 @@ export async function seedDatabase() {
     }
 
     // ── 4. siteConfig: row-level upsert, skip seed-hash-* keys ───────────────
-    const configEntries: any[] = (data.siteConfig || []).filter((sc: any) => !sc.key.startsWith("seed-hash-"));
+    const configEntries = (seedData.siteConfig ?? []).filter((sc) => !sc.key.startsWith("seed-hash-"));
     let configSynced = 0;
     for (const sc of configEntries) {
       const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, sc.key));
@@ -373,7 +374,7 @@ export async function seedDatabase() {
     }
 
     // ── 5. currencyRates: upsert by currency ──────────────────────────────────
-    const crEntries: any[] = (data.currencyRates || []);
+    const crEntries = seedData.currencyRates ?? [];
     let crSynced = 0;
     for (const cr of crEntries) {
       const [existing] = await db.select().from(currencyRates).where(eq(currencyRates.currency, cr.currency));
@@ -392,7 +393,7 @@ export async function seedDatabase() {
     }
 
     // ── 5a. pricingRules: upsert by currency ──────────────────────────────────
-    const prEntries: any[] = (data.pricingRules || []);
+    const prEntries = seedData.pricingRules ?? [];
     let prSynced = 0;
     for (const pr of prEntries) {
       const [existing] = await db.select().from(pricingRules).where(eq(pricingRules.currency, pr.currency));
@@ -435,7 +436,7 @@ export async function seedDatabase() {
     // ── 6. categoryTagVariantConfigs: upsert by (categoryId, tagId) ──────────
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
-    const ctvcEntries: any[] = (data.categoryTagVariantConfigs || []);
+    const ctvcEntries = seedData.categoryTagVariantConfigs ?? [];
     let ctvcSynced = 0;
     // Map seed configId → actual DB configId (in case the DB has a different PK)
     const seedConfigIdToDbId: Record<string, string> = {};
@@ -466,7 +467,7 @@ export async function seedDatabase() {
     }
 
     // ── 7. variantSizes: upsert by (configId, name) ───────────────────────────
-    const vsEntries: any[] = (data.variantSizes || []);
+    const vsEntries = seedData.variantSizes ?? [];
     let vsSynced = 0;
     // Map seed sizeId → actual DB sizeId (in case the DB has a different PK)
     const seedSizeIdToDbId: Record<string, string> = {};
@@ -510,7 +511,7 @@ export async function seedDatabase() {
     }
 
     // ── 8. variantColors: upsert by (sizeId, name) ───────────────────────────
-    const vcEntries: any[] = (data.variantColors || []);
+    const vcEntries = seedData.variantColors ?? [];
     let vcSynced = 0;
     for (const vc of vcEntries) {
       // Resolve actual DB sizeId (may differ from seed sizeId if row pre-existed)
@@ -545,7 +546,8 @@ export async function seedDatabase() {
     // ── 9. productVariants: upsert by (productId, color, size) ───────────────
     const allProdsForVariants = await db.select({ id: products.id, slug: products.slug }).from(products);
     const prodSlugToIdV: Record<string, string> = Object.fromEntries(allProdsForVariants.map(p => [p.slug, p.id]));
-    const pvEntries: any[] = (data.productVariants || []);
+    type SeedVariant = { id: string; productSlug: string; color: string; size: string; available?: boolean };
+    const pvEntries = ((seedData as Record<string, unknown>).productVariants as SeedVariant[] | undefined) ?? [];
     let pvSynced = 0;
     for (const pv of pvEntries) {
       const productId = prodSlugToIdV[pv.productSlug];
@@ -572,7 +574,7 @@ export async function seedDatabase() {
       table: any, starter: { name: string; sortOrder: number }[], label: string
     ) => {
       const existing = await db.select({ id: table.id, name: table.name }).from(table);
-      const existingNames = new Set(existing.map((r: any) => r.name));
+      const existingNames = new Set(existing.map((r) => r.name));
       let synced = 0;
       for (const item of starter) {
         if (!existingNames.has(item.name)) {
@@ -592,26 +594,28 @@ export async function seedDatabase() {
     {
       const allAg = await db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups);
       const allGen = await db.select({ id: genders.id, name: genders.name }).from(genders);
-      const agByName = Object.fromEntries(allAg.map((r: any) => [r.name, r.id]));
-      const genByName = Object.fromEntries(allGen.map((r: any) => [r.name, r.id]));
+      const agByName = Object.fromEntries(allAg.map((r) => [r.name, r.id]));
+      const genByName = Object.fromEntries(allGen.map((r) => [r.name, r.id]));
 
       const prods = await db.select({ id: products.id }).from(products);
-      const prodIds = prods.map((p: any) => p.id);
+      const prodIds = prods.map((p) => p.id);
+
+      type SeedProductRow = { slug: string; ageGroup?: string; gender?: string; themes?: string; styles?: string };
 
       // Build map of productId -> seed record
-      const seedProds: any[] = (seedData as any).products || [];
+      const seedProds = (seedData.products ?? []) as unknown as SeedProductRow[];
       const allCats = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
       const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
 
       // Fetch existing junction rows so we don't re-insert
       const existingAg = await db.select({ productId: productAgeGroups.productId, ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups);
       const existingGen = await db.select({ productId: productGenders.productId, genderId: productGenders.genderId }).from(productGenders);
-      const existingAgSet = new Set(existingAg.map((r: any) => `${r.productId}:${r.ageGroupId}`));
-      const existingGenSet = new Set(existingGen.map((r: any) => `${r.productId}:${r.genderId}`));
+      const existingAgSet = new Set(existingAg.map((r) => `${r.productId}:${r.ageGroupId}`));
+      const existingGenSet = new Set(existingGen.map((r) => `${r.productId}:${r.genderId}`));
 
       // To find productId from seed slug, we need product slugs
       const dbProds = await db.select({ id: products.id, slug: products.slug }).from(products);
-      const slugToId: Record<string, string> = Object.fromEntries(dbProds.map((p: any) => [p.slug, p.id]));
+      const slugToId: Record<string, string> = Object.fromEntries(dbProds.map((p) => [p.slug, p.id]));
 
       let jSynced = 0;
       for (const sp of seedProds) {
@@ -626,6 +630,16 @@ export async function seedDatabase() {
             existingAgSet.add(key);
             jSynced++;
           }
+          // "adults" products are also tagged as "couples" (couples are adult-range products)
+          if (sp.ageGroup === "adults" && agByName["couples"]) {
+            const couplesId = agByName["couples"];
+            const couplesKey = `${productId}:${couplesId}`;
+            if (!existingAgSet.has(couplesKey)) {
+              await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId: couplesId }).onConflictDoNothing();
+              existingAgSet.add(couplesKey);
+              jSynced++;
+            }
+          }
         }
         if (sp.gender && genByName[sp.gender]) {
           const genderId = genByName[sp.gender];
@@ -639,7 +653,7 @@ export async function seedDatabase() {
         // themes/styles from seed are null, so skip for now
         if (sp.themes && typeof sp.themes === "string") {
           const allThemes = await db.select({ id: themes.id, name: themes.name }).from(themes);
-          const thByName = Object.fromEntries(allThemes.map((r: any) => [r.name, r.id]));
+          const thByName = Object.fromEntries(allThemes.map((r) => [r.name, r.id]));
           const themeNames = sp.themes.split(",").map((t: string) => t.trim()).filter(Boolean);
           for (const tn of themeNames) {
             if (thByName[tn]) {
@@ -650,7 +664,7 @@ export async function seedDatabase() {
         }
         if (sp.styles && typeof sp.styles === "string") {
           const allStyles = await db.select({ id: styles.id, name: styles.name }).from(styles);
-          const stByName = Object.fromEntries(allStyles.map((r: any) => [r.name, r.id]));
+          const stByName = Object.fromEntries(allStyles.map((r) => [r.name, r.id]));
           const styleNames = sp.styles.split(",").map((s: string) => s.trim()).filter(Boolean);
           for (const sn of styleNames) {
             if (stByName[sn]) {
