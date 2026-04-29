@@ -39,8 +39,10 @@ async function main() {
   `);
   console.log("[migrate] products: ensured age_group/gender/themes/styles columns exist");
 
-  // ── 2. Backfill age_group/gender (only when audience column still exists) ──
-  // Check whether audience column is present before attempting to read it.
+  // ── 2. Backfill age_group/gender from audience (when column still exists) ───
+  // IMPORTANT: age_group has a schema default of 'kids', so db:push will have
+  // already set all rows to 'kids' before this script runs. We must map from
+  // audience for ALL rows (not just NULLs) to preserve adults/couples semantics.
   const audienceCheck = await db.execute(sql`
     SELECT column_name FROM information_schema.columns
     WHERE table_name = 'products' AND column_name = 'audience';
@@ -48,7 +50,8 @@ async function main() {
   const hasAudience = rows(audienceCheck).length > 0;
 
   if (hasAudience) {
-    // Map audience → age_group. "couples" → "adults"; anything unknown → "kids".
+    // Always re-derive age_group from audience regardless of current age_group value.
+    // This handles db:push pre-populating age_group='kids' for all rows.
     await db.execute(sql`
       UPDATE products
       SET
@@ -57,17 +60,31 @@ async function main() {
           WHEN audience IN ('kids', 'teens', 'adults', 'infant') THEN audience
           ELSE 'kids'
         END,
-        gender = 'unisex'
-      WHERE age_group IS NULL;
+        gender = COALESCE(gender, 'unisex')
+      WHERE audience IS NOT NULL;
+    `);
+    // Set gender for any rows where it's still NULL (unknown audience rows)
+    await db.execute(sql`
+      UPDATE products SET gender = 'unisex' WHERE gender IS NULL;
     `);
     console.log("[migrate] products: backfilled age_group/gender from audience column");
+
+    // Post-backfill sanity check
+    const counts = await db.execute(sql`
+      SELECT age_group, COUNT(*) as cnt FROM products GROUP BY age_group ORDER BY age_group;
+    `);
+    const countRows = rows(counts) as { age_group: string; cnt: string }[];
+    console.log("[migrate] products: age_group distribution after backfill:", countRows.map(r => `${r.age_group}=${r.cnt}`).join(", "));
   } else {
-    // audience already dropped — default any remaining NULLs defensively.
+    // audience already dropped — ensure no NULLs remain (defensive)
     await db.execute(sql`
-      UPDATE products SET age_group = 'kids', gender = 'unisex'
+      UPDATE products
+      SET
+        age_group = COALESCE(age_group, 'kids'),
+        gender    = COALESCE(gender, 'unisex')
       WHERE age_group IS NULL OR gender IS NULL;
     `);
-    console.log("[migrate] products: audience column absent — defaulted NULL age_group rows");
+    console.log("[migrate] products: audience column absent — ensured no NULL age_group/gender rows");
   }
 
   // ── 3. Create tag_types table (idempotent) ────────────────────────────────
