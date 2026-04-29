@@ -20,6 +20,19 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, ProductImage, ProductReview, Tag, TagType, ProductVariantOptions } from "@shared/types";
 
+const AGE_GROUP_OPTIONS = ["infant", "kids", "teens", "adults"] as const;
+const THEME_OPTIONS = ["animals", "florals", "nature", "abstract", "geometric", "traditional", "sports", "pop-culture"] as const;
+const STYLE_OPTIONS = ["minimal", "initials", "monogram", "typographic", "illustrative", "floral-frame", "bold-graphic"] as const;
+
+function toggleCsvValue(csv: string | null | undefined, value: string): string {
+  const vals = (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
+  if (vals.includes(value)) return vals.filter(v => v !== value).join(",");
+  return [...vals, value].join(",");
+}
+function parseCsv(csv: string | null | undefined): string[] {
+  return (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
+}
+
 export default function AdminProductEdit() {
   const { toast } = useToast();
   const [, params] = useRoute("/admin/catalog/product/:id");
@@ -466,21 +479,20 @@ export default function AdminProductEdit() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="prod-age-group">Age Group</Label>
-            <Select
-              value={product.ageGroup || "kids"}
-              onValueChange={(v) => setProduct(prev => ({ ...prev!, ageGroup: v }))}
-            >
-              <SelectTrigger id="prod-age-group" data-testid="select-age-group">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="infant">Infant</SelectItem>
-                <SelectItem value="kids">Kids</SelectItem>
-                <SelectItem value="teens">Teens</SelectItem>
-                <SelectItem value="adults">Adults</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="mb-1.5 block">Age Group</Label>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {AGE_GROUP_OPTIONS.map(opt => (
+                <div key={opt} className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`age-${opt}`}
+                    checked={parseCsv(product.ageGroup).includes(opt)}
+                    onCheckedChange={() => setProduct(prev => ({ ...prev!, ageGroup: toggleCsvValue(prev?.ageGroup, opt) }))}
+                    data-testid={`checkbox-age-${opt}`}
+                  />
+                  <Label htmlFor={`age-${opt}`} className="text-sm font-normal cursor-pointer capitalize">{opt}</Label>
+                </div>
+              ))}
+            </div>
           </div>
           <div>
             <Label htmlFor="prod-gender">Gender</Label>
@@ -500,26 +512,37 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="prod-themes">Themes (comma-separated)</Label>
-            <Input
-              id="prod-themes"
-              value={product.themes || ""}
-              onChange={(e) => setProduct(prev => ({ ...prev!, themes: e.target.value }))}
-              placeholder="e.g. animals,florals"
-              data-testid="input-product-themes"
-            />
+        <div>
+          <Label className="mb-1.5 block">Themes</Label>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+            {THEME_OPTIONS.map(opt => (
+              <div key={opt} className="flex items-center gap-1.5">
+                <Checkbox
+                  id={`theme-${opt}`}
+                  checked={parseCsv(product.themes).includes(opt)}
+                  onCheckedChange={() => setProduct(prev => ({ ...prev!, themes: toggleCsvValue(prev?.themes, opt) }))}
+                  data-testid={`checkbox-theme-${opt}`}
+                />
+                <Label htmlFor={`theme-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+              </div>
+            ))}
           </div>
-          <div>
-            <Label htmlFor="prod-styles">Styles (comma-separated)</Label>
-            <Input
-              id="prod-styles"
-              value={product.styles || ""}
-              onChange={(e) => setProduct(prev => ({ ...prev!, styles: e.target.value }))}
-              placeholder="e.g. minimal,initials"
-              data-testid="input-product-styles"
-            />
+        </div>
+
+        <div>
+          <Label className="mb-1.5 block">Styles</Label>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+            {STYLE_OPTIONS.map(opt => (
+              <div key={opt} className="flex items-center gap-1.5">
+                <Checkbox
+                  id={`style-${opt}`}
+                  checked={parseCsv(product.styles).includes(opt)}
+                  onCheckedChange={() => setProduct(prev => ({ ...prev!, styles: toggleCsvValue(prev?.styles, opt) }))}
+                  data-testid={`checkbox-style-${opt}`}
+                />
+                <Label htmlFor={`style-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+              </div>
+            ))}
           </div>
         </div>
 

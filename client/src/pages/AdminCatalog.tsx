@@ -27,6 +27,19 @@ import type { Category, Product, ProductImage, ProductReview, Tag, TagType, Cate
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
+const AGE_GROUP_OPTIONS = ["infant", "kids", "teens", "adults"] as const;
+const THEME_OPTIONS = ["animals", "florals", "nature", "abstract", "geometric", "traditional", "sports", "pop-culture"] as const;
+const STYLE_OPTIONS = ["minimal", "initials", "monogram", "typographic", "illustrative", "floral-frame", "bold-graphic"] as const;
+
+function toggleCsvValue(csv: string | null | undefined, value: string): string {
+  const vals = (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
+  if (vals.includes(value)) return vals.filter(v => v !== value).join(",");
+  return [...vals, value].join(",");
+}
+function parseCsv(csv: string | null | undefined): string[] {
+  return (csv ?? "").split(",").map(v => v.trim()).filter(Boolean);
+}
+
 function ProductTagSelector({ productId, categoryId, allTags, initialTags }: { productId: string; categoryId: string; allTags: Tag[]; initialTags: Tag[] }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -724,6 +737,8 @@ export default function AdminCatalog() {
   const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [newTagTypeName, setNewTagTypeName] = useState("");
+  const [newTagTypeSlug, setNewTagTypeSlug] = useState("");
+  const [newTagTypeDescription, setNewTagTypeDescription] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSearchActive, setAdminSearchActive] = useState(false);
@@ -1066,14 +1081,15 @@ export default function AdminCatalog() {
   });
 
   const createTagTypeMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const res = await apiRequest("POST", "/api/admin/tag-types", { name, slug });
+    mutationFn: async ({ name, slug, description }: { name: string; slug: string; description: string }) => {
+      const res = await apiRequest("POST", "/api/admin/tag-types", { name, slug, description });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
       setNewTagTypeName("");
+      setNewTagTypeSlug("");
+      setNewTagTypeDescription("");
       toast({ title: "Tag type created" });
     },
     onError: (err: any) => {
@@ -2840,21 +2856,20 @@ export default function AdminCatalog() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="edit-prod-age-group">Age Group</Label>
-              <Select
-                value={editingProduct.ageGroup || "kids"}
-                onValueChange={(v) => setEditingProduct(prev => ({ ...prev!, ageGroup: v }))}
-              >
-                <SelectTrigger id="edit-prod-age-group" data-testid="select-age-group">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="infant">Infant</SelectItem>
-                  <SelectItem value="kids">Kids</SelectItem>
-                  <SelectItem value="teens">Teens</SelectItem>
-                  <SelectItem value="adults">Adults</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="mb-1.5 block">Age Group</Label>
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                {AGE_GROUP_OPTIONS.map(opt => (
+                  <div key={opt} className="flex items-center gap-1.5">
+                    <Checkbox
+                      id={`edit-age-${opt}`}
+                      checked={parseCsv(editingProduct.ageGroup).includes(opt)}
+                      onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, ageGroup: toggleCsvValue(prev?.ageGroup, opt) }))}
+                      data-testid={`checkbox-age-${opt}`}
+                    />
+                    <Label htmlFor={`edit-age-${opt}`} className="text-sm font-normal cursor-pointer capitalize">{opt}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
             <div>
               <Label htmlFor="edit-prod-gender">Gender</Label>
@@ -2874,26 +2889,37 @@ export default function AdminCatalog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="edit-prod-themes">Themes (comma-separated)</Label>
-              <Input
-                id="edit-prod-themes"
-                value={editingProduct.themes || ""}
-                onChange={(e) => setEditingProduct(prev => ({ ...prev!, themes: e.target.value }))}
-                placeholder="e.g. animals,florals"
-                data-testid="input-product-themes"
-              />
+          <div>
+            <Label className="mb-1.5 block">Themes</Label>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {THEME_OPTIONS.map(opt => (
+                <div key={opt} className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`edit-theme-${opt}`}
+                    checked={parseCsv(editingProduct.themes).includes(opt)}
+                    onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, themes: toggleCsvValue(prev?.themes, opt) }))}
+                    data-testid={`checkbox-theme-${opt}`}
+                  />
+                  <Label htmlFor={`edit-theme-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                </div>
+              ))}
             </div>
-            <div>
-              <Label htmlFor="edit-prod-styles">Styles (comma-separated)</Label>
-              <Input
-                id="edit-prod-styles"
-                value={editingProduct.styles || ""}
-                onChange={(e) => setEditingProduct(prev => ({ ...prev!, styles: e.target.value }))}
-                placeholder="e.g. minimal,initials"
-                data-testid="input-product-styles"
-              />
+          </div>
+
+          <div>
+            <Label className="mb-1.5 block">Styles</Label>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {STYLE_OPTIONS.map(opt => (
+                <div key={opt} className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`edit-style-${opt}`}
+                    checked={parseCsv(editingProduct.styles).includes(opt)}
+                    onCheckedChange={() => setEditingProduct(prev => ({ ...prev!, styles: toggleCsvValue(prev?.styles, opt) }))}
+                    data-testid={`checkbox-style-${opt}`}
+                  />
+                  <Label htmlFor={`edit-style-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -3201,24 +3227,51 @@ export default function AdminCatalog() {
               </div>
             ))}
           </div>
-          <div className="flex gap-2 mt-3">
-            <Input
-              placeholder="New tag type name..."
-              value={newTagTypeName}
-              onChange={(e) => setNewTagTypeName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && newTagTypeName.trim()) createTagTypeMutation.mutate(newTagTypeName.trim()); }}
-              className="h-8 text-sm"
-              data-testid="input-new-tag-type"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => { if (newTagTypeName.trim()) createTagTypeMutation.mutate(newTagTypeName.trim()); }}
-              disabled={!newTagTypeName.trim() || createTagTypeMutation.isPending}
-              data-testid="button-create-tag-type"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add Type
-            </Button>
+          <div className="space-y-2 mt-3 border-t pt-3">
+            <p className="text-xs font-medium text-muted-foreground">Add New Tag Type</p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Name (e.g. Merchandising)"
+                value={newTagTypeName}
+                onChange={(e) => {
+                  setNewTagTypeName(e.target.value);
+                  if (!newTagTypeSlug || newTagTypeSlug === newTagTypeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")) {
+                    setNewTagTypeSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+                  }
+                }}
+                className="h-8 text-sm"
+                data-testid="input-new-tag-type"
+              />
+              <Input
+                placeholder="Slug (auto)"
+                value={newTagTypeSlug}
+                onChange={(e) => setNewTagTypeSlug(e.target.value)}
+                className="h-8 text-sm"
+                data-testid="input-new-tag-type-slug"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Description (optional)"
+                value={newTagTypeDescription}
+                onChange={(e) => setNewTagTypeDescription(e.target.value)}
+                className="h-8 text-sm flex-1"
+                data-testid="input-new-tag-type-description"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const name = newTagTypeName.trim();
+                  const slug = newTagTypeSlug.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                  if (name) createTagTypeMutation.mutate({ name, slug, description: newTagTypeDescription.trim() });
+                }}
+                disabled={!newTagTypeName.trim() || createTagTypeMutation.isPending}
+                data-testid="button-create-tag-type"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Type
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -3228,7 +3281,24 @@ export default function AdminCatalog() {
             if (tagsForType.length === 0) return null;
             return (
               <div key={tagType.id ?? "all"}>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{tagType.name}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{tagType.name}</h3>
+                  {tagType.id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        setIsNew(true);
+                        setEditingTag({ name: "", description: "", tagTypeId: tagType.id });
+                        setView("edit-tag");
+                      }}
+                      data-testid={`button-add-tag-in-type-${tagType.id}`}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-1.5">
                   {tagsForType.map((tag) => (
                     <Card key={tag.id} className="p-2.5" data-testid={`card-tag-${tag.id}`}>
