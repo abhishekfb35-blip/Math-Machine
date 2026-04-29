@@ -169,7 +169,6 @@ async function exportSeed() {
       bulletPoints: p.bulletPoints,
       searchKeywords: p.searchKeywords,
       productType: p.productType,
-      audience: p.audience,
       active: p.active,
       sortOrder: p.sortOrder,
     })),
