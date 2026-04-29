@@ -1088,7 +1088,7 @@ export function registerAdminHealthRoutes(app: Express) {
   app.get("/api/admin/export/csv/:table", requirePermission("export"), async (req, res) => {
     try {
       const allowedTables = [
-        "categories", "products", "tags", "product_tags", "product_images",
+        "tag_types", "categories", "products", "tags", "product_tags", "product_images",
         "product_reviews", "orders", "order_items", "carts", "cart_items",
         "site_config", "audit_logs"
       ];
@@ -1121,7 +1121,7 @@ export function registerAdminHealthRoutes(app: Express) {
         return res.status(500).json({ message: "Database not configured" });
       }
       const tables = [
-        "categories", "products", "tags", "product_tags", "product_images",
+        "tag_types", "categories", "products", "tags", "product_tags", "product_images",
         "product_reviews", "orders", "order_items", "carts", "cart_items",
         "site_config", "audit_logs"
       ];
@@ -1144,10 +1144,11 @@ export function registerAdminHealthRoutes(app: Express) {
   app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
-      const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs] = await Promise.all([
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
-        pool.query(`SELECT id, name FROM tags ORDER BY name`),
+        pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
+        pool.query(`SELECT id, name, description, tag_type_id AS "tagTypeId", sort_order AS "sortOrder" FROM tags ORDER BY sort_order, name`),
         pool.query(`
           SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
           FROM product_tags pt
@@ -1160,6 +1161,7 @@ export function registerAdminHealthRoutes(app: Express) {
       res.json({
         categories:     cats.rows,
         products:       prods.rows,
+        tagTypes:       ttypes.rows,
         tags:           tgs.rows,
         productTags:    ptags.rows,
         productImages:  imgs.rows,
