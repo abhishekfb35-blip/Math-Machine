@@ -13,13 +13,12 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product } from "@shared/types";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
 
-type AudienceFilter = "all" | "kids" | "adults" | "couples";
+type AudienceFilter = "all" | "kids" | "adults";
 
 const AUDIENCE_FILTERS: { label: string; value: AudienceFilter }[] = [
-  { label: "All",     value: "all"     },
-  { label: "Kids",    value: "kids"    },
-  { label: "Adults",  value: "adults"  },
-  { label: "Couples", value: "couples" },
+  { label: "All",    value: "all"    },
+  { label: "Kids",   value: "kids"   },
+  { label: "Adults", value: "adults" },
 ];
 
 function GridSkeleton() {
@@ -176,9 +175,10 @@ export default function ShopPage() {
     if (!products) return [];
     let result = products;
     if (activeFilter !== "all") {
-      const kw: Record<string, string> = { kids: "kids", adults: "adult", couples: "couple" };
-      const keyword = kw[activeFilter] || activeFilter;
-      result = result.filter(p => p.tagNames?.some(t => t.toLowerCase().includes(keyword)));
+      result = result.filter(p => {
+        const groups = (p.ageGroup ?? "").split(",").map(v => v.trim()).filter(Boolean);
+        return groups.includes(activeFilter);
+      });
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();

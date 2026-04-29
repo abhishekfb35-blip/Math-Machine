@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock, Send } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,15 @@ const sections = [
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/30",
     permission: "offers",
+  },
+  {
+    title: "Occasions",
+    description: "Manage merchandising occasions for product curation",
+    href: "/admin/occasions",
+    icon: CalendarDays,
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-50 dark:bg-rose-950/30",
+    permission: "catalog",
   },
 ];
 

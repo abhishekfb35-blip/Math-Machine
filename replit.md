@@ -26,6 +26,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
     -   **Admin International Pricing**: Manages multi-currency exchange rates and pricing rules.
     -   **Admin Consent**: Configures and monitors consent popups and collected signups.
     -   **Admin Security**: Configures API rate limiting (global/moderate/strict tiers) and guest cart cleanup. Superadmin-only.
+    -   **Admin Occasions**: CRUD management for merchandising occasions (boost/penalty tags, preferred themes/styles). Routes: `GET/POST /api/admin/occasions`, `PATCH/DELETE /api/admin/occasions/:id`. Public: `GET /api/occasions`.
 -   **Core UI Components**: Reusable components such as AnnouncementBar, Header (with CurrencySelector), BottomNav, Footer, ProductCardNew, QuickAddSheet for personalization, and a floating WhatsAppButton.
 -   **Multi-Currency Support**: Frontend displays prices in multiple currencies based on user selection or IP detection, with conversion and formatting handled by `CurrencyContext`.
 
@@ -57,7 +58,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
 -   **Audit Log**: Tracks all administrative changes with entity-specific details and auto-pruning.
 -   **Product Categorization**: Products have `age_group` (kids/teens/adults/infant), `gender` (male/female/unisex), `themes` (comma-separated: animals/florals/etc), and `styles` (comma-separated: minimal/initials/etc) columns replacing the old flat `audience` field.
 -   **Tag System**: `tag_types` table holds 6 admin-managed types (Merchandising, Occasion-fit, Risk/Suitability, Operational, Experimental/Growth, Use-Case/Structure). `tags` are internal merchandising signals (best_seller, bundle_friendly, etc.) — not user-facing filters. 25 initial tags seeded.
--   **Occasions**: `occasions` table stores merchandising engine config (boost/penalty tag weights, preferred themes/styles) for curating and ranking products externally.
+-   **Occasions**: `occasions` table stores merchandising engine config (boost/penalty tag weights, preferred themes/styles) for curating and ranking products externally. Managed via `AdminOccasions` page (`/admin/occasions`).
 -   **Discount Logic**: Implements an automatic "Buy 2 Get 1 Free" discount on cart items.
 
 ## Key Features

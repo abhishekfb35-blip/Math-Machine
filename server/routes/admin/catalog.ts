@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
-import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema, insertOccasionSchema } from "@shared/schema";
 import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
@@ -585,6 +585,65 @@ export function registerAdminCatalogRoutes(app: Express) {
     } catch (err) {
       console.error("Delete variant config error:", err);
       res.status(500).json({ message: "Failed to delete variant config" });
+    }
+  });
+
+  // ── Occasions CRUD ──
+  app.get("/api/admin/occasions", requirePermission("catalog"), async (_req, res) => {
+    const occ = await storage.getOccasions();
+    res.json(occ);
+  });
+
+  app.post("/api/admin/occasions", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertOccasionSchema.parse(req.body);
+      const occ = await storage.createOccasion(data);
+      await storage.createAuditLog({
+        entityType: "occasion", entityId: occ.id, entityName: occ.name,
+        action: "created", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
+      res.status(201).json(occ);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "An occasion with that slug already exists" });
+      console.error("Create occasion error:", err);
+      res.status(500).json({ message: "Failed to create occasion" });
+    }
+  });
+
+  app.patch("/api/admin/occasions/:id", requirePermission("catalog"), async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const data = insertOccasionSchema.partial().parse(req.body);
+      const updated = await storage.updateOccasion(id, data);
+      if (!updated) return res.status(404).json({ message: "Occasion not found" });
+      await storage.createAuditLog({
+        entityType: "occasion", entityId: id, entityName: updated.name,
+        action: "updated", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
+      res.json(updated);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "An occasion with that slug already exists" });
+      console.error("Update occasion error:", err);
+      res.status(500).json({ message: "Failed to update occasion" });
+    }
+  });
+
+  app.delete("/api/admin/occasions/:id", requirePermission("catalog"), async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      await storage.deleteOccasion(id);
+      await storage.createAuditLog({
+        entityType: "occasion", entityId: id, entityName: null,
+        action: "deleted", changes: null, username: getAdminUsername(req),
+      });
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete occasion error:", err);
+      res.status(500).json({ message: "Failed to delete occasion" });
     }
   });
 }

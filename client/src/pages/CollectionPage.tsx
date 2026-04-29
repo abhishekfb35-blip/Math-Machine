@@ -230,11 +230,11 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    const tagKeywordMap: Record<Audience, string> = { kids: "kids", adults: "adult", couples: "couple" };
-    const tagKeyword = tagKeywordMap[audience];
-    let filtered = products.filter((p) =>
-      p.tagNames?.some((t) => t.toLowerCase().includes(tagKeyword))
-    );
+    const ageGroupValue = audience === "couples" ? "adults" : audience;
+    let filtered = products.filter((p) => {
+      const groups = (p.ageGroup ?? "").split(",").map((v) => v.trim()).filter(Boolean);
+      return groups.includes(ageGroupValue);
+    });
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => detectGender(p) === genderFilter);
     }

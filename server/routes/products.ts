@@ -26,6 +26,11 @@ export function registerProductRoutes(app: Express) {
     res.json(prods);
   });
 
+  app.get("/api/occasions", async (_req, res) => {
+    const occs = await storage.getOccasions(true);
+    res.json(occs);
+  });
+
   app.post("/api/products/batch", async (req, res) => {
     const raw = req.body?.ids;
     if (!Array.isArray(raw)) return res.status(400).json({ message: "ids must be an array" });
