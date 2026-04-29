@@ -571,9 +571,10 @@ export async function seedDatabase() {
     }
 
     // ── 9b. Attribute lookup tables (idempotent upsert by name) ─────────────
-    async function seedLookup<T extends { id: string; name: string }>(
+    const { createId } = await import("@paralleldrive/cuid2");
+    const seedLookup = async (
       table: any, starter: { name: string; sortOrder: number }[], label: string
-    ) {
+    ) => {
       const existing = await db.select({ id: table.id, name: table.name }).from(table);
       const existingNames = new Set(existing.map((r: any) => r.name));
       let synced = 0;
@@ -585,8 +586,7 @@ export async function seedDatabase() {
       }
       if (synced > 0) console.log(`[seed] ${label}: inserted ${synced} entries`);
       else console.log(`[seed] ${label}: all entries up to date`);
-    }
-    const { createId } = await import("@paralleldrive/cuid2");
+    };
     await seedLookup(ageGroups, STARTER_AGE_GROUPS, "ageGroups");
     await seedLookup(genders, STARTER_GENDERS, "genders");
     await seedLookup(themes, STARTER_THEMES, "themes");

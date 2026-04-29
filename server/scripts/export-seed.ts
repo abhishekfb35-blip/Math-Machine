@@ -34,7 +34,6 @@ async function exportSeed() {
     bulletPoints: products.bulletPoints,
     searchKeywords: products.searchKeywords,
     productType: products.productType,
-    audience: products.audience,
     active: products.active,
     sortOrder: products.sortOrder,
   }).from(products)
