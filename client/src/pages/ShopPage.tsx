@@ -10,16 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
-import type { Product } from "@shared/types";
+import type { Product, Attributes } from "@shared/types";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
-
-type AudienceFilter = "all" | "kids" | "adults";
-
-const AUDIENCE_FILTERS: { label: string; value: AudienceFilter }[] = [
-  { label: "All",    value: "all"    },
-  { label: "Kids",   value: "kids"   },
-  { label: "Adults", value: "adults" },
-];
 
 function GridSkeleton() {
   return (
@@ -125,24 +117,33 @@ export default function ShopPage() {
   const searchString = useSearch();
   const [, navigate] = useLocation();
 
-  const [activeFilter, setActiveFilter] = useState<AudienceFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [activeTag,    setActiveTag]    = useState<string>("");
   const [searchQuery,  setSearchQuery]  = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
+  const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+  const audienceFilters = useMemo(() => {
+    const ags = attributes?.ageGroups ?? [];
+    return [
+      { label: "All", value: "all" },
+      ...ags.map(ag => ({ label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1), value: ag.name })),
+    ];
+  }, [attributes]);
+
   // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
-    const f = (p.get("filter") as AudienceFilter) || "all";
-    setActiveFilter(AUDIENCE_FILTERS.some(x => x.value === f) ? f : "all");
+    const f = p.get("filter") || "all";
+    setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
     const t = p.get("tag") || "";
     setActiveTag(t);
     const q = p.get("q") || "";
     setSearchQuery(q);
-  }, [searchString]);
+  }, [searchString, audienceFilters]);
 
   // Write state → URL
-  const pushURL = useCallback((filter: AudienceFilter, tag: string, query: string) => {
+  const pushURL = useCallback((filter: string, tag: string, query: string) => {
     const p = new URLSearchParams();
     if (filter !== "all") p.set("filter", filter);
     if (tag)   p.set("tag", tag);
@@ -151,7 +152,7 @@ export default function ShopPage() {
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
   }, [navigate]);
 
-  const handleFilterChange = (f: AudienceFilter) => pushURL(f, "", searchQuery);
+  const handleFilterChange = (f: string) => pushURL(f, "", searchQuery);
   const handleTagDrillDown = (tag: string)        => pushURL("all", tag, "");
   const handleBackToAll    = ()                   => pushURL("all", "", "");
   const handleSearchChange = (q: string) => {
@@ -248,7 +249,7 @@ export default function ShopPage() {
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {AUDIENCE_FILTERS.map(f => (
+            {audienceFilters.map(f => (
               <Button
                 key={f.value}
                 variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}

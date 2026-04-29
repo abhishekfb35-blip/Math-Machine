@@ -12,10 +12,9 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import towelsImg from "@/assets/images/towels-collection.png";
 import blanketsImg from "@/assets/images/blankets-collection.png";
 import bathrobesImg from "@/assets/images/bathrobes-collection.png";
-import type { Category, Product } from "@shared/types";
+import type { Category, Product, Attributes } from "@shared/types";
 
 type Audience = "kids" | "adults" | "couples";
-type GenderFilter = "all" | "boys" | "girls" | "unisex";
 
 const audienceLabels: Record<Audience, string> = {
   kids: "For Kids",
@@ -43,19 +42,6 @@ const productTypeConfigs: Record<string, ProductTypeConfig> = {
 };
 
 
-const genderFilters: { label: string; value: GenderFilter; dbValues: string[] }[] = [
-  { label: "All", value: "all", dbValues: [] },
-  { label: "Boys", value: "boys", dbValues: ["male"] },
-  { label: "Girls", value: "girls", dbValues: ["female"] },
-  { label: "Unisex", value: "unisex", dbValues: ["unisex"] },
-];
-
-function matchesGenderFilter(product: Product, filter: GenderFilter): boolean {
-  if (filter === "all") return true;
-  const dbValues = genderFilters.find(f => f.value === filter)?.dbValues ?? [];
-  const productGenders = product.genders ?? [];
-  return dbValues.some(v => productGenders.includes(v));
-}
 
 const PRODUCTS_PER_ROW = 10;
 
@@ -195,7 +181,7 @@ export default function CollectionPage() {
   const rawAudience = params.audience || "kids";
   const audience: Audience = validAudiences.includes(rawAudience as Audience) ? (rawAudience as Audience) : "kids";
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
-  const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
 
   const { data: categories, isLoading: catLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -204,6 +190,18 @@ export default function CollectionPage() {
   const { data: products, isLoading: prodLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  const { data: attributes } = useQuery<Attributes>({
+    queryKey: ["/api/attributes"],
+  });
+
+  const genderFilters = useMemo(() => {
+    const dbGenders = attributes?.genders ?? [];
+    return [
+      { label: "All", value: "all" },
+      ...dbGenders.map(g => ({ label: g.name.charAt(0).toUpperCase() + g.name.slice(1), value: g.name })),
+    ];
+  }, [attributes]);
 
   const isLoading = catLoading || prodLoading;
 
@@ -214,7 +212,7 @@ export default function CollectionPage() {
       return (p.ageGroups ?? []).includes(ageGroupValue);
     });
     if (genderFilter !== "all") {
-      filtered = filtered.filter((p) => matchesGenderFilter(p, genderFilter));
+      filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
     }
     return filtered;
   }, [products, audience, genderFilter]);

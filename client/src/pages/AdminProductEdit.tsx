@@ -521,6 +521,7 @@ export default function AdminProductEdit() {
           <div>
             <Label className="mb-1.5 block">Gender</Label>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
               {(attributes?.genders ?? []).map(g => (
                 <div key={g.id} className="flex items-center gap-1.5">
                   <Checkbox
@@ -541,6 +542,7 @@ export default function AdminProductEdit() {
         <div>
           <Label className="mb-1.5 block">Themes</Label>
           <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+            {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
             {(attributes?.themes ?? []).map(th => (
               <div key={th.id} className="flex items-center gap-1.5">
                 <Checkbox
@@ -560,6 +562,7 @@ export default function AdminProductEdit() {
         <div>
           <Label className="mb-1.5 block">Styles</Label>
           <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+            {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
             {(attributes?.styles ?? []).map(st => (
               <div key={st.id} className="flex items-center gap-1.5">
                 <Checkbox

@@ -197,4 +197,22 @@ export function registerAdminAttributeRoutes(app: Express) {
     await storage.deleteStyle(req.params.id as string);
     res.status(204).send();
   });
+
+  // ── Convenience aliases (/api/admin/{type} → /api/admin/attributes/{type}) ─
+  const aliasTypes = ["age-groups", "genders", "themes", "styles"] as const;
+  for (const t of aliasTypes) {
+    const canonical = t === "age-groups" ? "age-groups" : t;
+    app.get(`/api/admin/${t}`, requirePermission("catalog"), async (_req, res) => {
+      res.redirect(307, `/api/admin/attributes/${canonical}`);
+    });
+    app.post(`/api/admin/${t}`, requirePermission("catalog"), async (req, res) => {
+      res.redirect(307, `/api/admin/attributes/${canonical}`);
+    });
+    app.patch(`/api/admin/${t}/:id`, requirePermission("catalog"), async (req, res) => {
+      res.redirect(307, `/api/admin/attributes/${canonical}/${req.params.id}`);
+    });
+    app.delete(`/api/admin/${t}/:id`, requirePermission("catalog"), async (req, res) => {
+      res.redirect(307, `/api/admin/attributes/${canonical}/${req.params.id}`);
+    });
+  }
 }
