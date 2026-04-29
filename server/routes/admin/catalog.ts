@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
-import { insertCategorySchema, insertProductSchema, insertTagSchema } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
 import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
@@ -253,6 +253,61 @@ export function registerAdminCatalogRoutes(app: Express) {
     const reviewId = req.params.reviewId as string;
     if (!reviewId) return res.status(400).json({ message: "Invalid review ID" });
     await storage.deleteProductReview(reviewId);
+    res.status(204).send();
+  });
+
+  app.get("/api/admin/tag-types", requirePermission("catalog"), async (_req, res) => {
+    const types = await storage.getTagTypes();
+    res.json(types);
+  });
+
+  app.post("/api/admin/tag-types", requirePermission("catalog"), async (req, res) => {
+    try {
+      const data = insertTagTypeSchema.parse(req.body);
+      const tagType = await storage.createTagType(data);
+      await storage.createAuditLog({
+        entityType: "tag_type", entityId: tagType.id, entityName: tagType.name,
+        action: "created", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
+      res.status(201).json(tagType);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A tag type with that name already exists" });
+      console.error("Create tag type error:", err);
+      res.status(500).json({ message: "Failed to create tag type" });
+    }
+  });
+
+  app.put("/api/admin/tag-types/:id", requirePermission("catalog"), async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const data = insertTagTypeSchema.partial().parse(req.body);
+      const updated = await storage.updateTagType(id, data);
+      if (!updated) return res.status(404).json({ message: "Tag type not found" });
+      await storage.createAuditLog({
+        entityType: "tag_type", entityId: id, entityName: updated.name,
+        action: "updated", changes: JSON.stringify(data), username: getAdminUsername(req),
+      });
+      res.json(updated);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A tag type with that name already exists" });
+      console.error("Update tag type error:", err);
+      res.status(500).json({ message: "Failed to update tag type" });
+    }
+  });
+
+  app.delete("/api/admin/tag-types/:id", requirePermission("catalog"), async (req, res) => {
+    const id = req.params.id as string;
+    if (!id) return res.status(400).json({ message: "Invalid ID" });
+    const types = await storage.getTagTypes();
+    const before = types.find(t => t.id === id);
+    await storage.deleteTagType(id);
+    await storage.createAuditLog({
+      entityType: "tag_type", entityId: id, entityName: before?.name || "Unknown",
+      action: "deleted", changes: JSON.stringify(before), username: getAdminUsername(req),
+    });
     res.status(204).send();
   });
 

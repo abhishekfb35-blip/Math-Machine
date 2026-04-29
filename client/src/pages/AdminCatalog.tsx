@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag, CategoryTagVariantConfig, VariantSize, VariantColor } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
@@ -723,6 +723,7 @@ export default function AdminCatalog() {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [newTagTypeName, setNewTagTypeName] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSearchActive, setAdminSearchActive] = useState(false);
@@ -831,7 +832,7 @@ export default function AdminCatalog() {
   }, [selectedCategory?.id, queryClient]);
 
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
-
+  const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -1061,6 +1062,35 @@ export default function AdminCatalog() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete tag", variant: "destructive" });
+    },
+  });
+
+  const createTagTypeMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const res = await apiRequest("POST", "/api/admin/tag-types", { name, slug });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
+      setNewTagTypeName("");
+      toast({ title: "Tag type created" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to create tag type", variant: "destructive" });
+    },
+  });
+
+  const deleteTagTypeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/tag-types/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
+      toast({ title: "Tag type deleted" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete tag type", variant: "destructive" });
     },
   });
 
@@ -1340,12 +1370,6 @@ export default function AdminCatalog() {
     } catch {
       toast({ title: "Upload failed", variant: "destructive" });
     }
-  };
-
-  const mapLegacyAudience = (val: string | null | undefined): string => {
-    if (!val) return "";
-    const map: Record<string, string> = { kids: "boy,girl", adults: "adult", couples: "couple" };
-    return map[val] || val;
   };
 
   function generateSlug(name: string): string {
@@ -1791,7 +1815,8 @@ export default function AdminCatalog() {
                   material: "Cotton",
                   gsm: 500,
                   dimensions: "120 x 60 cm",
-                  audience: "kids",
+                  ageGroup: "kids",
+                  gender: "unisex",
                   productType: "towel",
                 });
                 setView("edit-product");
@@ -2813,39 +2838,62 @@ export default function AdminCatalog() {
             </div>
           </div>
 
-          <div>
-            <Label className="mb-2 block">Audience</Label>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {[
-                { value: "infant", label: "Infant" },
-                { value: "boy", label: "Boy" },
-                { value: "girl", label: "Girl" },
-                { value: "teenager", label: "Teenager" },
-                { value: "adult", label: "Adult" },
-                { value: "couple", label: "Couple" },
-              ].map((opt) => {
-                const mapped = mapLegacyAudience(editingProduct.audience);
-                const audiences = mapped.split(",").map(s => s.trim()).filter(Boolean);
-                const checked = audiences.includes(opt.value);
-                return (
-                  <div key={opt.value} className="flex items-center gap-1.5" data-testid={`audience-checkbox-${opt.value}`}>
-                    <Checkbox
-                      id={`audience-${opt.value}`}
-                      checked={checked}
-                      onCheckedChange={(isChecked) => {
-                        const currentAudiences = mapLegacyAudience(editingProduct.audience).split(",").map(s => s.trim()).filter(Boolean);
-                        const updated = isChecked
-                          ? [...currentAudiences, opt.value]
-                          : currentAudiences.filter(a => a !== opt.value);
-                        setEditingProduct(prev => ({ ...prev!, audience: updated.join(",") }));
-                      }}
-                    />
-                    <Label htmlFor={`audience-${opt.value}`} className="text-sm font-normal cursor-pointer">
-                      {opt.label}
-                    </Label>
-                  </div>
-                );
-              })}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="edit-prod-age-group">Age Group</Label>
+              <Select
+                value={editingProduct.ageGroup || "kids"}
+                onValueChange={(v) => setEditingProduct(prev => ({ ...prev!, ageGroup: v }))}
+              >
+                <SelectTrigger id="edit-prod-age-group" data-testid="select-age-group">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="infant">Infant</SelectItem>
+                  <SelectItem value="kids">Kids</SelectItem>
+                  <SelectItem value="teens">Teens</SelectItem>
+                  <SelectItem value="adults">Adults</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-prod-gender">Gender</Label>
+              <Select
+                value={editingProduct.gender || "unisex"}
+                onValueChange={(v) => setEditingProduct(prev => ({ ...prev!, gender: v }))}
+              >
+                <SelectTrigger id="edit-prod-gender" data-testid="select-gender">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="unisex">Unisex</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="edit-prod-themes">Themes (comma-separated)</Label>
+              <Input
+                id="edit-prod-themes"
+                value={editingProduct.themes || ""}
+                onChange={(e) => setEditingProduct(prev => ({ ...prev!, themes: e.target.value }))}
+                placeholder="e.g. animals,florals"
+                data-testid="input-product-themes"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-prod-styles">Styles (comma-separated)</Label>
+              <Input
+                id="edit-prod-styles"
+                value={editingProduct.styles || ""}
+                onChange={(e) => setEditingProduct(prev => ({ ...prev!, styles: e.target.value }))}
+                placeholder="e.g. minimal,initials"
+                data-testid="input-product-styles"
+              />
             </div>
           </div>
 
@@ -2939,9 +2987,36 @@ export default function AdminCatalog() {
               <Label className="flex items-center gap-1 mb-2">
                 <TagIcon className="w-4 h-4" /> Tags
               </Label>
-              <div className="space-y-2">
-                {allTags.map((tag) => (
-                  <div key={tag.id} className="flex items-center gap-2" data-testid={`tag-checkbox-${tag.id}`}>
+              <div className="space-y-3">
+                {(allTagTypes && allTagTypes.length > 0 ? allTagTypes : []).map((tagType) => {
+                  const tagsForType = allTags.filter(t => t.tagTypeId === tagType.id);
+                  if (tagsForType.length === 0) return null;
+                  return (
+                    <div key={tagType.id}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">{tagType.name}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                        {tagsForType.map((tag) => (
+                          <div key={tag.id} className="flex items-center gap-1.5" data-testid={`tag-checkbox-${tag.id}`}>
+                            <Checkbox
+                              id={`tag-${tag.id}`}
+                              checked={selectedTagIds.includes(tag.id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedTagIds(prev =>
+                                  checked ? [...prev, tag.id] : prev.filter(id => id !== tag.id)
+                                );
+                              }}
+                            />
+                            <Label htmlFor={`tag-${tag.id}`} className="text-sm font-normal cursor-pointer">
+                              {tag.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {allTags.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).map((tag) => (
+                  <div key={tag.id} className="flex items-center gap-1.5" data-testid={`tag-checkbox-${tag.id}`}>
                     <Checkbox
                       id={`tag-${tag.id}`}
                       checked={selectedTagIds.includes(tag.id)}
@@ -3088,13 +3163,13 @@ export default function AdminCatalog() {
         <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold" data-testid="text-tags-title">Tags</h1>
-            <p className="text-sm text-muted-foreground">Manage product tags</p>
+            <p className="text-sm text-muted-foreground">Internal merchandising signals, grouped by type</p>
           </div>
           <Button
             size="sm"
             onClick={() => {
               setIsNew(true);
-              setEditingTag({ name: "", description: "" });
+              setEditingTag({ name: "", description: "", tagTypeId: allTagTypes?.[0]?.id ?? null });
               setView("edit-tag");
             }}
             data-testid="button-add-tag"
@@ -3103,46 +3178,126 @@ export default function AdminCatalog() {
           </Button>
         </div>
 
-        <div className="space-y-2">
-          {allTags?.map((tag) => (
-            <Card key={tag.id} className="p-3" data-testid={`card-tag-${tag.id}`}>
-              <div className="flex items-center gap-3">
-                <TagIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm" data-testid={`text-tag-name-${tag.id}`}>{tag.name}</p>
-                  {tag.description && (
-                    <p className="text-xs text-muted-foreground truncate">{tag.description}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsNew(false);
-                      setEditingTag({ ...tag });
-                      setView("edit-tag");
-                    }}
-                    data-testid={`button-edit-tag-${tag.id}`}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      if (confirm(`Delete tag "${tag.name}"?`)) {
-                        deleteTagMutation.mutate(tag.id);
-                      }
-                    }}
-                    data-testid={`button-delete-tag-${tag.id}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+        <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+          <h2 className="text-sm font-semibold mb-3">Tag Types</h2>
+          <div className="space-y-2">
+            {allTagTypes?.map((tagType) => (
+              <div key={tagType.id} className="flex items-center gap-2" data-testid={`card-tag-type-${tagType.id}`}>
+                <span className="flex-1 text-sm font-medium">{tagType.name}</span>
+                <span className="text-xs text-muted-foreground">{allTags?.filter(t => t.tagTypeId === tagType.id).length ?? 0} tags</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    if (confirm(`Delete tag type "${tagType.name}"? Tags under this type will become untyped.`)) {
+                      deleteTagTypeMutation.mutate(tagType.id);
+                    }
+                  }}
+                  data-testid={`button-delete-tag-type-${tagType.id}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Input
+              placeholder="New tag type name..."
+              value={newTagTypeName}
+              onChange={(e) => setNewTagTypeName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && newTagTypeName.trim()) createTagTypeMutation.mutate(newTagTypeName.trim()); }}
+              className="h-8 text-sm"
+              data-testid="input-new-tag-type"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { if (newTagTypeName.trim()) createTagTypeMutation.mutate(newTagTypeName.trim()); }}
+              disabled={!newTagTypeName.trim() || createTagTypeMutation.isPending}
+              data-testid="button-create-tag-type"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add Type
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {(allTagTypes && allTagTypes.length > 0 ? allTagTypes : [{ id: null as string | null, name: "All Tags", slug: "", description: null, sortOrder: 0 }]).map((tagType) => {
+            const tagsForType = (allTags ?? []).filter(t => t.tagTypeId === tagType.id);
+            if (tagsForType.length === 0) return null;
+            return (
+              <div key={tagType.id ?? "all"}>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{tagType.name}</h3>
+                <div className="space-y-1.5">
+                  {tagsForType.map((tag) => (
+                    <Card key={tag.id} className="p-2.5" data-testid={`card-tag-${tag.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm" data-testid={`text-tag-name-${tag.id}`}>{tag.name}</p>
+                          {tag.description && (
+                            <p className="text-xs text-muted-foreground truncate">{tag.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setIsNew(false);
+                              setEditingTag({ ...tag });
+                              setView("edit-tag");
+                            }}
+                            data-testid={`button-edit-tag-${tag.id}`}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              if (confirm(`Delete tag "${tag.name}"?`)) {
+                                deleteTagMutation.mutate(tag.id);
+                              }
+                            }}
+                            data-testid={`button-delete-tag-${tag.id}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            </Card>
-          ))}
+            );
+          })}
+          {allTags?.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Untyped</h3>
+              <div className="space-y-1.5">
+                {allTags.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).map((tag) => (
+                  <Card key={tag.id} className="p-2.5" data-testid={`card-tag-${tag.id}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{tag.name}</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setIsNew(false); setEditingTag({ ...tag }); setView("edit-tag"); }} data-testid={`button-edit-tag-${tag.id}`}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm(`Delete tag "${tag.name}"?`)) deleteTagMutation.mutate(tag.id); }} data-testid={`button-delete-tag-${tag.id}`}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           {(!allTags || allTags.length === 0) && (
             <div className="text-center py-12 text-muted-foreground">
               <TagIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -3174,6 +3329,25 @@ export default function AdminCatalog() {
               onChange={(e) => setEditingTag(prev => ({ ...prev!, name: e.target.value }))}
               data-testid="input-tag-name"
             />
+          </div>
+          <div>
+            <Label htmlFor="tag-type-select">Tag Type</Label>
+            <Select
+              value={editingTag.tagTypeId ?? "none"}
+              onValueChange={(v) => setEditingTag(prev => ({ ...prev!, tagTypeId: v === "none" ? null : v }))}
+            >
+              <SelectTrigger id="tag-type-select" data-testid="select-tag-type">
+                <SelectValue placeholder="Select type..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No type</SelectItem>
+                {allTagTypes?.map((tt) => (
+                  <SelectItem key={tt.id} value={tt.id} data-testid={`tag-type-option-${tt.id}`}>
+                    {tt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="tag-desc">Description</Label>

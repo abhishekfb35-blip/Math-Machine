@@ -18,13 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, ProductImage, ProductReview, Tag, ProductVariantOptions } from "@shared/types";
-
-const mapLegacyAudience = (val: string | null | undefined): string => {
-  if (!val) return "";
-  const map: Record<string, string> = { kids: "boy,girl", adults: "adult", couples: "couple" };
-  return map[val] || val;
-};
+import type { Product, ProductImage, ProductReview, Tag, TagType, ProductVariantOptions } from "@shared/types";
 
 export default function AdminProductEdit() {
   const { toast } = useToast();
@@ -81,6 +75,10 @@ export default function AdminProductEdit() {
 
   const { data: allTags } = useQuery<Tag[]>({
     queryKey: ["/api/admin/tags"],
+  });
+
+  const { data: allTagTypes } = useQuery<TagType[]>({
+    queryKey: ["/api/admin/tag-types"],
   });
 
   useEffect(() => {
@@ -466,39 +464,62 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
-        <div>
-          <Label className="mb-2 block">Audience</Label>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {[
-              { value: "infant", label: "Infant" },
-              { value: "boy", label: "Boy" },
-              { value: "girl", label: "Girl" },
-              { value: "teenager", label: "Teenager" },
-              { value: "adult", label: "Adult" },
-              { value: "couple", label: "Couple" },
-            ].map((opt) => {
-              const mapped = mapLegacyAudience(product.audience);
-              const audiences = mapped.split(",").map(s => s.trim()).filter(Boolean);
-              const checked = audiences.includes(opt.value);
-              return (
-                <div key={opt.value} className="flex items-center gap-1.5" data-testid={`audience-checkbox-${opt.value}`}>
-                  <Checkbox
-                    id={`audience-${opt.value}`}
-                    checked={checked}
-                    onCheckedChange={(isChecked) => {
-                      const currentAudiences = mapLegacyAudience(product.audience).split(",").map(s => s.trim()).filter(Boolean);
-                      const updated = isChecked
-                        ? [...currentAudiences, opt.value]
-                        : currentAudiences.filter(a => a !== opt.value);
-                      setProduct(prev => ({ ...prev!, audience: updated.join(",") }));
-                    }}
-                  />
-                  <Label htmlFor={`audience-${opt.value}`} className="text-sm font-normal cursor-pointer">
-                    {opt.label}
-                  </Label>
-                </div>
-              );
-            })}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="prod-age-group">Age Group</Label>
+            <Select
+              value={product.ageGroup || "kids"}
+              onValueChange={(v) => setProduct(prev => ({ ...prev!, ageGroup: v }))}
+            >
+              <SelectTrigger id="prod-age-group" data-testid="select-age-group">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="infant">Infant</SelectItem>
+                <SelectItem value="kids">Kids</SelectItem>
+                <SelectItem value="teens">Teens</SelectItem>
+                <SelectItem value="adults">Adults</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="prod-gender">Gender</Label>
+            <Select
+              value={product.gender || "unisex"}
+              onValueChange={(v) => setProduct(prev => ({ ...prev!, gender: v }))}
+            >
+              <SelectTrigger id="prod-gender" data-testid="select-gender">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="unisex">Unisex</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="prod-themes">Themes (comma-separated)</Label>
+            <Input
+              id="prod-themes"
+              value={product.themes || ""}
+              onChange={(e) => setProduct(prev => ({ ...prev!, themes: e.target.value }))}
+              placeholder="e.g. animals,florals"
+              data-testid="input-product-themes"
+            />
+          </div>
+          <div>
+            <Label htmlFor="prod-styles">Styles (comma-separated)</Label>
+            <Input
+              id="prod-styles"
+              value={product.styles || ""}
+              onChange={(e) => setProduct(prev => ({ ...prev!, styles: e.target.value }))}
+              placeholder="e.g. minimal,initials"
+              data-testid="input-product-styles"
+            />
           </div>
         </div>
 
@@ -592,23 +613,57 @@ export default function AdminProductEdit() {
             <Label className="flex items-center gap-1 mb-2">
               <TagIcon className="w-4 h-4" /> Tags
             </Label>
-            <div className="space-y-2">
-              {allTags.map((tag) => (
-                <div key={tag.id} className="flex items-center gap-2" data-testid={`tag-checkbox-${tag.id}`}>
-                  <Checkbox
-                    id={`tag-${tag.id}`}
-                    checked={selectedTagIds.includes(tag.id)}
-                    onCheckedChange={(checked) => {
-                      setSelectedTagIds(prev =>
-                        checked ? [...prev, tag.id] : prev.filter(id => id !== tag.id)
-                      );
-                    }}
-                  />
-                  <Label htmlFor={`tag-${tag.id}`} className="text-sm font-normal cursor-pointer">
-                    {tag.name}
-                  </Label>
+            <div className="space-y-3">
+              {(allTagTypes && allTagTypes.length > 0 ? allTagTypes : [{ id: null, name: "Untyped", slug: "", description: null, sortOrder: 0 }]).map((tagType) => {
+                const tagsForType = allTags.filter(t => t.tagTypeId === tagType.id);
+                if (tagsForType.length === 0) return null;
+                return (
+                  <div key={tagType.id ?? "untyped"}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">{tagType.name}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                      {tagsForType.map((tag) => (
+                        <div key={tag.id} className="flex items-center gap-1.5" data-testid={`tag-checkbox-${tag.id}`}>
+                          <Checkbox
+                            id={`tag-${tag.id}`}
+                            checked={selectedTagIds.includes(tag.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedTagIds(prev =>
+                                checked ? [...prev, tag.id] : prev.filter(id => id !== tag.id)
+                              );
+                            }}
+                          />
+                          <Label htmlFor={`tag-${tag.id}`} className="text-sm font-normal cursor-pointer">
+                            {tag.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {allTags.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Untyped</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    {allTags.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).map((tag) => (
+                      <div key={tag.id} className="flex items-center gap-1.5" data-testid={`tag-checkbox-${tag.id}`}>
+                        <Checkbox
+                          id={`tag-${tag.id}`}
+                          checked={selectedTagIds.includes(tag.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedTagIds(prev =>
+                              checked ? [...prev, tag.id] : prev.filter(id => id !== tag.id)
+                            );
+                          }}
+                        />
+                        <Label htmlFor={`tag-${tag.id}`} className="text-sm font-normal cursor-pointer">
+                          {tag.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
