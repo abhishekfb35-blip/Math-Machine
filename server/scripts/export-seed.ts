@@ -2,6 +2,8 @@ import { db } from "../db";
 import {
   categories, products, productImages, productReviews, tags, productTags, siteConfig,
   categoryTagVariantConfigs, variantSizes, variantColors, currencyRates, pricingRules,
+  ageGroups, genders, themes, styles,
+  productAgeGroups, productGenders, productThemes, productStyles,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import * as fs from "fs";
@@ -12,6 +14,26 @@ async function exportSeed() {
   console.log("Exporting seed data from dev DB...");
 
   const cats = await db.select().from(categories).orderBy(categories.sortOrder);
+
+  // Fetch junction attribute assignments (used to enrich product export below)
+  const prodAgeGroups = await db.select({ productId: productAgeGroups.productId, name: ageGroups.name })
+    .from(productAgeGroups).innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id));
+  const prodGenders = await db.select({ productId: productGenders.productId, name: genders.name })
+    .from(productGenders).innerJoin(genders, eq(productGenders.genderId, genders.id));
+  const prodThemes = await db.select({ productId: productThemes.productId, name: themes.name })
+    .from(productThemes).innerJoin(themes, eq(productThemes.themeId, themes.id));
+  const prodStyles = await db.select({ productId: productStyles.productId, name: styles.name })
+    .from(productStyles).innerJoin(styles, eq(productStyles.styleId, styles.id));
+
+  // Build productId → attribute-name[] maps for O(1) lookup per product
+  const agMap = new Map<string, string[]>();
+  const genMap = new Map<string, string[]>();
+  const thMap = new Map<string, string[]>();
+  const stMap = new Map<string, string[]>();
+  for (const r of prodAgeGroups) agMap.set(r.productId, [...(agMap.get(r.productId) ?? []), r.name]);
+  for (const r of prodGenders)   genMap.set(r.productId, [...(genMap.get(r.productId) ?? []), r.name]);
+  for (const r of prodThemes)    thMap.set(r.productId, [...(thMap.get(r.productId) ?? []), r.name]);
+  for (const r of prodStyles)    stMap.set(r.productId, [...(stMap.get(r.productId) ?? []), r.name]);
 
   const prods = await db.select({
     id: products.id,
@@ -169,6 +191,10 @@ async function exportSeed() {
       bulletPoints: p.bulletPoints,
       searchKeywords: p.searchKeywords,
       productType: p.productType,
+      ageGroup: (agMap.get(p.id)  ?? []).join(","),
+      gender:   (genMap.get(p.id) ?? []).join(","),
+      themes:   (thMap.get(p.id)  ?? []).join(","),
+      styles:   (stMap.get(p.id)  ?? []).join(","),
       active: p.active,
       sortOrder: p.sortOrder,
     })),
