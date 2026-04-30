@@ -207,8 +207,12 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    // "couples" is a URL alias for the "adults" age group in the product DB model
-    // (couples gift sets are drawn from adult-range products).
+    // URL ALIAS — intentional exception to "zero hardcoded attribute values":
+    //   The /collection/couples route is a marketing URL showing adult-range products
+    //   as gift sets for couples. It maps to the "adults" DB age group rather than
+    //   a separate "couples" value in the lookup table (which would be semantically
+    //   wrong — couples are not an age group). The alias lives here in routing logic,
+    //   not in any attribute option list or lookup table.
     const dbAudience = audience === "couples" ? "adults" : audience;
     const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name);
     if (!dbAgeGroupNames.includes(dbAudience)) return [];

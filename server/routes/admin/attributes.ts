@@ -70,8 +70,14 @@ function makeHandlers<
       }
     },
     del: async (req: Request, res: Response) => {
-      await opts.delete(req.params.id as string);
-      res.status(204).send();
+      try {
+        await opts.delete(req.params.id as string);
+        res.status(204).send();
+      } catch (err: unknown) {
+        if (typeof err === "object" && err !== null && "code" in err && (err as { code: unknown }).code === "23503")
+          return res.status(409).json({ message: "Cannot delete — this attribute is still assigned to one or more products. Remove the assignment first." });
+        res.status(500).json({ message: "Failed to delete" });
+      }
     },
   };
 }
