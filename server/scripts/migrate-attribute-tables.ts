@@ -55,7 +55,7 @@ async function legacyColumnsExist(): Promise<boolean> {
       AND column_name IN ('age_group', 'gender', 'themes', 'styles')
   `);
   const rows = result.rows as Array<{ cnt: string | number }>;
-  return Number(rows[0]?.cnt ?? 0) > 0;
+  return Number(rows[0]?.cnt ?? 0) === 4;
 }
 
 async function loadLookupMaps() {
