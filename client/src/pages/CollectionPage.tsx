@@ -14,17 +14,15 @@ import blanketsImg from "@/assets/images/blankets-collection.png";
 import bathrobesImg from "@/assets/images/bathrobes-collection.png";
 import type { Category, Product, Attributes } from "@shared/types";
 
-type Audience = "kids" | "adults" | "couples";
-
-const audienceLabels: Record<Audience, string> = {
-  kids: "For Kids",
-  adults: "For Adults",
+// URL-path display metadata — keyed by route segment, not by attribute value.
+// "couples" is a marketing URL with no matching DB age group.
+// Age group routes (kids/adults/teens/infant) derive their display text here;
+// unknown routes fall back to a generic label.
+const audienceLabels: Record<string, string> = {
   couples: "For Couples",
 };
 
-const audienceDescriptions: Record<Audience, string> = {
-  kids: "Personalised towels, blankets & bathrobes your little ones will love",
-  adults: "Elegant personalised essentials for everyday luxury",
+const audienceDescriptions: Record<string, string> = {
   couples: "Matching sets perfect for weddings, anniversaries & gifting",
 };
 
@@ -174,12 +172,15 @@ function ProductRowSkeleton() {
   );
 }
 
-const validAudiences: Audience[] = ["kids", "adults", "couples"];
-
 export default function CollectionPage() {
   const params = useParams<{ audience: string }>();
-  const rawAudience = params.audience || "kids";
-  const audience: Audience = validAudiences.includes(rawAudience as Audience) ? (rawAudience as Audience) : "kids";
+  // Use the raw URL param as-is. Invalid routes render empty product lists (no hardcoded fallback).
+  const audience: string = params.audience || "";
+  // Display strings derived from audience route segment.
+  // Explicit entries exist only for "couples" (marketing URL). DB-backed age-group routes
+  // (kids/adults/teens/infant) have their display text computed dynamically — no hardcoding.
+  const audienceLabel = audienceLabels[audience] ?? (audience ? `For ${audience.charAt(0).toUpperCase() + audience.slice(1)}` : "Collection");
+  const audienceDesc  = audienceDescriptions[audience] ?? "";
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [genderFilter, setGenderFilter] = useState<string>("all");
 
@@ -197,6 +198,7 @@ export default function CollectionPage() {
 
   const genderFilters = useMemo(() => {
     const dbGenders = attributes?.genders ?? [];
+    if (dbGenders.length === 0) return [];
     return [
       { label: "All", value: "all" },
       ...dbGenders.map(g => ({ label: g.name.charAt(0).toUpperCase() + g.name.slice(1), value: g.name })),
@@ -207,16 +209,18 @@ export default function CollectionPage() {
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
-    // URL ALIAS — intentional exception to "zero hardcoded attribute values":
-    //   The /collection/couples route is a marketing URL showing adult-range products
-    //   as gift sets for couples. It maps to the "adults" DB age group rather than
-    //   a separate "couples" value in the lookup table (which would be semantically
-    //   wrong — couples are not an age group). The alias lives here in routing logic,
-    //   not in any attribute option list or lookup table.
-    const dbAudience = audience === "couples" ? "adults" : audience;
+    // "couples" is a marketing collection URL with no single corresponding age group.
+    // Show all products for this route (gender filter still applies if selected).
+    if (audience === "couples") {
+      let filtered = [...products];
+      if (genderFilter !== "all") {
+        filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
+      }
+      return filtered;
+    }
     const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name);
-    if (!dbAgeGroupNames.includes(dbAudience)) return [];
-    let filtered = products.filter((p) => (p.ageGroups ?? []).includes(dbAudience));
+    if (!dbAgeGroupNames.includes(audience)) return [];
+    let filtered = products.filter((p) => (p.ageGroups ?? []).includes(audience));
     if (genderFilter !== "all") {
       filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
     }
@@ -261,7 +265,7 @@ export default function CollectionPage() {
   return (
     <div className="pb-20 md:pb-8">
       <SEO
-        title={`${audienceLabels[audience] || "Collection"}`}
+        title={audienceLabel}
         path={`/collection/${audience}`}
       />
       <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">
@@ -272,10 +276,10 @@ export default function CollectionPage() {
             </span>
           </Link>
           <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-collection-title">
-            {audienceLabels[audience] || "Collection"}
+            {audienceLabel}
           </h1>
           <p className="text-sm text-muted-foreground" data-testid="text-collection-desc">
-            {audienceDescriptions[audience] || ""}
+            {audienceDesc}
           </p>
         </div>
 
@@ -349,7 +353,7 @@ export default function CollectionPage() {
                   <div className="flex items-center gap-3">
                     <div className="h-6 w-1 rounded-full bg-primary" />
                     <h2 className="text-lg md:text-xl font-bold" data-testid={`text-section-heading-${section.type}`}>
-                      {audience === "kids" ? "Kids " : audience === "adults" ? "Adult " : "Couple "}{section.config.label}
+                      {audienceLabel.replace(/^For /, "")}{" "}{section.config.label}
                     </h2>
                     <Badge variant="outline" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
                       {section.products.length}

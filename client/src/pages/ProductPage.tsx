@@ -167,13 +167,14 @@ export default function ProductPage() {
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions) return;
     const sizes = variantOptions.sizes;
-    // Kids bathrobes should not auto-select a size — the user must choose explicitly.
-    // ageGroups comes from the normalized junction tables (DB-backed array).
-    const isKidsBathrobe = product?.productType === "bathrobe" && (product?.ageGroups ?? []).includes("kids");
-    if (sizes.length > 0 && !selectedSize && !isKidsBathrobe) {
-      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
-      setSelectedSize(def.name);
-      setSelectedColor(getFirstSelectableColor(def.name));
+    if (sizes.length > 0 && !selectedSize) {
+      // Only auto-select when a size with explicit front-image exists (blurOnFront=false).
+      // Products where all sizes have blurOnFront=true require the user to choose explicitly.
+      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront);
+      if (def) {
+        setSelectedSize(def.name);
+        setSelectedColor(getFirstSelectableColor(def.name));
+      }
     }
   }, [showVariantSelectors, variantOptions]);
 

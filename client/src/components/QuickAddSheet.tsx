@@ -69,13 +69,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   useEffect(() => {
     if (!showVariantSelectors || !variantOptions || selectedSizeName) return;
     const sizes = variantOptions.sizes;
-    // Kids bathrobes should not auto-select a size — the user must choose explicitly
-    // for their child. ageGroups comes from the normalized junction tables (DB-backed).
-    const isKidsBathrobe = product?.productType === "bathrobe" && (product?.ageGroups ?? []).includes("kids");
-    if (sizes.length > 0 && !isKidsBathrobe) {
-      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront) || sizes[0];
-      setSelectedSizeName(def.name);
-      setSelectedColorName(getFirstSelectableColor(def.name));
+    if (sizes.length > 0) {
+      // Only auto-select when a size with explicit front-image exists (blurOnFront=false).
+      // Products where all sizes have blurOnFront=true require the user to choose explicitly.
+      const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront);
+      if (def) {
+        setSelectedSizeName(def.name);
+        setSelectedColorName(getFirstSelectableColor(def.name));
+      }
     }
   }, [showVariantSelectors, variantOptions]);
 

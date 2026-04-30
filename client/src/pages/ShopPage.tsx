@@ -125,6 +125,7 @@ export default function ShopPage() {
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const audienceFilters = useMemo(() => {
     const ags = attributes?.ageGroups ?? [];
+    if (ags.length === 0) return [];
     return [
       { label: "All", value: "all" },
       ...ags.map(ag => ({ label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1), value: ag.name })),
