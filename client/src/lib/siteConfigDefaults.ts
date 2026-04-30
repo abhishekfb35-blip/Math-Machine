@@ -416,6 +416,9 @@ export interface ShopSection {
   maxShown: number;
   enabled: boolean;
   audiences: string[];
+  genders?: string[];
+  themes?: string[];
+  styles?: string[];
 }
 
 export const defaultShopSections: ShopSection[] = [

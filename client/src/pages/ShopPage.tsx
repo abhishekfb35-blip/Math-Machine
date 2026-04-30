@@ -355,7 +355,7 @@ export default function ShopPage() {
     return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
   }, [attributeFilteredProducts, activeTag]);
 
-  // Compute tag sections filtered by all active attributes
+  // Compute tag sections filtered by all active attributes + section-level attribute pins
   const tagSections = useMemo(() => {
     if (!products) return [];
     return shopSections
@@ -363,7 +363,10 @@ export default function ShopPage() {
       .filter(s => activeFilter === "all" || (s.audiences ?? []).includes(activeFilter))
       .map(s => {
         const tagLower = s.tag.toLowerCase();
-        const all = attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+        let all = attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+        if (s.genders?.length) all = all.filter(p => (p.genders ?? []).some(g => s.genders!.includes(g)));
+        if (s.themes?.length)  all = all.filter(p => (p.themes  ?? []).some(t => s.themes!.includes(t)));
+        if (s.styles?.length)  all = all.filter(p => (p.styles  ?? []).some(st => s.styles!.includes(st)));
         return { ...s, all, shown: all.slice(0, s.maxShown) };
       });
   }, [attributeFilteredProducts, shopSections, products, activeFilter]);

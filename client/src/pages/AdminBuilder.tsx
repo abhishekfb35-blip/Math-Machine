@@ -21,6 +21,7 @@ import {
   RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut, Smartphone, Globe,
 } from "lucide-react";
 import { Link } from "wouter";
+import type { Attributes } from "@shared/types";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
@@ -883,6 +884,13 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     queryFn: () => fetch("/api/admin/tags").then(r => r.ok ? r.json() : []),
   });
 
+  const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+
+  const audienceOptions = attributes?.ageGroups?.map(ag => ag.name) ?? [];
+  const genderOptions   = attributes?.genders?.map(g => g.name) ?? [];
+  const themeOptions    = attributes?.themes?.map(t => t.name) ?? [];
+  const styleOptions    = attributes?.styles?.map(s => s.name) ?? [];
+
   const move = (index: number, dir: "up" | "down") => {
     const next = [...sections];
     const swap = dir === "up" ? index - 1 : index + 1;
@@ -897,30 +905,73 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     setSections(next);
   };
 
-  const toggleAudience = (index: number, audience: string) => {
+  const toggleMulti = (index: number, field: "audiences" | "genders" | "themes" | "styles", value: string) => {
     const next = [...sections];
-    const current = next[index].audiences ?? [];
+    const current: string[] = (next[index][field] as string[]) ?? [];
     next[index] = {
       ...next[index],
-      audiences: current.includes(audience)
-        ? current.filter(a => a !== audience)
-        : [...current, audience],
+      [field]: current.includes(value)
+        ? current.filter(v => v !== value)
+        : [...current, value],
     };
     setSections(next);
   };
 
   const addSection = () => {
-    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audiences: [] }]);
+    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audiences: [], genders: [], themes: [], styles: [] }]);
   };
 
   const removeSection = (index: number) => {
     setSections(sections.filter((_, i) => i !== index));
   };
 
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const AttrCheckboxRow = ({
+    sectionIndex, field, options, label, hint, testPrefix,
+  }: {
+    sectionIndex: number;
+    field: "audiences" | "genders" | "themes" | "styles";
+    options: string[];
+    label: string;
+    hint: string;
+    testPrefix: string;
+  }) => {
+    const selected: string[] = (sections[sectionIndex][field] as string[]) ?? [];
+    return (
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {attributes === undefined ? (
+            <span className="text-xs text-muted-foreground">Loading…</span>
+          ) : options.length === 0 ? (
+            <span className="text-xs text-muted-foreground italic">No options in DB</span>
+          ) : (
+            options.map(opt => (
+              <label key={opt} className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(opt)}
+                  onChange={() => toggleMulti(sectionIndex, field, opt)}
+                  className="w-3.5 h-3.5 rounded"
+                  data-testid={`checkbox-${testPrefix}-${opt}-${sectionIndex}`}
+                />
+                <span className="text-sm capitalize">{cap(opt)}</span>
+              </label>
+            ))
+          )}
+          {selected.length === 0 && attributes !== undefined && options.length > 0 && (
+            <span className="text-xs text-muted-foreground italic">{hint}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Control which tag-based sections appear on the Shop page, in what order, and how many products each shows.
+        Control which tag-based sections appear on the Shop page, in what order, and how many products each shows. Use the attribute filters to pin a section to specific genders, themes or styles.
       </p>
       {sections.map((s, i) => (
         <Card key={i} className="p-4 space-y-3" data-testid={`card-shop-section-${i}`}>
@@ -984,26 +1035,38 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               />
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Show under filter tabs</Label>
-            <div className="flex items-center gap-4">
-              {(["kids", "adults", "couples"] as const).map(aud => (
-                <label key={aud} className="flex items-center gap-1.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={(s.audiences ?? []).includes(aud)}
-                    onChange={() => toggleAudience(i, aud)}
-                    className="w-3.5 h-3.5 rounded"
-                    data-testid={`checkbox-audience-${aud}-${i}`}
-                  />
-                  <span className="text-sm capitalize">{aud}</span>
-                </label>
-              ))}
-              {(s.audiences ?? []).length === 0 && (
-                <span className="text-xs text-muted-foreground italic">Shows under "All" only</span>
-              )}
-            </div>
-          </div>
+          <AttrCheckboxRow
+            sectionIndex={i}
+            field="audiences"
+            options={audienceOptions}
+            label='Show under audience tabs'
+            hint='Shows under "All" only'
+            testPrefix="audience"
+          />
+          <AttrCheckboxRow
+            sectionIndex={i}
+            field="genders"
+            options={genderOptions}
+            label="Gender filter (all if none selected)"
+            hint="all genders"
+            testPrefix="gender"
+          />
+          <AttrCheckboxRow
+            sectionIndex={i}
+            field="themes"
+            options={themeOptions}
+            label="Theme filter (all if none selected)"
+            hint="all themes"
+            testPrefix="theme"
+          />
+          <AttrCheckboxRow
+            sectionIndex={i}
+            field="styles"
+            options={styleOptions}
+            label="Style filter (all if none selected)"
+            hint="all styles"
+            testPrefix="style"
+          />
         </Card>
       ))}
       <div className="flex gap-2">
