@@ -1039,8 +1039,8 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
             sectionIndex={i}
             field="audiences"
             options={audienceOptions}
-            label='Show under audience tabs'
-            hint='Shows under "All" only'
+            label="Show under filter tabs"
+            hint="(all)"
             testPrefix="audience"
           />
           <AttrCheckboxRow
@@ -1048,7 +1048,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
             field="genders"
             options={genderOptions}
             label="Gender filter (all if none selected)"
-            hint="all genders"
+            hint="(all)"
             testPrefix="gender"
           />
           <AttrCheckboxRow
@@ -1056,7 +1056,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
             field="themes"
             options={themeOptions}
             label="Theme filter (all if none selected)"
-            hint="all themes"
+            hint="(all)"
             testPrefix="theme"
           />
           <AttrCheckboxRow
@@ -1064,7 +1064,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
             field="styles"
             options={styleOptions}
             label="Style filter (all if none selected)"
-            hint="all styles"
+            hint="(all)"
             testPrefix="style"
           />
         </Card>
