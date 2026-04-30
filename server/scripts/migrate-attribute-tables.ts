@@ -112,8 +112,13 @@ async function main() {
   console.log("[migrate-attribute-tables] Starting...");
 
   const maps = await loadLookupMaps();
-  if (maps.agCount === 0) {
-    console.error("[migrate-attribute-tables] ERROR: age_groups table is empty — run seed first (npm run dev)");
+  const emptyTables: string[] = [];
+  if (maps.agCount === 0) emptyTables.push("age_groups");
+  if (maps.genCount === 0) emptyTables.push("genders");
+  if (maps.thCount === 0) emptyTables.push("themes");
+  if (maps.stCount === 0) emptyTables.push("styles");
+  if (emptyTables.length > 0) {
+    console.error(`[migrate-attribute-tables] ERROR: lookup table(s) empty: ${emptyTables.join(", ")} — run seed first (npm run dev)`);
     process.exit(1);
   }
   console.log(`[migrate-attribute-tables] Lookup: age_groups=${maps.agCount} genders=${maps.genCount} themes=${maps.thCount} styles=${maps.stCount}`);
