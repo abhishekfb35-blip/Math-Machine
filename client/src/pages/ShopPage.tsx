@@ -119,25 +119,29 @@ interface FilterRowProps {
   value: string;
   onChange: (v: string) => void;
   testIdPrefix: string;
+  counts?: Record<string, number>;
 }
 
-function FilterRow({ label, options, value, onChange, testIdPrefix }: FilterRowProps) {
+function FilterRow({ label, options, value, onChange, testIdPrefix, counts }: FilterRowProps) {
   if (options.length === 0) return null;
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
       <span className="text-xs text-muted-foreground shrink-0 font-medium">{label}</span>
-      {options.map(f => (
-        <Button
-          key={f.value}
-          variant={value === f.value ? "default" : "outline"}
-          size="sm"
-          onClick={() => onChange(f.value)}
-          className="shrink-0 h-7 px-2.5 text-xs"
-          data-testid={`${testIdPrefix}-${f.value}`}
-        >
-          {f.label}
-        </Button>
-      ))}
+      {options.map(f => {
+        const count = counts?.[f.value];
+        return (
+          <Button
+            key={f.value}
+            variant={value === f.value ? "default" : "outline"}
+            size="sm"
+            onClick={() => onChange(f.value)}
+            className="shrink-0 h-7 px-2.5 text-xs"
+            data-testid={`${testIdPrefix}-${f.value}`}
+          >
+            {f.label}{count !== undefined ? ` (${count})` : ""}
+          </Button>
+        );
+      })}
     </div>
   );
 }
@@ -257,6 +261,79 @@ export default function ShopPage() {
     return result;
   }, [products, activeFilter, activeGender, activeTheme, activeStyle]);
 
+  // Base product sets for counting each filter dimension (all OTHER filters applied)
+  const countBaseAudience = useMemo(() => {
+    if (!products) return [];
+    let r = products;
+    if (activeGender !== "all") r = r.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
+    if (activeTheme  !== "all") r = r.filter(p => (p.themes  ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
+    if (activeStyle  !== "all") r = r.filter(p => (p.styles  ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    return r;
+  }, [products, activeGender, activeTheme, activeStyle]);
+
+  const countBaseGender = useMemo(() => {
+    if (!products) return [];
+    let r = products;
+    if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
+    if (activeTheme  !== "all") r = r.filter(p => (p.themes   ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
+    if (activeStyle  !== "all") r = r.filter(p => (p.styles   ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    return r;
+  }, [products, activeFilter, activeTheme, activeStyle]);
+
+  const countBaseTheme = useMemo(() => {
+    if (!products) return [];
+    let r = products;
+    if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
+    if (activeGender !== "all") r = r.filter(p => (p.genders  ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
+    if (activeStyle  !== "all") r = r.filter(p => (p.styles   ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    return r;
+  }, [products, activeFilter, activeGender, activeStyle]);
+
+  const countBaseStyle = useMemo(() => {
+    if (!products) return [];
+    let r = products;
+    if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
+    if (activeGender !== "all") r = r.filter(p => (p.genders  ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
+    if (activeTheme  !== "all") r = r.filter(p => (p.themes   ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
+    return r;
+  }, [products, activeFilter, activeGender, activeTheme]);
+
+  const audienceCounts = useMemo(() => {
+    const map: Record<string, number> = { all: countBaseAudience.length };
+    for (const f of audienceFilters) {
+      if (f.value === "all") continue;
+      map[f.value] = countBaseAudience.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === f.value.toLowerCase())).length;
+    }
+    return map;
+  }, [countBaseAudience, audienceFilters]);
+
+  const genderCounts = useMemo(() => {
+    const map: Record<string, number> = { all: countBaseGender.length };
+    for (const f of genderOptions) {
+      if (f.value === "all") continue;
+      map[f.value] = countBaseGender.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === f.value.toLowerCase())).length;
+    }
+    return map;
+  }, [countBaseGender, genderOptions]);
+
+  const themeCounts = useMemo(() => {
+    const map: Record<string, number> = { all: countBaseTheme.length };
+    for (const f of themeOptions) {
+      if (f.value === "all") continue;
+      map[f.value] = countBaseTheme.filter(p => (p.themes ?? []).some(t => t.toLowerCase() === f.value.toLowerCase())).length;
+    }
+    return map;
+  }, [countBaseTheme, themeOptions]);
+
+  const styleCounts = useMemo(() => {
+    const map: Record<string, number> = { all: countBaseStyle.length };
+    for (const f of styleOptions) {
+      if (f.value === "all") continue;
+      map[f.value] = countBaseStyle.filter(p => (p.styles ?? []).some(s => s.toLowerCase() === f.value.toLowerCase())).length;
+    }
+    return map;
+  }, [countBaseStyle, styleOptions]);
+
   // Products for search views
   const flatProducts = useMemo(() => {
     let result = attributeFilteredProducts;
@@ -331,18 +408,21 @@ export default function ShopPage() {
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
-            {audienceFilters.map(f => (
-              <Button
-                key={f.value}
-                variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleFilterChange(f.value)}
-                className="shrink-0"
-                data-testid={`filter-${f.value}`}
-              >
-                {f.label}
-              </Button>
-            ))}
+            {audienceFilters.map(f => {
+              const count = audienceCounts[f.value];
+              return (
+                <Button
+                  key={f.value}
+                  variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleFilterChange(f.value)}
+                  className="shrink-0"
+                  data-testid={`filter-${f.value}`}
+                >
+                  {f.label}{count !== undefined ? ` (${count})` : ""}
+                </Button>
+              );
+            })}
           </div>
           <FilterRow
             label="Gender"
@@ -350,6 +430,7 @@ export default function ShopPage() {
             value={activeGender}
             onChange={handleGenderChange}
             testIdPrefix="filter-gender"
+            counts={genderCounts}
           />
           <FilterRow
             label="Theme"
@@ -357,6 +438,7 @@ export default function ShopPage() {
             value={activeTheme}
             onChange={handleThemeChange}
             testIdPrefix="filter-theme"
+            counts={themeCounts}
           />
           <FilterRow
             label="Style"
@@ -364,6 +446,7 @@ export default function ShopPage() {
             value={activeStyle}
             onChange={handleStyleChange}
             testIdPrefix="filter-style"
+            counts={styleCounts}
           />
           {hasAttributeFilters && (
             <div className="flex">
