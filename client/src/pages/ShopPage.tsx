@@ -348,12 +348,22 @@ export default function ShopPage() {
     return result;
   }, [attributeFilteredProducts, searchQuery]);
 
-  // Products for tag drill-down (still respects attribute filters)
+  // Products for tag drill-down — uses the section's attribute filters (same logic as tagSections)
   const tagProducts = useMemo(() => {
     if (!activeTag) return [];
+    const section = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase());
+    if (section) {
+      let all = attributeFilteredProducts;
+      if (section.ageGroups?.length) all = all.filter(p => (p.ageGroups ?? []).some(a => section.ageGroups!.includes(a)));
+      if (section.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => section.genders!.includes(g)));
+      if (section.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => section.themes!.includes(t)));
+      if (section.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => section.styles!.includes(st)));
+      return all;
+    }
+    // Fallback: match by tag name for any tag not tied to a section
     const tagLower = activeTag.toLowerCase();
     return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
-  }, [attributeFilteredProducts, activeTag]);
+  }, [attributeFilteredProducts, activeTag, shopSections]);
 
   // Compute tag sections filtered by all active attributes + section-level attribute pins
   const tagSections = useMemo(() => {
