@@ -70,25 +70,25 @@ export const styles = pgTable("styles", {
 export const productAgeGroups = pgTable("product_age_groups", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  ageGroupId: text("age_group_id").notNull().references(() => ageGroups.id, { onDelete: "cascade" }),
+  ageGroupId: text("age_group_id").notNull().references(() => ageGroups.id, { onDelete: "restrict" }),
 }, (t) => [uniqueIndex("product_age_groups_uniq").on(t.productId, t.ageGroupId)]);
 
 export const productGenders = pgTable("product_genders", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  genderId: text("gender_id").notNull().references(() => genders.id, { onDelete: "cascade" }),
+  genderId: text("gender_id").notNull().references(() => genders.id, { onDelete: "restrict" }),
 }, (t) => [uniqueIndex("product_genders_uniq").on(t.productId, t.genderId)]);
 
 export const productThemes = pgTable("product_themes", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  themeId: text("theme_id").notNull().references(() => themes.id, { onDelete: "cascade" }),
+  themeId: text("theme_id").notNull().references(() => themes.id, { onDelete: "restrict" }),
 }, (t) => [uniqueIndex("product_themes_uniq").on(t.productId, t.themeId)]);
 
 export const productStyles = pgTable("product_styles", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  styleId: text("style_id").notNull().references(() => styles.id, { onDelete: "cascade" }),
+  styleId: text("style_id").notNull().references(() => styles.id, { onDelete: "restrict" }),
 }, (t) => [uniqueIndex("product_styles_uniq").on(t.productId, t.styleId)]);
 
 export const carts = pgTable("carts", {
