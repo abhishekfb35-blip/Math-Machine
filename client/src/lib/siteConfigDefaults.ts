@@ -424,11 +424,11 @@ export interface ShopSection {
 export const defaultShopSections: ShopSection[] = [
   { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, ageGroups: ["kids"] },
   { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, ageGroups: ["adults"] },
-  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, ageGroups: ["adults"] }, // "couples" removed from age_groups table (not an age); managed separately
   { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, ageGroups: ["kids"] },
   { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, ageGroups: ["kids"] },
   { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, ageGroups: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, ageGroups: ["adults"] }, // "couples" removed from age_groups table (not an age); managed separately
 ];
 
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
