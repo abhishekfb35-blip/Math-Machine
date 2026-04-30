@@ -360,13 +360,13 @@ export default function ShopPage() {
     if (!products) return [];
     return shopSections
       .filter(s => s.enabled)
-      .filter(s => activeFilter === "all" || (s.audiences ?? []).includes(activeFilter))
+      .filter(s => activeFilter === "all" || (s.ageGroups ?? []).includes(activeFilter))
       .map(s => {
-        const tagLower = s.tag.toLowerCase();
-        let all = attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
-        if (s.genders?.length) all = all.filter(p => (p.genders ?? []).some(g => s.genders!.includes(g)));
-        if (s.themes?.length)  all = all.filter(p => (p.themes  ?? []).some(t => s.themes!.includes(t)));
-        if (s.styles?.length)  all = all.filter(p => (p.styles  ?? []).some(st => s.styles!.includes(st)));
+        let all = attributeFilteredProducts;
+        if (s.ageGroups?.length) all = all.filter(p => (p.ageGroups ?? []).some(a => s.ageGroups!.includes(a)));
+        if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
+        if (s.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => s.themes!.includes(t)));
+        if (s.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => s.styles!.includes(st)));
         return { ...s, all, shown: all.slice(0, s.maxShown) };
       });
   }, [attributeFilteredProducts, shopSections, products, activeFilter]);

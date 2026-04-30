@@ -415,20 +415,20 @@ export interface ShopSection {
   tag: string;
   maxShown: number;
   enabled: boolean;
-  audiences: string[];
+  ageGroups?: string[];
   genders?: string[];
   themes?: string[];
   styles?: string[];
 }
 
 export const defaultShopSections: ShopSection[] = [
-  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, audiences: ["kids"] },
-  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, audiences: ["adults"] },
-  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, audiences: ["adults", "couples"] },
-  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, audiences: ["kids"] },
-  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, audiences: ["kids"] },
-  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, audiences: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, audiences: ["adults", "couples"] },
+  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, ageGroups: ["kids"] },
+  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, ageGroups: ["kids"] },
+  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, ageGroups: ["kids"] },
+  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, ageGroups: ["adults"] },
 ];
 
 export const defaultFeaturedSections: FeaturedSectionsConfig = {

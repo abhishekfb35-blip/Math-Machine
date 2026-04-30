@@ -886,7 +886,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
 
-  const audienceOptions = attributes?.ageGroups?.map(ag => ag.name) ?? [];
+  const ageGroupOptions = attributes?.ageGroups?.map(ag => ag.name) ?? [];
   const genderOptions   = attributes?.genders?.map(g => g.name) ?? [];
   const themeOptions    = attributes?.themes?.map(t => t.name) ?? [];
   const styleOptions    = attributes?.styles?.map(s => s.name) ?? [];
@@ -905,7 +905,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     setSections(next);
   };
 
-  const toggleMulti = (index: number, field: "audiences" | "genders" | "themes" | "styles", value: string) => {
+  const toggleMulti = (index: number, field: "ageGroups" | "genders" | "themes" | "styles", value: string) => {
     const next = [...sections];
     const current: string[] = (next[index][field] as string[]) ?? [];
     next[index] = {
@@ -918,7 +918,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   };
 
   const addSection = () => {
-    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audiences: [], genders: [], themes: [], styles: [] }]);
+    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, ageGroups: [], genders: [], themes: [], styles: [] }]);
   };
 
   const removeSection = (index: number) => {
@@ -931,7 +931,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     sectionIndex, field, options, label, hint, testPrefix,
   }: {
     sectionIndex: number;
-    field: "audiences" | "genders" | "themes" | "styles";
+    field: "ageGroups" | "genders" | "themes" | "styles";
     options: string[];
     label: string;
     hint: string;
@@ -971,7 +971,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Control which tag-based sections appear on the Shop page, in what order, and how many products each shows. Use the attribute filters to pin a section to specific genders, themes or styles.
+        Control which sections appear on the Shop page, in what order, and how many products each shows. Use the attribute selectors to define which age group, gender, theme and style a section targets.
       </p>
       {sections.map((s, i) => (
         <Card key={i} className="p-4 space-y-3" data-testid={`card-shop-section-${i}`}>
@@ -1037,11 +1037,11 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
           </div>
           <AttrCheckboxRow
             sectionIndex={i}
-            field="audiences"
-            options={audienceOptions}
-            label="Show under filter tabs"
+            field="ageGroups"
+            options={ageGroupOptions}
+            label="Age group"
             hint="(all)"
-            testPrefix="audience"
+            testPrefix="agegroup"
           />
           <AttrCheckboxRow
             sectionIndex={i}
