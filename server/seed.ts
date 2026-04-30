@@ -29,6 +29,7 @@ const STARTER_THEMES = [
   { name: "space",       sortOrder: 5 },
   { name: "dinosaurs",   sortOrder: 6 },
   { name: "abstract",    sortOrder: 7 },
+  { name: "sports",      sortOrder: 8 },
 ];
 const STARTER_STYLES = [
   { name: "minimal",   sortOrder: 0 },
@@ -611,8 +612,12 @@ export async function seedDatabase() {
       // Fetch existing junction rows so we don't re-insert
       const existingAg = await db.select({ productId: productAgeGroups.productId, ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups);
       const existingGen = await db.select({ productId: productGenders.productId, genderId: productGenders.genderId }).from(productGenders);
+      const existingTh = await db.select({ productId: productThemes.productId, themeId: productThemes.themeId }).from(productThemes);
+      const existingSt = await db.select({ productId: productStyles.productId, styleId: productStyles.styleId }).from(productStyles);
       const existingAgSet = new Set(existingAg.map((r) => `${r.productId}:${r.ageGroupId}`));
       const existingGenSet = new Set(existingGen.map((r) => `${r.productId}:${r.genderId}`));
+      const existingThSet = new Set(existingTh.map((r) => `${r.productId}:${r.themeId}`));
+      const existingStSet = new Set(existingSt.map((r) => `${r.productId}:${r.styleId}`));
 
       // To find productId from seed slug, we need product slugs
       const dbProds = await db.select({ id: products.id, slug: products.slug }).from(products);
@@ -644,18 +649,28 @@ export async function seedDatabase() {
         if (sp.themes && typeof sp.themes === "string") {
           const themeNames = sp.themes.split(",").map((t: string) => t.trim()).filter(Boolean);
           for (const tn of themeNames) {
-            if (thByName[tn]) {
-              await db.insert(productThemes).values({ id: createId(), productId, themeId: thByName[tn] }).onConflictDoNothing();
-              jSynced++;
+            const themeId = thByName[tn];
+            if (themeId) {
+              const key = `${productId}:${themeId}`;
+              if (!existingThSet.has(key)) {
+                await db.insert(productThemes).values({ id: createId(), productId, themeId }).onConflictDoNothing();
+                existingThSet.add(key);
+                jSynced++;
+              }
             }
           }
         }
         if (sp.styles && typeof sp.styles === "string") {
           const styleNames = sp.styles.split(",").map((s: string) => s.trim()).filter(Boolean);
           for (const sn of styleNames) {
-            if (stByName[sn]) {
-              await db.insert(productStyles).values({ id: createId(), productId, styleId: stByName[sn] }).onConflictDoNothing();
-              jSynced++;
+            const styleId = stByName[sn];
+            if (styleId) {
+              const key = `${productId}:${styleId}`;
+              if (!existingStSet.has(key)) {
+                await db.insert(productStyles).values({ id: createId(), productId, styleId }).onConflictDoNothing();
+                existingStSet.add(key);
+                jSynced++;
+              }
             }
           }
         }

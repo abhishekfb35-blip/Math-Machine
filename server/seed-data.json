@@ -51,8 +51,8 @@
       "sortOrder": 0,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gi8nhg5zmi08t69ipgmomw5q",
@@ -79,8 +79,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "h63dvft0a9sxr1o4btzxafq2",
@@ -107,8 +107,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "m57k58yhimnulm0jy9may6ze",
@@ -135,8 +135,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "mpxl5h7wtkgdg5scw6mkvig6",
@@ -163,8 +163,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "p1w1595ejjtybbaeun9nkwm0",
@@ -191,8 +191,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "initials,elegant"
     },
     {
       "id": "yu0nufs01uk8m82ctn7psn9g",
@@ -219,8 +219,8 @@
       "sortOrder": 1,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "db2yait384egra75vvpngvyu",
@@ -247,8 +247,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "dbdxoeo3h27adrv0zqh0mwlg",
@@ -275,8 +275,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "gzyxvj0dk2a4h4c5cxfp7vx9",
@@ -303,8 +303,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "r6ayjkn8ezu1qupohe1u3jtv",
@@ -331,8 +331,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "xso705t4za4ibk7pyogpeyjt",
@@ -359,8 +359,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "y3ahq1pbbecvfkpvlgg5r2rx",
@@ -387,8 +387,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "zpm8f54z0hil9xftqbmo0hgl",
@@ -415,8 +415,8 @@
       "sortOrder": 2,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "bsdg1jtlxs9rt2qa5kiu3yah",
@@ -443,8 +443,8 @@
       "sortOrder": 3,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,florals",
+      "styles": "classic"
     },
     {
       "id": "g1loa427fg6b8gh3vhcyw3l0",
@@ -471,8 +471,8 @@
       "sortOrder": 3,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gp03qak56o8s4mbhn9yfzg7r",
@@ -499,8 +499,8 @@
       "sortOrder": 3,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "kmccg2w2nb8tgnhogatymypa",
@@ -527,8 +527,8 @@
       "sortOrder": 3,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "odsnxnrk5lsmanna37w0ufls",
@@ -555,8 +555,8 @@
       "sortOrder": 3,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "rd11yytco5ob164is57wimbt",
@@ -583,8 +583,8 @@
       "sortOrder": 3,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "vhfqnrlj7viphd12tpb31aq2",
@@ -611,8 +611,8 @@
       "sortOrder": 3,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "c1jpaunyuxisqahmet9xdo7k",
@@ -639,8 +639,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "j96a9brwyjxzr8htcy94my92",
@@ -667,8 +667,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "mzol5vx7bw69bcv5zdh12drg",
@@ -695,8 +695,8 @@
       "sortOrder": 4,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "rf2n5objwgnjs8d0hkehidzh",
@@ -723,8 +723,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "twdeskg2xaos7w61rhuzp4pe",
@@ -751,8 +751,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "vwpp9lr6fy5j17tx9wgy5a00",
@@ -779,8 +779,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "yfect8gy9hmw2hn6xa8kht6k",
@@ -807,8 +807,8 @@
       "sortOrder": 4,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "classic"
     },
     {
       "id": "i73v5dykbmvph6sayfo9djem",
@@ -835,8 +835,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "jojzzi7ht33arbrx9zux3xw7",
@@ -863,8 +863,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "k10sqhornq9momqc5gz3nhr8",
@@ -891,8 +891,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "lid4q0utor54nchtrwpi2zhs",
@@ -919,8 +919,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qqamkp7tprd42l2vz18u7ae0",
@@ -947,8 +947,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "s7bdg6y1wfiktgncwgbdiad0",
@@ -975,8 +975,8 @@
       "sortOrder": 5,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dwmyx58irmz9kts3c1uy3mdf",
@@ -1003,8 +1003,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "elegant"
     },
     {
       "id": "jnnkt4frq7pl1ufagkdzx9g3",
@@ -1031,8 +1031,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "mbr2nlpzznumy9x9mskinls0",
@@ -1059,8 +1059,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "oadvjwvilf7yoy473tjq6nsd",
@@ -1087,8 +1087,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "minimal"
     },
     {
       "id": "pgib7ssyuy7tq33tkjpmzpkf",
@@ -1115,8 +1115,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "qh2e9la4a65axm3ra4pjew5j",
@@ -1143,8 +1143,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "t8zqikm8ozf1x9s7q0vhgt4q",
@@ -1171,8 +1171,8 @@
       "sortOrder": 6,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "c0dc7tzm81953s1djc6myqhj",
@@ -1199,8 +1199,8 @@
       "sortOrder": 7,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "qfi1e8evx6lrtpoca1gy7mco",
@@ -1227,8 +1227,8 @@
       "sortOrder": 7,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "xo59v6gwqikp0ndczifi62wt",
@@ -1255,8 +1255,8 @@
       "sortOrder": 7,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "m4nisyyebzpkzchlcya92zv7",
@@ -1283,8 +1283,8 @@
       "sortOrder": 8,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "odlvlqydhhhdtbc8qb136pwd",
@@ -1311,8 +1311,8 @@
       "sortOrder": 8,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "pht45rul7dt2mpx1vce709q8",
@@ -1339,8 +1339,8 @@
       "sortOrder": 8,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "mg8k27wtmh915ryylwnrty0v",
@@ -1367,8 +1367,8 @@
       "sortOrder": 9,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "nank1qzke2kbwsltpxin3af8",
@@ -1395,8 +1395,8 @@
       "sortOrder": 9,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "t29f5r8tebzb2gztcibtwyys",
@@ -1423,8 +1423,8 @@
       "sortOrder": 9,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "h69pqido5vy6rvjpy9arply1",
@@ -1451,8 +1451,8 @@
       "sortOrder": 10,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "quvk68e7ds8n7uivsyhqf6jy",
@@ -1479,8 +1479,8 @@
       "sortOrder": 10,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "fsd8mtxq5gxblw6fgo7pu6p5",
@@ -1507,8 +1507,8 @@
       "sortOrder": 11,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ofqfv0kor4xtwln6zsyub6p3",
@@ -1535,8 +1535,8 @@
       "sortOrder": 11,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "u71wmant34wmr3pj2d6xhd2x",
@@ -1563,8 +1563,8 @@
       "sortOrder": 11,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "b9yhyakjokpvztbb1y7hg8cc",
@@ -1591,8 +1591,8 @@
       "sortOrder": 12,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dqj3i3eexao6tqiscd73pdyy",
@@ -1619,8 +1619,8 @@
       "sortOrder": 12,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "znaftgcgjkg6rpdcc6anhetg",
@@ -1647,8 +1647,8 @@
       "sortOrder": 12,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "lh2xf7v4mi6kwn4yw1b34ep9",
@@ -1675,8 +1675,8 @@
       "sortOrder": 13,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qcl3fo112n27j77xypy9fvos",
@@ -1703,8 +1703,8 @@
       "sortOrder": 13,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "yfr2uc072i9aexz4dulcojdj",
@@ -1731,8 +1731,8 @@
       "sortOrder": 13,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "dsvrgzb87b473fli3w7q3gd5",
@@ -1759,8 +1759,8 @@
       "sortOrder": 14,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "hk37rnstj2a95opsw9lwhw37",
@@ -1787,8 +1787,8 @@
       "sortOrder": 14,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "uhzs4g9ulsrof058su1g2mrq",
@@ -1815,8 +1815,8 @@
       "sortOrder": 14,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "tdzewloqe4cda5xb6n93278w",
@@ -1843,8 +1843,8 @@
       "sortOrder": 15,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "wzm68d0cjdfhb5twzijpxjyp",
@@ -1871,8 +1871,8 @@
       "sortOrder": 15,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "rb04wtr7l3v8et19ys74h7vf",
@@ -1899,8 +1899,8 @@
       "sortOrder": 16,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "uelq996a1q7tmfjhka63yyay",
@@ -1927,8 +1927,8 @@
       "sortOrder": 16,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "bi6s66taxo9nl0pf5shqd2jh",
@@ -1955,8 +1955,8 @@
       "sortOrder": 17,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "c2xr8as0i8jmki2xl2x6dqsg",
@@ -1983,8 +1983,8 @@
       "sortOrder": 17,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "texnfoc3ray7632dme6uwqpa",
@@ -2011,8 +2011,8 @@
       "sortOrder": 17,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "i3t8qaifaaqor13mny1eside",
@@ -2039,8 +2039,8 @@
       "sortOrder": 18,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "iuf78dqf8r49s3h3q639hkvq",
@@ -2067,8 +2067,8 @@
       "sortOrder": 18,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "classic"
     },
     {
       "id": "qgr25rpg33rba8qgown9rj6j",
@@ -2095,8 +2095,8 @@
       "sortOrder": 18,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "fpabma2ykh2aiik8ltj56zr3",
@@ -2123,8 +2123,8 @@
       "sortOrder": 19,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "w1uz1ofo6qqkz8j2h9c2k7qh",
@@ -2151,8 +2151,8 @@
       "sortOrder": 19,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,florals",
+      "styles": "classic"
     },
     {
       "id": "z7zcxpgci6zunyhih921h06f",
@@ -2179,8 +2179,8 @@
       "sortOrder": 19,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "fdx60m5nt8we0c8ent66qopj",
@@ -2207,8 +2207,8 @@
       "sortOrder": 20,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "j47xlkj3qfwagk8u8x0zj3aj",
@@ -2235,8 +2235,8 @@
       "sortOrder": 20,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "vw0fp3m19mpcge9q1ox1w0n0",
@@ -2263,8 +2263,8 @@
       "sortOrder": 20,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "p0zz8uwpn9y0i39cylytix3e",
@@ -2291,8 +2291,8 @@
       "sortOrder": 21,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "uxaxgwydubnzzv6fp19d8cvs",
@@ -2319,8 +2319,8 @@
       "sortOrder": 22,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "d1jch1fb5z6jwp8yvj54ilr3",
@@ -2347,8 +2347,8 @@
       "sortOrder": 23,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "aheewgxijq7a7ysq5ic2ntqc",
@@ -2375,8 +2375,8 @@
       "sortOrder": 24,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "xq4yjqkk93uobzlirevea2e8",
@@ -2403,8 +2403,8 @@
       "sortOrder": 25,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "h7fe7t5cpdlzhvilihnot0x4",
@@ -2431,8 +2431,8 @@
       "sortOrder": 26,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,florals",
+      "styles": "classic"
     },
     {
       "id": "rs6h6lbgsy60gz7ihb6j59u0",
@@ -2459,8 +2459,8 @@
       "sortOrder": 27,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "tr9gnxuxa8zxqqv1x129q2z3",
@@ -2487,8 +2487,8 @@
       "sortOrder": 28,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "qs6n0cid69w0zhcl05hqexes",
@@ -2515,8 +2515,8 @@
       "sortOrder": 29,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "nd9h7fywr53bevnqtc8w00xf",
@@ -2543,8 +2543,8 @@
       "sortOrder": 30,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "li78x575iqjsf5sxri5slsok",
@@ -2571,8 +2571,8 @@
       "sortOrder": 31,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "upsxgnjfl4amltwct6bay1sm",
@@ -2599,8 +2599,8 @@
       "sortOrder": 32,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "m5tumeu9ppms29lrfqvtw9im",
@@ -2627,8 +2627,8 @@
       "sortOrder": 33,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "g2ywi26ir7zkxu9l8sth382v",
@@ -2655,8 +2655,8 @@
       "sortOrder": 34,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials"
     },
     {
       "id": "zi7iardprxf4wdj9movgcce6",
@@ -2683,8 +2683,8 @@
       "sortOrder": 35,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials"
     },
     {
       "id": "meodacnmwam1q4gzbfuvqn4f",
@@ -2711,8 +2711,8 @@
       "sortOrder": 36,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials"
     },
     {
       "id": "dhoqwsyf6yko3ho16xxqgif0",
@@ -2739,8 +2739,8 @@
       "sortOrder": 37,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "mb7rdrticfju1rubetzpttsc",
@@ -2767,8 +2767,8 @@
       "sortOrder": 38,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "pwrkgdk24ffew9c7lwvkwijv",
@@ -2795,8 +2795,8 @@
       "sortOrder": 39,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "d04nua4p4ybyh5kryit2exop",
@@ -2823,8 +2823,8 @@
       "sortOrder": 40,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "yf5d6rr6rkszw6mel0d6d7jm",
@@ -2851,8 +2851,8 @@
       "sortOrder": 41,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "iys364lzw1zuf9wxbqj7eyrn",
@@ -2879,8 +2879,8 @@
       "sortOrder": 42,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "aujjw89bko4mddsuyy88cn6l",
@@ -2907,8 +2907,8 @@
       "sortOrder": 43,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "qgtqoqt6v43nqk11fnfbys4q",
@@ -2935,8 +2935,8 @@
       "sortOrder": 44,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "oqlfskgz4n5m57iyuea4n6nk",
@@ -2963,8 +2963,8 @@
       "sortOrder": 45,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "xs0iz773hu12kuhgrkbq19tr",
@@ -2991,8 +2991,8 @@
       "sortOrder": 46,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "vyral470o8f9rtw6pxr8eb7t",
@@ -3019,8 +3019,8 @@
       "sortOrder": 47,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "bupwjotbrljt214hypm82s09",
@@ -3047,8 +3047,8 @@
       "sortOrder": 48,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "dcwmx6yldc8nf48z7k1tx0p9",
@@ -3075,8 +3075,8 @@
       "sortOrder": 49,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "initials"
     },
     {
       "id": "pt6pbtxa3001qz7a98dkjh2f",
@@ -3103,8 +3103,8 @@
       "sortOrder": 50,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "initials"
     },
     {
       "id": "s5tofkz64dne6zzosyfdmxsf",
@@ -3131,8 +3131,8 @@
       "sortOrder": 51,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "initials"
     },
     {
       "id": "druvlplft49q7u0tg53nf6p7",
@@ -3159,8 +3159,8 @@
       "sortOrder": 52,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "initials"
     },
     {
       "id": "qj351nrno934ip4suwscz7re",
@@ -3187,8 +3187,8 @@
       "sortOrder": 53,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "hmyph5yerwddw18tzkavn31a",
@@ -3215,8 +3215,8 @@
       "sortOrder": 54,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "bskrmy75v0hnokzs583vdsq2",
@@ -3243,8 +3243,8 @@
       "sortOrder": 55,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "xbegb42nvqt2exc5umlq9gqw",
@@ -3271,8 +3271,8 @@
       "sortOrder": 56,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "ng5w9sw89qnytsnm4xf504bd",
@@ -3299,8 +3299,8 @@
       "sortOrder": 57,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "uy6ut12ryq8vvl35xf6hh3kx",
@@ -3327,8 +3327,8 @@
       "sortOrder": 58,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials,bold"
     },
     {
       "id": "mnw6l6yphye51ohfhm0sid8c",
@@ -3355,8 +3355,8 @@
       "sortOrder": 59,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials,bold"
     },
     {
       "id": "f0kepe1bw00sxb7iya4jsv34",
@@ -3383,8 +3383,8 @@
       "sortOrder": 60,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials,bold"
     },
     {
       "id": "x5003miaogtbddj91ziko5ns",
@@ -3411,8 +3411,8 @@
       "sortOrder": 61,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "sx737l11h7oaabn5d85l9rfm",
@@ -3439,8 +3439,8 @@
       "sortOrder": 62,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "bo8jpedlm8hsvhe3aw6acs7w",
@@ -3467,8 +3467,8 @@
       "sortOrder": 63,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials"
     },
     {
       "id": "fg3bgbsa02r2ug676rn368p5",
@@ -3495,8 +3495,8 @@
       "sortOrder": 64,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "initials"
     },
     {
       "id": "w0ra5k3a4fccbl8hw5wmwbyd",
@@ -3523,8 +3523,8 @@
       "sortOrder": 65,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "initials,elegant"
     },
     {
       "id": "h1y8s6em0ypirmvldnpzpi01",
@@ -3551,8 +3551,8 @@
       "sortOrder": 66,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "initials,elegant"
     },
     {
       "id": "k8vbkwy59nbnu2ti35zszbev",
@@ -3579,8 +3579,8 @@
       "sortOrder": 67,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "initials"
     },
     {
       "id": "xo8m2mgkivy89pzmui0v13tg",
@@ -3607,8 +3607,8 @@
       "sortOrder": 68,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "wed5kbao372uprhtbxlhyuyp",
@@ -3635,8 +3635,8 @@
       "sortOrder": 69,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "bur9nxpahehdusgd7to635qx",
@@ -3663,8 +3663,8 @@
       "sortOrder": 70,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "aauk5zaqgps31yb50bvayzcs",
@@ -3691,8 +3691,8 @@
       "sortOrder": 71,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "z9htv95bs3be3s933p5tngex",
@@ -3719,8 +3719,8 @@
       "sortOrder": 72,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "tciafwmc0ubrfnuod7rogfq5",
@@ -3747,8 +3747,8 @@
       "sortOrder": 73,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "w6sfh7w6y8ipt4ik6v9s2xr2",
@@ -3775,8 +3775,8 @@
       "sortOrder": 74,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "yiit9ca8j6fe0uttdfwnrux4",
@@ -3803,8 +3803,8 @@
       "sortOrder": 75,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "fu5php1q781krlrs3im3e7ry",
@@ -3831,8 +3831,8 @@
       "sortOrder": 76,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "e59edsurfxhxy2b2qm2tuvih",
@@ -3859,8 +3859,8 @@
       "sortOrder": 77,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,florals",
+      "styles": "classic"
     },
     {
       "id": "wkds8aoilb65nx0s8rf3qjn7",
@@ -3887,8 +3887,8 @@
       "sortOrder": 78,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "g0l5ya1yv65tl591u9iz48rq",
@@ -3915,8 +3915,8 @@
       "sortOrder": 79,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "uvo9z8rf8h7aqaysd4wtw5i5",
@@ -3943,8 +3943,8 @@
       "sortOrder": 80,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "bygddjv78zkeua4tchfn6z8r",
@@ -3971,8 +3971,8 @@
       "sortOrder": 81,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "y54qy8wxuccme8yh4hrlgm75",
@@ -3999,8 +3999,8 @@
       "sortOrder": 82,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "lequtf5zjor71bk5ck3oxs31",
@@ -4027,8 +4027,8 @@
       "sortOrder": 83,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "rb60noc1wkvq7d7pxx4fnvh0",
@@ -4055,8 +4055,8 @@
       "sortOrder": 84,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "subvqlfq07xp1sw14iisix8d",
@@ -4083,8 +4083,8 @@
       "sortOrder": 85,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "koazaeo05fr8vd47dhjvvlxk",
@@ -4111,8 +4111,8 @@
       "sortOrder": 86,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "b1onxd3f95k4jcj4vjh8wfnp",
@@ -4139,8 +4139,8 @@
       "sortOrder": 87,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "xb2vo0p221srphshkwlw4g9d",
@@ -4167,8 +4167,8 @@
       "sortOrder": 88,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "pp1g734998hj79pfuimpscsf",
@@ -4195,8 +4195,8 @@
       "sortOrder": 89,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "ay7am0xi4ebj20ho99ilpyjz",
@@ -4223,8 +4223,8 @@
       "sortOrder": 90,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "gqvsdaaf5ro0tyde81tx6ths",
@@ -4251,8 +4251,8 @@
       "sortOrder": 91,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "xzdigok7mzoudyapgaa3t7xy",
@@ -4279,8 +4279,8 @@
       "sortOrder": 92,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "kn9ljftrhrk319nf00dqy62k",
@@ -4307,8 +4307,8 @@
       "sortOrder": 93,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "ii17bfds1w6qhomiy918xbl3",
@@ -4335,8 +4335,8 @@
       "sortOrder": 94,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "ftwdkknave6ezwan15mloudx",
@@ -4363,8 +4363,8 @@
       "sortOrder": 95,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "b5bdhvq6sys8xiojk5w2w9yc",
@@ -4391,8 +4391,8 @@
       "sortOrder": 96,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "hbvpoi3bvxlr1ci3tgtsaxzc",
@@ -4419,8 +4419,8 @@
       "sortOrder": 97,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "pagmxn0yxazub4aqwnc3ram5",
@@ -4447,8 +4447,8 @@
       "sortOrder": 98,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "y5t8t0d5fg6m9m1ztuncgmbi",
@@ -4475,8 +4475,8 @@
       "sortOrder": 99,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "i7c1li7i7w2rilhebp6fyeh9",
@@ -4503,8 +4503,8 @@
       "sortOrder": 100,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "kk7hzzdo5iikl8dtyydlvid3",
@@ -4531,8 +4531,8 @@
       "sortOrder": 100,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold,classic"
     },
     {
       "id": "lge2h1ridbmvt9q2zgey9w0m",
@@ -4559,8 +4559,8 @@
       "sortOrder": 100,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "o3hhn2d3lwp0q4p2097nz5n5",
@@ -4587,8 +4587,8 @@
       "sortOrder": 100,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "sgjbbxyh1ahyr33pohwhduvn",
@@ -4615,8 +4615,8 @@
       "sortOrder": 100,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "z86nhtyjkc2254rd4kk5xs5t",
@@ -4643,8 +4643,8 @@
       "sortOrder": 100,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "ihuoe25uhm6wnrw5su5mxrpa",
@@ -4671,8 +4671,8 @@
       "sortOrder": 101,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "ocislxsp133to88jr9ieao3w",
@@ -4699,8 +4699,8 @@
       "sortOrder": 102,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "rlccmiki6pjsgway6r373710",
@@ -4727,8 +4727,8 @@
       "sortOrder": 103,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dwttiq79agva0z9agrv3a42p",
@@ -4755,8 +4755,8 @@
       "sortOrder": 104,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "l5582m6lv8gy6o7xbab3t9t5",
@@ -4783,8 +4783,8 @@
       "sortOrder": 105,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "vkfoxfmlz2ohgk7kgxci7l7u",
@@ -4811,8 +4811,8 @@
       "sortOrder": 106,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "hvn2jwtlb8qorvw1q1qjabq0",
@@ -4839,8 +4839,8 @@
       "sortOrder": 107,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gj981eoj48bwm2so1rctle1b",
@@ -4867,8 +4867,8 @@
       "sortOrder": 108,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "ojr4tmcc22781qwe5c2aaq5m",
@@ -4895,8 +4895,8 @@
       "sortOrder": 109,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "jchw52bo55vg9ia7iu0xa0pb",
@@ -4923,8 +4923,8 @@
       "sortOrder": 110,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "zd6ccv91z9dj24irox5yysgw",
@@ -4951,8 +4951,8 @@
       "sortOrder": 111,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "t7eolb3f2bkmjgq6tk5z2ngz",
@@ -4979,8 +4979,8 @@
       "sortOrder": 112,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "kuybqve3boszad9xzw9qop74",
@@ -5007,8 +5007,8 @@
       "sortOrder": 113,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "udsptd0v2riy869mou7aibgo",
@@ -5035,8 +5035,8 @@
       "sortOrder": 114,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ij2io5dzo6m1spe15eexmeut",
@@ -5063,8 +5063,8 @@
       "sortOrder": 115,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "zcg342y4im2l1isd4gzx6xr7",
@@ -5091,8 +5091,8 @@
       "sortOrder": 116,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "elegant"
     },
     {
       "id": "csuikqz2tctyh5gwjh2tpzrr",
@@ -5119,8 +5119,8 @@
       "sortOrder": 117,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "trsungsle3co55lagbmhcsqz",
@@ -5147,8 +5147,8 @@
       "sortOrder": 118,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "zj0l7sn19nu2ohzw6r8698ee",
@@ -5175,8 +5175,8 @@
       "sortOrder": 119,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold,classic"
     },
     {
       "id": "lgrvtmt7n6iehnhgsr4q8ukc",
@@ -5203,8 +5203,8 @@
       "sortOrder": 120,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "dgvr66h2xujhheb6jl90a6gy",
@@ -5231,8 +5231,8 @@
       "sortOrder": 121,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dwv8mhwh2bdusn38vb44ok0k",
@@ -5259,8 +5259,8 @@
       "sortOrder": 122,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "y36n1qq2dhf94w8kx9wuf9yz",
@@ -5287,8 +5287,8 @@
       "sortOrder": 123,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "ks1fzbat811h424l4dpgf29j",
@@ -5315,8 +5315,8 @@
       "sortOrder": 124,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "vztzkmvla66fjfqwytzdxsvk",
@@ -5343,8 +5343,8 @@
       "sortOrder": 125,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gzpm3c393whuperncy43ojb0",
@@ -5371,8 +5371,8 @@
       "sortOrder": 126,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "il1dvwt8cp2rdf54ohbjj4mb",
@@ -5399,8 +5399,8 @@
       "sortOrder": 127,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "elegant"
     },
     {
       "id": "nutjv03apislkutsxkcbs2ob",
@@ -5427,8 +5427,8 @@
       "sortOrder": 128,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "eqbay5t6gnemwuwpo4mj57du",
@@ -5455,8 +5455,8 @@
       "sortOrder": 129,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "elegant"
     },
     {
       "id": "lhzt38afomz47b9nn5ffx9z8",
@@ -5483,8 +5483,8 @@
       "sortOrder": 130,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "bvuaq5csz960w84njo06ngo4",
@@ -5511,8 +5511,8 @@
       "sortOrder": 131,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qsow4zadjofvs9pojj2l0kpd",
@@ -5539,8 +5539,8 @@
       "sortOrder": 132,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "lja9gvjac15e88n4vvxu9aya",
@@ -5567,8 +5567,8 @@
       "sortOrder": 133,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ygnv49mrvtw1odtad6oszzj2",
@@ -5595,8 +5595,8 @@
       "sortOrder": 134,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "g0gvq5a658a6u0ylqluwvmp1",
@@ -5623,8 +5623,8 @@
       "sortOrder": 135,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "sjgaeffiop0z3uho5k31goxq",
@@ -5651,8 +5651,8 @@
       "sortOrder": 136,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "v4ivc40ek3l8ai110so9qh2t",
@@ -5679,8 +5679,8 @@
       "sortOrder": 137,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "o5qqxr87vdi4yq2906e0hhjy",
@@ -5707,8 +5707,8 @@
       "sortOrder": 138,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "duz2pcrrkkx1dc9r3vf75u2g",
@@ -5735,8 +5735,8 @@
       "sortOrder": 139,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "lae3eeabov8vdctmt917aeht",
@@ -5763,8 +5763,8 @@
       "sortOrder": 140,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "fau1qvka69ya9umurwfz2oh2",
@@ -5791,8 +5791,8 @@
       "sortOrder": 141,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "t6ujcneifty4fvqrd16je80l",
@@ -5819,8 +5819,8 @@
       "sortOrder": 142,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gh077m7f89cfd4fzr4abxnob",
@@ -5847,8 +5847,8 @@
       "sortOrder": 143,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "oi9out40t6gwawsc4vm06msn",
@@ -5875,8 +5875,8 @@
       "sortOrder": 144,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "cvd6ou9jj22jfgknz9xhxwdj",
@@ -5903,8 +5903,8 @@
       "sortOrder": 145,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "usvmju98fk13scp07sen8gj8",
@@ -5931,8 +5931,8 @@
       "sortOrder": 146,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "fil9zhlijhg4ijmin8aktn1u",
@@ -5959,8 +5959,8 @@
       "sortOrder": 147,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "j60bozsk76hzuat0bs4eomqg",
@@ -5987,8 +5987,8 @@
       "sortOrder": 148,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "vf6hqum2bfivab0bayv1ed7d",
@@ -6015,8 +6015,8 @@
       "sortOrder": 149,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "qx7xbwwsh8mljc0yrj7q9wvo",
@@ -6043,8 +6043,8 @@
       "sortOrder": 150,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "fsq0tv51qclqxswdaytg6f78",
@@ -6071,8 +6071,8 @@
       "sortOrder": 151,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "elegant"
     },
     {
       "id": "u09fkdu8ysqcti402gx36wdv",
@@ -6099,8 +6099,8 @@
       "sortOrder": 152,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dm5ujlk7gsz6dyhrste8smoe",
@@ -6127,8 +6127,8 @@
       "sortOrder": 153,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "zwuaoaimi1f5s12d824hs8qj",
@@ -6155,8 +6155,8 @@
       "sortOrder": 154,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "fn8vks9gmmihgl1vpxmc7rac",
@@ -6183,8 +6183,8 @@
       "sortOrder": 155,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "euauzyrlbk40dwjsh3jo2x9s",
@@ -6211,8 +6211,8 @@
       "sortOrder": 156,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "isbz8n3jf3yyngqndp82drir",
@@ -6239,8 +6239,8 @@
       "sortOrder": 157,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qcdoc6ig6uo03zbmdyejhvmt",
@@ -6267,8 +6267,8 @@
       "sortOrder": 158,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "oiqk4nqnarnzsmsmaeg6h54w",
@@ -6295,8 +6295,8 @@
       "sortOrder": 159,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ctxvyd4b7tli72qp6zxmrisd",
@@ -6323,8 +6323,8 @@
       "sortOrder": 160,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "sd4baw540h3bee0gdy023xdh",
@@ -6351,8 +6351,8 @@
       "sortOrder": 161,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "zuac3ci1s06o3l4c3kv7misi",
@@ -6379,8 +6379,8 @@
       "sortOrder": 162,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "vx6xc6esg71saqciom6ejjnz",
@@ -6407,8 +6407,8 @@
       "sortOrder": 163,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "lwji25oqwpnkzx06vgwtqyh7",
@@ -6435,8 +6435,8 @@
       "sortOrder": 164,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "g1vy515ruedgu3l71iow941r",
@@ -6463,8 +6463,8 @@
       "sortOrder": 165,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "tqcbbl0els2dmspjfl824ua1",
@@ -6491,8 +6491,8 @@
       "sortOrder": 166,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ckbh0pyhwf0u5zn9807mp28k",
@@ -6519,8 +6519,8 @@
       "sortOrder": 167,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "shz4nh39gxxi8of7g2sgewbn",
@@ -6547,8 +6547,8 @@
       "sortOrder": 168,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "q2e0azb3mv07zfoc40dbtyrk",
@@ -6575,8 +6575,8 @@
       "sortOrder": 169,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "elegant"
     },
     {
       "id": "ktzoeyllem9qbrad2a4h3fkb",
@@ -6603,8 +6603,8 @@
       "sortOrder": 170,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,abstract",
+      "styles": "elegant"
     },
     {
       "id": "mrupwojtywghcir9jmu8hqtr",
@@ -6631,8 +6631,8 @@
       "sortOrder": 171,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,abstract",
+      "styles": "elegant"
     },
     {
       "id": "jri9d27wdzawy3rsctrwn3m9",
@@ -6659,8 +6659,8 @@
       "sortOrder": 172,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "rfa5gw67f9zlr958yr1d6v4m",
@@ -6687,8 +6687,8 @@
       "sortOrder": 173,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "aayxy5k8oczi30jgcvrlbcwc",
@@ -6715,8 +6715,8 @@
       "sortOrder": 174,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "h00b9qdhawouypm05jxh0xup",
@@ -6743,8 +6743,8 @@
       "sortOrder": 175,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "zya8zn9utw4vrw0jc4oh37lr",
@@ -6771,8 +6771,8 @@
       "sortOrder": 176,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "qxxso12fzlaho42q7gpog882",
@@ -6799,8 +6799,8 @@
       "sortOrder": 177,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "n388x64im41pl57cse0gg955",
@@ -6827,8 +6827,8 @@
       "sortOrder": 243,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "z6ys2zsm8qjl5ajkvcsfu2gz",
@@ -6855,8 +6855,8 @@
       "sortOrder": 244,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     },
     {
       "id": "tboax7f039x9q2xzxhz1axpl",
@@ -6883,8 +6883,8 @@
       "sortOrder": 245,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "s6xrrh8dk5q1wmvnqdoxm09v",
@@ -6911,8 +6911,8 @@
       "sortOrder": 246,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "z8yh8mwlr7yqk88wo5w3jiht",
@@ -6939,8 +6939,8 @@
       "sortOrder": 247,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "bbgy45nwux6z66bcom8n67u1",
@@ -6967,8 +6967,8 @@
       "sortOrder": 248,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "iz3ibkzgdf2g7ldmi7bu1m1b",
@@ -6995,8 +6995,8 @@
       "sortOrder": 249,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "qqbitxb200243j4spocwt1z0",
@@ -7023,8 +7023,8 @@
       "sortOrder": 250,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "o0mik4uvtixur0pbe4w9h9de",
@@ -7051,8 +7051,8 @@
       "sortOrder": 251,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "tuktookj8a359r6ynwihixqw",
@@ -7079,8 +7079,8 @@
       "sortOrder": 252,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "aopkln174vpi2k37ofydzdd1",
@@ -7107,8 +7107,8 @@
       "sortOrder": 253,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "a275ht1mprpk3ea6teo53jf6",
@@ -7135,8 +7135,8 @@
       "sortOrder": 254,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "q2hjjuay8870jnj6wji4c4e1",
@@ -7163,8 +7163,8 @@
       "sortOrder": 255,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ziwx1bypoxelewenv6crcqxy",
@@ -7191,8 +7191,8 @@
       "sortOrder": 256,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "pvi6gbiq99rtokhoq2e2bh30",
@@ -7219,8 +7219,8 @@
       "sortOrder": 257,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "t5ja197tfsogobk1xcvazyq0",
@@ -7247,8 +7247,8 @@
       "sortOrder": 258,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals,abstract",
+      "styles": "elegant"
     },
     {
       "id": "clewpo2471vz97ft5l2tszly",
@@ -7275,8 +7275,8 @@
       "sortOrder": 259,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "vmgrnu8ykciu8e8vtfyxtzls",
@@ -7303,8 +7303,8 @@
       "sortOrder": 260,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "b8mqbn59glfa09cwb6cjd99k",
@@ -7331,8 +7331,8 @@
       "sortOrder": 261,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "eeq2jwlsuce02ia59seyq4ez",
@@ -7359,8 +7359,8 @@
       "sortOrder": 262,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "a5sixyovhdzhem4igxquqkzb",
@@ -7387,8 +7387,8 @@
       "sortOrder": 263,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "e1fgzv6z2ea52rz3hfsoc5by",
@@ -7415,8 +7415,8 @@
       "sortOrder": 264,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "hnow1p08qja3akcscbnbsazv",
@@ -7443,8 +7443,8 @@
       "sortOrder": 265,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "djoi0zgk88jkk4atp3t0v8go",
@@ -7471,8 +7471,8 @@
       "sortOrder": 266,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "hpgnzmtzvcoopyho22c63318",
@@ -7499,8 +7499,8 @@
       "sortOrder": 267,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ln7j7rqix2k387dodoybsphi",
@@ -7527,8 +7527,8 @@
       "sortOrder": 268,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "p5j47x62uzgi42wgghocdrh0",
@@ -7555,8 +7555,8 @@
       "sortOrder": 269,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "xbf8xllj3ixhou4n6t51gbc1",
@@ -7583,8 +7583,8 @@
       "sortOrder": 270,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "f8eqe9djm4022lfzn8q2fmzz",
@@ -7611,8 +7611,8 @@
       "sortOrder": 271,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "czysr8mfgn4ylv3izqgrn5tm",
@@ -7639,8 +7639,8 @@
       "sortOrder": 272,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "xdq9gg2imc6u97v2899oowsk",
@@ -7667,8 +7667,8 @@
       "sortOrder": 273,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "uvqtd6iflnok71z3299poltv",
@@ -7695,8 +7695,8 @@
       "sortOrder": 274,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold,classic"
     },
     {
       "id": "lbmv28rzhpu7yektdj75jj2x",
@@ -7723,8 +7723,8 @@
       "sortOrder": 275,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "e9abt9bxu1s0xlfa3gvyi2u7",
@@ -7751,8 +7751,8 @@
       "sortOrder": 276,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "dkdwxwwfd2owg3ssuj82rt3x",
@@ -7779,8 +7779,8 @@
       "sortOrder": 277,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "rnxeud83c526sqbfldw9t046",
@@ -7807,8 +7807,8 @@
       "sortOrder": 278,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "h2wyqvw2fkg6acqvcrymg56r",
@@ -7835,8 +7835,8 @@
       "sortOrder": 279,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "uthiuqcfzrf1hzqcsz7s3mgf",
@@ -7863,8 +7863,8 @@
       "sortOrder": 280,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "w670lcem4ryhk49jrdqctl5q",
@@ -7891,8 +7891,8 @@
       "sortOrder": 281,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "fn5mcnoaossriaehr0ds54w2",
@@ -7919,8 +7919,8 @@
       "sortOrder": 282,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "hnjxfamwiu4za2gq0ks4huhx",
@@ -7947,8 +7947,8 @@
       "sortOrder": 283,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "jcap5um6obwckju7qvk7ofz2",
@@ -7975,8 +7975,8 @@
       "sortOrder": 284,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "poqy0re3ha8oixu2lci1c6hu",
@@ -8003,8 +8003,8 @@
       "sortOrder": 285,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "zsfmtn3norh8t1awimfu0vo1",
@@ -8031,8 +8031,8 @@
       "sortOrder": 286,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ngefeklacxp3exwy1pd1e8ia",
@@ -8059,8 +8059,8 @@
       "sortOrder": 287,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "u0ka0jk813uhjo1r16zdg5vy",
@@ -8087,8 +8087,8 @@
       "sortOrder": 288,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "a0up141ue1eqwlntacbj7zv4",
@@ -8115,8 +8115,8 @@
       "sortOrder": 289,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "b3lgovtidltd44cwfl3ct68m",
@@ -8143,8 +8143,8 @@
       "sortOrder": 290,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "yugak2lsus3a5k5l0lprar8m",
@@ -8171,8 +8171,8 @@
       "sortOrder": 291,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "zfpferc6quvlw39zjwpamt4k",
@@ -8199,8 +8199,8 @@
       "sortOrder": 292,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "ogjkdpx8kuh4aprpi0fa1n39",
@@ -8227,8 +8227,8 @@
       "sortOrder": 293,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "k303t8scvdz50j8kwes2khtl",
@@ -8255,8 +8255,8 @@
       "sortOrder": 294,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "usl8inpnmtb47v60nwwlgxs0",
@@ -8283,8 +8283,8 @@
       "sortOrder": 295,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "ykuksa6lr6umahcer1qhuo7z",
@@ -8311,8 +8311,8 @@
       "sortOrder": 296,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "tt81nzxezamu1phvi571xx6y",
@@ -8339,8 +8339,8 @@
       "sortOrder": 297,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "u845sf8funhjuwn4guzr4y4o",
@@ -8367,8 +8367,8 @@
       "sortOrder": 298,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "lb1vszk8j7upak1dbqvftfx2",
@@ -8395,8 +8395,8 @@
       "sortOrder": 299,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "wy515fkq9yfio163swe6eksd",
@@ -8423,8 +8423,8 @@
       "sortOrder": 300,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "kzzhzv1k6ypcklah5bg6sne1",
@@ -8451,8 +8451,8 @@
       "sortOrder": 301,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "kuon99pcej3fur1p83gcmitc",
@@ -8479,8 +8479,8 @@
       "sortOrder": 302,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "heeq58zgwkcl27n6irjtqwtz",
@@ -8507,8 +8507,8 @@
       "sortOrder": 303,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "d61kowth81m51ndwyajxue8c",
@@ -8535,8 +8535,8 @@
       "sortOrder": 304,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "y5fui28hg2t502bcngu3jic7",
@@ -8563,8 +8563,8 @@
       "sortOrder": 305,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "elegant"
     },
     {
       "id": "qmjhn88nduy7rcq8q0xae126",
@@ -8591,8 +8591,8 @@
       "sortOrder": 306,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "pllufr5888vi8392f2s3mkxt",
@@ -8619,8 +8619,8 @@
       "sortOrder": 307,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "elegant"
     },
     {
       "id": "hui1nxgasf0bnas29fio6k9m",
@@ -8647,8 +8647,8 @@
       "sortOrder": 308,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "sao4vosb3n63yncbt4eqob01",
@@ -8675,8 +8675,8 @@
       "sortOrder": 309,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ybbmq1bh6tnvy37m6omfgpv8",
@@ -8703,8 +8703,8 @@
       "sortOrder": 310,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "yc5cj95xkriggjdf6d4fua82",
@@ -8731,8 +8731,8 @@
       "sortOrder": 311,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "k8l9qb3d9e9rhadjr0ae338h",
@@ -8759,8 +8759,8 @@
       "sortOrder": 312,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "grkqjgknxxp51wez4hcpcrxy",
@@ -8787,8 +8787,8 @@
       "sortOrder": 313,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "l4gvg3u77ibht34vj988rw2u",
@@ -8815,8 +8815,8 @@
       "sortOrder": 314,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "g8sm6734ui2bl79chlqfh5ru",
@@ -8843,8 +8843,8 @@
       "sortOrder": 315,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "rlstmqrzqsrqo5ex5clbxhp1",
@@ -8871,8 +8871,8 @@
       "sortOrder": 316,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "gazxz5e83tmrh62xsquh26vh",
@@ -8899,8 +8899,8 @@
       "sortOrder": 317,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "qg2v7yhs41w01hljvjxhkkgr",
@@ -8927,8 +8927,8 @@
       "sortOrder": 318,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "pbank9djzsomkd1ckw7ji2q4",
@@ -8955,8 +8955,8 @@
       "sortOrder": 319,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "a4muenoij2qtr53dmuulojgd",
@@ -8983,8 +8983,8 @@
       "sortOrder": 320,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qdldgfqy80lulnpe57g9sopp",
@@ -9011,8 +9011,8 @@
       "sortOrder": 321,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ytvmkbg7gab40wek6c15la7s",
@@ -9039,8 +9039,8 @@
       "sortOrder": 322,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "zeasv76gma9uva3eocja0nag",
@@ -9067,8 +9067,8 @@
       "sortOrder": 323,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "ol7b8sod5okrbv9t64r8gg3r",
@@ -9095,8 +9095,8 @@
       "sortOrder": 324,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "kc99fci2lbz0fnwt5qlqlgpf",
@@ -9123,8 +9123,8 @@
       "sortOrder": 325,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "yc182i636vygml0eyi2sohd1",
@@ -9151,8 +9151,8 @@
       "sortOrder": 326,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "elegant,bold"
     },
     {
       "id": "bfy39dd9olyz9znvzphqr3ps",
@@ -9179,8 +9179,8 @@
       "sortOrder": 327,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "uxg9kxcb997llfgzgj8c3r98",
@@ -9207,8 +9207,8 @@
       "sortOrder": 328,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "b5fas11pze5ribo2od8mupyr",
@@ -9235,8 +9235,8 @@
       "sortOrder": 329,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes,animals",
+      "styles": "bold"
     },
     {
       "id": "b0o27xpgjzjl8s7jev3e9fxw",
@@ -9263,8 +9263,8 @@
       "sortOrder": 330,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "pjykmnr13ljksvcty4c6aa4l",
@@ -9291,8 +9291,8 @@
       "sortOrder": 331,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "n9qqbal7u1xxcpcepkloo7za",
@@ -9319,8 +9319,8 @@
       "sortOrder": 332,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "ejb2ovxq1085ns3odyg05hl4",
@@ -9347,8 +9347,8 @@
       "sortOrder": 333,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "r6snoxrlrigpxkx5rbialrir",
@@ -9375,8 +9375,8 @@
       "sortOrder": 334,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "mehw9ng6ecpde62q9z3waqis",
@@ -9403,8 +9403,8 @@
       "sortOrder": 335,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "jrxfgpw9pw9b98x024fyxc1r",
@@ -9431,8 +9431,8 @@
       "sortOrder": 336,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "smsndu11k9fr2nlgn0zv4ptn",
@@ -9459,8 +9459,8 @@
       "sortOrder": 337,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "og2zbvhv1o1mvjcvi40lf601",
@@ -9487,8 +9487,8 @@
       "sortOrder": 338,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "wvhjmvppfdkzjii8ro7day0w",
@@ -9515,8 +9515,8 @@
       "sortOrder": 339,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "i62kad7oxyl4t1jc4jk0ofwe",
@@ -9543,8 +9543,8 @@
       "sortOrder": 340,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "wkzhhstr30vyciiqqsclt0zq",
@@ -9571,8 +9571,8 @@
       "sortOrder": 341,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "wear7kui7n3rbwh1c2197urp",
@@ -9599,8 +9599,8 @@
       "sortOrder": 342,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "initials,bold"
     },
     {
       "id": "pcd546htz3hrimy5rmlaxff2",
@@ -9627,8 +9627,8 @@
       "sortOrder": 343,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "socrj79fbp0nrs946kyb7wta",
@@ -9655,8 +9655,8 @@
       "sortOrder": 344,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "nbaumccwlupaidquc577hqxv",
@@ -9683,8 +9683,8 @@
       "sortOrder": 345,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "wxjvrn40rczwupvixptjxfa3",
@@ -9711,8 +9711,8 @@
       "sortOrder": 346,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "ynpejr4ibn3y4pc5motvxuo8",
@@ -9739,8 +9739,8 @@
       "sortOrder": 347,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "n1qle7d97l67rfq8h2qsndqx",
@@ -9767,8 +9767,8 @@
       "sortOrder": 348,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "cgtl59fkokacpm4r4bn1ywn7",
@@ -9795,8 +9795,8 @@
       "sortOrder": 349,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ndos6q654vm4r4m2nk9p0da5",
@@ -9823,8 +9823,8 @@
       "sortOrder": 350,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "j2k2aki3exf7q4cvjt56lr9m",
@@ -9851,8 +9851,8 @@
       "sortOrder": 351,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs,space",
+      "styles": "classic"
     },
     {
       "id": "p4qtj04xlh0mq3ezt712ydes",
@@ -9879,8 +9879,8 @@
       "sortOrder": 352,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "ghe1cg0nrgx4al1xbhxh5its",
@@ -9907,8 +9907,8 @@
       "sortOrder": 353,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "space",
+      "styles": "classic"
     },
     {
       "id": "cl9phskxwvqgq1ca3koymp73",
@@ -9935,8 +9935,8 @@
       "sortOrder": 354,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "qzp2eomgf8x4r58e53oj06d3",
@@ -9963,8 +9963,8 @@
       "sortOrder": 355,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "opfyih2vbzvdz1w2zdszx6ud",
@@ -9991,8 +9991,8 @@
       "sortOrder": 356,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "l635uzw2pzq88urvgkbhts61",
@@ -10019,8 +10019,8 @@
       "sortOrder": 357,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "f0xprg3x528p2g0o37dl1x7f",
@@ -10047,8 +10047,8 @@
       "sortOrder": 358,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "twaoa47367z5dp3c38hml06z",
@@ -10075,8 +10075,8 @@
       "sortOrder": 359,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "x5t23b4l03kuc8s6qere7ngm",
@@ -10103,8 +10103,8 @@
       "sortOrder": 360,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,animals",
+      "styles": "classic"
     },
     {
       "id": "u27j00bi141w8y0nrpjmidtb",
@@ -10131,8 +10131,8 @@
       "sortOrder": 361,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,florals",
+      "styles": "classic"
     },
     {
       "id": "cd635fgk7gtv9y17uaeu08wb",
@@ -10159,8 +10159,8 @@
       "sortOrder": 362,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles,animals",
+      "styles": "classic"
     },
     {
       "id": "j6ho4dgpae3v56nayct9y264",
@@ -10187,8 +10187,8 @@
       "sortOrder": 363,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "b1amorzdh6jg3fkx0893egl7",
@@ -10215,8 +10215,8 @@
       "sortOrder": 364,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gr9o4b36foe8hu1at39m6pbm",
@@ -10243,8 +10243,8 @@
       "sortOrder": 365,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "rjgs6e8xbqc6yzy1wojs8z46",
@@ -10271,8 +10271,8 @@
       "sortOrder": 366,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "dni9c3xxbm3ufwxmpss00z3h",
@@ -10299,8 +10299,8 @@
       "sortOrder": 367,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "y4dfm9rexkaan34vy4t0pc1m",
@@ -10327,8 +10327,8 @@
       "sortOrder": 368,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "osk9f4lcq1mh1ihzkwipzrcc",
@@ -10355,8 +10355,8 @@
       "sortOrder": 369,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "elegant"
     },
     {
       "id": "kuxqhfhe2evrdoexfu20of9u",
@@ -10383,8 +10383,8 @@
       "sortOrder": 370,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "eu7uxzt7sw4scipt30bu7q76",
@@ -10411,8 +10411,8 @@
       "sortOrder": 371,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials,elegant"
     },
     {
       "id": "cvmb3o9jg0vyd39tir3j6pqk",
@@ -10439,8 +10439,8 @@
       "sortOrder": 372,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "afhtoj28eaoia4qu1qemsaac",
@@ -10467,8 +10467,8 @@
       "sortOrder": 373,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "o5wwp4shhx368ocz9q9a62u4",
@@ -10495,8 +10495,8 @@
       "sortOrder": 374,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "lhc3zqgzpbnq3qqcmdr3q1be",
@@ -10523,8 +10523,8 @@
       "sortOrder": 375,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ldoj1idm3ouwd53v37oxwcie",
@@ -10551,8 +10551,8 @@
       "sortOrder": 376,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "gwcv80kqarrm1i0sur0t65w8",
@@ -10579,8 +10579,8 @@
       "sortOrder": 377,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "m60e2c3746f35ruh756dbx03",
@@ -10607,8 +10607,8 @@
       "sortOrder": 378,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ij0wecbbvvb7w85b7m5fj132",
@@ -10635,8 +10635,8 @@
       "sortOrder": 379,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ocm8d032fg2qqjyx3lwmjkfh",
@@ -10663,8 +10663,8 @@
       "sortOrder": 380,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ij50oxz3g9zm1oop1is4zu8t",
@@ -10691,8 +10691,8 @@
       "sortOrder": 381,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "zqnwn50lrssxmf8orh2f9k84",
@@ -10719,8 +10719,8 @@
       "sortOrder": 382,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals,vehicles",
+      "styles": "classic"
     },
     {
       "id": "ppvqi5anzhxiez7snxzyog69",
@@ -10747,8 +10747,8 @@
       "sortOrder": 383,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "u6k5192ygc7qajrdb6nwg3gg",
@@ -10775,8 +10775,8 @@
       "sortOrder": 384,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "uwmz9a151rf86rfc7dq8haqe",
@@ -10803,8 +10803,8 @@
       "sortOrder": 385,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs",
+      "styles": "classic"
     },
     {
       "id": "wwifkecp1t9thrcmlfc2z9jy",
@@ -10831,8 +10831,8 @@
       "sortOrder": 386,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "dinosaurs,florals",
+      "styles": "classic"
     },
     {
       "id": "t3m0xidql9wbo2tj107bk12m",
@@ -10859,8 +10859,8 @@
       "sortOrder": 387,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "initials,elegant"
     },
     {
       "id": "ulrsc8ylthutvpsamp49bqvg",
@@ -10887,8 +10887,8 @@
       "sortOrder": 388,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "v65fxhancdbothp241glmv2y",
@@ -10915,8 +10915,8 @@
       "sortOrder": 389,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "s6278tiaaqqbtlyzyg91qqu8",
@@ -10943,8 +10943,8 @@
       "sortOrder": 390,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "uoj8l69a5fo1pwu63eno5ko7",
@@ -10971,8 +10971,8 @@
       "sortOrder": 391,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "huywmz1udt3ji40wntwvc41f",
@@ -10999,8 +10999,8 @@
       "sortOrder": 392,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "d1anfoxisikfojbqrc443y8m",
@@ -11027,8 +11027,8 @@
       "sortOrder": 393,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "cdjux7mz73po1edh2nxmuzxs",
@@ -11055,8 +11055,8 @@
       "sortOrder": 394,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "xd80aiu61hbaddtk4bllb4vp",
@@ -11083,8 +11083,8 @@
       "sortOrder": 395,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "mgzgb5h40gd0gejyr4dcvn6e",
@@ -11111,8 +11111,8 @@
       "sortOrder": 396,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "ntol6tyb5l1vdu66txzgznvm",
@@ -11139,8 +11139,8 @@
       "sortOrder": 397,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "yvt71ja84z5si91k0qq02u6t",
@@ -11167,8 +11167,8 @@
       "sortOrder": 398,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "og17pyoe7y7ngna0d2b0hnaq",
@@ -11195,8 +11195,8 @@
       "sortOrder": 399,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "kxt6ds43friayduy6drmtrc4",
@@ -11223,8 +11223,8 @@
       "sortOrder": 400,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "w1bjoxhvqwjspxjd4znwt37e",
@@ -11251,8 +11251,8 @@
       "sortOrder": 401,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "tml60d8cwy46u1mqrgqh6q8o",
@@ -11279,8 +11279,8 @@
       "sortOrder": 402,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "takd98zbk8x0itmr8ev1h226",
@@ -11307,8 +11307,8 @@
       "sortOrder": 403,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "rhwesfzq7nqlqyrzzmnulra5",
@@ -11335,8 +11335,8 @@
       "sortOrder": 404,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports,vehicles",
+      "styles": "bold"
     },
     {
       "id": "cg2rot95ja89vtcblikkfwg3",
@@ -11363,8 +11363,8 @@
       "sortOrder": 405,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "hd0ezhwc0319s3a1num9c4ys",
@@ -11391,8 +11391,8 @@
       "sortOrder": 406,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "qt2ooavxnlqqlka0i8seykfv",
@@ -11419,8 +11419,8 @@
       "sortOrder": 407,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "kj9oz0iqttm2zor0wzi4qg1z",
@@ -11447,8 +11447,8 @@
       "sortOrder": 408,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess,animals",
+      "styles": "classic"
     },
     {
       "id": "cyw5t058brtssqy1dck7tmuz",
@@ -11475,8 +11475,8 @@
       "sortOrder": 409,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "qr1dqxhx8k38nue6u9wsln7g",
@@ -11503,8 +11503,8 @@
       "sortOrder": 410,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "hdgeiuucdks94y8jqhzxlc19",
@@ -11531,8 +11531,8 @@
       "sortOrder": 411,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials,elegant"
     },
     {
       "id": "s31ays1tcebihcja8bk478gk",
@@ -11559,8 +11559,8 @@
       "sortOrder": 412,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "ksdkj45k5phlosvgyfw67e36",
@@ -11587,8 +11587,8 @@
       "sortOrder": 413,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "florals",
+      "styles": "classic"
     },
     {
       "id": "vlpzclocwouz1mu07ltabcgc",
@@ -11615,8 +11615,8 @@
       "sortOrder": 414,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "vt9322j1de2wo8ba34ory12q",
@@ -11643,8 +11643,8 @@
       "sortOrder": 415,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "js41qssx4o0oe1sc04sdku5u",
@@ -11671,8 +11671,8 @@
       "sortOrder": 416,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "tosyhfyjx6nk2nnf2zesu0gl",
@@ -11699,8 +11699,8 @@
       "sortOrder": 417,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "uz7c7paldefxy8a1wl6qptmj",
@@ -11727,8 +11727,8 @@
       "sortOrder": 418,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "xclm2209m4m6yjxn1ppz86ht",
@@ -11755,8 +11755,8 @@
       "sortOrder": 419,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "mga9kjhup8j2eh19m4yih45n",
@@ -11783,8 +11783,8 @@
       "sortOrder": 420,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "bx8w0y2t8zh8hv8vwsjyon18",
@@ -11811,8 +11811,8 @@
       "sortOrder": 421,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "x2wtzp7i6h8a50kk3sazlx7r",
@@ -11839,8 +11839,8 @@
       "sortOrder": 422,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "v6ffnvoan2d9be87ds26hys3",
@@ -11867,8 +11867,8 @@
       "sortOrder": 423,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "z1cv9yonywlx98zjumzvf50z",
@@ -11895,8 +11895,8 @@
       "sortOrder": 424,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "gjhrgmegxmj7kvr2y78i98ry",
@@ -11923,8 +11923,8 @@
       "sortOrder": 425,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "gj2ncjy4fzh0z8epjtx06vug",
@@ -11951,8 +11951,8 @@
       "sortOrder": 426,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "ns34824zz2e7sbgjx61n3yif",
@@ -11979,8 +11979,8 @@
       "sortOrder": 427,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "k8wvlq9uxvhe9t2n7rgwxryl",
@@ -12007,8 +12007,8 @@
       "sortOrder": 428,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "a8mov80bqrgo9rzb067xuo2o",
@@ -12035,8 +12035,8 @@
       "sortOrder": 429,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "uab74sqf2lklgy0h93zvhlk7",
@@ -12063,8 +12063,8 @@
       "sortOrder": 430,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "br96mgvibjepkcy6b5njrtdz",
@@ -12091,8 +12091,8 @@
       "sortOrder": 431,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "superheroes",
+      "styles": "bold"
     },
     {
       "id": "rczwanunzl0kp6a4jp84dpjd",
@@ -12119,8 +12119,8 @@
       "sortOrder": 432,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "coxgse2elz1v4i06kxklmbyv",
@@ -12147,8 +12147,8 @@
       "sortOrder": 433,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "mbgddvitpm1fqus090vpradb",
@@ -12175,8 +12175,8 @@
       "sortOrder": 434,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "wj9zl45oh9su0k6bh9q3fi92",
@@ -12203,8 +12203,8 @@
       "sortOrder": 435,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "princess",
+      "styles": "classic"
     },
     {
       "id": "vskr1blayzofgerwlptbtgqm",
@@ -12231,8 +12231,8 @@
       "sortOrder": 436,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "b9wekp0l76wxgtejpig4p4aw",
@@ -12259,8 +12259,8 @@
       "sortOrder": 437,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "oao6goy5fa6gbflzexop7db2",
@@ -12287,8 +12287,8 @@
       "sortOrder": 438,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "fvv34h9redvwgwhivequa4cs",
@@ -12315,8 +12315,8 @@
       "sortOrder": 439,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "v48s54op9ckkct54yjhgymuh",
@@ -12343,8 +12343,8 @@
       "sortOrder": 440,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "xjag6z4waut726g93u42xal7",
@@ -12371,8 +12371,8 @@
       "sortOrder": 441,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "elegant"
     },
     {
       "id": "u3zjy3ww9bffwhds94tlj04u",
@@ -12399,8 +12399,8 @@
       "sortOrder": 442,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "wkfpsoj59ur6xf0d24t5cefs",
@@ -12427,8 +12427,8 @@
       "sortOrder": 443,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "vehicles",
+      "styles": "classic"
     },
     {
       "id": "le807ak2tulc1dja5kxhzbxm",
@@ -12455,8 +12455,8 @@
       "sortOrder": 444,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "frli09xxnewqi6rdz20ofj7s",
@@ -12483,8 +12483,8 @@
       "sortOrder": 445,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "bold"
     },
     {
       "id": "ed22efcpg6oib6vq3ldnwnfe",
@@ -12511,8 +12511,8 @@
       "sortOrder": 446,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "zk86vrlhghi7i75439xl0dgn",
@@ -12539,8 +12539,8 @@
       "sortOrder": 447,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "yzuy7yj8no7sqauzj2n5jik9",
@@ -12567,8 +12567,8 @@
       "sortOrder": 448,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "classic"
     },
     {
       "id": "ezorxkk3zj9ow72s3i82kdn3",
@@ -12595,8 +12595,8 @@
       "sortOrder": 449,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "sports",
+      "styles": "classic"
     },
     {
       "id": "sluwsr5w1c8tet5y4wm1byum",
@@ -12623,8 +12623,8 @@
       "sortOrder": 450,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "p2xxnqxn8vflo4a0usy7xd40",
@@ -12651,8 +12651,8 @@
       "sortOrder": 451,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "i8liyrc8u79wjvdazol329sy",
@@ -12679,8 +12679,8 @@
       "sortOrder": 452,
       "ageGroup": "kids",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "animals",
+      "styles": "classic"
     },
     {
       "id": "ppoxycv89brzwxskuingctxe",
@@ -12707,8 +12707,8 @@
       "sortOrder": 453,
       "ageGroup": "adults",
       "gender": "unisex",
-      "themes": null,
-      "styles": null
+      "themes": "abstract",
+      "styles": "initials"
     }
   ],
   "productImages": [
