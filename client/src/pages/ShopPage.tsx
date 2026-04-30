@@ -247,12 +247,15 @@ export default function ShopPage() {
     queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
   });
   const shopSections: ShopSection[] = useMemo(() => {
-    const raw = Array.isArray(shopSectionsConfig?.value) ? shopSectionsConfig!.value : [];
+    type LegacyShopSection = ShopSection & { audiences?: string[] };
+    const raw: LegacyShopSection[] = Array.isArray(shopSectionsConfig?.value)
+      ? (shopSectionsConfig!.value as unknown as LegacyShopSection[])
+      : [];
     if (raw.length === 0) return [];
-    return (raw as any[]).map(s => ({
+    return raw.map((s): ShopSection => ({
       ...s,
       ageGroups: s.ageGroups ?? s.audiences ?? [],
-    })) as ShopSection[];
+    }));
   }, [shopSectionsConfig]);
 
   // Shared predicate: apply all attribute filters client-side
