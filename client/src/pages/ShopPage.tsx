@@ -296,7 +296,9 @@ export default function ShopPage() {
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
-  const hasAttributeFilters = activeGender !== "all" || activeTheme !== "all" || activeStyle !== "all";
+  const hasAttributeFilters = activeFilter !== "all" || activeGender !== "all" || activeTheme !== "all" || activeStyle !== "all";
+
+  const handleClearFilters = () => pushURL("all", "all", "all", "all", activeTag, searchQuery);
 
   return (
     <div className="pb-20 md:pb-8">
@@ -363,6 +365,17 @@ export default function ShopPage() {
             onChange={handleStyleChange}
             testIdPrefix="filter-style"
           />
+          {hasAttributeFilters && (
+            <div className="flex">
+              <button
+                onClick={handleClearFilters}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                data-testid="button-clear-filters"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

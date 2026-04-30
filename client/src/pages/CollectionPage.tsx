@@ -284,9 +284,10 @@ export default function CollectionPage() {
     navigate(qs ? `/collection/${audience}?${qs}` : `/collection/${audience}`, { replace: true });
   }, [navigate, audience]);
 
-  const handleGenderChange = (g: string) => pushURL(g, themeFilter, styleFilter);
-  const handleThemeChange  = (t: string) => pushURL(genderFilter, t, styleFilter);
-  const handleStyleChange  = (s: string) => pushURL(genderFilter, themeFilter, s);
+  const handleGenderChange  = (g: string) => pushURL(g, themeFilter, styleFilter);
+  const handleThemeChange   = (t: string) => pushURL(genderFilter, t, styleFilter);
+  const handleStyleChange   = (s: string) => pushURL(genderFilter, themeFilter, s);
+  const handleClearFilters  = () => pushURL("all", "all", "all");
 
   const isLoading = catLoading || prodLoading;
 
@@ -427,6 +428,17 @@ export default function CollectionPage() {
                 onChange={handleStyleChange}
                 testIdPrefix="filter-style"
               />
+            </div>
+          )}
+          {hasFilters && (
+            <div className="flex">
+              <button
+                onClick={handleClearFilters}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                data-testid="button-clear-filters"
+              >
+                Clear filters
+              </button>
             </div>
           )}
         </div>
