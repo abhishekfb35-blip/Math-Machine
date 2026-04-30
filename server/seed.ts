@@ -569,8 +569,9 @@ export async function seedDatabase() {
 
     // ── 9b. Attribute lookup tables (idempotent upsert by name) ─────────────
     const { createId } = await import("@paralleldrive/cuid2");
+    type AttrTable = typeof ageGroups | typeof genders | typeof themes | typeof styles;
     const seedLookup = async (
-      table: any, starter: { name: string; sortOrder: number }[], label: string
+      table: AttrTable, starter: { name: string; sortOrder: number }[], label: string
     ) => {
       const existing = await db.select({ id: table.id, name: table.name }).from(table);
       const existingNames = new Set(existing.map((r) => r.name));
@@ -593,11 +594,12 @@ export async function seedDatabase() {
     {
       const allAg = await db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups);
       const allGen = await db.select({ id: genders.id, name: genders.name }).from(genders);
+      const allTh = await db.select({ id: themes.id, name: themes.name }).from(themes);
+      const allSt = await db.select({ id: styles.id, name: styles.name }).from(styles);
       const agByName = Object.fromEntries(allAg.map((r) => [r.name, r.id]));
       const genByName = Object.fromEntries(allGen.map((r) => [r.name, r.id]));
-
-      const prods = await db.select({ id: products.id }).from(products);
-      const prodIds = prods.map((p) => p.id);
+      const thByName = Object.fromEntries(allTh.map((r) => [r.name, r.id]));
+      const stByName = Object.fromEntries(allSt.map((r) => [r.name, r.id]));
 
       type SeedProductRow = { slug: string; ageGroup?: string; gender?: string; themes?: string; styles?: string };
 
@@ -639,10 +641,7 @@ export async function seedDatabase() {
             jSynced++;
           }
         }
-        // themes/styles from seed are null, so skip for now
         if (sp.themes && typeof sp.themes === "string") {
-          const allThemes = await db.select({ id: themes.id, name: themes.name }).from(themes);
-          const thByName = Object.fromEntries(allThemes.map((r) => [r.name, r.id]));
           const themeNames = sp.themes.split(",").map((t: string) => t.trim()).filter(Boolean);
           for (const tn of themeNames) {
             if (thByName[tn]) {
@@ -652,8 +651,6 @@ export async function seedDatabase() {
           }
         }
         if (sp.styles && typeof sp.styles === "string") {
-          const allStyles = await db.select({ id: styles.id, name: styles.name }).from(styles);
-          const stByName = Object.fromEntries(allStyles.map((r) => [r.name, r.id]));
           const styleNames = sp.styles.split(",").map((s: string) => s.trim()).filter(Boolean);
           for (const sn of styleNames) {
             if (stByName[sn]) {
