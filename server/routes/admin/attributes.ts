@@ -142,12 +142,19 @@ export function registerAdminAttributeRoutes(app: Express) {
     res.json(await storage.getProductAttributeIds(id));
   });
 
+  const productAttributesSchema = z.object({
+    ageGroupIds: z.array(z.string()).optional().default([]),
+    genderIds:   z.array(z.string()).optional().default([]),
+    themeIds:    z.array(z.string()).optional().default([]),
+    styleIds:    z.array(z.string()).optional().default([]),
+  });
+
   app.put("/api/admin/products/:id/attributes", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
-    const { ageGroupIds = [], genderIds = [], themeIds = [], styleIds = [] } = req.body as {
-      ageGroupIds?: string[]; genderIds?: string[]; themeIds?: string[]; styleIds?: string[];
-    };
+    const parsed = productAttributesSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
+    const { ageGroupIds, genderIds, themeIds, styleIds } = parsed.data;
     await Promise.all([
       storage.setProductAgeGroups(id, ageGroupIds),
       storage.setProductGenders(id, genderIds),
