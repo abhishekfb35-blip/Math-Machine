@@ -113,16 +113,49 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
   );
 }
 
+interface FilterRowProps {
+  label: string;
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  testIdPrefix: string;
+}
+
+function FilterRow({ label, options, value, onChange, testIdPrefix }: FilterRowProps) {
+  if (options.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+      <span className="text-xs text-muted-foreground shrink-0 font-medium">{label}</span>
+      {options.map(f => (
+        <Button
+          key={f.value}
+          variant={value === f.value ? "default" : "outline"}
+          size="sm"
+          onClick={() => onChange(f.value)}
+          className="shrink-0 h-7 px-2.5 text-xs"
+          data-testid={`${testIdPrefix}-${f.value}`}
+        >
+          {f.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const searchString = useSearch();
   const [, navigate] = useLocation();
 
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [activeGender, setActiveGender] = useState<string>("all");
+  const [activeTheme,  setActiveTheme]  = useState<string>("all");
+  const [activeStyle,  setActiveStyle]  = useState<string>("all");
   const [activeTag,    setActiveTag]    = useState<string>("");
   const [searchQuery,  setSearchQuery]  = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+
   const audienceFilters = useMemo(() => {
     const ags = attributes?.ageGroups ?? [];
     if (ags.length === 0) return [];
@@ -132,32 +165,73 @@ export default function ShopPage() {
     ];
   }, [attributes]);
 
+  const genderOptions = useMemo(() => {
+    const gs = attributes?.genders ?? [];
+    if (gs.length === 0) return [];
+    return [
+      { label: "All", value: "all" },
+      ...gs.map(g => ({ label: g.name.charAt(0).toUpperCase() + g.name.slice(1), value: g.name })),
+    ];
+  }, [attributes]);
+
+  const themeOptions = useMemo(() => {
+    const ts = attributes?.themes ?? [];
+    if (ts.length === 0) return [];
+    return [
+      { label: "All", value: "all" },
+      ...ts.map(t => ({ label: t.name.charAt(0).toUpperCase() + t.name.slice(1), value: t.name })),
+    ];
+  }, [attributes]);
+
+  const styleOptions = useMemo(() => {
+    const ss = attributes?.styles ?? [];
+    if (ss.length === 0) return [];
+    return [
+      { label: "All", value: "all" },
+      ...ss.map(s => ({ label: s.name.charAt(0).toUpperCase() + s.name.slice(1), value: s.name })),
+    ];
+  }, [attributes]);
+
   // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
     const f = p.get("filter") || "all";
     setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
-    const t = p.get("tag") || "";
-    setActiveTag(t);
-    const q = p.get("q") || "";
-    setSearchQuery(q);
+    setActiveGender(p.get("gender") || "all");
+    setActiveTheme(p.get("theme") || "all");
+    setActiveStyle(p.get("style") || "all");
+    setActiveTag(p.get("tag") || "");
+    setSearchQuery(p.get("q") || "");
   }, [searchString, audienceFilters]);
 
   // Write state → URL
-  const pushURL = useCallback((filter: string, tag: string, query: string) => {
+  const pushURL = useCallback((
+    filter: string,
+    gender: string,
+    theme: string,
+    style: string,
+    tag: string,
+    query: string,
+  ) => {
     const p = new URLSearchParams();
     if (filter !== "all") p.set("filter", filter);
+    if (gender !== "all") p.set("gender", gender);
+    if (theme  !== "all") p.set("theme", theme);
+    if (style  !== "all") p.set("style", style);
     if (tag)   p.set("tag", tag);
     if (query) p.set("q", query);
     const qs = p.toString();
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
   }, [navigate]);
 
-  const handleFilterChange = (f: string) => pushURL(f, "", searchQuery);
-  const handleTagDrillDown = (tag: string)        => pushURL("all", tag, "");
-  const handleBackToAll    = ()                   => pushURL("all", "", "");
-  const handleSearchChange = (q: string) => {
-    pushURL(activeFilter, q ? "" : activeTag, q);
+  const handleFilterChange  = (f: string) => pushURL(f, activeGender, activeTheme, activeStyle, "", searchQuery);
+  const handleGenderChange  = (g: string) => pushURL(activeFilter, g, activeTheme, activeStyle, "", searchQuery);
+  const handleThemeChange   = (t: string) => pushURL(activeFilter, activeGender, t, activeStyle, "", searchQuery);
+  const handleStyleChange   = (s: string) => pushURL(activeFilter, activeGender, activeTheme, s, "", searchQuery);
+  const handleTagDrillDown  = (tag: string) => pushURL("all", "all", "all", "all", tag, "");
+  const handleBackToAll     = () => pushURL("all", "all", "all", "all", "", "");
+  const handleSearchChange  = (q: string) => {
+    pushURL(activeFilter, activeGender, activeTheme, activeStyle, q ? "" : activeTag, q);
   };
 
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -172,16 +246,20 @@ export default function ShopPage() {
     ? shopSectionsConfig.value
     : [];
 
-  // Shared predicate: filter products by the active audience (age group)
-  const ageFilteredProducts = useMemo(() => {
+  // Shared predicate: apply all attribute filters client-side
+  const attributeFilteredProducts = useMemo(() => {
     if (!products) return [];
-    if (activeFilter === "all") return products;
-    return products.filter(p => (p.ageGroups ?? []).includes(activeFilter));
-  }, [products, activeFilter]);
+    let result = products;
+    if (activeFilter !== "all") result = result.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
+    if (activeGender !== "all") result = result.filter(p => (p.genders   ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
+    if (activeTheme  !== "all") result = result.filter(p => (p.themes    ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
+    if (activeStyle  !== "all") result = result.filter(p => (p.styles    ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    return result;
+  }, [products, activeFilter, activeGender, activeTheme, activeStyle]);
 
-  // Products for audience-filtered / search views
+  // Products for search views
   const flatProducts = useMemo(() => {
-    let result = ageFilteredProducts;
+    let result = attributeFilteredProducts;
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter(p =>
@@ -191,16 +269,16 @@ export default function ShopPage() {
       );
     }
     return result;
-  }, [ageFilteredProducts, searchQuery]);
+  }, [attributeFilteredProducts, searchQuery]);
 
-  // Products for tag drill-down
+  // Products for tag drill-down (still respects attribute filters)
   const tagProducts = useMemo(() => {
-    if (!products || !activeTag) return [];
+    if (!activeTag) return [];
     const tagLower = activeTag.toLowerCase();
-    return products.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
-  }, [products, activeTag]);
+    return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+  }, [attributeFilteredProducts, activeTag]);
 
-  // Compute tag sections (all + shown slice), filtered by active audience via ageGroup
+  // Compute tag sections filtered by all active attributes
   const tagSections = useMemo(() => {
     if (!products) return [];
     return shopSections
@@ -208,16 +286,17 @@ export default function ShopPage() {
       .filter(s => activeFilter === "all" || (s.audiences ?? []).includes(activeFilter))
       .map(s => {
         const tagLower = s.tag.toLowerCase();
-        const all = ageFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+        const all = attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
         return { ...s, all, shown: all.slice(0, s.maxShown) };
       });
-  }, [ageFilteredProducts, shopSections, activeFilter]);
+  }, [attributeFilteredProducts, shopSections, products, activeFilter]);
 
-  // Sections view: any audience tab (All / Kids / Adults / Couples) with no drilldown or search
   const isAllView = !activeTag && !searchQuery.trim();
   const isTagView = !!activeTag && !searchQuery.trim();
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
+
+  const hasAttributeFilters = activeGender !== "all" || activeTheme !== "all" || activeStyle !== "all";
 
   return (
     <div className="pb-20 md:pb-8">
@@ -249,7 +328,7 @@ export default function ShopPage() {
             )}
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
+            <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
             {audienceFilters.map(f => (
               <Button
                 key={f.value}
@@ -263,6 +342,27 @@ export default function ShopPage() {
               </Button>
             ))}
           </div>
+          <FilterRow
+            label="Gender"
+            options={genderOptions}
+            value={activeGender}
+            onChange={handleGenderChange}
+            testIdPrefix="filter-gender"
+          />
+          <FilterRow
+            label="Theme"
+            options={themeOptions}
+            value={activeTheme}
+            onChange={handleThemeChange}
+            testIdPrefix="filter-theme"
+          />
+          <FilterRow
+            label="Style"
+            options={styleOptions}
+            value={activeStyle}
+            onChange={handleStyleChange}
+            testIdPrefix="filter-style"
+          />
         </div>
       </div>
 

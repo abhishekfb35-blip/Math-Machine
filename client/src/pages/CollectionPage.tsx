@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useSearch, useLocation } from "wouter";
 import { ChevronRight, ChevronLeft, ArrowLeft, SlidersHorizontal } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -172,8 +172,38 @@ function ProductRowSkeleton() {
   );
 }
 
+interface FilterRowProps {
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  testIdPrefix: string;
+}
+
+function FilterRow({ options, value, onChange, testIdPrefix }: FilterRowProps) {
+  if (options.length === 0) return null;
+  return (
+    <>
+      {options.map((f) => (
+        <Button
+          key={f.value}
+          variant={value === f.value ? "default" : "outline"}
+          size="sm"
+          onClick={() => onChange(f.value)}
+          className="shrink-0"
+          data-testid={`${testIdPrefix}-${f.value}`}
+        >
+          {f.label}
+        </Button>
+      ))}
+    </>
+  );
+}
+
 export default function CollectionPage() {
   const params = useParams<{ audience: string }>();
+  const searchString = useSearch();
+  const [, navigate] = useLocation();
+
   // Use the raw URL param as-is. Invalid routes render empty product lists (no hardcoded fallback).
   const audience: string = params.audience || "";
   // Display strings derived from audience route segment.
@@ -182,7 +212,10 @@ export default function CollectionPage() {
   const audienceLabel = audienceLabels[audience] ?? (audience ? `For ${audience.charAt(0).toUpperCase() + audience.slice(1)}` : "Collection");
   const audienceDesc  = audienceDescriptions[audience] ?? "";
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+
   const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [themeFilter,  setThemeFilter]  = useState<string>("all");
+  const [styleFilter,  setStyleFilter]  = useState<string>("all");
 
   const { data: categories, isLoading: catLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -196,7 +229,17 @@ export default function CollectionPage() {
     queryKey: ["/api/attributes"],
   });
 
-  const genderFilters = useMemo(() => {
+  // Age group chips — navigate to different collection routes
+  const ageGroupOptions = useMemo(() => {
+    const ags = attributes?.ageGroups ?? [];
+    return ags.map(ag => ({
+      label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1),
+      value: ag.name.toLowerCase(),
+    }));
+  }, [attributes]);
+
+  // Build filter option lists from attributes
+  const genderOptions = useMemo(() => {
     const dbGenders = attributes?.genders ?? [];
     if (dbGenders.length === 0) return [];
     return [
@@ -205,27 +248,70 @@ export default function CollectionPage() {
     ];
   }, [attributes]);
 
+  const themeOptions = useMemo(() => {
+    const ts = attributes?.themes ?? [];
+    if (ts.length === 0) return [];
+    return [
+      { label: "All", value: "all" },
+      ...ts.map(t => ({ label: t.name.charAt(0).toUpperCase() + t.name.slice(1), value: t.name })),
+    ];
+  }, [attributes]);
+
+  const styleOptions = useMemo(() => {
+    const ss = attributes?.styles ?? [];
+    if (ss.length === 0) return [];
+    return [
+      { label: "All", value: "all" },
+      ...ss.map(s => ({ label: s.name.charAt(0).toUpperCase() + s.name.slice(1), value: s.name })),
+    ];
+  }, [attributes]);
+
+  // Sync URL → state
+  useEffect(() => {
+    const p = new URLSearchParams(searchString);
+    setGenderFilter(p.get("gender") || "all");
+    setThemeFilter(p.get("theme")  || "all");
+    setStyleFilter(p.get("style")  || "all");
+  }, [searchString]);
+
+  // Write state → URL
+  const pushURL = useCallback((gender: string, theme: string, style: string) => {
+    const p = new URLSearchParams();
+    if (gender !== "all") p.set("gender", gender);
+    if (theme  !== "all") p.set("theme", theme);
+    if (style  !== "all") p.set("style", style);
+    const qs = p.toString();
+    navigate(qs ? `/collection/${audience}?${qs}` : `/collection/${audience}`, { replace: true });
+  }, [navigate, audience]);
+
+  const handleGenderChange = (g: string) => pushURL(g, themeFilter, styleFilter);
+  const handleThemeChange  = (t: string) => pushURL(genderFilter, t, styleFilter);
+  const handleStyleChange  = (s: string) => pushURL(genderFilter, themeFilter, s);
+
   const isLoading = catLoading || prodLoading;
 
   const audienceProducts = useMemo(() => {
     if (!products) return [];
+
+    let filtered: Product[];
+
     // "couples" is a marketing collection URL with no single corresponding age group.
-    // Show all products for this route (gender filter still applies if selected).
+    // Show all products for this route (other filters still apply).
     if (audience === "couples") {
-      let filtered = [...products];
-      if (genderFilter !== "all") {
-        filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
-      }
-      return filtered;
+      filtered = [...products];
+    } else {
+      const audienceLower = audience.toLowerCase();
+      const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name.toLowerCase());
+      if (!dbAgeGroupNames.includes(audienceLower)) return [];
+      filtered = products.filter((p) => (p.ageGroups ?? []).some(ag => ag.toLowerCase() === audienceLower));
     }
-    const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name);
-    if (!dbAgeGroupNames.includes(audience)) return [];
-    let filtered = products.filter((p) => (p.ageGroups ?? []).includes(audience));
-    if (genderFilter !== "all") {
-      filtered = filtered.filter((p) => (p.genders ?? []).includes(genderFilter));
-    }
+
+    if (genderFilter !== "all") filtered = filtered.filter((p) => (p.genders ?? []).some(g => g.toLowerCase() === genderFilter.toLowerCase()));
+    if (themeFilter  !== "all") filtered = filtered.filter((p) => (p.themes  ?? []).some(t => t.toLowerCase() === themeFilter.toLowerCase()));
+    if (styleFilter  !== "all") filtered = filtered.filter((p) => (p.styles  ?? []).some(s => s.toLowerCase() === styleFilter.toLowerCase()));
+
     return filtered;
-  }, [products, attributes, audience, genderFilter]);
+  }, [products, attributes, audience, genderFilter, themeFilter, styleFilter]);
 
   const productTypeSections = useMemo(() => {
     const categoryOrder = ["towels", "blankets", "bathrobes"];
@@ -262,6 +348,8 @@ export default function CollectionPage() {
     }
   };
 
+  const hasFilters = genderFilter !== "all" || themeFilter !== "all" || styleFilter !== "all";
+
   return (
     <div className="pb-20 md:pb-8">
       <SEO
@@ -283,20 +371,64 @@ export default function CollectionPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
-          {genderFilters.map((f) => (
-            <Button
-              key={f.value}
-              variant={genderFilter === f.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setGenderFilter(f.value)}
-              className="shrink-0"
-              data-testid={`filter-gender-${f.value}`}
-            >
-              {f.label}
-            </Button>
-          ))}
+        <div className="space-y-2">
+          {ageGroupOptions.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasFilters ? "text-primary" : "text-muted-foreground"}`} />
+              {ageGroupOptions.map(f => (
+                <Button
+                  key={f.value}
+                  variant={audience === f.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    const p = new URLSearchParams();
+                    if (genderFilter !== "all") p.set("gender", genderFilter);
+                    if (themeFilter  !== "all") p.set("theme", themeFilter);
+                    if (styleFilter  !== "all") p.set("style", styleFilter);
+                    const qs = p.toString();
+                    navigate(qs ? `/collection/${f.value}?${qs}` : `/collection/${f.value}`);
+                  }}
+                  className="shrink-0"
+                  data-testid={`filter-agegroup-${f.value}`}
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          )}
+          {genderOptions.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="text-xs text-muted-foreground shrink-0 font-medium">Gender</span>
+              <FilterRow
+                options={genderOptions}
+                value={genderFilter}
+                onChange={handleGenderChange}
+                testIdPrefix="filter-gender"
+              />
+            </div>
+          )}
+          {themeOptions.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="text-xs text-muted-foreground shrink-0 font-medium">Theme</span>
+              <FilterRow
+                options={themeOptions}
+                value={themeFilter}
+                onChange={handleThemeChange}
+                testIdPrefix="filter-theme"
+              />
+            </div>
+          )}
+          {styleOptions.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="text-xs text-muted-foreground shrink-0 font-medium">Style</span>
+              <FilterRow
+                options={styleOptions}
+                value={styleFilter}
+                onChange={handleStyleChange}
+                testIdPrefix="filter-style"
+              />
+            </div>
+          )}
         </div>
 
         {isLoading ? (
