@@ -247,14 +247,11 @@ export default function ShopPage() {
     queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
   });
   const shopSections: ShopSection[] = useMemo(() => {
-    type LegacyShopSection = ShopSection & { audiences?: string[] };
-    const raw: LegacyShopSection[] = Array.isArray(shopSectionsConfig?.value)
-      ? (shopSectionsConfig!.value as unknown as LegacyShopSection[])
-      : [];
-    if (raw.length === 0) return [];
+    const raw = shopSectionsConfig?.value;
+    if (!Array.isArray(raw) || raw.length === 0) return [];
     return raw.map((s): ShopSection => ({
       ...s,
-      ageGroups: s.ageGroups ?? s.audiences ?? [],
+      ageGroups: s.ageGroups ?? (s as typeof s & { audiences?: string[] }).audiences ?? [],
     }));
   }, [shopSectionsConfig]);
 
