@@ -18,10 +18,10 @@ import {
 import {
   Save, Plus, Trash2, ArrowLeft, Megaphone, LayoutDashboard, Heart,
   Grid3X3, Package, Gift, MessageSquare, BarChart3, FileText, Settings, ImageIcon,
-  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, History, Upload, Loader2, LogOut, Smartphone, Globe,
+  RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, History, Upload, Loader2, LogOut, Smartphone, Globe,
 } from "lucide-react";
 import { Link } from "wouter";
-import type { Attributes } from "@shared/types";
+import type { Attributes, Product } from "@shared/types";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
@@ -788,10 +788,81 @@ function FooterSection({ data }: { data: FooterConfig }) {
   );
 }
 
+const FEATURED_VISIBLE = 4;
+
+function FeaturedProductCarousel({ products, isLoading, sectionKey }: {
+  products: Product[];
+  isLoading: boolean;
+  sectionKey: string;
+}) {
+  const [offset, setOffset] = useState(0);
+  const canLeft = offset > 0;
+  const canRight = offset + FEATURED_VISIBLE < products.length;
+  const visible = products.slice(offset, offset + FEATURED_VISIBLE);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading products…
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return <p className="text-xs text-muted-foreground py-2">No products found for this section.</p>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline" size="icon"
+        className="shrink-0 h-8 w-8"
+        disabled={!canLeft}
+        onClick={() => setOffset(o => Math.max(0, o - 1))}
+        data-testid={`button-featured-${sectionKey}-prev`}
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+
+      <div className="flex gap-2 flex-1 min-w-0">
+        {visible.map((p) => (
+          <div key={p.id} className="flex-1 min-w-0 rounded-md border bg-muted/30 p-2 flex flex-col gap-1" data-testid={`card-featured-product-${p.id}`}>
+            {p.images?.[0]?.imageUrl ? (
+              <img src={p.images[0].imageUrl} alt={p.name} className="w-full aspect-square object-cover rounded" />
+            ) : (
+              <div className="w-full aspect-square bg-muted rounded flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-muted-foreground" />
+              </div>
+            )}
+            <p className="text-xs font-medium leading-tight line-clamp-2">{p.name}</p>
+            <p className="text-xs text-muted-foreground">₹{p.price}</p>
+          </div>
+        ))}
+      </div>
+
+      <Button
+        variant="outline" size="icon"
+        className="shrink-0 h-8 w-8"
+        disabled={!canRight}
+        onClick={() => setOffset(o => Math.min(products.length - FEATURED_VISIBLE, o + 1))}
+        data-testid={`button-featured-${sectionKey}-next`}
+      >
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
+
 function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const [config, setConfig] = useState(data);
   const save = useSaveConfig("featuredSections");
   useEffect(() => { setConfig(data); }, [data]);
+
+  const { data: featuredProducts, isLoading: loadingProducts } = useQuery<{
+    kids: Product[];
+    blankets: Product[];
+    bathrobes: Product[];
+  }>({ queryKey: ["/api/admin/featured-products"] });
 
   const updateSection = (section: "kids" | "couples" | "blankets" | "bathrobes", field: string, value: string) => {
     setConfig({ ...config, [section]: { ...config[section], [field]: value } });
@@ -801,9 +872,13 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
     <div className="space-y-4">
       {(["kids", "couples", "blankets", "bathrobes"] as const).map((section) => {
         const sectionData = config[section] || { title: "", subtitle: "", link: "" };
+        const hasCarousel = section !== "couples";
+        const products: Product[] = hasCarousel ? (featuredProducts?.[section as keyof typeof featuredProducts] ?? []) : [];
+
         return (
           <Card key={section} className="p-4 space-y-3">
             <p className="text-sm font-medium capitalize">{section} Section</p>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label>Title</Label>
@@ -818,9 +893,23 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
                 <Input value={sectionData.link} onChange={(e) => updateSection(section, "link", e.target.value)} data-testid={`input-featured-${section}-link`} />
               </div>
             </div>
+
+            {hasCarousel && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Featured products — auto-selected, rotates every 12 hrs &nbsp;·&nbsp; {products.length} in pool, showing 6
+                </p>
+                <FeaturedProductCarousel
+                  products={products}
+                  isLoading={loadingProducts}
+                  sectionKey={section}
+                />
+              </div>
+            )}
           </Card>
         );
       })}
+
       <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-featured">
         <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Featured Sections"}
       </Button>
