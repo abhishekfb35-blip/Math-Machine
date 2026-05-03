@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { db } from "../db";
-import { products, productTags, tags, categories } from "@shared/schema";
+import { products, categories, productAgeGroups, ageGroups } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { storage } from "../storage";
 import type { Product } from "@shared/types";
@@ -33,7 +33,7 @@ interface HomeCollections {
 }
 
 const BUCKET_MS = 12 * 60 * 60 * 1000;
-const PER_COLLECTION = 4;
+const PER_COLLECTION = 6;
 
 let cache: { bucket: number; data: HomeCollections } | null = null;
 
@@ -44,33 +44,49 @@ async function buildCollections(): Promise<HomeCollections> {
     return cache.data;
   }
 
-  const [kidsRows, couplesRows, blanketsRows, bathrobesRows] = await Promise.all([
+  const [kidsRows, adultsRows, blanketsRows, bathrobesRows] = await Promise.all([
     db.select({ id: products.id })
       .from(products)
-      .innerJoin(productTags, eq(productTags.productId, products.id))
-      .innerJoin(tags, eq(productTags.tagId, tags.id))
-      .where(and(eq(products.active, true), eq(tags.name, "kids towels"))),
-
-    db.select({ id: products.id })
-      .from(products)
-      .innerJoin(productTags, eq(productTags.productId, products.id))
-      .innerJoin(tags, eq(productTags.tagId, tags.id))
-      .where(and(eq(products.active, true), eq(tags.name, "couple towels"))),
+      .innerJoin(categories, eq(products.categoryId, categories.id))
+      .innerJoin(productAgeGroups, eq(productAgeGroups.productId, products.id))
+      .innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
+      .where(and(
+        eq(products.active, true),
+        eq(categories.slug, "towels"),
+        eq(ageGroups.name, "kids"),
+      )),
 
     db.select({ id: products.id })
       .from(products)
       .innerJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(eq(products.active, true), eq(categories.slug, "blankets"))),
+      .innerJoin(productAgeGroups, eq(productAgeGroups.productId, products.id))
+      .innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
+      .where(and(
+        eq(products.active, true),
+        eq(categories.slug, "towels"),
+        eq(ageGroups.name, "adults"),
+      )),
 
     db.select({ id: products.id })
       .from(products)
       .innerJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(eq(products.active, true), eq(categories.slug, "bathrobes"))),
+      .where(and(
+        eq(products.active, true),
+        eq(categories.slug, "blankets"),
+      )),
+
+    db.select({ id: products.id })
+      .from(products)
+      .innerJoin(categories, eq(products.categoryId, categories.id))
+      .where(and(
+        eq(products.active, true),
+        eq(categories.slug, "bathrobes"),
+      )),
   ]);
 
-  const kidsIds = seededShuffle(kidsRows.map(r => r.id), bucket * 4 + 0).slice(0, PER_COLLECTION);
-  const couplesIds = seededShuffle(couplesRows.map(r => r.id), bucket * 4 + 1).slice(0, PER_COLLECTION);
-  const blanketsIds = seededShuffle(blanketsRows.map(r => r.id), bucket * 4 + 2).slice(0, PER_COLLECTION);
+  const kidsIds      = seededShuffle(kidsRows.map(r => r.id),      bucket * 4 + 0).slice(0, PER_COLLECTION);
+  const couplesIds   = seededShuffle(adultsRows.map(r => r.id),    bucket * 4 + 1).slice(0, PER_COLLECTION);
+  const blanketsIds  = seededShuffle(blanketsRows.map(r => r.id),  bucket * 4 + 2).slice(0, PER_COLLECTION);
   const bathrobesIds = seededShuffle(bathrobesRows.map(r => r.id), bucket * 4 + 3).slice(0, PER_COLLECTION);
 
   const allIds = [...kidsIds, ...couplesIds, ...blanketsIds, ...bathrobesIds];
@@ -78,9 +94,9 @@ async function buildCollections(): Promise<HomeCollections> {
   const productMap = new Map(allProducts.map(p => [p.id, p]));
 
   const data: HomeCollections = {
-    kids: kidsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-    couples: couplesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-    blankets: blanketsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
+    kids:      kidsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
+    couples:   couplesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
+    blankets:  blanketsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
     bathrobes: bathrobesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
   };
 
