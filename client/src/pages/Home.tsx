@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
 import SEO, { OrganizationJsonLd } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,6 +46,65 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
         </Card>
       ))}
     </div>
+  );
+}
+
+const HOME_VISIBLE = 4;
+
+function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuickAdd }: {
+  products: Product[];
+  title: string;
+  subtitle: string;
+  link: string;
+  testIdPrefix: string;
+  onQuickAdd: (p: Product) => void;
+}) {
+  const [offset, setOffset] = useState(0);
+  const canLeft = offset > 0;
+  const canRight = offset + HOME_VISIBLE < products.length;
+  const visible = products.slice(offset, offset + HOME_VISIBLE);
+
+  return (
+    <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold" data-testid={`text-${testIdPrefix}-section`}>{title}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+        <Link href={link}>
+          <Button variant="ghost" size="sm" data-testid={`link-view-all-${testIdPrefix}`}>
+            See All <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline" size="icon"
+          className="shrink-0 h-9 w-9"
+          disabled={!canLeft}
+          onClick={() => setOffset(o => Math.max(0, o - 1))}
+          data-testid={`button-${testIdPrefix}-prev`}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <div className="flex gap-3 flex-1 min-w-0">
+          {visible.map(product => (
+            <div key={product.id} className="flex-1 min-w-0">
+              <ProductCardNew product={product} onQuickAdd={onQuickAdd} />
+            </div>
+          ))}
+        </div>
+        <Button
+          variant="outline" size="icon"
+          className="shrink-0 h-9 w-9"
+          disabled={!canRight}
+          onClick={() => setOffset(o => Math.min(products.length - HOME_VISIBLE, o + 1))}
+          data-testid={`button-${testIdPrefix}-next`}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -210,24 +269,14 @@ export default function Home() {
       ) : (
         <>
           {featuredKids.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-xl font-bold" data-testid="text-kids-section">{featured.kids.title}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">{featured.kids.subtitle}</p>
-                </div>
-                <Link href={featured.kids.link}>
-                  <Button variant="ghost" size="sm" data-testid="link-view-all-kids">
-                    See All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {featuredKids.map((product) => (
-                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
-                ))}
-              </div>
-            </section>
+            <FeaturedSection
+              products={featuredKids}
+              title={featured.kids.title}
+              subtitle={featured.kids.subtitle}
+              link={featured.kids.link}
+              testIdPrefix="kids"
+              onQuickAdd={setQuickAddProduct}
+            />
           )}
 
           <section className="bg-primary/5 py-8 my-4">
@@ -248,66 +297,36 @@ export default function Home() {
           </section>
 
           {featuredAdults.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-xl font-bold" data-testid="text-couples-section">{featured.couples.title}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">{featured.couples.subtitle}</p>
-                </div>
-                <Link href={featured.couples.link}>
-                  <Button variant="ghost" size="sm" data-testid="link-view-all-couples">
-                    See All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {featuredAdults.map((product) => (
-                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
-                ))}
-              </div>
-            </section>
+            <FeaturedSection
+              products={featuredAdults}
+              title={featured.couples.title}
+              subtitle={featured.couples.subtitle}
+              link={featured.couples.link}
+              testIdPrefix="couples"
+              onQuickAdd={setQuickAddProduct}
+            />
           )}
 
           {featuredBlankets.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-xl font-bold" data-testid="text-blankets-section">{featured.blankets.title}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">{featured.blankets.subtitle}</p>
-                </div>
-                <Link href={featured.blankets.link}>
-                  <Button variant="ghost" size="sm" data-testid="link-view-all-blankets">
-                    See All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {featuredBlankets.map((product) => (
-                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
-                ))}
-              </div>
-            </section>
+            <FeaturedSection
+              products={featuredBlankets}
+              title={featured.blankets.title}
+              subtitle={featured.blankets.subtitle}
+              link={featured.blankets.link}
+              testIdPrefix="blankets"
+              onQuickAdd={setQuickAddProduct}
+            />
           )}
 
           {featuredBathrobes.length > 0 && (
-            <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 className="text-xl font-bold" data-testid="text-bathrobes-section">{featured.bathrobes?.title || "Luxury Bathrobes"}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">{featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}</p>
-                </div>
-                <Link href={featured.bathrobes?.link || "/category/bathrobes"}>
-                  <Button variant="ghost" size="sm" data-testid="link-view-all-bathrobes">
-                    See All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {featuredBathrobes.map((product) => (
-                  <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
-                ))}
-              </div>
-            </section>
+            <FeaturedSection
+              products={featuredBathrobes}
+              title={featured.bathrobes?.title || "Luxury Bathrobes"}
+              subtitle={featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}
+              link={featured.bathrobes?.link || "/category/bathrobes"}
+              testIdPrefix="bathrobes"
+              onQuickAdd={setQuickAddProduct}
+            />
           )}
         </>
       )}
