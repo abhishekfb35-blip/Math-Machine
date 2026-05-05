@@ -1,88 +1,70 @@
 import type { Express } from "express";
-import { db } from "../../db";
-import { products, categories, productAgeGroups, ageGroups } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
 import { storage } from "../../storage";
 import { requirePermission } from "../../adminAuth";
 import type { Product } from "@shared/types";
-
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
-    return ((z ^ (z >>> 14)) >>> 0) / 0x100000000;
-  };
-}
-
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const a = [...arr];
-  const rand = mulberry32(seed);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+import {
+  loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
+  SECTION_KEYS, EMPTY_FILTERS, type SectionFilters,
+} from "../../lib/featuredQuery";
 
 const BUCKET_MS = 12 * 60 * 60 * 1000;
 const PER_SECTION = 6;
 
-async function getIdsByCategoryAndAge(categorySlug: string, ageGroupName: string): Promise<string[]> {
-  const rows = await db
-    .select({ id: products.id })
-    .from(products)
-    .innerJoin(categories, eq(products.categoryId, categories.id))
-    .innerJoin(productAgeGroups, eq(productAgeGroups.productId, products.id))
-    .innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
-    .where(and(
-      eq(products.active, true),
-      eq(categories.slug, categorySlug),
-      eq(ageGroups.name, ageGroupName),
-    ));
-  return rows.map(r => r.id);
-}
-
-async function getIdsByCategory(categorySlug: string): Promise<string[]> {
-  const rows = await db
-    .select({ id: products.id })
-    .from(products)
-    .innerJoin(categories, eq(products.categoryId, categories.id))
-    .where(and(
-      eq(products.active, true),
-      eq(categories.slug, categorySlug),
-    ));
-  return rows.map(r => r.id);
-}
-
 export function registerAdminFeaturedRoutes(app: Express) {
+  // GET — returns products for all 4 sections based on saved config
   app.get("/api/admin/featured-products", requirePermission("catalog"), async (_req, res) => {
     try {
       const bucket = Math.floor(Date.now() / BUCKET_MS);
+      const allFilters = await loadAllSectionFilters();
 
-      const [kidsIds, blanketsIds, bathrobesIds] = await Promise.all([
-        getIdsByCategoryAndAge("towels", "kids"),
-        getIdsByCategory("blankets"),
-        getIdsByCategory("bathrobes"),
-      ]);
+      const idSets = await Promise.all(
+        SECTION_KEYS.map(k => getProductIdsByFilters(allFilters[k]))
+      );
 
-      const selectedKidsIds      = seededShuffle(kidsIds,      bucket * 3 + 0).slice(0, PER_SECTION);
-      const selectedBlanketsIds  = seededShuffle(blanketsIds,  bucket * 3 + 1).slice(0, PER_SECTION);
-      const selectedBathrobesIds = seededShuffle(bathrobesIds, bucket * 3 + 2).slice(0, PER_SECTION);
+      const selectedIdSets = idSets.map((ids, i) =>
+        seededShuffle(ids, bucket * SECTION_KEYS.length + i).slice(0, PER_SECTION)
+      );
 
-      const allIds = [...selectedKidsIds, ...selectedBlanketsIds, ...selectedBathrobesIds];
+      const allIds = selectedIdSets.flat();
       const allProducts = await storage.getProductsByIds(allIds);
       const productMap = new Map<string, Product>(allProducts.map(p => [p.id, p]));
 
-      res.json({
-        kids:      selectedKidsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-        blankets:  selectedBlanketsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-        bathrobes: selectedBathrobesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
+      const result: Record<string, Product[]> = {};
+      SECTION_KEYS.forEach((k, i) => {
+        result[k] = selectedIdSets[i].map(id => productMap.get(id)).filter(Boolean) as Product[];
       });
+
+      res.json(result);
     } catch (err) {
       console.error("Error building admin featured products:", err);
       res.status(500).json({ message: "Failed to load featured products" });
+    }
+  });
+
+  // POST preview — returns products matching caller-supplied filters (no cache)
+  app.post("/api/admin/featured-products/preview", requirePermission("catalog"), async (req, res) => {
+    try {
+      const filters: SectionFilters = {
+        categoryFilters: Array.isArray(req.body.categoryFilters) ? req.body.categoryFilters : [],
+        ageGroupFilters: Array.isArray(req.body.ageGroupFilters) ? req.body.ageGroupFilters : [],
+        genderFilters:   Array.isArray(req.body.genderFilters)   ? req.body.genderFilters   : [],
+        themeFilters:    Array.isArray(req.body.themeFilters)    ? req.body.themeFilters    : [],
+        styleFilters:    Array.isArray(req.body.styleFilters)    ? req.body.styleFilters    : [],
+        tagFilters:      Array.isArray(req.body.tagFilters)      ? req.body.tagFilters      : [],
+      };
+
+      const bucket = Math.floor(Date.now() / BUCKET_MS);
+      const ids = await getProductIdsByFilters(filters);
+      const selectedIds = seededShuffle(ids, bucket).slice(0, PER_SECTION);
+
+      const allProducts = await storage.getProductsByIds(selectedIds);
+      const productMap = new Map<string, Product>(allProducts.map(p => [p.id, p]));
+      const products = selectedIds.map(id => productMap.get(id)).filter(Boolean) as Product[];
+
+      res.json({ products, total: ids.length });
+    } catch (err) {
+      console.error("Error previewing featured products:", err);
+      res.status(500).json({ message: "Failed to preview featured products" });
     }
   });
 }

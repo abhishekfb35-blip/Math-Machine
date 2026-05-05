@@ -51,6 +51,11 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
 
 const HOME_VISIBLE = 4;
 
+function deriveSeeAllLink(categoryFilters?: string[]): string {
+  if (categoryFilters && categoryFilters.length === 1) return `/category/${categoryFilters[0]}`;
+  return "/shop";
+}
+
 function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuickAdd }: {
   products: Product[];
   title: string;
@@ -273,7 +278,7 @@ export default function Home() {
               products={featuredKids}
               title={featured.kids.title}
               subtitle={featured.kids.subtitle}
-              link={featured.kids.link}
+              link={deriveSeeAllLink(featured.kids.categoryFilters)}
               testIdPrefix="kids"
               onQuickAdd={setQuickAddProduct}
             />
@@ -301,7 +306,7 @@ export default function Home() {
               products={featuredAdults}
               title={featured.couples.title}
               subtitle={featured.couples.subtitle}
-              link={featured.couples.link}
+              link={deriveSeeAllLink(featured.couples.categoryFilters)}
               testIdPrefix="couples"
               onQuickAdd={setQuickAddProduct}
             />
@@ -312,7 +317,7 @@ export default function Home() {
               products={featuredBlankets}
               title={featured.blankets.title}
               subtitle={featured.blankets.subtitle}
-              link={featured.blankets.link}
+              link={deriveSeeAllLink(featured.blankets.categoryFilters)}
               testIdPrefix="blankets"
               onQuickAdd={setQuickAddProduct}
             />
@@ -323,7 +328,7 @@ export default function Home() {
               products={featuredBathrobes}
               title={featured.bathrobes?.title || "Luxury Bathrobes"}
               subtitle={featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}
-              link={featured.bathrobes?.link || "/category/bathrobes"}
+              link={deriveSeeAllLink(featured.bathrobes?.categoryFilters)}
               testIdPrefix="bathrobes"
               onQuickAdd={setQuickAddProduct}
             />

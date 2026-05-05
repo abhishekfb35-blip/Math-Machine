@@ -197,6 +197,10 @@ export function registerCheckoutRoutes(app: Express) {
       const key = req.params.key as string;
       const value = JSON.stringify(req.body.value);
       const config = await storage.upsertSiteConfig(key, value);
+      if (key === "featuredSections") {
+        const { bustHomeCache } = await import("./home");
+        bustHomeCache();
+      }
       await storage.createAuditLog({
         entityType: "site-config", entityId: key, entityName: key,
         action: "updated", changes: JSON.stringify({ key }), username: getAdminUsername(req),

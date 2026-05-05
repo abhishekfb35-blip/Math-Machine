@@ -21,7 +21,8 @@ import {
   RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, History, Upload, Loader2, LogOut, Smartphone, Globe,
 } from "lucide-react";
 import { Link } from "wouter";
-import type { Attributes, Product } from "@shared/types";
+import { cn } from "@/lib/utils";
+import type { Attributes, Product, Tag, Category } from "@shared/types";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
@@ -30,7 +31,7 @@ import {
   type AnnouncementConfig, type HeroConfig, type HeaderConfig,
   type PromiseConfig, type CollectionsConfig, type ProductTypesConfig,
   type PromoConfig, type TestimonialsConfig, type StatsConfig,
-  type FooterConfig, type FeaturedSectionsConfig,
+  type FooterConfig, type FeaturedSectionsConfig, type FeaturedSectionConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
   type PwaInstallConfig, type SeoConfig, type ShopSection,
 } from "@/lib/siteConfigDefaults";
@@ -790,6 +791,40 @@ function FooterSection({ data }: { data: FooterConfig }) {
 
 const FEATURED_VISIBLE = 4;
 
+function FilterChips({
+  label, options, selected, onToggle,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  selected: string[];
+  onToggle: (v: string) => void;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(opt => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onToggle(opt.value)}
+            className={cn(
+              "text-xs px-2.5 py-0.5 rounded-full border transition-colors",
+              selected.includes(opt.value)
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+            )}
+            data-testid={`chip-${label.toLowerCase().replace(/\s/g, "-")}-${opt.value}`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FeaturedProductCarousel({ products, isLoading, sectionKey }: {
   products: Product[];
   isLoading: boolean;
@@ -827,8 +862,8 @@ function FeaturedProductCarousel({ products, isLoading, sectionKey }: {
       <div className="flex gap-2 flex-1 min-w-0">
         {visible.map((p) => (
           <div key={p.id} className="flex-1 min-w-0 rounded-md border bg-muted/30 p-2 flex flex-col gap-1" data-testid={`card-featured-product-${p.id}`}>
-            {p.images?.[0]?.imageUrl ? (
-              <img src={p.images[0].imageUrl} alt={p.name} className="w-full aspect-square object-cover rounded" />
+            {p.imageUrl ? (
+              <img src={p.imageUrl} alt={p.name} className="w-full aspect-square object-cover rounded" />
             ) : (
               <div className="w-full aspect-square bg-muted rounded flex items-center justify-center">
                 <ImageIcon className="w-5 h-5 text-muted-foreground" />
@@ -853,59 +888,145 @@ function FeaturedProductCarousel({ products, isLoading, sectionKey }: {
   );
 }
 
+type SectionKey = "kids" | "couples" | "blankets" | "bathrobes";
+
+function normaliseSectionConfig(raw: any): FeaturedSectionConfig {
+  return {
+    title:           raw?.title           ?? "",
+    subtitle:        raw?.subtitle        ?? "",
+    categoryFilters: Array.isArray(raw?.categoryFilters) ? raw.categoryFilters : [],
+    ageGroupFilters: Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : [],
+    genderFilters:   Array.isArray(raw?.genderFilters)   ? raw.genderFilters   : [],
+    themeFilters:    Array.isArray(raw?.themeFilters)    ? raw.themeFilters    : [],
+    styleFilters:    Array.isArray(raw?.styleFilters)    ? raw.styleFilters    : [],
+    tagFilters:      Array.isArray(raw?.tagFilters)      ? raw.tagFilters      : [],
+  };
+}
+
 function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
-  const [config, setConfig] = useState(data);
+  const [config, setConfig] = useState<FeaturedSectionsConfig>(() => ({
+    kids:      normaliseSectionConfig(data.kids),
+    couples:   normaliseSectionConfig(data.couples),
+    blankets:  normaliseSectionConfig(data.blankets),
+    bathrobes: normaliseSectionConfig(data.bathrobes),
+  }));
+  const [previewResults, setPreviewResults] = useState<Record<string, { products: Product[]; total: number }>>({});
   const save = useSaveConfig("featuredSections");
-  useEffect(() => { setConfig(data); }, [data]);
+  useEffect(() => {
+    setConfig({
+      kids:      normaliseSectionConfig(data.kids),
+      couples:   normaliseSectionConfig(data.couples),
+      blankets:  normaliseSectionConfig(data.blankets),
+      bathrobes: normaliseSectionConfig(data.bathrobes),
+    });
+  }, [data]);
 
-  const { data: featuredProducts, isLoading: loadingProducts } = useQuery<{
-    kids: Product[];
-    blankets: Product[];
-    bathrobes: Product[];
-  }>({ queryKey: ["/api/admin/featured-products"] });
+  const { data: savedProducts, isLoading: loadingProducts } = useQuery<Record<string, Product[]>>({
+    queryKey: ["/api/admin/featured-products"],
+  });
+  const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+  const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
 
-  const updateSection = (section: "kids" | "couples" | "blankets" | "bathrobes", field: string, value: string) => {
-    setConfig({ ...config, [section]: { ...config[section], [field]: value } });
+  const previewMutation = useMutation({
+    mutationFn: async ({ section, filters }: { section: string; filters: FeaturedSectionConfig }) => {
+      const res = await apiRequest("POST", "/api/admin/featured-products/preview", {
+        categoryFilters: filters.categoryFilters,
+        ageGroupFilters: filters.ageGroupFilters,
+        genderFilters:   filters.genderFilters,
+        themeFilters:    filters.themeFilters,
+        styleFilters:    filters.styleFilters,
+        tagFilters:      filters.tagFilters,
+      }) as unknown as { products: Product[]; total: number };
+      return { section, products: res.products, total: res.total };
+    },
+    onSuccess: ({ section, products, total }) => {
+      setPreviewResults(prev => ({ ...prev, [section]: { products, total } }));
+    },
+  });
+
+  const updateField = (section: SectionKey, field: keyof FeaturedSectionConfig, value: any) => {
+    setConfig(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
+    if (field !== "title" && field !== "subtitle") {
+      setPreviewResults(prev => { const n = { ...prev }; delete n[section]; return n; });
+    }
+  };
+
+  const toggleFilter = (section: SectionKey, field: keyof FeaturedSectionConfig, value: string) => {
+    const current = (config[section][field] as string[]) ?? [];
+    const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+    updateField(section, field, updated);
+  };
+
+  const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
+  const ageGroupOptions = (attributes?.ageGroups ?? []).map(a => ({ value: a.name, label: a.name }));
+  const genderOptions   = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
+  const themeOptions    = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
+  const styleOptions    = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
+  const tagOptions      = (allTags ?? []).map(t => ({ value: t.name, label: t.name }));
+
+  const SECTION_LABELS: Record<SectionKey, string> = {
+    kids: "Kids", couples: "Couples", blankets: "Blankets", bathrobes: "Bathrobes",
   };
 
   return (
     <div className="space-y-4">
-      {(["kids", "couples", "blankets", "bathrobes"] as const).map((section) => {
-        const sectionData = config[section] || { title: "", subtitle: "", link: "" };
-        const hasCarousel = section !== "couples";
-        const products: Product[] = hasCarousel ? (featuredProducts?.[section as keyof typeof featuredProducts] ?? []) : [];
+      {(["kids", "couples", "blankets", "bathrobes"] as SectionKey[]).map((section) => {
+        const s = config[section];
+        const preview = previewResults[section];
+        const displayProducts: Product[] = preview?.products ?? savedProducts?.[section] ?? [];
+        const isPreviewing = !!preview;
+        const previewingThis = previewMutation.isPending && (previewMutation.variables as any)?.section === section;
 
         return (
-          <Card key={section} className="p-4 space-y-3">
-            <p className="text-sm font-medium capitalize">{section} Section</p>
+          <Card key={section} className="p-4 space-y-4">
+            <p className="text-sm font-semibold capitalize">{SECTION_LABELS[section]} Section</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <Label>Title</Label>
-                <Input value={sectionData.title} onChange={(e) => updateSection(section, "title", e.target.value)} data-testid={`input-featured-${section}-title`} />
+                <Input value={s.title} onChange={(e) => updateField(section, "title", e.target.value)} data-testid={`input-featured-${section}-title`} />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Subtitle</Label>
-                <Input value={sectionData.subtitle} onChange={(e) => updateSection(section, "subtitle", e.target.value)} data-testid={`input-featured-${section}-subtitle`} />
-              </div>
-              <div className="space-y-2">
-                <Label>Link</Label>
-                <Input value={sectionData.link} onChange={(e) => updateSection(section, "link", e.target.value)} data-testid={`input-featured-${section}-link`} />
+                <Input value={s.subtitle} onChange={(e) => updateField(section, "subtitle", e.target.value)} data-testid={`input-featured-${section}-subtitle`} />
               </div>
             </div>
 
-            {hasCarousel && (
-              <div className="space-y-1.5">
+            <div className="space-y-3 rounded-md border p-3 bg-muted/30">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
+              <FilterChips label="Categories"  options={categoryOptions} selected={s.categoryFilters} onToggle={v => toggleFilter(section, "categoryFilters", v)} />
+              <FilterChips label="Age Groups"  options={ageGroupOptions} selected={s.ageGroupFilters} onToggle={v => toggleFilter(section, "ageGroupFilters", v)} />
+              <FilterChips label="Genders"     options={genderOptions}   selected={s.genderFilters}   onToggle={v => toggleFilter(section, "genderFilters",   v)} />
+              <FilterChips label="Themes"      options={themeOptions}    selected={s.themeFilters}    onToggle={v => toggleFilter(section, "themeFilters",    v)} />
+              <FilterChips label="Styles"      options={styleOptions}    selected={s.styleFilters}    onToggle={v => toggleFilter(section, "styleFilters",    v)} />
+              <FilterChips label="Tags"        options={tagOptions}      selected={s.tagFilters}      onToggle={v => toggleFilter(section, "tagFilters",      v)} />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
-                  Featured products — auto-selected, rotates every 12 hrs &nbsp;·&nbsp; {products.length} in pool, showing 6
+                  {isPreviewing
+                    ? `Preview — ${preview.total} matched, showing ${preview.products.length}`
+                    : `Saved — ${displayProducts.length} products (rotates every 12 hrs)`}
                 </p>
-                <FeaturedProductCarousel
-                  products={products}
-                  isLoading={loadingProducts}
-                  sectionKey={section}
-                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={previewingThis}
+                  onClick={() => previewMutation.mutate({ section, filters: s })}
+                  data-testid={`button-preview-${section}`}
+                >
+                  {previewingThis ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Previewing…</> : "Preview"}
+                </Button>
               </div>
-            )}
+              <FeaturedProductCarousel
+                products={displayProducts}
+                isLoading={loadingProducts && !isPreviewing}
+                sectionKey={section}
+              />
+            </div>
           </Card>
         );
       })}

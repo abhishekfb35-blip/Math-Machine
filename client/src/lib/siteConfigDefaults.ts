@@ -143,11 +143,22 @@ export interface FooterConfig {
   shopLinks: { label: string; href: string }[];
 }
 
+export interface FeaturedSectionConfig {
+  title: string;
+  subtitle: string;
+  categoryFilters: string[];
+  ageGroupFilters: string[];
+  genderFilters: string[];
+  themeFilters: string[];
+  styleFilters: string[];
+  tagFilters: string[];
+}
+
 export interface FeaturedSectionsConfig {
-  kids: { title: string; subtitle: string; link: string };
-  couples: { title: string; subtitle: string; link: string };
-  blankets: { title: string; subtitle: string; link: string };
-  bathrobes: { title: string; subtitle: string; link: string };
+  kids: FeaturedSectionConfig;
+  couples: FeaturedSectionConfig;
+  blankets: FeaturedSectionConfig;
+  bathrobes: FeaturedSectionConfig;
 }
 
 export const defaultAnnouncement: AnnouncementConfig = {
@@ -431,9 +442,18 @@ export const defaultShopSections: ShopSection[] = [
   { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, ageGroups: ["adults"] },
 ];
 
+const EMPTY_SECTION_FILTERS = {
+  categoryFilters: [],
+  ageGroupFilters: [],
+  genderFilters: [],
+  themeFilters: [],
+  styleFilters: [],
+  tagFilters: [],
+};
+
 export const defaultFeaturedSections: FeaturedSectionsConfig = {
-  kids: { title: "Popular for Kids Towels", subtitle: "Disney princesses, superheroes & more", link: "/shop?filter=kids" },
-  couples: { title: "Couple Sets", subtitle: "Elegant matching towel sets for two", link: "/collection/couples" },
-  blankets: { title: "Cozy Blankets", subtitle: "Soft personalised AC blankets for kids", link: "/collection/kids" },
-  bathrobes: { title: "Luxury Bathrobes", subtitle: "Premium personalised cotton bathrobes", link: "/category/bathrobes" },
+  kids:      { title: "Popular for Kids Towels",           subtitle: "Disney princesses, superheroes & more",   ...EMPTY_SECTION_FILTERS },
+  couples:   { title: "Couple Sets",                       subtitle: "Elegant matching towel sets for two",       ...EMPTY_SECTION_FILTERS },
+  blankets:  { title: "Cozy Blankets",                     subtitle: "Soft personalised AC blankets for kids",    ...EMPTY_SECTION_FILTERS },
+  bathrobes: { title: "Luxury Bathrobes",                  subtitle: "Premium personalised cotton bathrobes",     ...EMPTY_SECTION_FILTERS },
 };

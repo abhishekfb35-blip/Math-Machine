@@ -18,7 +18,7 @@ The project utilizes a **monorepo structure** comprising `client/` (React fronte
 -   **State Management/Data Fetching**: TanStack React Query.
 -   **Key User-facing Pages**: Home, Shop, Product Detail, Cart, Checkout, Order Confirmation.
 -   **Admin Dashboard**: A central interface for managing catalog, orders, page layouts, policy pages, health checks, audit logs, and data exports. Includes specialized tools like:
-    -   **Admin Builder**: Dynamic homepage layout and collection management.
+    -   **Admin Builder**: Dynamic homepage layout and collection management. Featured Sections panel lets admins configure per-section filters (category, age group, gender, theme, style, tags) with a live Preview button per section. The "See All" link is auto-derived from `categoryFilters` (1 category → `/category/{slug}`, else `/shop`).
     -   **Admin Catalog**: CMS for product and category management with bulk editing capabilities.
     -   **Admin Orders**: Order viewing, status updates, and internal notes.
     -   **Admin Health Checks**: Deploy and data integrity verification tools.

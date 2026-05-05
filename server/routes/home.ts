@@ -1,31 +1,12 @@
 import type { Express } from "express";
-import { db } from "../db";
-import { products, categories, productAgeGroups, ageGroups } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
 import { storage } from "../storage";
 import type { Product } from "@shared/types";
+import {
+  loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
+  SECTION_KEYS, type SectionKey,
+} from "../lib/featuredQuery";
 
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
-    return ((z ^ (z >>> 14)) >>> 0) / 0x100000000;
-  };
-}
-
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const a = [...arr];
-  const rand = mulberry32(seed);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-interface HomeCollections {
+export interface HomeCollections {
   kids: Product[];
   couples: Product[];
   blankets: Product[];
@@ -37,6 +18,10 @@ const PER_COLLECTION = 6;
 
 let cache: { bucket: number; data: HomeCollections } | null = null;
 
+export function bustHomeCache() {
+  cache = null;
+}
+
 async function buildCollections(): Promise<HomeCollections> {
   const bucket = Math.floor(Date.now() / BUCKET_MS);
 
@@ -44,60 +29,26 @@ async function buildCollections(): Promise<HomeCollections> {
     return cache.data;
   }
 
-  const [kidsRows, adultsRows, blanketsRows, bathrobesRows] = await Promise.all([
-    db.select({ id: products.id })
-      .from(products)
-      .innerJoin(categories, eq(products.categoryId, categories.id))
-      .innerJoin(productAgeGroups, eq(productAgeGroups.productId, products.id))
-      .innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
-      .where(and(
-        eq(products.active, true),
-        eq(categories.slug, "towels"),
-        eq(ageGroups.name, "kids"),
-      )),
+  const allFilters = await loadAllSectionFilters();
 
-    db.select({ id: products.id })
-      .from(products)
-      .innerJoin(categories, eq(products.categoryId, categories.id))
-      .innerJoin(productAgeGroups, eq(productAgeGroups.productId, products.id))
-      .innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
-      .where(and(
-        eq(products.active, true),
-        eq(categories.slug, "towels"),
-        eq(ageGroups.name, "adults"),
-      )),
+  const [kidsIds, couplesIds, blanketsIds, bathrobesIds] = await Promise.all(
+    SECTION_KEYS.map(k => getProductIdsByFilters(allFilters[k]))
+  );
 
-    db.select({ id: products.id })
-      .from(products)
-      .innerJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(
-        eq(products.active, true),
-        eq(categories.slug, "blankets"),
-      )),
+  const selectedKids      = seededShuffle(kidsIds,      bucket * 4 + 0).slice(0, PER_COLLECTION);
+  const selectedCouples   = seededShuffle(couplesIds,   bucket * 4 + 1).slice(0, PER_COLLECTION);
+  const selectedBlankets  = seededShuffle(blanketsIds,  bucket * 4 + 2).slice(0, PER_COLLECTION);
+  const selectedBathrobes = seededShuffle(bathrobesIds, bucket * 4 + 3).slice(0, PER_COLLECTION);
 
-    db.select({ id: products.id })
-      .from(products)
-      .innerJoin(categories, eq(products.categoryId, categories.id))
-      .where(and(
-        eq(products.active, true),
-        eq(categories.slug, "bathrobes"),
-      )),
-  ]);
-
-  const kidsIds      = seededShuffle(kidsRows.map(r => r.id),      bucket * 4 + 0).slice(0, PER_COLLECTION);
-  const couplesIds   = seededShuffle(adultsRows.map(r => r.id),    bucket * 4 + 1).slice(0, PER_COLLECTION);
-  const blanketsIds  = seededShuffle(blanketsRows.map(r => r.id),  bucket * 4 + 2).slice(0, PER_COLLECTION);
-  const bathrobesIds = seededShuffle(bathrobesRows.map(r => r.id), bucket * 4 + 3).slice(0, PER_COLLECTION);
-
-  const allIds = [...kidsIds, ...couplesIds, ...blanketsIds, ...bathrobesIds];
+  const allIds = [...selectedKids, ...selectedCouples, ...selectedBlankets, ...selectedBathrobes];
   const allProducts = await storage.getProductsByIds(allIds);
   const productMap = new Map(allProducts.map(p => [p.id, p]));
 
   const data: HomeCollections = {
-    kids:      kidsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-    couples:   couplesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-    blankets:  blanketsIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
-    bathrobes: bathrobesIds.map(id => productMap.get(id)).filter(Boolean) as Product[],
+    kids:      selectedKids.map(id      => productMap.get(id)).filter(Boolean) as Product[],
+    couples:   selectedCouples.map(id   => productMap.get(id)).filter(Boolean) as Product[],
+    blankets:  selectedBlankets.map(id  => productMap.get(id)).filter(Boolean) as Product[],
+    bathrobes: selectedBathrobes.map(id => productMap.get(id)).filter(Boolean) as Product[],
   };
 
   cache = { bucket, data };
