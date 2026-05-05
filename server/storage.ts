@@ -720,7 +720,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProductImage(id: string): Promise<void> {
+    const [deleted] = await db.select({ productId: productImages.productId })
+      .from(productImages).where(eq(productImages.id, id));
     await db.delete(productImages).where(eq(productImages.id, id));
+    if (deleted?.productId) {
+      const remaining = await db.select({ id: productImages.id })
+        .from(productImages)
+        .where(eq(productImages.productId, deleted.productId))
+        .orderBy(productImages.sortOrder);
+      await db.transaction(async (tx) => {
+        for (let i = 0; i < remaining.length; i++) {
+          await tx.update(productImages)
+            .set({ sortOrder: i, isPrimary: i === 0 })
+            .where(eq(productImages.id, remaining[i].id));
+        }
+      });
+    }
   }
 
   async reorderProductImages(productId: string, imageIds: string[]): Promise<void> {
