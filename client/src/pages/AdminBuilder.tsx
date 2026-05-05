@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
-import type { Attributes, Product, Tag, Category } from "@shared/types";
+import type { Attributes, Product, Tag, TagType, Category } from "@shared/types";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
@@ -792,18 +792,35 @@ function FooterSection({ data }: { data: FooterConfig }) {
 const FEATURED_VISIBLE = 4;
 
 function FilterChips({
-  label, options, selected, onToggle,
+  label, options, selected, onToggle, onToggleAll,
 }: {
   label: string;
   options: { value: string; label: string }[];
   selected: string[];
   onToggle: (v: string) => void;
+  onToggleAll?: () => void;
 }) {
   if (options.length === 0) return null;
+  const allSelected = options.length > 0 && options.every(o => selected.includes(o.value));
   return (
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
       <div className="flex flex-wrap gap-1.5">
+        {onToggleAll && (
+          <button
+            type="button"
+            onClick={onToggleAll}
+            className={cn(
+              "text-xs px-2.5 py-0.5 rounded-full border transition-colors font-semibold",
+              allSelected
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+            )}
+            data-testid={`chip-${label.toLowerCase().replace(/\s/g, "-")}-all`}
+          >
+            All
+          </button>
+        )}
         {options.map(opt => (
           <button
             key={opt.value}
@@ -903,6 +920,8 @@ function normaliseSectionConfig(raw: any): FeaturedSectionConfig {
   };
 }
 
+const EMPTY_TAG_TYPES: Record<SectionKey, string[]> = { kids: [], couples: [], blankets: [], bathrobes: [] };
+
 function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const [config, setConfig] = useState<FeaturedSectionsConfig>(() => ({
     kids:      normaliseSectionConfig(data.kids),
@@ -911,6 +930,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
     bathrobes: normaliseSectionConfig(data.bathrobes),
   }));
   const [previewResults, setPreviewResults] = useState<Record<string, { products: Product[]; total: number }>>({});
+  const [selectedTagTypes, setSelectedTagTypes] = useState<Record<SectionKey, string[]>>(EMPTY_TAG_TYPES);
   const save = useSaveConfig("featuredSections");
   useEffect(() => {
     setConfig({
@@ -927,6 +947,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
+  const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
 
   const previewMutation = useMutation({
     mutationFn: async ({ section, filters }: { section: string; filters: FeaturedSectionConfig }) => {
@@ -958,12 +979,36 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
     updateField(section, field, updated);
   };
 
-  const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
-  const ageGroupOptions = (attributes?.ageGroups ?? []).map(a => ({ value: a.name, label: a.name }));
-  const genderOptions   = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
-  const themeOptions    = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
-  const styleOptions    = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
-  const tagOptions      = (allTags ?? []).map(t => ({ value: t.name, label: t.name }));
+  const toggleAll = (section: SectionKey, field: keyof FeaturedSectionConfig, allValues: string[]) => {
+    const current = (config[section][field] as string[]) ?? [];
+    const allSelected = allValues.length > 0 && allValues.every(v => current.includes(v));
+    updateField(section, field, allSelected ? [] : allValues);
+  };
+
+  const toggleTagType = (section: SectionKey, typeId: string) => {
+    setSelectedTagTypes(prev => {
+      const cur = prev[section];
+      const next = cur.includes(typeId) ? cur.filter(t => t !== typeId) : [...cur, typeId];
+      return { ...prev, [section]: next };
+    });
+  };
+
+  const toggleAllTagTypes = (section: SectionKey) => {
+    const allTypeIds = (allTagTypes ?? []).map(t => t.id);
+    setSelectedTagTypes(prev => {
+      const cur = prev[section];
+      const allSelected = allTypeIds.length > 0 && allTypeIds.every(id => cur.includes(id));
+      return { ...prev, [section]: allSelected ? [] : allTypeIds };
+    });
+  };
+
+  const categoryOptions  = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
+  const ageGroupOptions  = (attributes?.ageGroups ?? []).map(a => ({ value: a.name, label: a.name }));
+  const genderOptions    = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
+  const themeOptions     = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
+  const styleOptions     = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
+  const tagTypeOptions   = (allTagTypes ?? []).map(tt => ({ value: tt.id, label: tt.name }));
+  const allTagsFlat      = allTags ?? [];
 
   const SECTION_LABELS: Record<SectionKey, string> = {
     kids: "Kids", couples: "Couples", blankets: "Blankets", bathrobes: "Bathrobes",
@@ -977,6 +1022,13 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
         const displayProducts: Product[] = preview?.products ?? savedProducts?.[section] ?? [];
         const isPreviewing = !!preview;
         const previewingThis = previewMutation.isPending && (previewMutation.variables as any)?.section === section;
+
+        const activeSectionTagTypes = selectedTagTypes[section];
+        const tagOptions = activeSectionTagTypes.length === 0
+          ? allTagsFlat.map(t => ({ value: t.name, label: t.name }))
+          : allTagsFlat
+              .filter(t => t.tagTypeId && activeSectionTagTypes.includes(t.tagTypeId))
+              .map(t => ({ value: t.name, label: t.name }));
 
         return (
           <Card key={section} className="p-4 space-y-4">
@@ -995,12 +1047,27 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
 
             <div className="space-y-3 rounded-md border p-3 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
-              <FilterChips label="Categories"  options={categoryOptions} selected={s.categoryFilters} onToggle={v => toggleFilter(section, "categoryFilters", v)} />
-              <FilterChips label="Age Groups"  options={ageGroupOptions} selected={s.ageGroupFilters} onToggle={v => toggleFilter(section, "ageGroupFilters", v)} />
-              <FilterChips label="Genders"     options={genderOptions}   selected={s.genderFilters}   onToggle={v => toggleFilter(section, "genderFilters",   v)} />
-              <FilterChips label="Themes"      options={themeOptions}    selected={s.themeFilters}    onToggle={v => toggleFilter(section, "themeFilters",    v)} />
-              <FilterChips label="Styles"      options={styleOptions}    selected={s.styleFilters}    onToggle={v => toggleFilter(section, "styleFilters",    v)} />
-              <FilterChips label="Tags"        options={tagOptions}      selected={s.tagFilters}      onToggle={v => toggleFilter(section, "tagFilters",      v)} />
+              <FilterChips label="Categories" options={categoryOptions} selected={s.categoryFilters}
+                onToggle={v => toggleFilter(section, "categoryFilters", v)}
+                onToggleAll={() => toggleAll(section, "categoryFilters", categoryOptions.map(o => o.value))} />
+              <FilterChips label="Age Groups" options={ageGroupOptions} selected={s.ageGroupFilters}
+                onToggle={v => toggleFilter(section, "ageGroupFilters", v)}
+                onToggleAll={() => toggleAll(section, "ageGroupFilters", ageGroupOptions.map(o => o.value))} />
+              <FilterChips label="Genders" options={genderOptions} selected={s.genderFilters}
+                onToggle={v => toggleFilter(section, "genderFilters", v)}
+                onToggleAll={() => toggleAll(section, "genderFilters", genderOptions.map(o => o.value))} />
+              <FilterChips label="Themes" options={themeOptions} selected={s.themeFilters}
+                onToggle={v => toggleFilter(section, "themeFilters", v)}
+                onToggleAll={() => toggleAll(section, "themeFilters", themeOptions.map(o => o.value))} />
+              <FilterChips label="Styles" options={styleOptions} selected={s.styleFilters}
+                onToggle={v => toggleFilter(section, "styleFilters", v)}
+                onToggleAll={() => toggleAll(section, "styleFilters", styleOptions.map(o => o.value))} />
+              <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
+                onToggle={v => toggleTagType(section, v)}
+                onToggleAll={() => toggleAllTagTypes(section)} />
+              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
+                onToggle={v => toggleFilter(section, "tagFilters", v)}
+                onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
 
             <div className="space-y-1.5">
