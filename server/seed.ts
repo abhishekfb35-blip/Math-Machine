@@ -248,7 +248,6 @@ export async function seedDatabase() {
             description: p.description ?? null,
             price: p.price,
             mrp: p.mrp ?? null,
-            imageUrl: p.imageUrl,
             categoryId: catSlugToId[p.categorySlug],
             amazonAsin: p.amazonAsin ?? null,
             color: p.color ?? null,

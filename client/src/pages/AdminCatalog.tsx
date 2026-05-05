@@ -1856,7 +1856,6 @@ export default function AdminCatalog() {
                   description: "",
                   price: 999,
                   mrp: undefined,
-                  imageUrl: "/images/products/placeholder.jpg",
                   categoryId: selectedCategory.id,
                   active: true,
                   sortOrder: (products?.length || 0) + 1,

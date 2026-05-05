@@ -18,7 +18,6 @@ export const products = pgTable("products", {
   description: text("description"),
   price: integer("price").notNull(),
   mrp: integer("mrp"),
-  imageUrl: text("image_url").notNull(),
   categoryId: text("category_id").notNull(),
   amazonAsin: text("amazon_asin"),
   color: text("color"),

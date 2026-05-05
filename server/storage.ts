@@ -419,36 +419,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {
+    const { imageUrl, ...productData } = prod;
     const id = createId();
-    const [created] = await db.insert(products).values({ id, ...prod }).returning();
-    if (created.imageUrl) {
+    const [created] = await db.insert(products).values({ id, ...productData }).returning();
+    if (imageUrl) {
       await db.insert(productImages).values({
         id: createId(),
         productId: id,
-        imageUrl: created.imageUrl,
+        imageUrl,
         sortOrder: 0,
         isPrimary: true,
       });
     }
-    return { ...created, ageGroups: [], genders: [], themes: [], styles: [] };
+    const [enriched] = await this.withEnriched([created]);
+    return enriched;
   }
 
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
+    const { imageUrl, ...productData } = data;
+    const [updated] = await db.update(products).set({ ...productData, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     if (!updated) return undefined;
-    if (data.imageUrl !== undefined && updated.imageUrl) {
+    if (imageUrl !== undefined && imageUrl) {
       const [existing] = await db.select({ id: productImages.id })
         .from(productImages)
         .where(and(eq(productImages.productId, id), eq(productImages.sortOrder, 0)));
       if (existing) {
         await db.update(productImages)
-          .set({ imageUrl: updated.imageUrl })
+          .set({ imageUrl })
           .where(eq(productImages.id, existing.id));
       } else {
         await db.insert(productImages).values({
           id: createId(),
           productId: id,
-          imageUrl: updated.imageUrl,
+          imageUrl,
           sortOrder: 0,
           isPrimary: true,
         });

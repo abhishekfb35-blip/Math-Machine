@@ -107,7 +107,7 @@ export interface InsertProduct {
   description?: string | null;
   price: number;
   mrp?: number | null;
-  imageUrl: string;
+  imageUrl?: string | null;
   categoryId: string;
   amazonAsin?: string | null;
   color?: string | null;
