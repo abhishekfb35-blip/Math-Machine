@@ -244,20 +244,6 @@ export default function AdminProductEdit() {
     }
   };
 
-  const handleMainImageUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.url) {
-        setProduct(prev => ({ ...prev!, imageUrl: data.url }));
-        toast({ title: "Main image updated — save to apply" });
-      }
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
-    }
-  };
 
   if (isLoading || !product) {
     return (
@@ -340,24 +326,14 @@ export default function AdminProductEdit() {
           <Label className="flex items-center gap-1 mb-2">
             <ImageIcon className="w-4 h-4" /> Product Images
           </Label>
+          <p className="text-[10px] text-muted-foreground mb-2">First image is the main thumbnail. Use arrows to reorder.</p>
           <div className="flex flex-wrap gap-2">
-            {product.imageUrl && (
-              <label className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted border-2 border-primary/30 cursor-pointer group`} data-testid="thumbnail-main-image">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => { if (e.target.files?.[0]) handleMainImageUpload(e.target.files[0]); }}
-                />
-                <img src={getProductImageUrl(product.imageUrl, "small")} alt="Main" className="w-full h-full object-contain rounded-md" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-md invisible group-hover:visible">
-                  <Upload className="w-4 h-4 text-white" />
-                </div>
-                <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">Main</Badge>
-              </label>
-            )}
             {localImages.map((img, idx) => (
-              <div key={img.id} className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group`} data-testid={`thumbnail-image-${img.id}`}>
+              <div
+                key={img.id}
+                className={`relative ${THUMBNAIL_SIZES.adminEditor} rounded-md overflow-visible bg-muted group ${idx === 0 ? "border-2 border-primary/40" : ""}`}
+                data-testid={`thumbnail-image-${img.id}`}
+              >
                 <img src={getProductImageUrl(img.imageUrl, "small")} alt="" className="w-full h-full object-contain rounded-md" />
                 {/* arrow reorder overlay */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 rounded-md z-10">
@@ -380,7 +356,9 @@ export default function AdminProductEdit() {
                 >
                   <X className="w-3 h-3" />
                 </button>
-                <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">{idx + 2}</Badge>
+                <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] px-1.5 py-0 no-default-hover-elevate no-default-active-elevate">
+                  {idx === 0 ? "Main" : String(idx + 1)}
+                </Badge>
               </div>
             ))}
             <label className={`${THUMBNAIL_SIZES.adminEditor} rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover-elevate`} data-testid="button-upload-image">

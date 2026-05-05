@@ -4,7 +4,6 @@ import { storage } from "../../storage";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { handleAdminLogin, handleAdminLogout, handleAdminCheck } from "../../adminAuth";
 import { notificationService } from "../../providers/notification";
-import { enrichItemsWithImages } from "../../utils/imageEnrichment";
 
 const orderStatusSchema = z.object({
   status: z.enum(["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]),
@@ -45,8 +44,7 @@ export function registerAdminOrderRoutes(app: Express) {
       const id = req.params.id as string;
       const order = await storage.getOrderById(id);
       if (!order) return res.status(404).json({ message: "Order not found" });
-      const rawItems = await storage.getOrderItems(id);
-      const items = await enrichItemsWithImages(rawItems);
+      const items = await storage.getOrderItems(id);
       res.json({ ...order, items });
     } catch (err) {
       console.error("Admin order detail error:", err);

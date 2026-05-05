@@ -323,9 +323,25 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  private async withPrimaryImage(prods: RawProductRow[]): Promise<RawProductRow[]> {
+    if (prods.length === 0) return prods;
+    const ids = prods.map(p => p.id);
+    const rows = await db.select({
+      productId: productImages.productId,
+      imageUrl: productImages.imageUrl,
+    }).from(productImages)
+      .where(and(inArray(productImages.productId, ids), eq(productImages.sortOrder, 0)));
+    const imageMap = new Map<string, string>(rows.map(r => [r.productId, r.imageUrl]));
+    return prods.map(p => {
+      const primary = imageMap.get(p.id);
+      return primary ? { ...p, imageUrl: primary } : p;
+    });
+  }
+
   private async withEnriched(prods: RawProductRow[]): Promise<Product[]> {
-    const withStats = await this.withReviewStats(prods);
-    const withTags  = await this.withTagNames(withStats);
+    const withImages = await this.withPrimaryImage(prods);
+    const withStats  = await this.withReviewStats(withImages);
+    const withTags   = await this.withTagNames(withStats);
     return this.withAttributes(withTags);
   }
 
@@ -403,7 +419,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {
-    const [created] = await db.insert(products).values({ id: createId(), ...prod }).returning();
+    const id = createId();
+    const [created] = await db.insert(products).values({ id, ...prod }).returning();
+    if (created.imageUrl) {
+      await db.insert(productImages).values({
+        id: createId(),
+        productId: id,
+        imageUrl: created.imageUrl,
+        sortOrder: 0,
+        isPrimary: true,
+      });
+    }
     return { ...created, ageGroups: [], genders: [], themes: [], styles: [] };
   }
 
@@ -536,7 +562,19 @@ export class DatabaseStorage implements IStorage {
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
-    return rows;
+
+    const productIds = [...new Set(rows.filter(r => r.productId).map(r => r.productId as string))];
+    if (productIds.length === 0) return rows;
+    const primaryImages = await db.select({
+      productId: productImages.productId,
+      imageUrl: productImages.imageUrl,
+    }).from(productImages)
+      .where(and(inArray(productImages.productId, productIds), eq(productImages.sortOrder, 0)));
+    const imageMap = new Map<string, string>(primaryImages.map(r => [r.productId, r.imageUrl]));
+    return rows.map(row => ({
+      ...row,
+      imageUrl: row.productId ? (imageMap.get(row.productId) ?? row.imageUrl) : row.imageUrl,
+    }));
   }
 
   async updateOrderPayment(orderId: string, paymentId: string, paymentStatus: string): Promise<Order | undefined> {

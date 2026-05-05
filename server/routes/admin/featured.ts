@@ -6,8 +6,6 @@ import {
   loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
   SECTION_KEYS, EMPTY_FILTERS, type SectionFilters,
 } from "../../lib/featuredQuery";
-import { enrichWithImages } from "../../utils/imageEnrichment";
-
 const BUCKET_MS = 12 * 60 * 60 * 1000;
 const PER_SECTION = 6;
 
@@ -27,8 +25,7 @@ export function registerAdminFeaturedRoutes(app: Express) {
       );
 
       const allIds = selectedIdSets.flat();
-      const rawProducts = await storage.getProductsByIds(allIds);
-      const allProducts = await enrichWithImages(rawProducts);
+      const allProducts = await storage.getProductsByIds(allIds);
       const productMap = new Map<string, Product>(allProducts.map(p => [p.id, p]));
 
       const result: Record<string, Product[]> = {};
@@ -59,8 +56,7 @@ export function registerAdminFeaturedRoutes(app: Express) {
       const ids = await getProductIdsByFilters(filters);
       const selectedIds = seededShuffle(ids, bucket).slice(0, PER_SECTION);
 
-      const rawProducts = await storage.getProductsByIds(selectedIds);
-      const allProducts = await enrichWithImages(rawProducts);
+      const allProducts = await storage.getProductsByIds(selectedIds);
       const productMap = new Map<string, Product>(allProducts.map(p => [p.id, p]));
       const products = selectedIds.map(id => productMap.get(id)).filter(Boolean) as Product[];
 

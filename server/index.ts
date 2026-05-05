@@ -21,6 +21,7 @@ import { nullifySwatchUploads } from "./migrations/nullify-swatch-uploads";
 import { ensureAdminUsersTable } from "./migrations/admin-users-table";
 import { ensureWishlistsTable } from "./migrations/wishlists-table";
 import { ensureRateLimitStatsTable } from "./migrations/rate-limit-stats-table";
+import { consolidateProductImages } from "./migrations/consolidate-product-images";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
@@ -297,6 +298,7 @@ function startAbandonedCartScheduler() {
           await ensureAdminUsersTable();
           await ensureWishlistsTable();
           await ensureRateLimitStatsTable();
+          await consolidateProductImages();
           await loadRateLimitConfig();
           log("startup tasks complete");
           startAbandonedCartScheduler();
