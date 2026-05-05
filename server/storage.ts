@@ -395,7 +395,7 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(products.sortOrder, products.name);
-    return this.withAttributes(prods);
+    return this.withEnriched(prods);
   }
 
   async getProductBySlug(slug: string): Promise<Product | undefined> {
@@ -436,7 +436,25 @@ export class DatabaseStorage implements IStorage {
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
     const [updated] = await db.update(products).set({ ...data, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     if (!updated) return undefined;
-    const [enriched] = await this.withAttributes([updated]);
+    if (data.imageUrl !== undefined && updated.imageUrl) {
+      const [existing] = await db.select({ id: productImages.id })
+        .from(productImages)
+        .where(and(eq(productImages.productId, id), eq(productImages.sortOrder, 0)));
+      if (existing) {
+        await db.update(productImages)
+          .set({ imageUrl: updated.imageUrl })
+          .where(eq(productImages.id, existing.id));
+      } else {
+        await db.insert(productImages).values({
+          id: createId(),
+          productId: id,
+          imageUrl: updated.imageUrl,
+          sortOrder: 0,
+          isPrimary: true,
+        });
+      }
+    }
+    const [enriched] = await this.withEnriched([updated]);
     return enriched;
   }
 
@@ -556,7 +574,7 @@ export class DatabaseStorage implements IStorage {
         selectedColor: orderItems.selectedColor,
         selectedSize: orderItems.selectedSize,
         isFree: orderItems.isFree,
-        imageUrl: products.imageUrl,
+        imageUrl: sql<string | null>`null`,
         sku: products.sku,
       })
       .from(orderItems)
@@ -573,7 +591,7 @@ export class DatabaseStorage implements IStorage {
     const imageMap = new Map<string, string>(primaryImages.map(r => [r.productId, r.imageUrl]));
     return rows.map(row => ({
       ...row,
-      imageUrl: row.productId ? (imageMap.get(row.productId) ?? row.imageUrl) : row.imageUrl,
+      imageUrl: row.productId ? (imageMap.get(row.productId) ?? null) : null,
     }));
   }
 
@@ -890,8 +908,7 @@ export class DatabaseStorage implements IStorage {
     const prods = await db.select().from(products)
       .where(eq(products.categoryId, categoryId))
       .orderBy(products.sortOrder, products.name);
-    const withStats = await this.withReviewStats(prods);
-    return this.withAttributes(withStats);
+    return this.withEnriched(prods);
   }
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
