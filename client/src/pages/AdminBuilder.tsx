@@ -939,6 +939,8 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
       blankets:  normaliseSectionConfig(data.blankets),
       bathrobes: normaliseSectionConfig(data.bathrobes),
     });
+    setSelectedTagTypes(EMPTY_TAG_TYPES);
+    setPreviewResults({});
   }, [data]);
 
   const { data: savedProducts, isLoading: loadingProducts } = useQuery<Record<string, Product[]>>({
