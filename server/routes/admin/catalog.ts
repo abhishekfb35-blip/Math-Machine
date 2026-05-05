@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
 import { fileStorage } from "../../providers/fileStorage";
+import { enrichWithImages } from "../../utils/imageEnrichment";
 
 const sseClients = new Set<Response>();
 
@@ -93,21 +94,21 @@ export function registerAdminCatalogRoutes(app: Express) {
 
   app.get("/api/admin/products", requirePermission("catalog"), async (_req, res) => {
     const prods = await storage.getAllProducts();
-    res.json(prods);
+    res.json(await enrichWithImages(prods));
   });
 
   app.get("/api/admin/products/search", requirePermission("catalog"), async (req, res) => {
     const q = (req.query.q as string || "").trim();
     if (!q) return res.json([]);
     const prods = await storage.searchAllProducts(q);
-    res.json(prods);
+    res.json(await enrichWithImages(prods));
   });
 
   app.get("/api/admin/products/category/:categoryId", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
     const prods = await storage.getAllProductsByCategory(categoryId);
-    res.json(prods);
+    res.json(await enrichWithImages(prods));
   });
 
   // Combined catalog endpoint — products + tags + images in one request
@@ -119,7 +120,8 @@ export function registerAdminCatalogRoutes(app: Express) {
       storage.getProductTagsForCatalog(categoryId),
       storage.getProductImagesByCategory(categoryId),
     ]);
-    const products = prods.map(p => ({ ...p, tagNames: productTagNameMap[p.id] ?? [] }));
+    const enriched = await enrichWithImages(prods);
+    const products = enriched.map(p => ({ ...p, tagNames: productTagNameMap[p.id] ?? [] }));
     res.json({ products, productTagMap, productImages });
   });
 

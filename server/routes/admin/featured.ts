@@ -6,27 +6,10 @@ import {
   loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
   SECTION_KEYS, EMPTY_FILTERS, type SectionFilters,
 } from "../../lib/featuredQuery";
-import { db } from "../../db";
-import { productImages } from "@shared/schema";
-import { inArray } from "drizzle-orm";
+import { enrichWithImages } from "../../utils/imageEnrichment";
 
 const BUCKET_MS = 12 * 60 * 60 * 1000;
 const PER_SECTION = 6;
-
-async function enrichWithImages(prods: Product[]): Promise<Product[]> {
-  const missing = prods.filter(p => !p.imageUrl).map(p => p.id);
-  if (missing.length === 0) return prods;
-  const rows = await db
-    .select({ productId: productImages.productId, imageUrl: productImages.imageUrl })
-    .from(productImages)
-    .where(inArray(productImages.productId, missing))
-    .orderBy(productImages.sortOrder);
-  const imageMap = new Map<string, string>();
-  for (const r of rows) {
-    if (!imageMap.has(r.productId)) imageMap.set(r.productId, r.imageUrl);
-  }
-  return prods.map(p => (!p.imageUrl && imageMap.has(p.id)) ? { ...p, imageUrl: imageMap.get(p.id)! } : p);
-}
 
 export function registerAdminFeaturedRoutes(app: Express) {
   // GET — returns products for all 4 sections based on saved config
