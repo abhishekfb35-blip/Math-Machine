@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -27,88 +28,229 @@ import type { Category, Product, ProductImage, ProductReview, Tag, TagType, Cate
 
 type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
 
-function ProductTagSelector({ productId, categoryId, allTags, initialTags }: { productId: string; categoryId: string; allTags: Tag[]; initialTags: Tag[] }) {
+function ProductAttributeSelector({
+  productId, categoryId, product, attributes, allTags, allTagTypes, initialTagIds,
+}: {
+  productId: string; categoryId: string; product: Product;
+  attributes: Attributes | undefined; allTags: Tag[]; allTagTypes: TagType[]; initialTagIds: string[];
+}) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const toIds = (names: string[], lookup: { id: string; name: string }[]) =>
+    lookup.filter(item => names.includes(item.name)).map(item => item.id);
+
+  const [ageGroupIds, setAgeGroupIds] = useState<string[]>([]);
+  const [genderIds, setGenderIds] = useState<string[]>([]);
+  const [themeIds, setThemeIds] = useState<string[]>([]);
+  const [styleIds, setStyleIds] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
+  const [activeTagTypeId, setActiveTagTypeId] = useState<string>("all");
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "Enter") {
-        setOpen(false);
-      }
-    };
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("keydown", handleKey);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
+    if (!attributes || initializedRef.current) return;
+    initializedRef.current = true;
+    setAgeGroupIds(toIds(product.ageGroups ?? [], attributes.ageGroups));
+    setGenderIds(toIds(product.genders ?? [], attributes.genders));
+    setThemeIds(toIds(product.themes ?? [], attributes.themes));
+    setStyleIds(toIds(product.styles ?? [], attributes.styles));
+  }, [attributes]);
 
-  const currentTagIds = initialTags.map(t => t.id);
+  const savedAttrRef = useRef({ ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[] });
+  const savedTagIdsRef = useRef(initialTagIds);
 
-  const toggleTagMutation = useMutation({
-    mutationFn: async (tagId: string) => {
-      const newIds = currentTagIds.includes(tagId)
-        ? currentTagIds.filter(id => id !== tagId)
-        : [...currentTagIds, tagId];
-      await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: newIds });
+  const attrMutation = useMutation({
+    mutationFn: async (data: { ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
+      const res = await apiRequest("PUT", `/api/admin/products/${productId}/attributes`, data);
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId, "tags"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
-    },
-    onError: () => {
-      toast({ title: "Failed to update tags", variant: "destructive" });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] }),
+    onError: () => toast({ title: "Failed to save attributes", variant: "destructive" }),
   });
 
+  const tagMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: ids });
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] }),
+    onError: () => toast({ title: "Failed to save tags", variant: "destructive" }),
+  });
+
+  const saveAttrs = (ids: { ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
+    if (JSON.stringify(ids) !== JSON.stringify(savedAttrRef.current)) {
+      savedAttrRef.current = ids;
+      attrMutation.mutate(ids);
+    }
+  };
+
+  const saveTags = (ids: string[]) => {
+    if (JSON.stringify([...ids].sort()) !== JSON.stringify([...savedTagIdsRef.current].sort())) {
+      savedTagIdsRef.current = ids;
+      tagMutation.mutate(ids);
+    }
+  };
+
+  const filteredTags = activeTagTypeId === "all" ? allTags : allTags.filter(t => t.tagTypeId === activeTagTypeId);
+
+  const pillLabel = (ids: string[], lookup: { id: string; name: string }[]) => {
+    if (ids.length === 0) return "";
+    if (ids.length <= 2) return ": " + ids.map(id => lookup.find(x => x.id === id)?.name).filter(Boolean).join(", ");
+    return `: ${ids.length}`;
+  };
+
+  const allAgeIds = (attributes?.ageGroups ?? []).map(x => x.id);
+  const allGenderIds = (attributes?.genders ?? []).map(x => x.id);
+  const allThemeIds = (attributes?.themes ?? []).map(x => x.id);
+  const allStyleIds = (attributes?.styles ?? []).map(x => x.id);
+  const allFilteredTagIds = filteredTags.map(t => t.id);
+
+  const pillCls = (active: boolean) =>
+    `h-6 text-[10px] px-2 rounded-full border transition-colors cursor-pointer select-none inline-flex items-center gap-1 ${
+      active ? "bg-primary/10 border-primary/40 text-primary font-medium" : "border-border text-muted-foreground hover:bg-muted"
+    }`;
+
   return (
-    <div className="relative" ref={containerRef}>
-      <div className="flex items-center gap-1 flex-wrap">
-        {initialTags.length > 0 && initialTags.map(tag => (
-          <Badge key={tag.id} variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate" data-testid={`badge-tag-${productId}-${tag.id}`}>
-            {tag.name}
-          </Badge>
-        ))}
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => setOpen(!open)}
-          data-testid={`button-tags-${productId}`}
-        >
-          <TagIcon className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-background border rounded-md shadow-lg p-2 min-w-[160px]" data-testid={`dropdown-tags-${productId}`}>
-          <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">Tags</p>
-          {allTags.length === 0 && (
-            <p className="text-xs text-muted-foreground px-1 py-2">No tags created yet</p>
-          )}
-          {allTags.map(tag => (
-            <label
-              key={tag.id}
-              className="flex items-center gap-2 px-1 py-1 rounded hover-elevate cursor-pointer"
-              data-testid={`checkbox-tag-${productId}-${tag.id}`}
-            >
-              <Checkbox
-                checked={currentTagIds.includes(tag.id)}
-                onCheckedChange={() => toggleTagMutation.mutate(tag.id)}
-                disabled={toggleTagMutation.isPending}
-              />
-              <span className="text-sm">{tag.name}</span>
+    <div className="flex items-center gap-1.5 flex-wrap mt-1.5" data-testid={`attr-selector-${productId}`}>
+
+      {/* Age Group */}
+      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+        <PopoverTrigger asChild>
+          <button className={pillCls(ageGroupIds.length > 0)} data-testid={`pill-age-${productId}`}>
+            Age{pillLabel(ageGroupIds, attributes?.ageGroups ?? [])}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-44 p-2" align="start">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Age Group</p>
+          <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
+            <Checkbox checked={ageGroupIds.length === allAgeIds.length && allAgeIds.length > 0}
+              onCheckedChange={(c) => setAgeGroupIds(c ? allAgeIds : [])} />
+            <span className="text-xs font-medium">All</span>
+          </label>
+          {(attributes?.ageGroups ?? []).map(ag => (
+            <label key={ag.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
+              <Checkbox checked={ageGroupIds.includes(ag.id)}
+                onCheckedChange={() => setAgeGroupIds(p => p.includes(ag.id) ? p.filter(x => x !== ag.id) : [...p, ag.id])} />
+              <span className="text-xs">{ag.name}</span>
             </label>
           ))}
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Gender */}
+      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+        <PopoverTrigger asChild>
+          <button className={pillCls(genderIds.length > 0)} data-testid={`pill-gender-${productId}`}>
+            Gender{pillLabel(genderIds, attributes?.genders ?? [])}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-44 p-2" align="start">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Gender</p>
+          <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
+            <Checkbox checked={genderIds.length === allGenderIds.length && allGenderIds.length > 0}
+              onCheckedChange={(c) => setGenderIds(c ? allGenderIds : [])} />
+            <span className="text-xs font-medium">All</span>
+          </label>
+          {(attributes?.genders ?? []).map(g => (
+            <label key={g.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
+              <Checkbox checked={genderIds.includes(g.id)}
+                onCheckedChange={() => setGenderIds(p => p.includes(g.id) ? p.filter(x => x !== g.id) : [...p, g.id])} />
+              <span className="text-xs">{g.name}</span>
+            </label>
+          ))}
+        </PopoverContent>
+      </Popover>
+
+      {/* Themes */}
+      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+        <PopoverTrigger asChild>
+          <button className={pillCls(themeIds.length > 0)} data-testid={`pill-themes-${productId}`}>
+            Themes{themeIds.length > 0 ? `: ${themeIds.length}` : ""}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2" align="start">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Themes</p>
+          <div className="max-h-56 overflow-y-auto space-y-0.5">
+            <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
+              <Checkbox checked={themeIds.length === allThemeIds.length && allThemeIds.length > 0}
+                onCheckedChange={(c) => setThemeIds(c ? allThemeIds : [])} />
+              <span className="text-xs font-medium">All</span>
+            </label>
+            {(attributes?.themes ?? []).map(t => (
+              <label key={t.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
+                <Checkbox checked={themeIds.includes(t.id)}
+                  onCheckedChange={() => setThemeIds(p => p.includes(t.id) ? p.filter(x => x !== t.id) : [...p, t.id])} />
+                <span className="text-xs">{t.name}</span>
+              </label>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Styles */}
+      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+        <PopoverTrigger asChild>
+          <button className={pillCls(styleIds.length > 0)} data-testid={`pill-styles-${productId}`}>
+            Styles{pillLabel(styleIds, attributes?.styles ?? [])}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-44 p-2" align="start">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Styles</p>
+          <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
+            <Checkbox checked={styleIds.length === allStyleIds.length && allStyleIds.length > 0}
+              onCheckedChange={(c) => setStyleIds(c ? allStyleIds : [])} />
+            <span className="text-xs font-medium">All</span>
+          </label>
+          {(attributes?.styles ?? []).map(s => (
+            <label key={s.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
+              <Checkbox checked={styleIds.includes(s.id)}
+                onCheckedChange={() => setStyleIds(p => p.includes(s.id) ? p.filter(x => x !== s.id) : [...p, s.id])} />
+              <span className="text-xs">{s.name}</span>
+            </label>
+          ))}
+        </PopoverContent>
+      </Popover>
+
+      {/* Tags */}
+      <Popover onOpenChange={(open) => { if (!open) saveTags(tagIds); }}>
+        <PopoverTrigger asChild>
+          <button className={pillCls(tagIds.length > 0)} data-testid={`pill-tags-${productId}`}>
+            Tags{tagIds.length > 0 ? `: ${tagIds.length}` : ""}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-60 p-2" align="start">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Tags</p>
+          {/* Tag type filter row */}
+          <div className="flex flex-wrap gap-1 mb-2 pb-2 border-b">
+            <button onClick={() => setActiveTagTypeId("all")}
+              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeTagTypeId === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+              All
+            </button>
+            {allTagTypes.map(tt => (
+              <button key={tt.id} onClick={() => setActiveTagTypeId(activeTagTypeId === tt.id ? "all" : tt.id)}
+                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeTagTypeId === tt.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+                {tt.name}
+              </button>
+            ))}
+          </div>
+          <div className="max-h-52 overflow-y-auto space-y-0.5">
+            <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
+              <Checkbox
+                checked={allFilteredTagIds.length > 0 && allFilteredTagIds.every(id => tagIds.includes(id))}
+                onCheckedChange={(c) => setTagIds(p => c ? [...new Set([...p, ...allFilteredTagIds])] : p.filter(id => !allFilteredTagIds.includes(id)))} />
+              <span className="text-xs font-medium">All</span>
+            </label>
+            {filteredTags.length === 0 && <p className="text-xs text-muted-foreground px-1 py-1">No tags</p>}
+            {filteredTags.map(tag => (
+              <label key={tag.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer" data-testid={`checkbox-tag-${productId}-${tag.id}`}>
+                <Checkbox checked={tagIds.includes(tag.id)}
+                  onCheckedChange={() => setTagIds(p => p.includes(tag.id) ? p.filter(id => id !== tag.id) : [...p, tag.id])} />
+                <span className="text-xs">{tag.name}</span>
+              </label>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -2083,14 +2225,15 @@ export default function AdminCatalog() {
                         </button>
                       )}
                     </div>
-                    <div className="mt-1">
-                      <ProductTagSelector
-                        productId={prod.id}
-                        categoryId={selectedCategory?.id ?? ""}
-                        allTags={allTags || []}
-                        initialTags={(allTags ?? []).filter(t => (catalogData?.productTagMap?.[prod.id] ?? []).includes(t.id))}
-                      />
-                    </div>
+                    <ProductAttributeSelector
+                      productId={prod.id}
+                      categoryId={selectedCategory?.id ?? ""}
+                      product={prod}
+                      attributes={attributes}
+                      allTags={allTags ?? []}
+                      allTagTypes={allTagTypes ?? []}
+                      initialTagIds={catalogData?.productTagMap?.[prod.id] ?? []}
+                    />
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <DropdownMenu>
