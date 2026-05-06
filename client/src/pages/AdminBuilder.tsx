@@ -960,8 +960,9 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
         themeFilters:    filters.themeFilters,
         styleFilters:    filters.styleFilters,
         tagFilters:      filters.tagFilters,
-      }) as unknown as { products: Product[]; total: number };
-      return { section, products: res.products, total: res.total };
+      });
+      const data = await res.json() as { products: Product[]; total: number };
+      return { section, products: data.products ?? [], total: data.total ?? 0 };
     },
     onSuccess: ({ section, products, total }) => {
       setPreviewResults(prev => ({ ...prev, [section]: { products, total } }));
@@ -1076,7 +1077,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   {isPreviewing
-                    ? `Preview — ${preview.total} matched, showing ${preview.products.length}`
+                    ? `Preview — ${preview.total ?? 0} matched, showing ${preview.products?.length ?? 0}`
                     : `Saved — ${displayProducts.length} products (rotates every 12 hrs)`}
                 </p>
                 <Button
