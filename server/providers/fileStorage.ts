@@ -54,7 +54,7 @@ export class LocalFileStorage implements IFileStorage {
     } catch (err) {
       console.warn(`[fileStorage] Resize failed for ${filename}:`, err);
     }
-    return { url: `/images/products/${filename}`, filename };
+    return { url: `/images/products/medium/${filename}`, filename };
   }
 
   async copy(sourceUrl: string): Promise<UploadResult> {
@@ -69,7 +69,7 @@ export class LocalFileStorage implements IFileStorage {
     } catch (err) {
       console.warn(`[fileStorage] Resize failed for copy ${filename}:`, err);
     }
-    return { url: `/images/products/${filename}`, filename };
+    return { url: `/images/products/medium/${filename}`, filename };
   }
 
   async delete(url: string): Promise<void> {
