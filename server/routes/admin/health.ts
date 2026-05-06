@@ -1534,6 +1534,14 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY vc.sort_order, vc.id`
       );
 
+      // Export productVariants (with productSlug via JOIN)
+      const pvResult = await pool.query(
+        `SELECT pv.id, p.slug AS "productSlug", pv.color, pv.size, pv.available
+         FROM product_variants pv
+         JOIN products p ON p.id = pv.product_id
+         ORDER BY p.slug, pv.size, pv.color`
+      );
+
       // Export occasions
       const occasionsResult = await pool.query(
         `SELECT id, name, slug, description,
@@ -1567,6 +1575,7 @@ export function registerAdminHealthRoutes(app: Express) {
         categoryTagVariantConfigs: ctvcResult.rows,
         variantSizes:              vsResult.rows,
         variantColors:             vcResult.rows,
+        productVariants:           pvResult.rows,
         occasions:                 occasionsResult.rows,
         siteConfig:                scResult.rows,
       };
