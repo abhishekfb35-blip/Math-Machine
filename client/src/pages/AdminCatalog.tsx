@@ -92,32 +92,36 @@ function ProductAttributeSelector({
   };
 
   const filteredTags = activeTagTypeId === "all" ? allTags : allTags.filter(t => t.tagTypeId === activeTagTypeId);
-
-  const pillLabel = (ids: string[], lookup: { id: string; name: string }[]) => {
-    if (ids.length === 0) return "";
-    if (ids.length <= 2) return ": " + ids.map(id => lookup.find(x => x.id === id)?.name).filter(Boolean).join(", ");
-    return `: ${ids.length}`;
-  };
+  const allFilteredTagIds = filteredTags.map(t => t.id);
 
   const allAgeIds = (attributes?.ageGroups ?? []).map(x => x.id);
   const allGenderIds = (attributes?.genders ?? []).map(x => x.id);
   const allThemeIds = (attributes?.themes ?? []).map(x => x.id);
   const allStyleIds = (attributes?.styles ?? []).map(x => x.id);
-  const allFilteredTagIds = filteredTags.map(t => t.id);
 
-  const pillCls = (active: boolean) =>
-    `h-6 text-[10px] px-2 rounded-full border transition-colors cursor-pointer select-none inline-flex items-center gap-1 ${
-      active ? "bg-primary/10 border-primary/40 text-primary font-medium" : "border-border text-muted-foreground hover:bg-muted"
-    }`;
+  const nameList = (ids: string[], lookup: { id: string; name: string }[]) =>
+    ids.map(id => lookup.find(x => x.id === id)?.name).filter(Boolean).join(", ");
+
+  const tagsByType = allTagTypes
+    .map(tt => ({ type: tt, tags: allTags.filter(t => t.tagTypeId === tt.id && tagIds.includes(t.id)) }))
+    .filter(g => g.tags.length > 0);
+
+  const rowCls = "flex items-start gap-1.5 w-full text-left hover:bg-muted/60 rounded px-1 py-0.5 transition-colors cursor-pointer";
+  const labelCls = "text-[11px] font-semibold text-muted-foreground shrink-0 w-14 pt-px";
+  const valueCls = "text-[11px] text-foreground capitalize leading-snug";
+  const emptyCls = "text-[11px] text-muted-foreground/40";
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap mt-1.5" data-testid={`attr-selector-${productId}`}>
+    <div className="space-y-px mt-1.5 pt-1.5 border-t border-border/40" data-testid={`attr-selector-${productId}`}>
 
-      {/* Age Group */}
+      {/* Age */}
       <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
-          <button className={pillCls(ageGroupIds.length > 0)} data-testid={`pill-age-${productId}`}>
-            Age{pillLabel(ageGroupIds, attributes?.ageGroups ?? [])}
+          <button className={rowCls} data-testid={`pill-age-${productId}`}>
+            <span className={labelCls}>Age</span>
+            {ageGroupIds.length > 0
+              ? <span className={valueCls}>{nameList(ageGroupIds, attributes?.ageGroups ?? [])}</span>
+              : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-44 p-2" align="start">
@@ -140,8 +144,11 @@ function ProductAttributeSelector({
       {/* Gender */}
       <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
-          <button className={pillCls(genderIds.length > 0)} data-testid={`pill-gender-${productId}`}>
-            Gender{pillLabel(genderIds, attributes?.genders ?? [])}
+          <button className={rowCls} data-testid={`pill-gender-${productId}`}>
+            <span className={labelCls}>Gender</span>
+            {genderIds.length > 0
+              ? <span className={valueCls}>{nameList(genderIds, attributes?.genders ?? [])}</span>
+              : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-44 p-2" align="start">
@@ -161,11 +168,14 @@ function ProductAttributeSelector({
         </PopoverContent>
       </Popover>
 
-      {/* Themes */}
+      {/* Theme */}
       <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
-          <button className={pillCls(themeIds.length > 0)} data-testid={`pill-themes-${productId}`}>
-            Themes{themeIds.length > 0 ? `: ${themeIds.length}` : ""}
+          <button className={rowCls} data-testid={`pill-themes-${productId}`}>
+            <span className={labelCls}>Theme</span>
+            {themeIds.length > 0
+              ? <span className={valueCls}>{nameList(themeIds, attributes?.themes ?? [])}</span>
+              : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-52 p-2" align="start">
@@ -187,11 +197,14 @@ function ProductAttributeSelector({
         </PopoverContent>
       </Popover>
 
-      {/* Styles */}
+      {/* Style */}
       <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
-          <button className={pillCls(styleIds.length > 0)} data-testid={`pill-styles-${productId}`}>
-            Styles{pillLabel(styleIds, attributes?.styles ?? [])}
+          <button className={rowCls} data-testid={`pill-styles-${productId}`}>
+            <span className={labelCls}>Style</span>
+            {styleIds.length > 0
+              ? <span className={valueCls}>{nameList(styleIds, attributes?.styles ?? [])}</span>
+              : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-44 p-2" align="start">
@@ -211,16 +224,25 @@ function ProductAttributeSelector({
         </PopoverContent>
       </Popover>
 
-      {/* Tags */}
+      {/* Tags — grouped by tag type */}
       <Popover onOpenChange={(open) => { if (!open) saveTags(tagIds); }}>
         <PopoverTrigger asChild>
-          <button className={pillCls(tagIds.length > 0)} data-testid={`pill-tags-${productId}`}>
-            Tags{tagIds.length > 0 ? `: ${tagIds.length}` : ""}
+          <button className={rowCls} data-testid={`pill-tags-${productId}`}>
+            <span className={labelCls}>Tags</span>
+            {tagsByType.length > 0
+              ? <div className="flex flex-col gap-px">
+                  {tagsByType.map(g => (
+                    <span key={g.type.id} className="text-[11px] leading-snug">
+                      <span className="text-muted-foreground">{g.type.name}: </span>
+                      <span className="text-foreground capitalize">{g.tags.map(t => t.name).join(", ")}</span>
+                    </span>
+                  ))}
+                </div>
+              : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-60 p-2" align="start">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Tags</p>
-          {/* Tag type filter row */}
           <div className="flex flex-wrap gap-1 mb-2 pb-2 border-b">
             <button onClick={() => setActiveTagTypeId("all")}
               className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${activeTagTypeId === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
