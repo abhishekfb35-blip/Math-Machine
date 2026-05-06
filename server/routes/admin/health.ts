@@ -1475,6 +1475,55 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.slug, t.name`
       );
 
+      // Export tagTypes
+      const tagTypesResult = await pool.query(
+        `SELECT id, name, slug, description, sort_order AS "sortOrder"
+         FROM tag_types ORDER BY sort_order, name`
+      );
+
+      // Export productReviews (with productSlug via JOIN)
+      const reviewsResult = await pool.query(
+        `SELECT pr.id, p.slug AS "productSlug", pr.reviewer_name AS "reviewerName",
+                pr.rating, pr.title, pr.body,
+                pr.amz_review_date AS "amzReviewDate",
+                pr.verified_purchase AS "verifiedPurchase"
+         FROM product_reviews pr
+         JOIN products p ON p.id = pr.product_id
+         ORDER BY p.slug, pr.id`
+      );
+
+      // Export currencyRates
+      const crResult = await pool.query(
+        `SELECT id, currency, rate_from_inr AS "rateFromInr"
+         FROM currency_rates ORDER BY currency`
+      );
+
+      // Export pricingRules
+      const prResult = await pool.query(
+        `SELECT id, currency, symbol, display_name AS "displayName",
+                markup_percent AS "markupPercent",
+                rounding_rule AS "roundingRule", enabled
+         FROM pricing_rules ORDER BY currency`
+      );
+
+      // Export categoryTagVariantConfigs (with categorySlug via JOIN)
+      const ctvcResult = await pool.query(
+        `SELECT ctvc.id, c.slug AS "categorySlug", ctvc.tag_id AS "tagId",
+                ctvc.sort_order AS "sortOrder"
+         FROM category_tag_variant_configs ctvc
+         JOIN categories c ON c.id = ctvc.category_id
+         ORDER BY c.slug, ctvc.sort_order`
+      );
+
+      // Export variantSizes
+      const vsResult = await pool.query(
+        `SELECT id, config_id AS "configId", name, description,
+                description_font_size AS "descriptionFontSize",
+                price_add AS "priceAdd", is_default AS "isDefault",
+                blur_on_front AS "blurOnFront", sort_order AS "sortOrder"
+         FROM variant_sizes ORDER BY sort_order, id`
+      );
+
       // Export variantColors with swatch URLs in /images/swatches/
       const vcResult = await pool.query(
         `SELECT vc.id, vc.size_id AS "sizeId", vc.name,
@@ -1483,6 +1532,15 @@ export function registerAdminHealthRoutes(app: Express) {
                 vc.sort_order AS "sortOrder"
          FROM variant_colors vc
          ORDER BY vc.sort_order, vc.id`
+      );
+
+      // Export occasions
+      const occasionsResult = await pool.query(
+        `SELECT id, name, slug, description,
+                boost_tags AS "boostTags", penalty_tags AS "penaltyTags",
+                preferred_styles AS "preferredStyles", preferred_themes AS "preferredThemes",
+                active, sort_order AS "sortOrder"
+         FROM occasions ORDER BY sort_order, name`
       );
 
       // Export site_config — exclude base64 brand images and runtime-only keys
@@ -1497,13 +1555,20 @@ export function registerAdminHealthRoutes(app: Express) {
 
       const updated = {
         ...existing,
-        categories:    catsResult.rows,
-        tags:          tagsResult.rows,
-        products:      prodsResult.rows,
-        productImages: imgsResult.rows,
-        productTags:   ptagsResult.rows,
-        variantColors: vcResult.rows,
-        siteConfig:    scResult.rows,
+        tagTypes:                  tagTypesResult.rows,
+        categories:                catsResult.rows,
+        tags:                      tagsResult.rows,
+        products:                  prodsResult.rows,
+        productImages:             imgsResult.rows,
+        productReviews:            reviewsResult.rows,
+        productTags:               ptagsResult.rows,
+        currencyRates:             crResult.rows,
+        pricingRules:              prResult.rows,
+        categoryTagVariantConfigs: ctvcResult.rows,
+        variantSizes:              vsResult.rows,
+        variantColors:             vcResult.rows,
+        occasions:                 occasionsResult.rows,
+        siteConfig:                scResult.rows,
       };
 
       fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
@@ -1511,13 +1576,20 @@ export function registerAdminHealthRoutes(app: Express) {
       res.json({
         success: true,
         exported: {
-          categories:    catsResult.rowCount,
-          tags:          tagsResult.rowCount,
-          products:      prodsResult.rowCount,
-          productImages: imgsResult.rowCount,
-          productTags:   ptagsResult.rowCount,
-          variantColors: vcResult.rowCount,
-          siteConfig:    scResult.rowCount,
+          categories:                catsResult.rowCount,
+          tags:                      tagsResult.rowCount,
+          tagTypes:                  tagTypesResult.rowCount,
+          products:                  prodsResult.rowCount,
+          productImages:             imgsResult.rowCount,
+          productReviews:            reviewsResult.rowCount,
+          productTags:               ptagsResult.rowCount,
+          currencyRates:             crResult.rowCount,
+          pricingRules:              prResult.rowCount,
+          categoryTagVariantConfigs: ctvcResult.rowCount,
+          variantSizes:              vsResult.rowCount,
+          variantColors:             vcResult.rowCount,
+          occasions:                 occasionsResult.rowCount,
+          siteConfig:                scResult.rowCount,
         },
         message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
       });

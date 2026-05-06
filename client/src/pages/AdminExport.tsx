@@ -46,7 +46,7 @@ export default function AdminExport() {
       setLastSeedResult(result);
       toast({
         title: "Catalog exported to seed",
-        description: `${result.exported.products} products, ${result.exported.productImages} images synced.`,
+        description: `${result.exported.products} products · ${result.exported.categories} categories · ${result.exported.productImages} images · ${result.exported.productReviews ?? 0} reviews · ${result.exported.occasions ?? 0} occasions · ${result.exported.currencyRates ?? 0} currencies synced.`,
       });
     } catch {
       toast({

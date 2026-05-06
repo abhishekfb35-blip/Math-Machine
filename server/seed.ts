@@ -6,6 +6,7 @@ import {
   categories, products, siteConfig, productImages, productReviews, tags, tagTypes, productTags,
   currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
   ageGroups, genders, themes, styles, productAgeGroups, productGenders, productThemes, productStyles,
+  occasions,
 } from "@shared/schema";
 
 // ── Starter attribute values (source of truth — only seeded here) ─────────────
@@ -677,6 +678,59 @@ export async function seedDatabase() {
       if (jSynced > 0) console.log(`[seed] product junction attrs: inserted ${jSynced} rows`);
       else console.log(`[seed] product junction attrs: all up to date`);
     }
+
+    // ── 9d. Occasions: upsert by slug ────────────────────────────────────────
+    type SeedOccasion = {
+      id: string; name: string; slug: string; description?: string;
+      boostTags?: Record<string, number>; penaltyTags?: Record<string, number>;
+      preferredStyles?: string; preferredThemes?: string;
+      active?: boolean; sortOrder?: number;
+    };
+    const occEntries = ((seedData as Record<string, unknown>).occasions as SeedOccasion[] | undefined) ?? [];
+    let occSynced = 0;
+    for (const occ of occEntries) {
+      const [existing] = await db.select().from(occasions).where(eq(occasions.slug, occ.slug));
+      if (!existing) {
+        await db.insert(occasions).values({
+          id: occ.id,
+          name: occ.name,
+          slug: occ.slug,
+          description: occ.description ?? null,
+          boostTags: occ.boostTags ?? {},
+          penaltyTags: occ.penaltyTags ?? {},
+          preferredStyles: occ.preferredStyles ?? null,
+          preferredThemes: occ.preferredThemes ?? null,
+          active: occ.active !== false,
+          sortOrder: occ.sortOrder ?? 0,
+        });
+        occSynced++;
+      } else {
+        const changed =
+          existing.name !== occ.name ||
+          existing.description !== (occ.description ?? null) ||
+          JSON.stringify(existing.boostTags) !== JSON.stringify(occ.boostTags ?? {}) ||
+          JSON.stringify(existing.penaltyTags) !== JSON.stringify(occ.penaltyTags ?? {}) ||
+          existing.preferredStyles !== (occ.preferredStyles ?? null) ||
+          existing.preferredThemes !== (occ.preferredThemes ?? null) ||
+          existing.active !== (occ.active !== false) ||
+          existing.sortOrder !== (occ.sortOrder ?? 0);
+        if (changed) {
+          await db.update(occasions).set({
+            name: occ.name,
+            description: occ.description ?? null,
+            boostTags: occ.boostTags ?? {},
+            penaltyTags: occ.penaltyTags ?? {},
+            preferredStyles: occ.preferredStyles ?? null,
+            preferredThemes: occ.preferredThemes ?? null,
+            active: occ.active !== false,
+            sortOrder: occ.sortOrder ?? 0,
+          }).where(eq(occasions.slug, occ.slug));
+          occSynced++;
+        }
+      }
+    }
+    if (occSynced > 0) console.log(`[seed] occasions: synced ${occSynced} entries`);
+    else console.log(`[seed] occasions: all entries up to date`);
 
     // ── 10. Default shop-sections config (first-time seed only) ──────────────
     const [existingShopSections] = await db
