@@ -1436,7 +1436,7 @@ export function registerAdminHealthRoutes(app: Express) {
       // Export products (with categorySlug via JOIN; attributes via junction subqueries)
       const prodsResult = await pool.query(
         `SELECT p.id, p.sku, p.name, p.slug, p.description,
-                p.price, p.mrp, p.image_url AS "imageUrl",
+                p.price, p.mrp,
                 c.slug AS "categorySlug",
                 p.amazon_asin AS "amazonAsin",
                 p.color, p.material, p.gsm, p.dimensions,
