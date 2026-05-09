@@ -915,6 +915,8 @@ export default function AdminCatalog() {
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
   const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string | null>(null);
   const [bulkAttrMode, setBulkAttrMode] = useState<"add" | "remove">("add");
+  const [bulkRemoveConfirmOpen, setBulkRemoveConfirmOpen] = useState(false);
+  const BULK_REMOVE_CONFIRM_THRESHOLD = 5;
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -2632,6 +2634,10 @@ export default function AdminCatalog() {
                  bulkAttrSel.tagIds.length === 0)
               }
               onClick={() => {
+                if (bulkAttrMode === "remove" && selectedProductIds.size >= BULK_REMOVE_CONFIRM_THRESHOLD) {
+                  setBulkRemoveConfirmOpen(true);
+                  return;
+                }
                 const payload = {
                   productIds: Array.from(selectedProductIds),
                   ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
@@ -2653,6 +2659,80 @@ export default function AdminCatalog() {
                 : bulkAttrMode === "remove"
                   ? `Remove from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`
                   : `Add to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Remove Attributes — Confirmation Dialog */}
+      <Dialog open={bulkRemoveConfirmOpen} onOpenChange={(open) => { if (!open) setBulkRemoveConfirmOpen(false); }}>
+        <DialogContent className="max-w-md" data-testid="dialog-bulk-remove-confirm">
+          <DialogHeader>
+            <DialogTitle className="text-base text-destructive">Confirm Bulk Remove</DialogTitle>
+            <DialogDescription className="text-sm">
+              You are about to remove attributes from <strong>{selectedProductIds.size} products</strong>. This cannot be undone automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <p className="text-sm font-medium">Attributes to be removed:</p>
+            <ul className="text-sm space-y-1 pl-3 border-l-2 border-destructive/40">
+              {bulkAttrSel.ageGroupIds.length > 0 && (
+                <li data-testid="confirm-remove-age-groups">
+                  <span className="text-muted-foreground">Age Groups: </span>
+                  {bulkAttrSel.ageGroupIds.map(id => attributes?.ageGroups.find(a => a.id === id)?.name).filter(Boolean).join(", ")}
+                </li>
+              )}
+              {bulkAttrSel.genderIds.length > 0 && (
+                <li data-testid="confirm-remove-genders">
+                  <span className="text-muted-foreground">Genders: </span>
+                  {bulkAttrSel.genderIds.map(id => attributes?.genders.find(g => g.id === id)?.name).filter(Boolean).join(", ")}
+                </li>
+              )}
+              {bulkAttrSel.themeIds.length > 0 && (
+                <li data-testid="confirm-remove-themes">
+                  <span className="text-muted-foreground">Themes: </span>
+                  {bulkAttrSel.themeIds.map(id => attributes?.themes.find(t => t.id === id)?.name).filter(Boolean).join(", ")}
+                </li>
+              )}
+              {bulkAttrSel.styleIds.length > 0 && (
+                <li data-testid="confirm-remove-styles">
+                  <span className="text-muted-foreground">Styles: </span>
+                  {bulkAttrSel.styleIds.map(id => attributes?.styles.find(s => s.id === id)?.name).filter(Boolean).join(", ")}
+                </li>
+              )}
+              {bulkAttrSel.tagIds.length > 0 && (
+                <li data-testid="confirm-remove-tags">
+                  <span className="text-muted-foreground">Tags: </span>
+                  {bulkAttrSel.tagIds.map(id => (allTags ?? []).find(t => t.id === id)?.name).filter(Boolean).join(", ")}
+                </li>
+              )}
+            </ul>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" size="sm" onClick={() => setBulkRemoveConfirmOpen(false)} data-testid="button-bulk-remove-cancel">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={bulkRemoveAttrsMutation.isPending}
+              onClick={() => {
+                const payload = {
+                  productIds: Array.from(selectedProductIds),
+                  ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
+                  ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
+                  ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
+                  ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
+                  ...(bulkAttrSel.tagIds.length > 0      ? { tagIds:      bulkAttrSel.tagIds }      : {}),
+                };
+                bulkRemoveAttrsMutation.mutate(payload);
+                setBulkRemoveConfirmOpen(false);
+              }}
+              data-testid="button-bulk-remove-confirm"
+            >
+              {bulkRemoveAttrsMutation.isPending
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Removing…</>
+                : `Yes, remove from ${selectedProductIds.size} products`}
             </Button>
           </div>
         </DialogContent>
