@@ -914,6 +914,7 @@ export default function AdminCatalog() {
   const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
   const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string | null>(null);
+  const [bulkAttrMode, setBulkAttrMode] = useState<"add" | "remove">("add");
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1256,10 +1257,37 @@ export default function AdminCatalog() {
       setBulkAttrsOpen(false);
       setBulkAttrSel(emptyBulkAttrSel);
       setBulkTagTypeTab(getDefaultBulkTagTypeTab());
-      toast({ title: `Attributes updated on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+      toast({ title: `Attributes added on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to update attributes", variant: "destructive" });
+    },
+  });
+
+  const bulkRemoveAttrsMutation = useMutation({
+    mutationFn: async (payload: {
+      productIds: string[];
+      ageGroupIds?: string[];
+      genderIds?: string[];
+      themeIds?: string[];
+      styleIds?: string[];
+      tagIds?: string[];
+    }) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-remove-attributes", payload);
+      return res.json();
+    },
+    onSuccess: (data: { updated: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkAttrsOpen(false);
+      setBulkAttrSel(emptyBulkAttrSel);
+      setBulkTagTypeTab(getDefaultBulkTagTypeTab());
+      setBulkAttrMode("add");
+      toast({ title: `Attributes removed from ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to remove attributes", variant: "destructive" });
     },
   });
 
@@ -1850,7 +1878,7 @@ export default function AdminCatalog() {
               size="sm"
               variant="outline"
               disabled={selectedProductIds.size === 0}
-              onClick={() => { setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrsOpen(true); }}
+              onClick={() => { setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrMode("add"); setBulkAttrsOpen(true); }}
               data-testid="button-bulk-update-attributes"
               className="text-muted-foreground disabled:opacity-50"
             >
@@ -2405,12 +2433,43 @@ export default function AdminCatalog() {
       </Dialog>
 
       {/* Bulk Update Attributes Dialog */}
-      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); } }}>
+      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrMode("add"); } }}>
         <DialogContent className="max-w-lg flex flex-col" data-testid="dialog-bulk-update-attributes">
           <DialogHeader className="shrink-0">
             <DialogTitle>Bulk Update Attributes ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
-            <DialogDescription>Select values for any attribute. Only the attributes you check here will be updated; all others stay as-is on each product.</DialogDescription>
+            <DialogDescription>
+              {bulkAttrMode === "add"
+                ? "Select values to add. Only the attributes you check here will be updated; all others stay as-is on each product."
+                : "Select values to remove. Checked attributes will be removed from all selected products; products that don't have them are unaffected."}
+            </DialogDescription>
           </DialogHeader>
+          {/* Add / Remove mode toggle */}
+          <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit shrink-0" data-testid="bulk-attr-mode-toggle">
+            <button
+              type="button"
+              onClick={() => { setBulkAttrMode("add"); setBulkAttrSel(emptyBulkAttrSel); }}
+              data-testid="bulk-attr-mode-add"
+              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                bulkAttrMode === "add"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => { setBulkAttrMode("remove"); setBulkAttrSel(emptyBulkAttrSel); }}
+              data-testid="bulk-attr-mode-remove"
+              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                bulkAttrMode === "remove"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Remove
+            </button>
+          </div>
           <div className="overflow-y-auto max-h-[60vh] pr-1 -mr-1">
             <div className="space-y-5 pb-2">
 
@@ -2560,31 +2619,40 @@ export default function AdminCatalog() {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
-            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); }} data-testid="button-bulk-attrs-cancel">
+            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrMode("add"); }} data-testid="button-bulk-attrs-cancel">
               Cancel
             </Button>
             <Button
               size="sm"
+              variant={bulkAttrMode === "remove" ? "destructive" : "default"}
               disabled={
-                bulkUpdateAttrsMutation.isPending ||
+                (bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending) ||
                 (bulkAttrSel.ageGroupIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
                  bulkAttrSel.themeIds.length === 0 && bulkAttrSel.styleIds.length === 0 &&
                  bulkAttrSel.tagIds.length === 0)
               }
               onClick={() => {
-                const payload: Parameters<typeof bulkUpdateAttrsMutation.mutate>[0] = {
+                const payload = {
                   productIds: Array.from(selectedProductIds),
+                  ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
+                  ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
+                  ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
+                  ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
+                  ...(bulkAttrSel.tagIds.length > 0      ? { tagIds:      bulkAttrSel.tagIds }      : {}),
                 };
-                if (bulkAttrSel.ageGroupIds.length > 0) payload.ageGroupIds = bulkAttrSel.ageGroupIds;
-                if (bulkAttrSel.genderIds.length > 0)   payload.genderIds   = bulkAttrSel.genderIds;
-                if (bulkAttrSel.themeIds.length > 0)    payload.themeIds    = bulkAttrSel.themeIds;
-                if (bulkAttrSel.styleIds.length > 0)    payload.styleIds    = bulkAttrSel.styleIds;
-                if (bulkAttrSel.tagIds.length > 0)      payload.tagIds      = bulkAttrSel.tagIds;
-                bulkUpdateAttrsMutation.mutate(payload);
+                if (bulkAttrMode === "remove") {
+                  bulkRemoveAttrsMutation.mutate(payload);
+                } else {
+                  bulkUpdateAttrsMutation.mutate(payload);
+                }
               }}
               data-testid="button-bulk-attrs-apply"
             >
-              {bulkUpdateAttrsMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Applying…</> : `Apply to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+              {(bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending)
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Applying…</>
+                : bulkAttrMode === "remove"
+                  ? `Remove from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`
+                  : `Add to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
             </Button>
           </div>
         </DialogContent>

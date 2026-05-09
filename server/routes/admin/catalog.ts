@@ -585,6 +585,47 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  // ── Bulk Remove Attributes ──
+  app.post("/api/admin/products/bulk-remove-attributes", requirePermission("catalog"), async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        productIds:   z.array(z.string()).min(1),
+        ageGroupIds:  z.array(z.string()).optional(),
+        genderIds:    z.array(z.string()).optional(),
+        themeIds:     z.array(z.string()).optional(),
+        styleIds:     z.array(z.string()).optional(),
+        tagIds:       z.array(z.string()).optional(),
+      });
+      const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      const needsAttrs = ageGroupIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
+      const subtract = (existing: string[], toRemove: string[]) => existing.filter(id => !toRemove.includes(id));
+      await Promise.all(productIds.map(async (productId) => {
+        const [existing, existingTagIds] = await Promise.all([
+          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ ageGroupIds: [], genderIds: [], themeIds: [], styleIds: [] }),
+          tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
+        ]);
+        await Promise.all([
+          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, subtract(existing.ageGroupIds, ageGroupIds)) : Promise.resolve(),
+          genderIds   !== undefined ? storage.setProductGenders(productId, subtract(existing.genderIds, genderIds))       : Promise.resolve(),
+          themeIds    !== undefined ? storage.setProductThemes(productId, subtract(existing.themeIds, themeIds))           : Promise.resolve(),
+          styleIds    !== undefined ? storage.setProductStyles(productId, subtract(existing.styleIds, styleIds))           : Promise.resolve(),
+          tagIds      !== undefined ? storage.setProductTags(productId, subtract(existingTagIds, tagIds))                 : Promise.resolve(),
+        ]);
+      }));
+      await storage.createAuditLog({
+        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
+        action: "bulk-remove-attributes",
+        changes: JSON.stringify({ productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds }),
+        username: getAdminUsername(req),
+      });
+      res.json({ updated: productIds.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk remove attributes error:", err);
+      res.status(500).json({ message: "Failed to bulk remove attributes" });
+    }
+  });
+
   // ── Occasions CRUD ──
   app.get("/api/admin/occasions", requirePermission("catalog"), async (_req, res) => {
     const occ = await storage.getOccasions();
