@@ -404,50 +404,6 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/products/bulk-add-tags", requirePermission("catalog"), async (req, res) => {
-    try {
-      const { productIds, tagIds } = z.object({
-        productIds: z.array(z.string()).min(1),
-        tagIds: z.array(z.string()).min(1),
-      }).parse(req.body);
-      let updated = 0;
-      for (const productId of productIds) {
-        const existing = await storage.getProductTags(productId);
-        const existingIds = existing.map(t => t.id);
-        const merged = Array.from(new Set([...existingIds, ...tagIds]));
-        await storage.setProductTags(productId, merged);
-        updated++;
-      }
-      res.json({ updated });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-      console.error("Bulk add tags error:", err);
-      res.status(500).json({ message: "Failed to bulk add tags" });
-    }
-  });
-
-  app.post("/api/admin/products/bulk-remove-tags", requirePermission("catalog"), async (req, res) => {
-    try {
-      const { productIds, tagIds } = z.object({
-        productIds: z.array(z.string()).min(1),
-        tagIds: z.array(z.string()).min(1),
-      }).parse(req.body);
-      const removeSet = new Set(tagIds);
-      let updated = 0;
-      for (const productId of productIds) {
-        const existing = await storage.getProductTags(productId);
-        const remaining = existing.map(t => t.id).filter(id => !removeSet.has(id));
-        await storage.setProductTags(productId, remaining);
-        updated++;
-      }
-      res.json({ updated });
-    } catch (err) {
-      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-      console.error("Bulk remove tags error:", err);
-      res.status(500).json({ message: "Failed to bulk remove tags" });
-    }
-  });
-
   app.get("/api/admin/products/:id/tags", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
