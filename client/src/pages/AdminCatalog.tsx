@@ -1003,6 +1003,14 @@ export default function AdminCatalog() {
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
   const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
 
+  const getDefaultBulkTagTypeTab = () => {
+    const firstTypedWithTags = (allTagTypes ?? []).find(tt => (allTags ?? []).some(t => t.tagTypeId === tt.id));
+    if (firstTypedWithTags) return firstTypedWithTags.id;
+    const typedIds = new Set((allTagTypes ?? []).map(tt => tt.id));
+    const hasUntyped = (allTags ?? []).some(t => !t.tagTypeId || !typedIds.has(t.tagTypeId));
+    return hasUntyped ? "other" : "other";
+  };
+
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
     queryFn: async () => {
@@ -1252,6 +1260,7 @@ export default function AdminCatalog() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setBulkAttrsOpen(false);
       setBulkAttrSel(emptyBulkAttrSel);
+      setBulkTagTypeTab(getDefaultBulkTagTypeTab());
       toast({ title: `Attributes updated on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
     },
     onError: (err: any) => {
@@ -1846,7 +1855,7 @@ export default function AdminCatalog() {
               size="sm"
               variant="outline"
               disabled={selectedProductIds.size === 0}
-              onClick={() => { setBulkAttrSel(emptyBulkAttrSel); setBulkAttrsOpen(true); }}
+              onClick={() => { setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrsOpen(true); }}
               data-testid="button-bulk-update-attributes"
               className="text-muted-foreground disabled:opacity-50"
             >
@@ -2401,7 +2410,7 @@ export default function AdminCatalog() {
       </Dialog>
 
       {/* Bulk Update Attributes Dialog */}
-      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab("other"); } }}>
+      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); } }}>
         <DialogContent className="max-w-lg flex flex-col" data-testid="dialog-bulk-update-attributes">
           <DialogHeader className="shrink-0">
             <DialogTitle>Bulk Update Attributes ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
@@ -2579,7 +2588,7 @@ export default function AdminCatalog() {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
-            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); }} data-testid="button-bulk-attrs-cancel">
+            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); }} data-testid="button-bulk-attrs-cancel">
               Cancel
             </Button>
             <Button
