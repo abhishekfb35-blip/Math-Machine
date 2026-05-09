@@ -1006,9 +1006,7 @@ export default function AdminCatalog() {
   const getDefaultBulkTagTypeTab = () => {
     const firstTypedWithTags = (allTagTypes ?? []).find(tt => (allTags ?? []).some(t => t.tagTypeId === tt.id));
     if (firstTypedWithTags) return firstTypedWithTags.id;
-    const typedIds = new Set((allTagTypes ?? []).map(tt => tt.id));
-    const hasUntyped = (allTags ?? []).some(t => !t.tagTypeId || !typedIds.has(t.tagTypeId));
-    return hasUntyped ? "other" : "other";
+    return "other";
   };
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
@@ -2499,7 +2497,7 @@ export default function AdminCatalog() {
               {(() => {
                 const typedTagTypeIds = new Set((allTagTypes ?? []).map(tt => tt.id));
                 const untypedTags = (allTags ?? []).filter(t => !t.tagTypeId || !typedTagTypeIds.has(t.tagTypeId));
-                const tabsWithTags = (allTagTypes ?? []).filter(tt => (allTags ?? []).some(t => t.tagTypeId === tt.id));
+                const tabsWithTags = allTagTypes ?? [];
                 const showOtherTab = untypedTags.length > 0;
 
                 const activeTagTypeLabel = bulkTagTypeTab === "other"
