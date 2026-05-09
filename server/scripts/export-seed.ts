@@ -219,6 +219,8 @@ async function exportSeed() {
       id: t.id,
       name: t.name,
       description: t.description,
+      tagTypeId: t.tagTypeId ?? null,
+      sortOrder: t.sortOrder ?? 0,
     })),
     productTags: ptList.map(pt => ({
       id: pt.id,

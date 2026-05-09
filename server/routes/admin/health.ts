@@ -1430,7 +1430,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Export tags
       const tagsResult = await pool.query(
-        `SELECT id, name, description FROM tags ORDER BY name`
+        `SELECT id, name, description, tag_type_id AS "tagTypeId", sort_order AS "sortOrder" FROM tags ORDER BY name`
       );
 
       // Export products (with categorySlug via JOIN; attributes via junction subqueries)

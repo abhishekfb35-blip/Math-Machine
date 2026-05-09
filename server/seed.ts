@@ -39,7 +39,7 @@ const STARTER_STYLES = [
   { name: "initials",  sortOrder: 3 },
   { name: "elegant",   sortOrder: 4 },
 ];
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
 const BATCH = 100;
@@ -228,8 +228,14 @@ export async function seedDatabase() {
             description: t.description ?? null,
             tagTypeId: t.tagTypeId ?? null,
             sortOrder: t.sortOrder ?? 0,
-          })));
-          console.log(`[seed] tags: inserted ${tableData.tags.length}`);
+          }))).onConflictDoUpdate({
+            target: tags.id,
+            set: {
+              tagTypeId: sql`excluded.tag_type_id`,
+              sortOrder: sql`excluded.sort_order`,
+            },
+          });
+          console.log(`[seed] tags: upserted ${tableData.tags.length}`);
         }
         await storeHash("tags", computeHash(tableData.tags));
       }

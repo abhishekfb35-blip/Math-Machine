@@ -913,7 +913,7 @@ export default function AdminCatalog() {
   const [bulkAttrsOpen, setBulkAttrsOpen] = useState(false);
   const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
-  const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string>("other");
+  const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string | null>(null);
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1003,11 +1003,7 @@ export default function AdminCatalog() {
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
   const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
 
-  const getDefaultBulkTagTypeTab = () => {
-    const firstTypedWithTags = (allTagTypes ?? []).find(tt => (allTags ?? []).some(t => t.tagTypeId === tt.id));
-    if (firstTypedWithTags) return firstTypedWithTags.id;
-    return "other";
-  };
+  const getDefaultBulkTagTypeTab = (): string | null => null;
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -2495,28 +2491,17 @@ export default function AdminCatalog() {
 
               {/* Tags — tag type selector + filtered list */}
               {(() => {
-                const typedTagTypeIds = new Set((allTagTypes ?? []).map(tt => tt.id));
-                const untypedTags = (allTags ?? []).filter(t => !t.tagTypeId || !typedTagTypeIds.has(t.tagTypeId));
-                const tabsWithTags = allTagTypes ?? [];
-                const showOtherTab = untypedTags.length > 0;
-
-                const activeTagTypeLabel = bulkTagTypeTab === "other"
-                  ? "Other"
-                  : (allTagTypes ?? []).find(tt => tt.id === bulkTagTypeTab)?.name ?? "";
-
-                const visibleTags = bulkTagTypeTab === "other"
-                  ? untypedTags
-                  : (allTags ?? []).filter(t => t.tagTypeId === bulkTagTypeTab);
+                const visibleTags = bulkTagTypeTab
+                  ? (allTags ?? []).filter(t => t.tagTypeId === bulkTagTypeTab)
+                  : [];
 
                 const selectedTagSummary = bulkAttrSel.tagIds.length === 0
                   ? null
                   : bulkAttrSel.tagIds.map(tid => {
                       const tag = (allTags ?? []).find(t => t.id === tid);
                       if (!tag) return null;
-                      const typeName = tag.tagTypeId
-                        ? ((allTagTypes ?? []).find(tt => tt.id === tag.tagTypeId)?.name ?? "Other")
-                        : "Other";
-                      return `${tag.name} (${typeName})`;
+                      const typeName = (allTagTypes ?? []).find(tt => tt.id === tag.tagTypeId)?.name ?? "";
+                      return typeName ? `${tag.name} (${typeName})` : tag.name;
                     }).filter(Boolean).join(", ");
 
                 return (
@@ -2531,7 +2516,7 @@ export default function AdminCatalog() {
 
                     {/* Tag type selector row */}
                     <div className="flex flex-wrap gap-1.5 mb-3" data-testid="bulk-attr-tag-type-tabs">
-                      {tabsWithTags.map(tt => (
+                      {(allTagTypes ?? []).map(tt => (
                         <button
                           key={tt.id}
                           type="button"
@@ -2546,26 +2531,14 @@ export default function AdminCatalog() {
                           {tt.name}
                         </button>
                       ))}
-                      {showOtherTab && (
-                        <button
-                          type="button"
-                          onClick={() => setBulkTagTypeTab("other")}
-                          data-testid="bulk-attr-tag-type-other"
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                            bulkTagTypeTab === "other"
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground"
-                          }`}
-                        >
-                          Other
-                        </button>
-                      )}
                     </div>
 
                     {/* Filtered tag checkboxes for active tab */}
                     <div className="space-y-1.5 pl-1" data-testid="bulk-attr-tag-list">
-                      {visibleTags.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic">No tags in {activeTagTypeLabel}</p>
+                      {bulkTagTypeTab === null ? (
+                        <p className="text-xs text-muted-foreground italic">Select a tag type above</p>
+                      ) : visibleTags.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">No tags in this type</p>
                       ) : visibleTags.map(tag => (
                         <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
                           <Checkbox
