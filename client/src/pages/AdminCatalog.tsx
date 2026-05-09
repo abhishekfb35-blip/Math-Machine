@@ -910,6 +910,10 @@ export default function AdminCatalog() {
   const [bulkImageSlots, setBulkImageSlots] = useState<BulkImageSlot[]>([]);
   const [bulkImageProgress, setBulkImageProgress] = useState<string | null>(null);
 
+  const [bulkAttrsOpen, setBulkAttrsOpen] = useState(false);
+  const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
+  const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
+
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [renderedPage, setRenderedPage] = useState(1);
@@ -1227,6 +1231,30 @@ export default function AdminCatalog() {
     },
     onError: (err: any) => {
       toast({ title: "Error saving", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const bulkUpdateAttrsMutation = useMutation({
+    mutationFn: async (payload: {
+      productIds: string[];
+      ageGroupIds?: string[];
+      genderIds?: string[];
+      themeIds?: string[];
+      styleIds?: string[];
+      tagIds?: string[];
+    }) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-update-attributes", payload);
+      return res.json();
+    },
+    onSuccess: (data: { updated: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkAttrsOpen(false);
+      setBulkAttrSel(emptyBulkAttrSel);
+      toast({ title: `Attributes updated on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to update attributes", variant: "destructive" });
     },
   });
 
@@ -1813,6 +1841,17 @@ export default function AdminCatalog() {
                 </Button>
               </>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={selectedProductIds.size === 0}
+              onClick={() => { setBulkAttrSel(emptyBulkAttrSel); setBulkAttrsOpen(true); }}
+              data-testid="button-bulk-update-attributes"
+              className="text-muted-foreground disabled:opacity-50"
+            >
+              <TagIcon className="w-4 h-4 mr-1" />
+              Update Attributes
+            </Button>
             {(Object.keys(pendingChanges).length > 0 || dirtyImageProductIds.size > 0) && (
               <Button
                 size="sm"
@@ -2356,6 +2395,179 @@ export default function AdminCatalog() {
                 Apply to {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Update Attributes Dialog */}
+      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); } }}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col" data-testid="dialog-bulk-update-attributes">
+          <DialogHeader>
+            <DialogTitle>Update Attributes — {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
+            <DialogDescription>Select values for any attribute. Only the attributes you check here will be updated; all others stay as-is on each product.</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 pr-2">
+            <div className="space-y-5 pb-2">
+
+              {/* Age Group */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Age Group</p>
+                <div className="space-y-1.5">
+                  {attributes?.ageGroups.map((ag) => (
+                    <label key={ag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-age-${ag.id}`}>
+                      <Checkbox
+                        checked={bulkAttrSel.ageGroupIds.includes(ag.id)}
+                        onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                          ...prev,
+                          ageGroupIds: checked ? [...prev.ageGroupIds, ag.id] : prev.ageGroupIds.filter(id => id !== ag.id),
+                        }))}
+                      />
+                      <span className="text-sm">{ag.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gender */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Gender</p>
+                <div className="space-y-1.5">
+                  {attributes?.genders.map((g) => (
+                    <label key={g.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-gender-${g.id}`}>
+                      <Checkbox
+                        checked={bulkAttrSel.genderIds.includes(g.id)}
+                        onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                          ...prev,
+                          genderIds: checked ? [...prev.genderIds, g.id] : prev.genderIds.filter(id => id !== g.id),
+                        }))}
+                      />
+                      <span className="text-sm">{g.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theme */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Theme</p>
+                <div className="space-y-1.5">
+                  {attributes?.themes.map((t) => (
+                    <label key={t.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-theme-${t.id}`}>
+                      <Checkbox
+                        checked={bulkAttrSel.themeIds.includes(t.id)}
+                        onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                          ...prev,
+                          themeIds: checked ? [...prev.themeIds, t.id] : prev.themeIds.filter(id => id !== t.id),
+                        }))}
+                      />
+                      <span className="text-sm">{t.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Style */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Style</p>
+                <div className="space-y-1.5">
+                  {attributes?.styles.map((s) => (
+                    <label key={s.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-style-${s.id}`}>
+                      <Checkbox
+                        checked={bulkAttrSel.styleIds.includes(s.id)}
+                        onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                          ...prev,
+                          styleIds: checked ? [...prev.styleIds, s.id] : prev.styleIds.filter(id => id !== s.id),
+                        }))}
+                      />
+                      <span className="text-sm">{s.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags — grouped by tag type */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Tags</p>
+                <div className="space-y-4">
+                  {allTagTypes?.map((tagType) => {
+                    const tagsForType = (allTags ?? []).filter(t => t.tagTypeId === tagType.id);
+                    if (tagsForType.length === 0) return null;
+                    return (
+                      <div key={tagType.id}>
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">{tagType.name}</p>
+                        <div className="space-y-1.5 pl-1">
+                          {tagsForType.map((tag) => (
+                            <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
+                              <Checkbox
+                                checked={bulkAttrSel.tagIds.includes(tag.id)}
+                                onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                                  ...prev,
+                                  tagIds: checked ? [...prev.tagIds, tag.id] : prev.tagIds.filter(id => id !== tag.id),
+                                }))}
+                              />
+                              <span className="text-sm">{tag.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(() => {
+                    const typedTagTypeIds = new Set((allTagTypes ?? []).map(tt => tt.id));
+                    const untypedTags = (allTags ?? []).filter(t => !t.tagTypeId || !typedTagTypeIds.has(t.tagTypeId));
+                    if (untypedTags.length === 0) return null;
+                    return (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Other</p>
+                        <div className="space-y-1.5 pl-1">
+                          {untypedTags.map((tag) => (
+                            <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
+                              <Checkbox
+                                checked={bulkAttrSel.tagIds.includes(tag.id)}
+                                onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                                  ...prev,
+                                  tagIds: checked ? [...prev.tagIds, tag.id] : prev.tagIds.filter(id => id !== tag.id),
+                                }))}
+                              />
+                              <span className="text-sm">{tag.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
+            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); }} data-testid="button-bulk-attrs-cancel">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={
+                bulkUpdateAttrsMutation.isPending ||
+                (bulkAttrSel.ageGroupIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
+                 bulkAttrSel.themeIds.length === 0 && bulkAttrSel.styleIds.length === 0 &&
+                 bulkAttrSel.tagIds.length === 0)
+              }
+              onClick={() => {
+                const payload: Parameters<typeof bulkUpdateAttrsMutation.mutate>[0] = {
+                  productIds: Array.from(selectedProductIds),
+                };
+                if (bulkAttrSel.ageGroupIds.length > 0) payload.ageGroupIds = bulkAttrSel.ageGroupIds;
+                if (bulkAttrSel.genderIds.length > 0)   payload.genderIds   = bulkAttrSel.genderIds;
+                if (bulkAttrSel.themeIds.length > 0)    payload.themeIds    = bulkAttrSel.themeIds;
+                if (bulkAttrSel.styleIds.length > 0)    payload.styleIds    = bulkAttrSel.styleIds;
+                if (bulkAttrSel.tagIds.length > 0)      payload.tagIds      = bulkAttrSel.tagIds;
+                bulkUpdateAttrsMutation.mutate(payload);
+              }}
+              data-testid="button-bulk-attrs-apply"
+            >
+              {bulkUpdateAttrsMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Applying…</> : `Apply to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

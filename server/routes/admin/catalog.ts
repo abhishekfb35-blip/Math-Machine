@@ -544,6 +544,41 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  // ── Bulk Update Attributes ──
+  app.post("/api/admin/products/bulk-update-attributes", requirePermission("catalog"), async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        productIds:   z.array(z.string()).min(1),
+        ageGroupIds:  z.array(z.string()).optional(),
+        genderIds:    z.array(z.string()).optional(),
+        themeIds:     z.array(z.string()).optional(),
+        styleIds:     z.array(z.string()).optional(),
+        tagIds:       z.array(z.string()).optional(),
+      });
+      const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      await Promise.all(productIds.map(async (productId) => {
+        await Promise.all([
+          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, ageGroupIds) : Promise.resolve(),
+          genderIds   !== undefined ? storage.setProductGenders(productId, genderIds)     : Promise.resolve(),
+          themeIds    !== undefined ? storage.setProductThemes(productId, themeIds)       : Promise.resolve(),
+          styleIds    !== undefined ? storage.setProductStyles(productId, styleIds)       : Promise.resolve(),
+          tagIds      !== undefined ? storage.setProductTags(productId, tagIds)           : Promise.resolve(),
+        ]);
+      }));
+      await storage.createAuditLog({
+        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
+        action: "bulk-update-attributes",
+        changes: JSON.stringify({ productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds }),
+        username: getAdminUsername(req),
+      });
+      res.json({ updated: productIds.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk update attributes error:", err);
+      res.status(500).json({ message: "Failed to bulk update attributes" });
+    }
+  });
+
   // ── Occasions CRUD ──
   app.get("/api/admin/occasions", requirePermission("catalog"), async (_req, res) => {
     const occ = await storage.getOccasions();
