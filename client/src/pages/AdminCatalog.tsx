@@ -2401,12 +2401,12 @@ export default function AdminCatalog() {
 
       {/* Bulk Update Attributes Dialog */}
       <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); } }}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col" data-testid="dialog-bulk-update-attributes">
-          <DialogHeader>
+        <DialogContent className="max-w-lg flex flex-col" data-testid="dialog-bulk-update-attributes">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Bulk Update Attributes ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
             <DialogDescription>Select values for any attribute. Only the attributes you check here will be updated; all others stay as-is on each product.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 pr-2">
+          <div className="overflow-y-auto max-h-[60vh] pr-1 -mr-1">
             <div className="space-y-5 pb-2">
 
               {/* Age Group */}
@@ -2540,7 +2540,7 @@ export default function AdminCatalog() {
               </div>
 
             </div>
-          </ScrollArea>
+          </div>
           <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
             <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); }} data-testid="button-bulk-attrs-cancel">
               Cancel
