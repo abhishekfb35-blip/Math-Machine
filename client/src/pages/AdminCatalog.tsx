@@ -933,8 +933,9 @@ export default function AdminCatalog() {
   const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
   const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string | null>(null);
-  const [bulkAttrMode, setBulkAttrMode] = useState<"add" | "remove">("add");
+  const [bulkAttrMode, setBulkAttrMode] = useState<"add" | "remove" | "replace">("add");
   const [bulkRemoveConfirmOpen, setBulkRemoveConfirmOpen] = useState(false);
+  const [bulkClearConfirmOpen, setBulkClearConfirmOpen] = useState(false);
   const BULK_REMOVE_CONFIRM_THRESHOLD = 5;
 
   const [pageSize, setPageSize] = useState<number>(25);
@@ -1309,6 +1310,54 @@ export default function AdminCatalog() {
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to remove attributes", variant: "destructive" });
+    },
+  });
+
+  const bulkReplaceAttrsMutation = useMutation({
+    mutationFn: async (payload: {
+      productIds: string[];
+      ageGroupIds?: string[];
+      genderIds?: string[];
+      themeIds?: string[];
+      styleIds?: string[];
+      tagIds?: string[];
+    }) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-replace-attributes", payload);
+      return res.json();
+    },
+    onSuccess: (data: { updated: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkAttrsOpen(false);
+      setBulkAttrSel(emptyBulkAttrSel);
+      setBulkTagTypeTab(getDefaultBulkTagTypeTab());
+      setBulkAttrMode("add");
+      toast({ title: `Attributes replaced on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to replace attributes", variant: "destructive" });
+    },
+  });
+
+  const bulkClearAttrsMutation = useMutation({
+    mutationFn: async (payload: { productIds: string[] }) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-clear-attributes", payload);
+      return res.json();
+    },
+    onSuccess: (data: { updated: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkAttrsOpen(false);
+      setBulkAttrSel(emptyBulkAttrSel);
+      setBulkTagTypeTab(getDefaultBulkTagTypeTab());
+      setBulkAttrMode("add");
+      setBulkClearConfirmOpen(false);
+      toast({ title: `All attributes cleared from ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to clear attributes", variant: "destructive" });
     },
   });
 
@@ -2461,10 +2510,12 @@ export default function AdminCatalog() {
             <DialogDescription>
               {bulkAttrMode === "add"
                 ? "Select values to add. Only the attributes you check here will be updated; all others stay as-is on each product."
-                : "Select values to remove. Checked attributes will be removed from all selected products; products that don't have them are unaffected."}
+                : bulkAttrMode === "remove"
+                ? "Select values to remove. Checked attributes will be removed from all selected products; products that don't have them are unaffected."
+                : "Select values to set. For each attribute type you check, the product's existing values for that type will be replaced with only what you select here."}
             </DialogDescription>
           </DialogHeader>
-          {/* Add / Remove mode toggle */}
+          {/* Add / Remove / Replace mode toggle */}
           <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit shrink-0" data-testid="bulk-attr-mode-toggle">
             <button
               type="button"
@@ -2489,6 +2540,18 @@ export default function AdminCatalog() {
               }`}
             >
               Remove
+            </button>
+            <button
+              type="button"
+              onClick={() => { setBulkAttrMode("replace"); setBulkAttrSel(emptyBulkAttrSel); }}
+              data-testid="bulk-attr-mode-replace"
+              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                bulkAttrMode === "replace"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Replace
             </button>
           </div>
           <div className="overflow-y-auto max-h-[60vh] pr-1 -mr-1">
@@ -2639,61 +2702,84 @@ export default function AdminCatalog() {
 
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
-            <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrMode("add"); }} data-testid="button-bulk-attrs-cancel">
-              Cancel
-            </Button>
+          <div className="flex items-center justify-between gap-2 pt-3 border-t shrink-0">
             <Button
               size="sm"
-              variant={bulkAttrMode === "remove" ? "destructive" : "default"}
-              disabled={
-                (bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending) ||
-                (bulkAttrSel.ageGroupIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
-                 bulkAttrSel.themeIds.length === 0 && bulkAttrSel.styleIds.length === 0 &&
-                 bulkAttrSel.tagIds.length === 0)
-              }
-              onClick={() => {
-                if (bulkAttrMode === "remove" && selectedProductIds.size >= BULK_REMOVE_CONFIRM_THRESHOLD) {
-                  setBulkRemoveConfirmOpen(true);
-                  return;
-                }
-                const payload = {
-                  productIds: Array.from(selectedProductIds),
-                  ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
-                  ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
-                  ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
-                  ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
-                  ...(bulkAttrSel.tagIds.length > 0      ? { tagIds:      bulkAttrSel.tagIds }      : {}),
-                };
-                if (bulkAttrMode === "remove") {
-                  bulkRemoveAttrsMutation.mutate(payload);
-                } else {
-                  bulkUpdateAttrsMutation.mutate(payload);
-                }
-              }}
-              data-testid="button-bulk-attrs-apply"
+              variant="destructive"
+              disabled={bulkClearAttrsMutation.isPending}
+              onClick={() => setBulkClearConfirmOpen(true)}
+              data-testid="button-bulk-attrs-clear-all"
             >
-              {(bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending)
-                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Applying…</>
-                : bulkAttrMode === "remove"
-                  ? `Remove from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`
-                  : `Add to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+              {bulkClearAttrsMutation.isPending
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Clearing…</>
+                : "Clear All"}
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab(getDefaultBulkTagTypeTab()); setBulkAttrMode("add"); }} data-testid="button-bulk-attrs-cancel">
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant={bulkAttrMode === "add" ? "default" : "destructive"}
+                disabled={
+                  (bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending || bulkReplaceAttrsMutation.isPending) ||
+                  (bulkAttrSel.ageGroupIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
+                   bulkAttrSel.themeIds.length === 0 && bulkAttrSel.styleIds.length === 0 &&
+                   bulkAttrSel.tagIds.length === 0)
+                }
+                onClick={() => {
+                  if ((bulkAttrMode === "remove" || bulkAttrMode === "replace") && selectedProductIds.size >= BULK_REMOVE_CONFIRM_THRESHOLD) {
+                    setBulkRemoveConfirmOpen(true);
+                    return;
+                  }
+                  const payload = {
+                    productIds: Array.from(selectedProductIds),
+                    ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
+                    ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
+                    ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
+                    ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
+                    ...(bulkAttrSel.tagIds.length > 0      ? { tagIds:      bulkAttrSel.tagIds }      : {}),
+                  };
+                  if (bulkAttrMode === "remove") {
+                    bulkRemoveAttrsMutation.mutate(payload);
+                  } else if (bulkAttrMode === "replace") {
+                    bulkReplaceAttrsMutation.mutate(payload);
+                  } else {
+                    bulkUpdateAttrsMutation.mutate(payload);
+                  }
+                }}
+                data-testid="button-bulk-attrs-apply"
+              >
+                {(bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending || bulkReplaceAttrsMutation.isPending)
+                  ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Applying…</>
+                  : bulkAttrMode === "remove"
+                    ? `Remove from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`
+                    : bulkAttrMode === "replace"
+                    ? `Replace on ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`
+                    : `Add to ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Remove Attributes — Confirmation Dialog */}
+      {/* Bulk Remove / Replace Attributes — Confirmation Dialog */}
       <Dialog open={bulkRemoveConfirmOpen} onOpenChange={(open) => { if (!open) setBulkRemoveConfirmOpen(false); }}>
         <DialogContent className="max-w-md" data-testid="dialog-bulk-remove-confirm">
           <DialogHeader>
-            <DialogTitle className="text-base text-destructive">Confirm Bulk Remove</DialogTitle>
+            <DialogTitle className="text-base text-destructive">
+              {bulkAttrMode === "replace" ? "Confirm Bulk Replace" : "Confirm Bulk Remove"}
+            </DialogTitle>
             <DialogDescription className="text-sm">
-              You are about to remove attributes from <strong>{selectedProductIds.size} products</strong>. This cannot be undone automatically.
+              {bulkAttrMode === "replace"
+                ? <>You are about to replace attributes on <strong>{selectedProductIds.size} products</strong>. Existing values for the checked types will be overwritten. This cannot be undone automatically.</>
+                : <>You are about to remove attributes from <strong>{selectedProductIds.size} products</strong>. This cannot be undone automatically.</>}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
-            <p className="text-sm font-medium">Attributes to be removed:</p>
+            <p className="text-sm font-medium">
+              {bulkAttrMode === "replace" ? "Attributes to be replaced with:" : "Attributes to be removed:"}
+            </p>
             <ul className="text-sm space-y-1 pl-3 border-l-2 border-destructive/40">
               {bulkAttrSel.ageGroupIds.length > 0 && (
                 <li data-testid="confirm-remove-age-groups">
@@ -2734,7 +2820,7 @@ export default function AdminCatalog() {
             <Button
               size="sm"
               variant="destructive"
-              disabled={bulkRemoveAttrsMutation.isPending}
+              disabled={bulkRemoveAttrsMutation.isPending || bulkReplaceAttrsMutation.isPending}
               onClick={() => {
                 const payload = {
                   productIds: Array.from(selectedProductIds),
@@ -2744,14 +2830,48 @@ export default function AdminCatalog() {
                   ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
                   ...(bulkAttrSel.tagIds.length > 0      ? { tagIds:      bulkAttrSel.tagIds }      : {}),
                 };
-                bulkRemoveAttrsMutation.mutate(payload);
+                if (bulkAttrMode === "replace") {
+                  bulkReplaceAttrsMutation.mutate(payload);
+                } else {
+                  bulkRemoveAttrsMutation.mutate(payload);
+                }
                 setBulkRemoveConfirmOpen(false);
               }}
               data-testid="button-bulk-remove-confirm"
             >
-              {bulkRemoveAttrsMutation.isPending
-                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Removing…</>
-                : `Yes, remove from ${selectedProductIds.size} products`}
+              {(bulkRemoveAttrsMutation.isPending || bulkReplaceAttrsMutation.isPending)
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />{bulkAttrMode === "replace" ? "Replacing…" : "Removing…"}</>
+                : bulkAttrMode === "replace"
+                  ? `Yes, replace on ${selectedProductIds.size} products`
+                  : `Yes, remove from ${selectedProductIds.size} products`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Clear All Attributes — Confirmation Dialog */}
+      <Dialog open={bulkClearConfirmOpen} onOpenChange={(open) => { if (!open) setBulkClearConfirmOpen(false); }}>
+        <DialogContent className="max-w-md" data-testid="dialog-bulk-clear-confirm">
+          <DialogHeader>
+            <DialogTitle className="text-base text-destructive">Clear All Attributes</DialogTitle>
+            <DialogDescription className="text-sm">
+              This will remove <strong>all</strong> age groups, genders, themes, styles, and tags from <strong>{selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}</strong>. This cannot be undone automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" size="sm" onClick={() => setBulkClearConfirmOpen(false)} data-testid="button-bulk-clear-cancel">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={bulkClearAttrsMutation.isPending}
+              onClick={() => bulkClearAttrsMutation.mutate({ productIds: Array.from(selectedProductIds) })}
+              data-testid="button-bulk-clear-confirm"
+            >
+              {bulkClearAttrsMutation.isPending
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Clearing…</>
+                : `Yes, clear all from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
             </Button>
           </div>
         </DialogContent>
