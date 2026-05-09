@@ -1251,6 +1251,7 @@ export default function AdminCatalog() {
     },
     onSuccess: (data: { updated: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setBulkAttrsOpen(false);
       setBulkAttrSel(emptyBulkAttrSel);
