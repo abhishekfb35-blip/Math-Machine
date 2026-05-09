@@ -556,13 +556,19 @@ export function registerAdminCatalogRoutes(app: Express) {
         tagIds:       z.array(z.string()).optional(),
       });
       const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      const needsAttrs = ageGroupIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
+      const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
       await Promise.all(productIds.map(async (productId) => {
+        const [existing, existingTagIds] = await Promise.all([
+          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ ageGroupIds: [], genderIds: [], themeIds: [], styleIds: [] }),
+          tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
+        ]);
         await Promise.all([
-          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, ageGroupIds) : Promise.resolve(),
-          genderIds   !== undefined ? storage.setProductGenders(productId, genderIds)     : Promise.resolve(),
-          themeIds    !== undefined ? storage.setProductThemes(productId, themeIds)       : Promise.resolve(),
-          styleIds    !== undefined ? storage.setProductStyles(productId, styleIds)       : Promise.resolve(),
-          tagIds      !== undefined ? storage.setProductTags(productId, tagIds)           : Promise.resolve(),
+          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, union(existing.ageGroupIds, ageGroupIds)) : Promise.resolve(),
+          genderIds   !== undefined ? storage.setProductGenders(productId, union(existing.genderIds, genderIds))       : Promise.resolve(),
+          themeIds    !== undefined ? storage.setProductThemes(productId, union(existing.themeIds, themeIds))           : Promise.resolve(),
+          styleIds    !== undefined ? storage.setProductStyles(productId, union(existing.styleIds, styleIds))           : Promise.resolve(),
+          tagIds      !== undefined ? storage.setProductTags(productId, union(existingTagIds, tagIds))                 : Promise.resolve(),
         ]);
       }));
       await storage.createAuditLog({

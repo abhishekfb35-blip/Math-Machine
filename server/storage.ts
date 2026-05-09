@@ -117,6 +117,7 @@ export interface IStorage {
   deleteOccasion(id: string): Promise<void>;
 
   getProductTags(productId: string): Promise<Tag[]>;
+  getProductTagIds(productId: string): Promise<string[]>;
   setProductTags(productId: string, tagIds: string[]): Promise<void>;
   getProductTagIdsByCategory(categoryId: string): Promise<Record<string, string[]>>;
   getProductTagsForCatalog(categoryId: string): Promise<{ productTagMap: Record<string, string[]>; productTagNameMap: Record<string, string[]> }>;
@@ -881,6 +882,11 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(tags, eq(productTags.tagId, tags.id))
       .where(eq(productTags.productId, productId));
     return rows;
+  }
+
+  async getProductTagIds(productId: string): Promise<string[]> {
+    const rows = await db.select({ tagId: productTags.tagId }).from(productTags).where(eq(productTags.productId, productId));
+    return rows.map(r => r.tagId);
   }
 
   async setProductTags(productId: string, tagIds: string[]): Promise<void> {
