@@ -913,6 +913,7 @@ export default function AdminCatalog() {
   const [bulkAttrsOpen, setBulkAttrsOpen] = useState(false);
   const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
+  const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string>("other");
 
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -2400,7 +2401,7 @@ export default function AdminCatalog() {
       </Dialog>
 
       {/* Bulk Update Attributes Dialog */}
-      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); } }}>
+      <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); setBulkTagTypeTab("other"); } }}>
         <DialogContent className="max-w-lg flex flex-col" data-testid="dialog-bulk-update-attributes">
           <DialogHeader className="shrink-0">
             <DialogTitle>Bulk Update Attributes ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
@@ -2485,59 +2486,95 @@ export default function AdminCatalog() {
                 </div>
               </div>
 
-              {/* Tags — grouped by tag type */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Tags</p>
-                <div className="space-y-4">
-                  {allTagTypes?.map((tagType) => {
-                    const tagsForType = (allTags ?? []).filter(t => t.tagTypeId === tagType.id);
-                    if (tagsForType.length === 0) return null;
-                    return (
-                      <div key={tagType.id}>
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5">{tagType.name}</p>
-                        <div className="space-y-1.5 pl-1">
-                          {tagsForType.map((tag) => (
-                            <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
-                              <Checkbox
-                                checked={bulkAttrSel.tagIds.includes(tag.id)}
-                                onCheckedChange={(checked) => setBulkAttrSel(prev => ({
-                                  ...prev,
-                                  tagIds: checked ? [...prev.tagIds, tag.id] : prev.tagIds.filter(id => id !== tag.id),
-                                }))}
-                              />
-                              <span className="text-sm">{tag.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {(() => {
-                    const typedTagTypeIds = new Set((allTagTypes ?? []).map(tt => tt.id));
-                    const untypedTags = (allTags ?? []).filter(t => !t.tagTypeId || !typedTagTypeIds.has(t.tagTypeId));
-                    if (untypedTags.length === 0) return null;
-                    return (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Other</p>
-                        <div className="space-y-1.5 pl-1">
-                          {untypedTags.map((tag) => (
-                            <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
-                              <Checkbox
-                                checked={bulkAttrSel.tagIds.includes(tag.id)}
-                                onCheckedChange={(checked) => setBulkAttrSel(prev => ({
-                                  ...prev,
-                                  tagIds: checked ? [...prev.tagIds, tag.id] : prev.tagIds.filter(id => id !== tag.id),
-                                }))}
-                              />
-                              <span className="text-sm">{tag.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
+              {/* Tags — tag type selector + filtered list */}
+              {(() => {
+                const typedTagTypeIds = new Set((allTagTypes ?? []).map(tt => tt.id));
+                const untypedTags = (allTags ?? []).filter(t => !t.tagTypeId || !typedTagTypeIds.has(t.tagTypeId));
+                const tabsWithTags = (allTagTypes ?? []).filter(tt => (allTags ?? []).some(t => t.tagTypeId === tt.id));
+                const showOtherTab = untypedTags.length > 0;
+
+                const activeTagTypeLabel = bulkTagTypeTab === "other"
+                  ? "Other"
+                  : (allTagTypes ?? []).find(tt => tt.id === bulkTagTypeTab)?.name ?? "";
+
+                const visibleTags = bulkTagTypeTab === "other"
+                  ? untypedTags
+                  : (allTags ?? []).filter(t => t.tagTypeId === bulkTagTypeTab);
+
+                const selectedTagSummary = bulkAttrSel.tagIds.length === 0
+                  ? null
+                  : bulkAttrSel.tagIds.map(tid => {
+                      const tag = (allTags ?? []).find(t => t.id === tid);
+                      if (!tag) return null;
+                      const typeName = tag.tagTypeId
+                        ? ((allTagTypes ?? []).find(tt => tt.id === tag.tagTypeId)?.name ?? "Other")
+                        : "Other";
+                      return `${tag.name} (${typeName})`;
+                    }).filter(Boolean).join(", ");
+
+                return (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Tags</p>
+
+                    {/* Selected tags summary */}
+                    <p className="text-xs text-muted-foreground mb-2" data-testid="bulk-attr-tags-summary">
+                      <span className="font-medium">Selected: </span>
+                      {selectedTagSummary ?? <span className="italic">None</span>}
+                    </p>
+
+                    {/* Tag type selector row */}
+                    <div className="flex flex-wrap gap-1.5 mb-3" data-testid="bulk-attr-tag-type-tabs">
+                      {tabsWithTags.map(tt => (
+                        <button
+                          key={tt.id}
+                          type="button"
+                          onClick={() => setBulkTagTypeTab(tt.id)}
+                          data-testid={`bulk-attr-tag-type-${tt.id}`}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            bulkTagTypeTab === tt.id
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground"
+                          }`}
+                        >
+                          {tt.name}
+                        </button>
+                      ))}
+                      {showOtherTab && (
+                        <button
+                          type="button"
+                          onClick={() => setBulkTagTypeTab("other")}
+                          data-testid="bulk-attr-tag-type-other"
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            bulkTagTypeTab === "other"
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground"
+                          }`}
+                        >
+                          Other
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filtered tag checkboxes for active tab */}
+                    <div className="space-y-1.5 pl-1" data-testid="bulk-attr-tag-list">
+                      {visibleTags.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">No tags in {activeTagTypeLabel}</p>
+                      ) : visibleTags.map(tag => (
+                        <label key={tag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-tag-${tag.id}`}>
+                          <Checkbox
+                            checked={bulkAttrSel.tagIds.includes(tag.id)}
+                            onCheckedChange={(checked) => setBulkAttrSel(prev => ({
+                              ...prev,
+                              tagIds: checked ? [...prev.tagIds, tag.id] : prev.tagIds.filter(id => id !== tag.id),
+                            }))}
+                          />
+                          <span className="text-sm">{tag.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
             </div>
           </div>
