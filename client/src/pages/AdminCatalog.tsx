@@ -54,9 +54,10 @@ function ProductAttributeSelector({
   ].join("|");
 
   const savedAttrRef = useRef({ ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[] });
+  const openPopoverCountRef = useRef(0);
 
   useEffect(() => {
-    if (!attributes) return;
+    if (!attributes || openPopoverCountRef.current > 0) return;
     const newAgeGroupIds = toIds(product.ageGroups ?? [], attributes.ageGroups);
     const newGenderIds = toIds(product.genders ?? [], attributes.genders);
     const newThemeIds = toIds(product.themes ?? [], attributes.themes);
@@ -125,7 +126,7 @@ function ProductAttributeSelector({
     <div className="space-y-px mt-1.5 pt-1.5 border-t border-border/40" data-testid={`attr-selector-${productId}`}>
 
       {/* Age */}
-      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-age-${productId}`}>
             <span className={labelCls}>Age</span>
@@ -152,7 +153,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Gender */}
-      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-gender-${productId}`}>
             <span className={labelCls}>Gender</span>
@@ -179,7 +180,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Theme */}
-      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-themes-${productId}`}>
             <span className={labelCls}>Theme</span>
@@ -208,7 +209,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Style */}
-      <Popover onOpenChange={(open) => { if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-styles-${productId}`}>
             <span className={labelCls}>Style</span>
@@ -235,7 +236,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Tags — grouped by tag type */}
-      <Popover onOpenChange={(open) => { if (!open) saveTags(tagIds); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveTags(tagIds); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-tags-${productId}`}>
             <span className={labelCls}>Tags</span>
