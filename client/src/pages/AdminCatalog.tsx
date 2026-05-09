@@ -45,18 +45,28 @@ function ProductAttributeSelector({
   const [styleIds, setStyleIds] = useState<string[]>([]);
   const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
   const [activeTagTypeId, setActiveTagTypeId] = useState<string>("all");
-  const initializedRef = useRef(false);
 
-  useEffect(() => {
-    if (!attributes || initializedRef.current) return;
-    initializedRef.current = true;
-    setAgeGroupIds(toIds(product.ageGroups ?? [], attributes.ageGroups));
-    setGenderIds(toIds(product.genders ?? [], attributes.genders));
-    setThemeIds(toIds(product.themes ?? [], attributes.themes));
-    setStyleIds(toIds(product.styles ?? [], attributes.styles));
-  }, [attributes]);
+  const productAttrKey = [
+    [...(product.ageGroups ?? [])].sort().join(","),
+    [...(product.genders ?? [])].sort().join(","),
+    [...(product.themes ?? [])].sort().join(","),
+    [...(product.styles ?? [])].sort().join(","),
+  ].join("|");
 
   const savedAttrRef = useRef({ ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[] });
+
+  useEffect(() => {
+    if (!attributes) return;
+    const newAgeGroupIds = toIds(product.ageGroups ?? [], attributes.ageGroups);
+    const newGenderIds = toIds(product.genders ?? [], attributes.genders);
+    const newThemeIds = toIds(product.themes ?? [], attributes.themes);
+    const newStyleIds = toIds(product.styles ?? [], attributes.styles);
+    setAgeGroupIds(newAgeGroupIds);
+    setGenderIds(newGenderIds);
+    setThemeIds(newThemeIds);
+    setStyleIds(newStyleIds);
+    savedAttrRef.current = { ageGroupIds: newAgeGroupIds, genderIds: newGenderIds, themeIds: newThemeIds, styleIds: newStyleIds };
+  }, [attributes, productAttrKey]);
   const savedTagIdsRef = useRef(initialTagIds);
 
   const attrMutation = useMutation({
