@@ -46,6 +46,8 @@ function ProductAttributeSelector({
   const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
   const [activeTagTypeId, setActiveTagTypeId] = useState<string>("all");
 
+  const initialTagKey = [...initialTagIds].sort().join(",");
+
   const productAttrKey = [
     [...(product.ageGroups ?? [])].sort().join(","),
     [...(product.genders ?? [])].sort().join(","),
@@ -69,6 +71,12 @@ function ProductAttributeSelector({
     savedAttrRef.current = { ageGroupIds: newAgeGroupIds, genderIds: newGenderIds, themeIds: newThemeIds, styleIds: newStyleIds };
   }, [attributes, productAttrKey]);
   const savedTagIdsRef = useRef(initialTagIds);
+
+  useEffect(() => {
+    if (openPopoverCountRef.current > 0) return;
+    setTagIds(initialTagIds);
+    savedTagIdsRef.current = initialTagIds;
+  }, [initialTagKey]);
 
   const attrMutation = useMutation({
     mutationFn: async (data: { ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
