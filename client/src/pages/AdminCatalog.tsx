@@ -26,7 +26,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor, Attributes } from "@shared/types";
 
-type View = "categories" | "products" | "edit-category" | "edit-product" | "tags" | "edit-tag";
+type View = "categories" | "products" | "edit-category" | "edit-product";
 
 function ProductAttributeSelector({
   productId, categoryId, product, attributes, allTags, allTagTypes, initialTagIds,
@@ -885,15 +885,11 @@ export default function AdminCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
-  const [editingTag, setEditingTag] = useState<Partial<Tag> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [editingAgeGroupIds, setEditingAgeGroupIds] = useState<string[]>([]);
   const [editingGenderIds, setEditingGenderIds] = useState<string[]>([]);
   const [editingThemeIds, setEditingThemeIds] = useState<string[]>([]);
   const [editingStyleIds, setEditingStyleIds] = useState<string[]>([]);
-  const [newTagTypeName, setNewTagTypeName] = useState("");
-  const [newTagTypeSlug, setNewTagTypeSlug] = useState("");
-  const [newTagTypeDescription, setNewTagTypeDescription] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [adminSearchQuery, setAdminSearchQuery] = useState("");
   const [adminSearchActive, setAdminSearchActive] = useState(false);
@@ -1234,72 +1230,6 @@ export default function AdminCatalog() {
     },
   });
 
-  const saveTagMutation = useMutation({
-    mutationFn: async (data: Partial<Tag>) => {
-      if (data.id) {
-        const res = await apiRequest("PUT", `/api/admin/tags/${data.id}`, data);
-        return res.json();
-      } else {
-        const res = await apiRequest("POST", "/api/admin/tags", data);
-        return res.json();
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
-      toast({ title: isNew ? "Tag created" : "Tag updated" });
-      setView("tags");
-      setEditingTag(null);
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const deleteTagMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/admin/tags/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
-      toast({ title: "Tag deleted" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete tag", variant: "destructive" });
-    },
-  });
-
-  const createTagTypeMutation = useMutation({
-    mutationFn: async ({ name, slug, description }: { name: string; slug: string; description: string }) => {
-      const res = await apiRequest("POST", "/api/admin/tag-types", { name, slug, description });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
-      setNewTagTypeName("");
-      setNewTagTypeSlug("");
-      setNewTagTypeDescription("");
-      toast({ title: "Tag type created" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message || "Failed to create tag type", variant: "destructive" });
-    },
-  });
-
-  const deleteTagTypeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/admin/tag-types/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tag-types"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/tags"] });
-      toast({ title: "Tag type deleted" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete tag type", variant: "destructive" });
-    },
-  });
-
   const deleteProductMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/products/${id}`);
@@ -1531,14 +1461,6 @@ export default function AdminCatalog() {
                 <ChevronLeft className="w-4 h-4 mr-1" /> Dashboard
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("tags")}
-              data-testid="button-tags"
-            >
-              <TagIcon className="w-4 h-4 mr-1" /> Tags
-            </Button>
             <Button
               size="sm"
               onClick={() => {
@@ -3191,273 +3113,6 @@ export default function AdminCatalog() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Tags List View ──
-  if (view === "tags") {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setView("categories")} data-testid="button-back-from-tags">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Categories
-        </Button>
-
-        <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-bold" data-testid="text-tags-title">Tags</h1>
-            <p className="text-sm text-muted-foreground">Internal merchandising signals, grouped by type</p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              setIsNew(true);
-              setEditingTag({ name: "", description: "", tagTypeId: allTagTypes?.[0]?.id ?? null });
-              setView("edit-tag");
-            }}
-            data-testid="button-add-tag"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add Tag
-          </Button>
-        </div>
-
-        <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-          <h2 className="text-sm font-semibold mb-3">Tag Types</h2>
-          <div className="space-y-2">
-            {allTagTypes?.map((tagType) => (
-              <div key={tagType.id} className="flex items-center gap-2" data-testid={`card-tag-type-${tagType.id}`}>
-                <span className="flex-1 text-sm font-medium">{tagType.name}</span>
-                <span className="text-xs text-muted-foreground">{allTags?.filter(t => t.tagTypeId === tagType.id).length ?? 0} tags</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    const count = allTags?.filter(t => t.tagTypeId === tagType.id).length ?? 0;
-                    const msg = count > 0
-                      ? `Delete tag type "${tagType.name}"? This type has ${count} tag${count === 1 ? "" : "s"} — they will become untyped.`
-                      : `Delete tag type "${tagType.name}"?`;
-                    if (confirm(msg)) {
-                      deleteTagTypeMutation.mutate(tagType.id);
-                    }
-                  }}
-                  data-testid={`button-delete-tag-type-${tagType.id}`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-2 mt-3 border-t pt-3">
-            <p className="text-xs font-medium text-muted-foreground">Add New Tag Type</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Name (e.g. Merchandising)"
-                value={newTagTypeName}
-                onChange={(e) => {
-                  setNewTagTypeName(e.target.value);
-                  if (!newTagTypeSlug || newTagTypeSlug === newTagTypeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")) {
-                    setNewTagTypeSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
-                  }
-                }}
-                className="h-8 text-sm"
-                data-testid="input-new-tag-type"
-              />
-              <Input
-                placeholder="Slug (auto)"
-                value={newTagTypeSlug}
-                onChange={(e) => setNewTagTypeSlug(e.target.value)}
-                className="h-8 text-sm"
-                data-testid="input-new-tag-type-slug"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Description (optional)"
-                value={newTagTypeDescription}
-                onChange={(e) => setNewTagTypeDescription(e.target.value)}
-                className="h-8 text-sm flex-1"
-                data-testid="input-new-tag-type-description"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const name = newTagTypeName.trim();
-                  const slug = newTagTypeSlug.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-                  if (name) createTagTypeMutation.mutate({ name, slug, description: newTagTypeDescription.trim() });
-                }}
-                disabled={!newTagTypeName.trim() || createTagTypeMutation.isPending}
-                data-testid="button-create-tag-type"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Add Type
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {(allTagTypes && allTagTypes.length > 0 ? allTagTypes : [{ id: null as string | null, name: "All Tags", slug: "", description: null, sortOrder: 0 }]).map((tagType) => {
-            const tagsForType = (allTags ?? []).filter(t => t.tagTypeId === tagType.id);
-            if (tagsForType.length === 0) return null;
-            return (
-              <div key={tagType.id ?? "all"}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{tagType.name}</h3>
-                  {tagType.id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => {
-                        setIsNew(true);
-                        setEditingTag({ name: "", description: "", tagTypeId: tagType.id });
-                        setView("edit-tag");
-                      }}
-                      data-testid={`button-add-tag-in-type-${tagType.id}`}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Add
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  {tagsForType.map((tag) => (
-                    <Card key={tag.id} className="p-2.5" data-testid={`card-tag-${tag.id}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm" data-testid={`text-tag-name-${tag.id}`}>{tag.name}</p>
-                          {tag.description && (
-                            <p className="text-xs text-muted-foreground truncate">{tag.description}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => {
-                              setIsNew(false);
-                              setEditingTag({ ...tag });
-                              setView("edit-tag");
-                            }}
-                            data-testid={`button-edit-tag-${tag.id}`}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => {
-                              if (confirm(`Delete tag "${tag.name}"?`)) {
-                                deleteTagMutation.mutate(tag.id);
-                              }
-                            }}
-                            data-testid={`button-delete-tag-${tag.id}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {allTags?.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Untyped</h3>
-              <div className="space-y-1.5">
-                {allTags.filter(t => !allTagTypes?.some(tt => tt.id === t.tagTypeId)).map((tag) => (
-                  <Card key={tag.id} className="p-2.5" data-testid={`card-tag-${tag.id}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{tag.name}</p>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setIsNew(false); setEditingTag({ ...tag }); setView("edit-tag"); }} data-testid={`button-edit-tag-${tag.id}`}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm(`Delete tag "${tag.name}"?`)) deleteTagMutation.mutate(tag.id); }} data-testid={`button-delete-tag-${tag.id}`}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-          {(!allTags || allTags.length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
-              <TagIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No tags yet</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Edit Tag View ──
-  if (view === "edit-tag" && editingTag) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => { setView("tags"); setEditingTag(null); }} data-testid="button-back-tags">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Tags
-        </Button>
-        <h1 className="text-xl font-bold mb-4" data-testid="text-edit-tag-title">
-          {isNew ? "New Tag" : "Edit Tag"}
-        </h1>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="tag-name">Name</Label>
-            <Input
-              id="tag-name"
-              value={editingTag.name || ""}
-              onChange={(e) => setEditingTag(prev => ({ ...prev!, name: e.target.value }))}
-              data-testid="input-tag-name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="tag-type-select">Tag Type</Label>
-            <Select
-              value={editingTag.tagTypeId ?? "none"}
-              onValueChange={(v) => setEditingTag(prev => ({ ...prev!, tagTypeId: v === "none" ? null : v }))}
-            >
-              <SelectTrigger id="tag-type-select" data-testid="select-tag-type">
-                <SelectValue placeholder="Select type..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No type</SelectItem>
-                {allTagTypes?.map((tt) => (
-                  <SelectItem key={tt.id} value={tt.id} data-testid={`tag-type-option-${tt.id}`}>
-                    {tt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="tag-desc">Description</Label>
-            <Textarea
-              id="tag-desc"
-              value={editingTag.description || ""}
-              onChange={(e) => setEditingTag(prev => ({ ...prev!, description: e.target.value }))}
-              data-testid="input-tag-description"
-            />
-          </div>
-          <Button
-            className="w-full"
-            onClick={() => saveTagMutation.mutate(editingTag)}
-            disabled={saveTagMutation.isPending || !editingTag.name}
-            data-testid="button-save-tag"
-          >
-            {saveTagMutation.isPending ? "Saving..." : isNew ? "Create Tag" : "Save Changes"}
-          </Button>
         </div>
       </div>
     );
