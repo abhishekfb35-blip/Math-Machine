@@ -1850,7 +1850,7 @@ export default function AdminCatalog() {
               className="text-muted-foreground disabled:opacity-50"
             >
               <TagIcon className="w-4 h-4 mr-1" />
-              Update Attributes
+              Bulk Update Attributes
             </Button>
             {(Object.keys(pendingChanges).length > 0 || dirtyImageProductIds.size > 0) && (
               <Button
@@ -2403,7 +2403,7 @@ export default function AdminCatalog() {
       <Dialog open={bulkAttrsOpen} onOpenChange={(open) => { if (!open) { setBulkAttrsOpen(false); setBulkAttrSel(emptyBulkAttrSel); } }}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col" data-testid="dialog-bulk-update-attributes">
           <DialogHeader>
-            <DialogTitle>Update Attributes — {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}</DialogTitle>
+            <DialogTitle>Bulk Update Attributes ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
             <DialogDescription>Select values for any attribute. Only the attributes you check here will be updated; all others stay as-is on each product.</DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 pr-2">
