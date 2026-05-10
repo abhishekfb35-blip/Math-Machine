@@ -666,6 +666,13 @@ export function registerAdminCatalogRoutes(app: Express) {
     try {
       const bodySchema = z.object({ productIds: z.array(z.string()).min(1) });
       const { productIds } = bodySchema.parse(req.body);
+      const snapshot = await Promise.all(productIds.map(async (productId) => {
+        const [attrs, tagIds] = await Promise.all([
+          storage.getProductAttributeIds(productId),
+          storage.getProductTagIds(productId),
+        ]);
+        return { productId, ...attrs, tagIds };
+      }));
       await Promise.all(productIds.map(async (productId) => {
         await Promise.all([
           storage.setProductAgeGroups(productId, []),
@@ -681,11 +688,49 @@ export function registerAdminCatalogRoutes(app: Express) {
         changes: JSON.stringify({ productIds }),
         username: getAdminUsername(req),
       });
-      res.json({ updated: productIds.length });
+      res.json({ updated: productIds.length, snapshot });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk clear attributes error:", err);
       res.status(500).json({ message: "Failed to bulk clear attributes" });
+    }
+  });
+
+  // ── Bulk Restore Attributes (undo clear) ──
+  app.post("/api/admin/products/bulk-restore-attributes", requirePermission("catalog"), async (req, res) => {
+    try {
+      const snapshotItemSchema = z.object({
+        productId:    z.string(),
+        ageGroupIds:  z.array(z.string()),
+        genderIds:    z.array(z.string()),
+        themeIds:     z.array(z.string()),
+        styleIds:     z.array(z.string()),
+        tagIds:       z.array(z.string()),
+      });
+      const bodySchema = z.object({ snapshot: z.array(snapshotItemSchema).min(1) });
+      const { snapshot } = bodySchema.parse(req.body);
+      await Promise.all(snapshot.map(async ({ productId, ageGroupIds, genderIds, themeIds, styleIds, tagIds }) => {
+        await Promise.all([
+          storage.setProductAgeGroups(productId, ageGroupIds),
+          storage.setProductGenders(productId, genderIds),
+          storage.setProductThemes(productId, themeIds),
+          storage.setProductStyles(productId, styleIds),
+          storage.setProductTags(productId, tagIds),
+        ]);
+      }));
+      await storage.createAuditLog({
+        entityType: "product",
+        entityId: snapshot.map(s => s.productId).join(","),
+        entityName: `${snapshot.length} products`,
+        action: "bulk-restore-attributes",
+        changes: JSON.stringify({ productIds: snapshot.map(s => s.productId) }),
+        username: getAdminUsername(req),
+      });
+      res.json({ updated: snapshot.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk restore attributes error:", err);
+      res.status(500).json({ message: "Failed to restore attributes" });
     }
   });
 

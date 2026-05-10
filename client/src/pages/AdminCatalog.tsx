@@ -1340,12 +1340,37 @@ export default function AdminCatalog() {
     },
   });
 
+  type AttributeSnapshot = {
+    productId: string;
+    ageGroupIds: string[];
+    genderIds: string[];
+    themeIds: string[];
+    styleIds: string[];
+    tagIds: string[];
+  };
+
+  const bulkRestoreAttrsMutation = useMutation({
+    mutationFn: async (snapshot: AttributeSnapshot[]) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-restore-attributes", { snapshot });
+      return res.json();
+    },
+    onSuccess: (data: { updated: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: `Attributes restored on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to restore attributes", variant: "destructive" });
+    },
+  });
+
   const bulkClearAttrsMutation = useMutation({
     mutationFn: async (payload: { productIds: string[] }) => {
       const res = await apiRequest("POST", "/api/admin/products/bulk-clear-attributes", payload);
       return res.json();
     },
-    onSuccess: (data: { updated: number }) => {
+    onSuccess: (data: { updated: number; snapshot: AttributeSnapshot[] }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -1354,7 +1379,29 @@ export default function AdminCatalog() {
       setBulkTagTypeTab(getDefaultBulkTagTypeTab());
       setBulkAttrMode("add");
       setBulkClearConfirmOpen(false);
-      toast({ title: `All attributes cleared from ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
+      const snapshot = data.snapshot;
+      const { dismiss: dismissToast } = toast({
+        duration: 30000,
+        title: `All attributes cleared from ${data.updated} product${data.updated !== 1 ? "s" : ""}`,
+        description: (
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <span>You have 30 seconds to undo.</span>
+            <button
+              type="button"
+              data-testid="button-undo-bulk-clear"
+              className="text-sm font-medium underline underline-offset-2 hover:no-underline shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissToast();
+                bulkRestoreAttrsMutation.mutate(snapshot);
+              }}
+            >
+              Undo
+            </button>
+          </div>
+        ),
+      });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to clear attributes", variant: "destructive" });
