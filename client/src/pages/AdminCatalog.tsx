@@ -1340,18 +1340,9 @@ export default function AdminCatalog() {
     },
   });
 
-  type AttributeSnapshot = {
-    productId: string;
-    ageGroupIds: string[];
-    genderIds: string[];
-    themeIds: string[];
-    styleIds: string[];
-    tagIds: string[];
-  };
-
   const bulkRestoreAttrsMutation = useMutation({
-    mutationFn: async (snapshot: AttributeSnapshot[]) => {
-      const res = await apiRequest("POST", "/api/admin/products/bulk-restore-attributes", { snapshot });
+    mutationFn: async (undoToken: string) => {
+      const res = await apiRequest("POST", "/api/admin/products/bulk-restore-attributes", { undoToken });
       return res.json();
     },
     onSuccess: (data: { updated: number }) => {
@@ -1361,7 +1352,7 @@ export default function AdminCatalog() {
       toast({ title: `Attributes restored on ${data.updated} product${data.updated !== 1 ? "s" : ""}` });
     },
     onError: (err: any) => {
-      toast({ title: "Error", description: err.message || "Failed to restore attributes", variant: "destructive" });
+      toast({ title: "Undo failed", description: err.message || "The undo window may have expired.", variant: "destructive" });
     },
   });
 
@@ -1370,7 +1361,7 @@ export default function AdminCatalog() {
       const res = await apiRequest("POST", "/api/admin/products/bulk-clear-attributes", payload);
       return res.json();
     },
-    onSuccess: (data: { updated: number; snapshot: AttributeSnapshot[] }) => {
+    onSuccess: (data: { updated: number; undoToken: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -1379,13 +1370,13 @@ export default function AdminCatalog() {
       setBulkTagTypeTab(getDefaultBulkTagTypeTab());
       setBulkAttrMode("add");
       setBulkClearConfirmOpen(false);
-      const snapshot = data.snapshot;
+      const undoToken = data.undoToken;
       const { dismiss: dismissToast } = toast({
-        duration: 30000,
+        duration: 60000,
         title: `All attributes cleared from ${data.updated} product${data.updated !== 1 ? "s" : ""}`,
         description: (
           <div className="flex items-center justify-between gap-4 mt-1">
-            <span>You have 30 seconds to undo.</span>
+            <span>You have 60 seconds to undo.</span>
             <button
               type="button"
               data-testid="button-undo-bulk-clear"
@@ -1394,7 +1385,7 @@ export default function AdminCatalog() {
                 e.preventDefault();
                 e.stopPropagation();
                 dismissToast();
-                bulkRestoreAttrsMutation.mutate(snapshot);
+                bulkRestoreAttrsMutation.mutate(undoToken);
               }}
             >
               Undo

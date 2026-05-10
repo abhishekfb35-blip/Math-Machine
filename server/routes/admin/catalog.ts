@@ -8,6 +8,18 @@ import { fileStorage } from "../../providers/fileStorage";
 
 const sseClients = new Set<Response>();
 
+// ── Server-side undo store for bulk-clear-attributes ──
+type ClearSnapshot = {
+  productId: string;
+  ageGroupIds: string[];
+  genderIds: string[];
+  themeIds: string[];
+  styleIds: string[];
+  tagIds: string[];
+};
+const clearUndoStore = new Map<string, { snapshot: ClearSnapshot[]; expiresAt: number }>();
+const UNDO_TTL_MS = 60_000;
+
 function broadcastProductUpdate(product: object) {
   const data = `event: product-updated\ndata: ${JSON.stringify(product)}\n\n`;
   for (const client of sseClients) {
@@ -666,13 +678,18 @@ export function registerAdminCatalogRoutes(app: Express) {
     try {
       const bodySchema = z.object({ productIds: z.array(z.string()).min(1) });
       const { productIds } = bodySchema.parse(req.body);
-      const snapshot = await Promise.all(productIds.map(async (productId) => {
+      // 1. Capture snapshot FIRST, before any writes
+      const snapshot: ClearSnapshot[] = await Promise.all(productIds.map(async (productId) => {
         const [attrs, tagIds] = await Promise.all([
           storage.getProductAttributeIds(productId),
           storage.getProductTagIds(productId),
         ]);
         return { productId, ...attrs, tagIds };
       }));
+      // 2. Store snapshot server-side immediately with a token (never leaves as round-trip data)
+      const undoToken = crypto.randomUUID();
+      clearUndoStore.set(undoToken, { snapshot, expiresAt: Date.now() + UNDO_TTL_MS });
+      // 3. Now clear
       await Promise.all(productIds.map(async (productId) => {
         await Promise.all([
           storage.setProductAgeGroups(productId, []),
@@ -688,7 +705,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         changes: JSON.stringify({ productIds }),
         username: getAdminUsername(req),
       });
-      res.json({ updated: productIds.length, snapshot });
+      res.json({ updated: productIds.length, undoToken });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk clear attributes error:", err);
@@ -699,16 +716,16 @@ export function registerAdminCatalogRoutes(app: Express) {
   // ── Bulk Restore Attributes (undo clear) ──
   app.post("/api/admin/products/bulk-restore-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const snapshotItemSchema = z.object({
-        productId:    z.string(),
-        ageGroupIds:  z.array(z.string()),
-        genderIds:    z.array(z.string()),
-        themeIds:     z.array(z.string()),
-        styleIds:     z.array(z.string()),
-        tagIds:       z.array(z.string()),
-      });
-      const bodySchema = z.object({ snapshot: z.array(snapshotItemSchema).min(1) });
-      const { snapshot } = bodySchema.parse(req.body);
+      const bodySchema = z.object({ undoToken: z.string() });
+      const { undoToken } = bodySchema.parse(req.body);
+      const entry = clearUndoStore.get(undoToken);
+      if (!entry) return res.status(410).json({ message: "Undo window has expired. Please re-apply attributes manually." });
+      if (Date.now() > entry.expiresAt) {
+        clearUndoStore.delete(undoToken);
+        return res.status(410).json({ message: "Undo window has expired. Please re-apply attributes manually." });
+      }
+      const { snapshot } = entry;
+      clearUndoStore.delete(undoToken);
       await Promise.all(snapshot.map(async ({ productId, ageGroupIds, genderIds, themeIds, styleIds, tagIds }) => {
         await Promise.all([
           storage.setProductAgeGroups(productId, ageGroupIds),
