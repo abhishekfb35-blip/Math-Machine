@@ -19353,16 +19353,16 @@
       "isPrimary": false
     },
     {
-      "id": "ft1z4b4nyj8533osn3ejepiv",
+      "id": "l6b9682qkp0h5ye6d8bhwnyv",
       "productSlug": "pink-doll-adult-bath-towel",
-      "imageUrl": "/images/products/medium/1775332241483-1cfd5e9549ee.jpg",
+      "imageUrl": "/images/products/medium/pink-doll-adult-bath-towel_3.jpg",
       "sortOrder": 3,
       "isPrimary": false
     },
     {
-      "id": "l6b9682qkp0h5ye6d8bhwnyv",
+      "id": "ft1z4b4nyj8533osn3ejepiv",
       "productSlug": "pink-doll-adult-bath-towel",
-      "imageUrl": "/images/products/medium/pink-doll-adult-bath-towel_3.jpg",
+      "imageUrl": "/images/products/medium/1775332241483-1cfd5e9549ee.jpg",
       "sortOrder": 3,
       "isPrimary": false
     },
@@ -39791,6 +39791,151 @@
       "id": "r8uipikmyu5uq3dj8um4uzqg",
       "name": "sports",
       "sortOrder": 8
+    },
+    {
+      "id": "c9t82jt4lionf4efrnx2z85n",
+      "name": "Unicorn",
+      "sortOrder": 9
+    },
+    {
+      "id": "lsvrjf1rwoathhg1veaiu1zb",
+      "name": "Ocean",
+      "sortOrder": 11
+    },
+    {
+      "id": "lu7451a1cpv3og3jnkzxm3md",
+      "name": "Fish",
+      "sortOrder": 12
+    },
+    {
+      "id": "v9qcl5blz1f71pclg0i5tn9j",
+      "name": "Boat",
+      "sortOrder": 13
+    },
+    {
+      "id": "fumikrgmp5hmtxmr4f349e6e",
+      "name": "Insects/bugs",
+      "sortOrder": 14
+    },
+    {
+      "id": "hu6w3yg8i90z39rvc6feg5uf",
+      "name": "Korean Bands",
+      "sortOrder": 15
+    },
+    {
+      "id": "jbwu6gheayhjubvsquxeggqf",
+      "name": "Harry Potter",
+      "sortOrder": 16
+    },
+    {
+      "id": "hhxtpkye5anak8j8t8tv44gr",
+      "name": "flamingo",
+      "sortOrder": 16
+    },
+    {
+      "id": "zl4ba0xk6ets4d9lp27zsttv",
+      "name": "Frozen",
+      "sortOrder": 17
+    },
+    {
+      "id": "d6f6g9vsbxolj7mk8aeihzsc",
+      "name": "Christmas",
+      "sortOrder": 18
+    },
+    {
+      "id": "t371cwxd6td3wdxstoivxnle",
+      "name": "Minions",
+      "sortOrder": 19
+    },
+    {
+      "id": "lizpo8tvmzfyorq0rkri86w2",
+      "name": "Cars",
+      "sortOrder": 20
+    },
+    {
+      "id": "nfnrw98pc1912zekcniu2rsd",
+      "name": "astronaut",
+      "sortOrder": 21
+    },
+    {
+      "id": "xfkauw6og3xn9vsj3g0werru",
+      "name": "planets/solar system",
+      "sortOrder": 22
+    },
+    {
+      "id": "zko0zmmla1f59pb7ekmnhw8l",
+      "name": "Rocket",
+      "sortOrder": 23
+    },
+    {
+      "id": "ik8i3xjbrpoqqakwhnfu5tdj",
+      "name": "Avengers",
+      "sortOrder": 24
+    },
+    {
+      "id": "p3u2fp5e63xp16z3djk1l53m",
+      "name": "Honey Bee",
+      "sortOrder": 25
+    },
+    {
+      "id": "dvobpnhwzoige16hq7gt648p",
+      "name": "Butterfly",
+      "sortOrder": 26
+    },
+    {
+      "id": "v0d52ma5b182ua9h7loy4oae",
+      "name": "soccer",
+      "sortOrder": 27
+    },
+    {
+      "id": "fe7kij5baxztk2i6w3m429wf",
+      "name": "basketball",
+      "sortOrder": 28
+    },
+    {
+      "id": "pxmtd5odbk1e3eazmw5ubor2",
+      "name": "Tennis",
+      "sortOrder": 29
+    },
+    {
+      "id": "a80g5fpn4ewnaso4egtl8vd1",
+      "name": "Aeroplane",
+      "sortOrder": 30
+    },
+    {
+      "id": "dw36cyathk463absqcatw5r6",
+      "name": "Cricket",
+      "sortOrder": 31
+    },
+    {
+      "id": "tjstmr1010geidwx7fnynbg8",
+      "name": "Anime",
+      "sortOrder": 32
+    },
+    {
+      "id": "ajv0ejc7pluqmq3h4r2w29ng",
+      "name": "Zodiac Signs",
+      "sortOrder": 33
+    },
+    {
+      "id": "s6nu9a7ad7m479kgs8ii2ri0",
+      "name": "Mr Mrs Designs",
+      "sortOrder": 34
+    },
+    {
+      "id": "esumshax8l2x3agegrbzfg7i",
+      "name": "His Her Designs",
+      "sortOrder": 35
+    },
+    {
+      "id": "h36rbnn820jorbahgw4rl9og",
+      "name": "Heart Designs",
+      "sortOrder": 36
+    },
+    {
+      "id": "vknos8gxypa19vkwes5do642",
+      "name": "Bikes/Motorcycles",
+      "sortOrder": 37
     }
   ],
   "styles": [
