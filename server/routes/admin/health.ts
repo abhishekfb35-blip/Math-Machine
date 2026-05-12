@@ -1413,12 +1413,17 @@ export function registerAdminHealthRoutes(app: Express) {
         // Proxy mode: read current seed-data.json from disk and send it to prod
         // so prod uses the just-exported data rather than its compiled-in snapshot.
         const seedFilePath = path.join(process.cwd(), "server/seed-data.json");
-        let seedPayload: Record<string, unknown> = {};
+        let seedPayload: Record<string, unknown>;
         try {
           const raw = fs.readFileSync(seedFilePath, "utf-8");
           seedPayload = JSON.parse(raw);
         } catch (e) {
-          console.warn("[force-reseed proxy] Could not read seed-data.json:", e);
+          console.error("[force-reseed proxy] Could not read seed-data.json:", e);
+          return res.status(500).json({ message: "Cannot read seed-data.json — run Export to Seed first." });
+        }
+        // Sanity-check: require at least one of the core catalogue arrays to be present
+        if (!Array.isArray(seedPayload.products) && !Array.isArray(seedPayload.categories)) {
+          return res.status(500).json({ message: "seed-data.json appears empty or invalid — run Export to Seed first." });
         }
 
         const adminPassword = process.env.ADMIN_PASSWORD || "";
@@ -1444,7 +1449,13 @@ export function registerAdminHealthRoutes(app: Express) {
       // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
       // If seedData was provided in the request body (sent by the dev proxy), use it
       // directly so prod applies the freshly-exported data without needing a redeploy.
-      const incomingSeedData = (req.body || {}).seedData as Record<string, unknown> | undefined;
+      const rawIncoming = (req.body || {}).seedData;
+      // Only use incoming data if it is a non-null object with at least the core arrays.
+      const incomingSeedData: Record<string, unknown> | undefined =
+        rawIncoming && typeof rawIncoming === "object" && !Array.isArray(rawIncoming) &&
+        (Array.isArray(rawIncoming.products) || Array.isArray(rawIncoming.categories))
+          ? (rawIncoming as Record<string, unknown>)
+          : undefined;
 
       const catalogTables = [
         "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",

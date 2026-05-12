@@ -80,6 +80,16 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     type SeedJunctionTh  = { id: string; productSlug: string; themeName: string };
     type SeedJunctionSt  = { id: string; productSlug: string; styleName: string };
 
+    // If override data was provided, validate it has at least the core catalogue arrays
+    // before trusting it — an empty or malformed payload would wipe tables via cleared hashes.
+    if (overrideData !== undefined) {
+      const hasProducts   = Array.isArray(overrideData.products)   && (overrideData.products   as unknown[]).length > 0;
+      const hasCategories = Array.isArray(overrideData.categories) && (overrideData.categories as unknown[]).length > 0;
+      if (!hasProducts && !hasCategories) {
+        throw new Error("[seed] Refusing to apply override data: both products and categories arrays are missing or empty. Re-run Export to Seed.");
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sd: any = overrideData ?? seedData;
     const tableData = {
