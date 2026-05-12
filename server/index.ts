@@ -23,6 +23,7 @@ import { ensureWishlistsTable } from "./migrations/wishlists-table";
 import { ensureRateLimitStatsTable } from "./migrations/rate-limit-stats-table";
 import { consolidateProductImages } from "./migrations/consolidate-product-images";
 import { dropProductImageUrl } from "./migrations/drop-product-image-url";
+import { ensureAttributeTables } from "./migrations/attribute-tables";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
@@ -289,6 +290,7 @@ function startAbandonedCartScheduler() {
           await ensureShippingFeeColumn();
           await ensureCartCustomerColumns();
           await ensureReviewCustomerColumn();
+          await ensureAttributeTables();
           await seedDatabase();
           await initializeExchangeRateService();
           await ensureSkuNotNull();

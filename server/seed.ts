@@ -188,6 +188,10 @@ export async function seedDatabase() {
       if (effective.productGenders)   await db.delete(productGenders);
       if (effective.productThemes)    await db.delete(productThemes);
       if (effective.productStyles)    await db.delete(productStyles);
+      if (effective.ageGroups)        await db.delete(ageGroups);
+      if (effective.genders)          await db.delete(genders);
+      if (effective.themes)           await db.delete(themes);
+      if (effective.styles)           await db.delete(styles);
       if (effective.productTags)      await db.delete(productTags);
       if (changed.productImages)      await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
       if (effective.productReviews) await db.delete(productReviews);
