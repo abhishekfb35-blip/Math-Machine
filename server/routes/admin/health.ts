@@ -1410,188 +1410,40 @@ export function registerAdminHealthRoutes(app: Express) {
       const { prodUrl } = (req.body || {}) as { prodUrl?: string };
 
       if (prodUrl) {
-        // Proxy mode: sync catalogue to prod using small individual API calls.
-        // This avoids the body-size limit on prod's express.json() middleware
-        // (prod may still be running a compiled bundle with the 100 kb default).
-        // Flow:
-        //   1. Read seed-data.json from disk (source of truth)
-        //   2. Force-reseed prod from its compiled baseline (products/categories/tags/images)
-        //   3. Fetch prod's current DB snapshot to know what already exists
-        //   4. Sync attribute lookup tables (themes/genders/age-groups/styles)
-        //   5. Sync occasions
-        //   6. Re-fetch prod snapshot for fresh attribute IDs
-        //   7. Sync every product's attribute assignments
+        // Proxy mode: read current seed-data.json from disk and send it to prod
+        // so prod uses the just-exported data rather than its compiled-in snapshot.
         const seedFilePath = path.join(process.cwd(), "server/seed-data.json");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let sd: any;
+        let seedPayload: Record<string, unknown>;
         try {
           const raw = fs.readFileSync(seedFilePath, "utf-8");
-          sd = JSON.parse(raw);
+          seedPayload = JSON.parse(raw);
         } catch (e) {
-          console.error("[sync-to-prod] Could not read seed-data.json:", e);
+          console.error("[force-reseed proxy] Could not read seed-data.json:", e);
           return res.status(500).json({ message: "Cannot read seed-data.json — run Export to Seed first." });
         }
-        if (!Array.isArray(sd.products) && !Array.isArray(sd.categories)) {
+        // Sanity-check: require at least one of the core catalogue arrays to be present
+        if (!Array.isArray(seedPayload.products) && !Array.isArray(seedPayload.categories)) {
           return res.status(500).json({ message: "seed-data.json appears empty or invalid — run Export to Seed first." });
         }
 
-        const base         = prodUrl.replace(/\/$/, "");
-        const adminPwd     = process.env.ADMIN_PASSWORD || "";
-        const dbToken      = process.env.DB_COMPARE_TOKEN || "";
-        const adminHeaders = { "x-admin-password": adminPwd, "Content-Type": "application/json" };
-        const snapHeaders  = { "x-admin-password": adminPwd, "x-db-compare-token": dbToken };
-
-        // Helper: fetch prod's full DB snapshot
-        async function getProdSnap() {
-          const r = await fetch(`${base}/api/admin/db-snapshot`, { headers: snapHeaders });
-          if (!r.ok) throw new Error(`Prod db-snapshot failed (${r.status}): ${(await r.text()).slice(0, 200)}`);
-          return r.json() as Promise<Record<string, unknown[]>>;
-        }
-
-        // ── Step 1: Force-reseed prod's compiled baseline ──────────────────────
-        console.log("[sync-to-prod] Step 1: force-reseed prod baseline...");
-        const baselineResp = await fetch(`${base}/api/admin/catalog/force-reseed`, {
+        const adminPassword = process.env.ADMIN_PASSWORD || "";
+        const prodResp = await fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/catalog/force-reseed`, {
           method: "POST",
-          headers: adminHeaders,
-          body: JSON.stringify({}),
+          headers: {
+            "x-admin-password": adminPassword,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ seedData: seedPayload }),
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let baselineCounts: any = {};
-        if (baselineResp.ok) {
-          try { baselineCounts = (await baselineResp.json() as any).counts ?? {}; } catch { /* ignore */ }
-        } else {
-          const t = await baselineResp.text();
-          return res.status(502).json({ message: `Prod baseline reseed failed (${baselineResp.status}): ${t.slice(0, 300)}` });
+        const rawText = await prodResp.text();
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = { message: `Prod returned non-JSON (${prodResp.status}): ${rawText.slice(0, 300)}` };
         }
-
-        // ── Step 2: Fetch prod snapshot ────────────────────────────────────────
-        console.log("[sync-to-prod] Step 2: fetching prod snapshot...");
-        const snap = await getProdSnap();
-
-        // ── Step 3: Sync attribute lookup tables ───────────────────────────────
-        console.log("[sync-to-prod] Step 3: syncing attribute lookup tables...");
-        const attrConfigs = [
-          { seedKey: "themes",    snapKey: "themes",    apiSlug: "themes"     },
-          { seedKey: "genders",   snapKey: "genders",   apiSlug: "genders"    },
-          { seedKey: "ageGroups", snapKey: "ageGroups", apiSlug: "age-groups" },
-          { seedKey: "styles",    snapKey: "styles",    apiSlug: "styles"     },
-        ] as const;
-        let attrCreated = 0, attrUpdated = 0;
-        for (const { seedKey, snapKey, apiSlug } of attrConfigs) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const seedItems = (sd[seedKey] ?? []) as Array<{ name: string; sortOrder?: number }>;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const prodItems = (snap[snapKey] ?? []) as Array<{ id: string; name: string; sort_order: number }>;
-          const prodByName = new Map(prodItems.map(r => [r.name.toLowerCase(), r]));
-          for (const item of seedItems) {
-            const existing = prodByName.get(item.name.toLowerCase());
-            if (!existing) {
-              await fetch(`${base}/api/admin/attributes/${apiSlug}`, {
-                method: "POST", headers: adminHeaders,
-                body: JSON.stringify({ name: item.name, sortOrder: item.sortOrder ?? 0 }),
-              });
-              attrCreated++;
-            } else if (existing.sort_order !== (item.sortOrder ?? 0)) {
-              await fetch(`${base}/api/admin/attributes/${apiSlug}/${existing.id}`, {
-                method: "PUT", headers: adminHeaders,
-                body: JSON.stringify({ sortOrder: item.sortOrder ?? 0 }),
-              });
-              attrUpdated++;
-            }
-          }
-        }
-
-        // ── Step 4: Sync occasions ─────────────────────────────────────────────
-        console.log("[sync-to-prod] Step 4: syncing occasions...");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const seedOccs = (sd.occasions ?? []) as Array<any>;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const prodOccs = (snap.occasions ?? []) as Array<any>;
-        const prodOccBySlug = new Map(prodOccs.map(o => [o.slug, o]));
-        let occCreated = 0, occUpdated = 0;
-        for (const occ of seedOccs) {
-          const occBody = {
-            name: occ.name, slug: occ.slug, description: occ.description ?? null,
-            boostTags: occ.boostTags ?? {}, penaltyTags: occ.penaltyTags ?? {},
-            preferredStyles: occ.preferredStyles ?? null, preferredThemes: occ.preferredThemes ?? null,
-            active: occ.active !== false, sortOrder: occ.sortOrder ?? 0,
-          };
-          const existing = prodOccBySlug.get(occ.slug);
-          if (!existing) {
-            await fetch(`${base}/api/admin/occasions`, { method: "POST", headers: adminHeaders, body: JSON.stringify(occBody) });
-            occCreated++;
-          } else {
-            const needsUpdate = existing.name !== occ.name || existing.active !== (occ.active !== false) || existing.sort_order !== (occ.sortOrder ?? 0);
-            if (needsUpdate) {
-              await fetch(`${base}/api/admin/occasions/${existing.id}`, { method: "PATCH", headers: adminHeaders, body: JSON.stringify(occBody) });
-              occUpdated++;
-            }
-          }
-        }
-
-        // ── Step 5: Re-fetch prod snapshot for fresh attribute IDs ─────────────
-        console.log("[sync-to-prod] Step 5: re-fetching prod attributes for assignment sync...");
-        const snap2 = await getProdSnap();
-
-        // Build name→id maps using prod's current (possibly freshly-created) IDs
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const thByName  = new Map(((snap2.themes    ?? []) as any[]).map(r => [r.name.toLowerCase(), r.id as string]));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const genByName = new Map(((snap2.genders   ?? []) as any[]).map(r => [r.name.toLowerCase(), r.id as string]));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const agByName  = new Map(((snap2.ageGroups ?? []) as any[]).map(r => [r.name.toLowerCase(), r.id as string]));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const stByName  = new Map(((snap2.styles    ?? []) as any[]).map(r => [r.name.toLowerCase(), r.id as string]));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const prodBySlug = new Map(((snap2.products ?? []) as any[]).map(r => [r.slug as string, r.id as string]));
-
-        // ── Step 6: Sync product attribute assignments ─────────────────────────
-        console.log("[sync-to-prod] Step 6: syncing product attribute assignments...");
-        type ProdTheme  = { productSlug: string; themeName: string };
-        type ProdGender = { productSlug: string; genderName: string };
-        type ProdAge    = { productSlug: string; ageGroupName: string };
-        type ProdStyle  = { productSlug: string; styleName: string };
-
-        function groupBySlug<T extends { productSlug: string }>(arr: T[]) {
-          const m = new Map<string, T[]>();
-          for (const r of arr) {
-            const list = m.get(r.productSlug) ?? [];
-            list.push(r);
-            m.set(r.productSlug, list);
-          }
-          return m;
-        }
-        const thMap  = groupBySlug((sd.productThemes    ?? []) as ProdTheme[]);
-        const genMap = groupBySlug((sd.productGenders   ?? []) as ProdGender[]);
-        const agMap  = groupBySlug((sd.productAgeGroups ?? []) as ProdAge[]);
-        const stMap  = groupBySlug((sd.productStyles    ?? []) as ProdStyle[]);
-
-        const allSlugs = new Set([...thMap.keys(), ...genMap.keys(), ...agMap.keys(), ...stMap.keys()]);
-        let assignSynced = 0, assignSkipped = 0;
-        for (const slug of allSlugs) {
-          const prodId = prodBySlug.get(slug);
-          if (!prodId) { assignSkipped++; continue; } // new product — needs publish first
-          const themeIds    = (thMap.get(slug)  ?? []).map(r => thByName.get(r.themeName.toLowerCase())).filter(Boolean) as string[];
-          const genderIds   = (genMap.get(slug) ?? []).map(r => genByName.get(r.genderName.toLowerCase())).filter(Boolean) as string[];
-          const ageGroupIds = (agMap.get(slug)  ?? []).map(r => agByName.get(r.ageGroupName.toLowerCase())).filter(Boolean) as string[];
-          const styleIds    = (stMap.get(slug)  ?? []).map(r => stByName.get(r.styleName.toLowerCase())).filter(Boolean) as string[];
-          await fetch(`${base}/api/admin/products/${prodId}/attributes`, {
-            method: "PUT", headers: adminHeaders,
-            body: JSON.stringify({ themeIds, genderIds, ageGroupIds, styleIds }),
-          });
-          assignSynced++;
-        }
-
-        console.log(`[sync-to-prod] Done. attrs: +${attrCreated} new, ~${attrUpdated} updated | occs: +${occCreated} new, ~${occUpdated} updated | assignments: ${assignSynced} synced, ${assignSkipped} skipped (not on prod)`);
-        return res.json({
-          success: true,
-          message: "Sync to prod completed",
-          baseline: baselineCounts,
-          attributes: { created: attrCreated, updated: attrUpdated },
-          occasions:  { created: occCreated,  updated: occUpdated  },
-          productAttributes: { synced: assignSynced, skipped: assignSkipped },
-          note: assignSkipped > 0 ? `${assignSkipped} product(s) are in dev but not yet on prod — publish the app to sync them.` : undefined,
-        });
+        if (!prodResp.ok) return res.status(502).json(data);
+        return res.json(data);
       }
 
       // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
