@@ -324,7 +324,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   });
 
   app.get("/api/admin/tags", requirePermission("catalog"), async (_req, res) => {
-    const allTags = await storage.getTags();
+    const allTags = await storage.getTagsWithProductCount();
     res.json(allTags);
   });
 

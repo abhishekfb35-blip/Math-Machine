@@ -106,6 +106,7 @@ export interface IStorage {
   deleteTagType(id: string): Promise<void>;
 
   getTags(): Promise<Tag[]>;
+  getTagsWithProductCount(): Promise<(Tag & { productCount: number })[]>;
   createTag(tag: InsertTag): Promise<Tag>;
   updateTag(id: string, data: Partial<InsertTag>): Promise<Tag | undefined>;
   deleteTag(id: string): Promise<void>;
@@ -832,6 +833,23 @@ export class DatabaseStorage implements IStorage {
 
   async getTags(): Promise<Tag[]> {
     return await db.select().from(tags).orderBy(tags.tagTypeId, tags.sortOrder, tags.name);
+  }
+
+  async getTagsWithProductCount(): Promise<(Tag & { productCount: number })[]> {
+    const rows = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        description: tags.description,
+        tagTypeId: tags.tagTypeId,
+        sortOrder: tags.sortOrder,
+        productCount: count(productTags.id),
+      })
+      .from(tags)
+      .leftJoin(productTags, eq(productTags.tagId, tags.id))
+      .groupBy(tags.id, tags.name, tags.description, tags.tagTypeId, tags.sortOrder)
+      .orderBy(tags.tagTypeId, tags.sortOrder, tags.name);
+    return rows;
   }
 
   async createTag(tag: InsertTag): Promise<Tag> {

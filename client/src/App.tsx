@@ -46,6 +46,7 @@ import AdminCustomers from "@/pages/AdminCustomers";
 import AdminOffers from "@/pages/AdminOffers";
 import AdminOccasions from "@/pages/AdminOccasions";
 import AdminAttributes from "@/pages/AdminAttributes";
+import AdminTags from "@/pages/AdminTags";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminSecurity from "@/pages/AdminSecurity";
 import WishlistPage from "@/pages/WishlistPage";
@@ -103,6 +104,7 @@ function Router() {
       <Route path="/admin/offers" component={() => <PermissionGuard permission="offers"><AdminOffers /></PermissionGuard>} />
       <Route path="/admin/occasions" component={() => <PermissionGuard permission="catalog"><AdminOccasions /></PermissionGuard>} />
       <Route path="/admin/attributes" component={() => <PermissionGuard permission="catalog"><AdminAttributes /></PermissionGuard>} />
+      <Route path="/admin/tags" component={() => <PermissionGuard permission="catalog"><AdminTags /></PermissionGuard>} />
       <Route path="/admin/users" component={() => <SuperAdminGuard><AdminUsers /></SuperAdminGuard>} />
       <Route path="/admin/security" component={() => <SuperAdminGuard><AdminSecurity /></SuperAdminGuard>} />
       <Route path="/wishlist" component={WishlistPage} />

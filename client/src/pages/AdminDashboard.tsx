@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -141,6 +141,15 @@ const sections = [
     icon: Layers,
     color: "text-indigo-600 dark:text-indigo-400",
     bg: "bg-indigo-50 dark:bg-indigo-950/30",
+    permission: "catalog",
+  },
+  {
+    title: "Tags",
+    description: "Manage merchandising tags and tag types for product curation",
+    href: "/admin/tags",
+    icon: Tags,
+    color: "text-fuchsia-600 dark:text-fuchsia-400",
+    bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30",
     permission: "catalog",
   },
 ];
