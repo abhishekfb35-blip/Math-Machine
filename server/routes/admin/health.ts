@@ -1631,6 +1631,50 @@ export function registerAdminHealthRoutes(app: Express) {
          FROM occasions ORDER BY sort_order, name`
       );
 
+      // Export attribute lookup tables (age groups, genders, themes, styles)
+      const agResult = await pool.query(
+        `SELECT id, name, sort_order AS "sortOrder" FROM age_groups ORDER BY sort_order, name`
+      );
+      const genResult = await pool.query(
+        `SELECT id, name, sort_order AS "sortOrder" FROM genders ORDER BY sort_order, name`
+      );
+      const thResult = await pool.query(
+        `SELECT id, name, sort_order AS "sortOrder" FROM themes ORDER BY sort_order, name`
+      );
+      const stResult = await pool.query(
+        `SELECT id, name, sort_order AS "sortOrder" FROM styles ORDER BY sort_order, name`
+      );
+
+      // Export attribute junction tables
+      const pagResult = await pool.query(
+        `SELECT pag.id, p.slug AS "productSlug", ag.name AS "ageGroupName"
+         FROM product_age_groups pag
+         JOIN products p ON p.id = pag.product_id
+         JOIN age_groups ag ON ag.id = pag.age_group_id
+         ORDER BY p.slug, ag.name`
+      );
+      const pgenResult = await pool.query(
+        `SELECT pg.id, p.slug AS "productSlug", g.name AS "genderName"
+         FROM product_genders pg
+         JOIN products p ON p.id = pg.product_id
+         JOIN genders g ON g.id = pg.gender_id
+         ORDER BY p.slug, g.name`
+      );
+      const pthResult = await pool.query(
+        `SELECT pt.id, p.slug AS "productSlug", t.name AS "themeName"
+         FROM product_themes pt
+         JOIN products p ON p.id = pt.product_id
+         JOIN themes t ON t.id = pt.theme_id
+         ORDER BY p.slug, t.name`
+      );
+      const pstResult = await pool.query(
+        `SELECT ps.id, p.slug AS "productSlug", s.name AS "styleName"
+         FROM product_styles ps
+         JOIN products p ON p.id = ps.product_id
+         JOIN styles s ON s.id = ps.style_id
+         ORDER BY p.slug, s.name`
+      );
+
       // Export site_config — exclude base64 brand images and runtime-only keys
       const scResult = await pool.query(
         `SELECT key, value FROM site_config
@@ -1658,6 +1702,14 @@ export function registerAdminHealthRoutes(app: Express) {
         productVariants:           pvResult.rows,
         occasions:                 occasionsResult.rows,
         siteConfig:                scResult.rows,
+        ageGroups:                 agResult.rows,
+        genders:                   genResult.rows,
+        themes:                    thResult.rows,
+        styles:                    stResult.rows,
+        productAgeGroups:          pagResult.rows,
+        productGenders:            pgenResult.rows,
+        productThemes:             pthResult.rows,
+        productStyles:             pstResult.rows,
       };
 
       fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
@@ -1679,6 +1731,14 @@ export function registerAdminHealthRoutes(app: Express) {
           variantColors:             vcResult.rowCount,
           occasions:                 occasionsResult.rowCount,
           siteConfig:                scResult.rowCount,
+          ageGroups:                 agResult.rowCount,
+          genders:                   genResult.rowCount,
+          themes:                    thResult.rowCount,
+          styles:                    stResult.rowCount,
+          productAgeGroups:          pagResult.rowCount,
+          productGenders:            pgenResult.rowCount,
+          productThemes:             pthResult.rowCount,
+          productStyles:             pstResult.rowCount,
         },
         message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
       });
