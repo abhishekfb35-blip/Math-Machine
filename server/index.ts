@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import "dotenv/config";
+import path from "path";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -93,6 +94,12 @@ app.use((req, res, next) => {
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+// Serve product images directly from the git-tracked source directory.
+// This bypasses the Vite build copy (which can be incomplete for large folders)
+// and works identically in both dev and prod since client/public/ is in git.
+const PRODUCT_IMAGES_SRC = path.resolve(process.cwd(), "client", "public", "images", "products");
+app.use("/images/products", express.static(PRODUCT_IMAGES_SRC, { maxAge: "7d" }));
 
 function startGuestCartCleanupScheduler() {
   const INTERVAL_MS = 24 * 60 * 60 * 1000;
