@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -223,12 +222,10 @@ function TagForm({
 
 function TagRow({
   tag,
-  tagTypes,
   onEdit,
   onDelete,
 }: {
   tag: TagWithCount;
-  tagTypes: TagType[];
   onEdit: (tag: TagWithCount) => void;
   onDelete: (tag: TagWithCount) => void;
 }) {
@@ -381,7 +378,6 @@ function TagTypeSection({
                   <TagRow
                     key={tag.id}
                     tag={tag}
-                    tagTypes={allTagTypes}
                     onEdit={t => { setEditingTag(t); setShowAddTag(false); }}
                     onDelete={t => setDeleteTagTarget(t)}
                   />
