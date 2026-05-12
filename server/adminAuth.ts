@@ -223,6 +223,13 @@ export function requireSnapshotAccess(req: Request, res: Response, next: NextFun
 }
 
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  // Allow server-to-server calls (e.g. dev proxying force-reseed to prod) via x-admin-password header
+  const headerPassword = req.headers["x-admin-password"] as string | undefined;
+  const envCreds = getEnvAdminCredentials();
+  if (headerPassword && envCreds?.plainPassword && headerPassword === envCreds.plainPassword) {
+    return next();
+  }
+
   const token = req.cookies?.[ADMIN_SESSION_COOKIE];
   if (!token) {
     return res.status(401).json({ message: "Authentication required" });
