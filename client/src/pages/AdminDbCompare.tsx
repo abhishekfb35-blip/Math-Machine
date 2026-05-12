@@ -347,10 +347,13 @@ export default function AdminDbCompare() {
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             {reseedResult.message} —{" "}
-            {reseedResult.counts.products} products, {reseedResult.counts.categories} categories,{" "}
-            {reseedResult.counts.tags} tags, {reseedResult.counts.ageGroups} age groups,{" "}
-            {reseedResult.counts.genders} genders, {reseedResult.counts.themes} themes,{" "}
-            {reseedResult.counts.styles} styles
+            {reseedResult.counts.categories} categories, {reseedResult.counts.products} products,{" "}
+            {reseedResult.counts.tagTypes} tag types, {reseedResult.counts.tags} tags,{" "}
+            {reseedResult.counts.productTags} product tags, {reseedResult.counts.productImages} images,{" "}
+            {reseedResult.counts.ageGroups} age groups, {reseedResult.counts.genders} genders,{" "}
+            {reseedResult.counts.themes} themes, {reseedResult.counts.styles} styles,{" "}
+            {reseedResult.counts.occasions} occasions,{" "}
+            {reseedResult.counts.productAgeGroups}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links
           </span>
         </div>
       )}
