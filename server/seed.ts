@@ -9,36 +9,6 @@ import {
   occasions,
 } from "@shared/schema";
 
-// ── Starter attribute values (source of truth — only seeded here) ─────────────
-const STARTER_AGE_GROUPS = [
-  { name: "infant", sortOrder: 0 },
-  { name: "kids",   sortOrder: 1 },
-  { name: "teens",  sortOrder: 2 },
-  { name: "adults", sortOrder: 3 },
-];
-const STARTER_GENDERS = [
-  { name: "male",    sortOrder: 0 },
-  { name: "female",  sortOrder: 1 },
-  { name: "unisex",  sortOrder: 2 },
-];
-const STARTER_THEMES = [
-  { name: "animals",     sortOrder: 0 },
-  { name: "superheroes", sortOrder: 1 },
-  { name: "princess",    sortOrder: 2 },
-  { name: "florals",     sortOrder: 3 },
-  { name: "vehicles",    sortOrder: 4 },
-  { name: "space",       sortOrder: 5 },
-  { name: "dinosaurs",   sortOrder: 6 },
-  { name: "abstract",    sortOrder: 7 },
-  { name: "sports",      sortOrder: 8 },
-];
-const STARTER_STYLES = [
-  { name: "minimal",   sortOrder: 0 },
-  { name: "bold",      sortOrder: 1 },
-  { name: "classic",   sortOrder: 2 },
-  { name: "initials",  sortOrder: 3 },
-  { name: "elegant",   sortOrder: 4 },
-];
 import { and, eq, like, sql } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
@@ -103,19 +73,39 @@ export async function seedDatabase() {
       console.log(`[seed] swatches: seed-assets/swatches not found, skipping`);
     }
 
-    type SeedProductTag = { id: string; productSlug: string; tagName: string };
+    type SeedProductTag  = { id: string; productSlug: string; tagName: string };
+    type SeedAttr        = { id: string; name: string; sortOrder?: number };
+    type SeedJunctionAg  = { id: string; productSlug: string; ageGroupName: string };
+    type SeedJunctionGen = { id: string; productSlug: string; genderName: string };
+    type SeedJunctionTh  = { id: string; productSlug: string; themeName: string };
+    type SeedJunctionSt  = { id: string; productSlug: string; styleName: string };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sd: any = seedData;
     const tableData = {
-      tagTypes:       seedData.tagTypes       ?? [],
-      categories:     seedData.categories     ?? [],
-      tags:           seedData.tags           ?? [],
-      products:       seedData.products       ?? [],
-      productImages:  seedData.productImages  ?? [],
-      productReviews: seedData.productReviews ?? [],
-      productTags:    (seedData.productTags   ?? []) as SeedProductTag[],
+      tagTypes:         seedData.tagTypes         ?? [],
+      categories:       seedData.categories       ?? [],
+      tags:             seedData.tags             ?? [],
+      products:         seedData.products         ?? [],
+      productImages:    seedData.productImages     ?? [],
+      productReviews:   seedData.productReviews    ?? [],
+      productTags:      (seedData.productTags      ?? []) as SeedProductTag[],
+      ageGroups:        ((sd.ageGroups             ?? []) as SeedAttr[]),
+      genders:          ((sd.genders               ?? []) as SeedAttr[]),
+      themes:           ((sd.themes                ?? []) as SeedAttr[]),
+      styles:           ((sd.styles                ?? []) as SeedAttr[]),
+      productAgeGroups: ((sd.productAgeGroups      ?? []) as SeedJunctionAg[]),
+      productGenders:   ((sd.productGenders        ?? []) as SeedJunctionGen[]),
+      productThemes:    ((sd.productThemes         ?? []) as SeedJunctionTh[]),
+      productStyles:    ((sd.productStyles         ?? []) as SeedJunctionSt[]),
     };
 
     // ── 0. Validate all IDs are present — abort immediately if any are missing ─
-    const catalogTableNames = ["tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags"] as const;
+    const catalogTableNames = [
+      "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
+      "ageGroups", "genders", "themes", "styles",
+      "productAgeGroups", "productGenders", "productThemes", "productStyles",
+    ] as const;
     let idErrors = 0;
     for (const table of catalogTableNames) {
       const rows = tableData[table];
@@ -139,25 +129,41 @@ export async function seedDatabase() {
 
     // ── 1. Check per-table hashes ─────────────────────────────────────────────
     const changed = {
-      tagTypes:       computeHash(tableData.tagTypes)       !== await getStoredHash("tagTypes"),
-      categories:     computeHash(tableData.categories)     !== await getStoredHash("categories"),
-      tags:           computeHash(tableData.tags)           !== await getStoredHash("tags"),
-      products:       computeHash(tableData.products)       !== await getStoredHash("products"),
-      productImages:  computeHash(tableData.productImages)  !== await getStoredHash("productImages"),
-      productReviews: computeHash(tableData.productReviews) !== await getStoredHash("productReviews"),
-      productTags:    computeHash(tableData.productTags)    !== await getStoredHash("productTags"),
+      tagTypes:         computeHash(tableData.tagTypes)         !== await getStoredHash("tagTypes"),
+      categories:       computeHash(tableData.categories)       !== await getStoredHash("categories"),
+      tags:             computeHash(tableData.tags)             !== await getStoredHash("tags"),
+      products:         computeHash(tableData.products)         !== await getStoredHash("products"),
+      productImages:    computeHash(tableData.productImages)    !== await getStoredHash("productImages"),
+      productReviews:   computeHash(tableData.productReviews)   !== await getStoredHash("productReviews"),
+      productTags:      computeHash(tableData.productTags)      !== await getStoredHash("productTags"),
+      ageGroups:        computeHash(tableData.ageGroups)        !== await getStoredHash("ageGroups"),
+      genders:          computeHash(tableData.genders)          !== await getStoredHash("genders"),
+      themes:           computeHash(tableData.themes)           !== await getStoredHash("themes"),
+      styles:           computeHash(tableData.styles)           !== await getStoredHash("styles"),
+      productAgeGroups: computeHash(tableData.productAgeGroups) !== await getStoredHash("productAgeGroups"),
+      productGenders:   computeHash(tableData.productGenders)   !== await getStoredHash("productGenders"),
+      productThemes:    computeHash(tableData.productThemes)    !== await getStoredHash("productThemes"),
+      productStyles:    computeHash(tableData.productStyles)    !== await getStoredHash("productStyles"),
     };
 
     // Cascade: if a parent changes, all its children must also be re-seeded
     // (children were wiped when parent was wiped, so they need re-inserting)
     const effective = {
-      tagTypes:       changed.tagTypes,
-      categories:     changed.categories,
-      tags:           changed.tags           || changed.tagTypes,
-      products:       changed.products       || changed.categories,
-      productImages:  changed.productImages  || changed.products || changed.categories,
-      productReviews: changed.productReviews || changed.products || changed.categories,
-      productTags:    changed.productTags    || changed.tags     || changed.products || changed.categories,
+      tagTypes:         changed.tagTypes,
+      categories:       changed.categories,
+      tags:             changed.tags             || changed.tagTypes,
+      products:         changed.products         || changed.categories,
+      productImages:    changed.productImages    || changed.products    || changed.categories,
+      productReviews:   changed.productReviews   || changed.products    || changed.categories,
+      productTags:      changed.productTags      || changed.tags        || changed.products || changed.categories,
+      ageGroups:        changed.ageGroups,
+      genders:          changed.genders,
+      themes:           changed.themes,
+      styles:           changed.styles,
+      productAgeGroups: changed.productAgeGroups || changed.products    || changed.ageGroups  || changed.categories,
+      productGenders:   changed.productGenders   || changed.products    || changed.genders    || changed.categories,
+      productThemes:    changed.productThemes    || changed.products    || changed.themes     || changed.categories,
+      productStyles:    changed.productStyles    || changed.products    || changed.styles     || changed.categories,
     };
 
     const tableNames = Object.keys(effective) as (keyof typeof effective)[];
@@ -178,8 +184,12 @@ export async function seedDatabase() {
       // ── 2. Wipe in reverse dependency order ─────────────────────────────────
       // Only wipe tables that will be re-inserted. Since children must be wiped
       // before parents (no FK constraints, but logical order), go deepest first.
-      if (effective.productTags)    await db.delete(productTags);
-      if (changed.productImages)    await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
+      if (effective.productAgeGroups) await db.delete(productAgeGroups);
+      if (effective.productGenders)   await db.delete(productGenders);
+      if (effective.productThemes)    await db.delete(productThemes);
+      if (effective.productStyles)    await db.delete(productStyles);
+      if (effective.productTags)      await db.delete(productTags);
+      if (changed.productImages)      await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
       if (effective.productReviews) await db.delete(productReviews);
       if (effective.products)       await db.delete(products);
       if (effective.categories)     await db.delete(categories);
@@ -574,115 +584,101 @@ export async function seedDatabase() {
       console.log(`[seed] productVariants: all entries up to date`);
     }
 
-    // ── 9b. Attribute lookup tables (idempotent upsert by name) ─────────────
-    const { createId } = await import("@paralleldrive/cuid2");
-    type AttrTable = typeof ageGroups | typeof genders | typeof themes | typeof styles;
-    const seedLookup = async (
-      table: AttrTable, starter: { name: string; sortOrder: number }[], label: string
-    ) => {
-      const existing = await db.select({ id: table.id, name: table.name }).from(table);
-      const existingNames = new Set(existing.map((r) => r.name));
-      let synced = 0;
-      for (const item of starter) {
-        if (!existingNames.has(item.name)) {
-          await db.insert(table).values({ id: createId(), ...item });
-          synced++;
-        }
+    // ── 9b. Attribute lookup tables (pre-baked IDs from seed-data.json) ────────
+    // Lookup tables upsert by ID so admin-added entries are never lost.
+    if (effective.ageGroups) {
+      if (tableData.ageGroups.length > 0) {
+        await db.insert(ageGroups)
+          .values(tableData.ageGroups.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })))
+          .onConflictDoUpdate({ target: ageGroups.id, set: { name: sql`excluded.name`, sortOrder: sql`excluded.sort_order` } });
+        console.log(`[seed] ageGroups: upserted ${tableData.ageGroups.length}`);
       }
-      if (synced > 0) console.log(`[seed] ${label}: inserted ${synced} entries`);
-      else console.log(`[seed] ${label}: all entries up to date`);
-    };
-    await seedLookup(ageGroups, STARTER_AGE_GROUPS, "ageGroups");
-    await seedLookup(genders, STARTER_GENDERS, "genders");
-    await seedLookup(themes, STARTER_THEMES, "themes");
-    await seedLookup(styles, STARTER_STYLES, "styles");
+      await storeHash("ageGroups", computeHash(tableData.ageGroups));
+    } else { console.log(`[seed] ageGroups: up to date`); }
 
-    // ── 9c. Product junction tables (ageGroup/gender from seed data) ─────────
+    if (effective.genders) {
+      if (tableData.genders.length > 0) {
+        await db.insert(genders)
+          .values(tableData.genders.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })))
+          .onConflictDoUpdate({ target: genders.id, set: { name: sql`excluded.name`, sortOrder: sql`excluded.sort_order` } });
+        console.log(`[seed] genders: upserted ${tableData.genders.length}`);
+      }
+      await storeHash("genders", computeHash(tableData.genders));
+    } else { console.log(`[seed] genders: up to date`); }
+
+    if (effective.themes) {
+      if (tableData.themes.length > 0) {
+        await db.insert(themes)
+          .values(tableData.themes.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })))
+          .onConflictDoUpdate({ target: themes.id, set: { name: sql`excluded.name`, sortOrder: sql`excluded.sort_order` } });
+        console.log(`[seed] themes: upserted ${tableData.themes.length}`);
+      }
+      await storeHash("themes", computeHash(tableData.themes));
+    } else { console.log(`[seed] themes: up to date`); }
+
+    if (effective.styles) {
+      if (tableData.styles.length > 0) {
+        await db.insert(styles)
+          .values(tableData.styles.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })))
+          .onConflictDoUpdate({ target: styles.id, set: { name: sql`excluded.name`, sortOrder: sql`excluded.sort_order` } });
+        console.log(`[seed] styles: upserted ${tableData.styles.length}`);
+      }
+      await storeHash("styles", computeHash(tableData.styles));
+    } else { console.log(`[seed] styles: up to date`); }
+
+    // ── 9c. Product attribute junction tables (pre-baked IDs from seed-data.json)
+    // Rows were wiped (if needed) in step 2; re-insert using pre-baked IDs.
     {
-      const allAg = await db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups);
-      const allGen = await db.select({ id: genders.id, name: genders.name }).from(genders);
-      const allTh = await db.select({ id: themes.id, name: themes.name }).from(themes);
-      const allSt = await db.select({ id: styles.id, name: styles.name }).from(styles);
-      const agByName = Object.fromEntries(allAg.map((r) => [r.name, r.id]));
-      const genByName = Object.fromEntries(allGen.map((r) => [r.name, r.id]));
-      const thByName = Object.fromEntries(allTh.map((r) => [r.name, r.id]));
-      const stByName = Object.fromEntries(allSt.map((r) => [r.name, r.id]));
+      const allAg  = await db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups);
+      const allGen = await db.select({ id: genders.id,   name: genders.name   }).from(genders);
+      const allTh  = await db.select({ id: themes.id,    name: themes.name    }).from(themes);
+      const allSt  = await db.select({ id: styles.id,    name: styles.name    }).from(styles);
+      const agByName  = Object.fromEntries(allAg.map(r  => [r.name, r.id]));
+      const genByName = Object.fromEntries(allGen.map(r => [r.name, r.id]));
+      const thByName  = Object.fromEntries(allTh.map(r  => [r.name, r.id]));
+      const stByName  = Object.fromEntries(allSt.map(r  => [r.name, r.id]));
+      const dbProds   = await db.select({ id: products.id, slug: products.slug }).from(products);
+      const slugToId  = Object.fromEntries(dbProds.map(p => [p.slug, p.id]));
 
-      type SeedProductRow = { slug: string; ageGroup?: string; gender?: string; themes?: string; styles?: string };
+      if (effective.productAgeGroups) {
+        const rows = tableData.productAgeGroups
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], ageGroupId: agByName[r.ageGroupName] }))
+          .filter((r): r is { id: string; productId: string; ageGroupId: string } => !!(r.productId && r.ageGroupId));
+        for (let i = 0; i < rows.length; i += BATCH)
+          await db.insert(productAgeGroups).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
+        console.log(`[seed] productAgeGroups: inserted ${rows.length}`);
+        await storeHash("productAgeGroups", computeHash(tableData.productAgeGroups));
+      } else { console.log(`[seed] productAgeGroups: up to date`); }
 
-      // Build map of productId -> seed record
-      const seedProds = (seedData.products ?? []) as unknown as SeedProductRow[];
-      const allCats = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
-      const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
+      if (effective.productGenders) {
+        const rows = tableData.productGenders
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], genderId: genByName[r.genderName] }))
+          .filter((r): r is { id: string; productId: string; genderId: string } => !!(r.productId && r.genderId));
+        for (let i = 0; i < rows.length; i += BATCH)
+          await db.insert(productGenders).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
+        console.log(`[seed] productGenders: inserted ${rows.length}`);
+        await storeHash("productGenders", computeHash(tableData.productGenders));
+      } else { console.log(`[seed] productGenders: up to date`); }
 
-      // Fetch existing junction rows so we don't re-insert
-      const existingAg = await db.select({ productId: productAgeGroups.productId, ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups);
-      const existingGen = await db.select({ productId: productGenders.productId, genderId: productGenders.genderId }).from(productGenders);
-      const existingTh = await db.select({ productId: productThemes.productId, themeId: productThemes.themeId }).from(productThemes);
-      const existingSt = await db.select({ productId: productStyles.productId, styleId: productStyles.styleId }).from(productStyles);
-      const existingAgSet = new Set(existingAg.map((r) => `${r.productId}:${r.ageGroupId}`));
-      const existingGenSet = new Set(existingGen.map((r) => `${r.productId}:${r.genderId}`));
-      const existingThSet = new Set(existingTh.map((r) => `${r.productId}:${r.themeId}`));
-      const existingStSet = new Set(existingSt.map((r) => `${r.productId}:${r.styleId}`));
+      if (effective.productThemes) {
+        const rows = tableData.productThemes
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], themeId: thByName[r.themeName] }))
+          .filter((r): r is { id: string; productId: string; themeId: string } => !!(r.productId && r.themeId));
+        for (let i = 0; i < rows.length; i += BATCH)
+          await db.insert(productThemes).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
+        console.log(`[seed] productThemes: inserted ${rows.length}`);
+        await storeHash("productThemes", computeHash(tableData.productThemes));
+      } else { console.log(`[seed] productThemes: up to date`); }
 
-      // To find productId from seed slug, we need product slugs
-      const dbProds = await db.select({ id: products.id, slug: products.slug }).from(products);
-      const slugToId: Record<string, string> = Object.fromEntries(dbProds.map((p) => [p.slug, p.id]));
-
-      let jSynced = 0;
-      for (const sp of seedProds) {
-        const productId = slugToId[sp.slug];
-        if (!productId) continue;
-
-        if (sp.ageGroup && agByName[sp.ageGroup]) {
-          const ageGroupId = agByName[sp.ageGroup];
-          const key = `${productId}:${ageGroupId}`;
-          if (!existingAgSet.has(key)) {
-            await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId }).onConflictDoNothing();
-            existingAgSet.add(key);
-            jSynced++;
-          }
-        }
-        if (sp.gender && genByName[sp.gender]) {
-          const genderId = genByName[sp.gender];
-          const key = `${productId}:${genderId}`;
-          if (!existingGenSet.has(key)) {
-            await db.insert(productGenders).values({ id: createId(), productId, genderId }).onConflictDoNothing();
-            existingGenSet.add(key);
-            jSynced++;
-          }
-        }
-        if (sp.themes && typeof sp.themes === "string") {
-          const themeNames = sp.themes.split(",").map((t: string) => t.trim()).filter(Boolean);
-          for (const tn of themeNames) {
-            const themeId = thByName[tn];
-            if (themeId) {
-              const key = `${productId}:${themeId}`;
-              if (!existingThSet.has(key)) {
-                await db.insert(productThemes).values({ id: createId(), productId, themeId }).onConflictDoNothing();
-                existingThSet.add(key);
-                jSynced++;
-              }
-            }
-          }
-        }
-        if (sp.styles && typeof sp.styles === "string") {
-          const styleNames = sp.styles.split(",").map((s: string) => s.trim()).filter(Boolean);
-          for (const sn of styleNames) {
-            const styleId = stByName[sn];
-            if (styleId) {
-              const key = `${productId}:${styleId}`;
-              if (!existingStSet.has(key)) {
-                await db.insert(productStyles).values({ id: createId(), productId, styleId }).onConflictDoNothing();
-                existingStSet.add(key);
-                jSynced++;
-              }
-            }
-          }
-        }
-      }
-      if (jSynced > 0) console.log(`[seed] product junction attrs: inserted ${jSynced} rows`);
-      else console.log(`[seed] product junction attrs: all up to date`);
+      if (effective.productStyles) {
+        const rows = tableData.productStyles
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], styleId: stByName[r.styleName] }))
+          .filter((r): r is { id: string; productId: string; styleId: string } => !!(r.productId && r.styleId));
+        for (let i = 0; i < rows.length; i += BATCH)
+          await db.insert(productStyles).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
+        console.log(`[seed] productStyles: inserted ${rows.length}`);
+        await storeHash("productStyles", computeHash(tableData.productStyles));
+      } else { console.log(`[seed] productStyles: up to date`); }
     }
 
     // ── 9d. Occasions: upsert by slug ────────────────────────────────────────
