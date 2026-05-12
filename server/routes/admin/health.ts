@@ -1410,7 +1410,17 @@ export function registerAdminHealthRoutes(app: Express) {
       const { prodUrl } = (req.body || {}) as { prodUrl?: string };
 
       if (prodUrl) {
-        // Proxy mode: call prod's endpoint
+        // Proxy mode: read current seed-data.json from disk and send it to prod
+        // so prod uses the just-exported data rather than its compiled-in snapshot.
+        const seedFilePath = path.join(process.cwd(), "server/seed-data.json");
+        let seedPayload: Record<string, unknown> = {};
+        try {
+          const raw = fs.readFileSync(seedFilePath, "utf-8");
+          seedPayload = JSON.parse(raw);
+        } catch (e) {
+          console.warn("[force-reseed proxy] Could not read seed-data.json:", e);
+        }
+
         const adminPassword = process.env.ADMIN_PASSWORD || "";
         const prodResp = await fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/catalog/force-reseed`, {
           method: "POST",
@@ -1418,7 +1428,7 @@ export function registerAdminHealthRoutes(app: Express) {
             "x-admin-password": adminPassword,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ seedData: seedPayload }),
         });
         const rawText = await prodResp.text();
         let data: Record<string, unknown>;
@@ -1432,6 +1442,10 @@ export function registerAdminHealthRoutes(app: Express) {
       }
 
       // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
+      // If seedData was provided in the request body (sent by the dev proxy), use it
+      // directly so prod applies the freshly-exported data without needing a redeploy.
+      const incomingSeedData = (req.body || {}).seedData as Record<string, unknown> | undefined;
+
       const catalogTables = [
         "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
         "ageGroups", "genders", "themes", "styles", "occasions",
@@ -1442,7 +1456,7 @@ export function registerAdminHealthRoutes(app: Express) {
       }
       console.log("[force-reseed] Cleared catalog hashes, running seed...");
 
-      await seedDatabase();
+      await seedDatabase(incomingSeedData);
 
       // Query final counts for the response summary
       const { pool } = await import("../../db");

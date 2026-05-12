@@ -43,7 +43,7 @@ async function storeHash(tableName: string, hash: string): Promise<void> {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export async function seedDatabase() {
+export async function seedDatabase(overrideData?: Record<string, unknown>) {
   try {
     // ── 0a. Restore bundled swatch images ─────────────────────────────────────
     // Use process.cwd() (always the project root) so paths work in both dev
@@ -81,15 +81,15 @@ export async function seedDatabase() {
     type SeedJunctionSt  = { id: string; productSlug: string; styleName: string };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sd: any = seedData;
+    const sd: any = overrideData ?? seedData;
     const tableData = {
-      tagTypes:         seedData.tagTypes         ?? [],
-      categories:       seedData.categories       ?? [],
-      tags:             seedData.tags             ?? [],
-      products:         seedData.products         ?? [],
-      productImages:    seedData.productImages     ?? [],
-      productReviews:   seedData.productReviews    ?? [],
-      productTags:      (seedData.productTags      ?? []) as SeedProductTag[],
+      tagTypes:         sd.tagTypes         ?? [],
+      categories:       sd.categories       ?? [],
+      tags:             sd.tags             ?? [],
+      products:         sd.products         ?? [],
+      productImages:    sd.productImages     ?? [],
+      productReviews:   sd.productReviews    ?? [],
+      productTags:      (sd.productTags      ?? []) as SeedProductTag[],
       ageGroups:        ((sd.ageGroups             ?? []) as SeedAttr[]),
       genders:          ((sd.genders               ?? []) as SeedAttr[]),
       themes:           ((sd.themes                ?? []) as SeedAttr[]),
@@ -375,7 +375,7 @@ export async function seedDatabase() {
     }
 
     // ── 4. siteConfig: row-level upsert, skip seed-hash-* keys ───────────────
-    const configEntries = (seedData.siteConfig ?? []).filter((sc) => !sc.key.startsWith("seed-hash-"));
+    const configEntries = ((sd.siteConfig ?? []) as Array<{key: string; value: string}>).filter((sc) => !sc.key.startsWith("seed-hash-"));
     let configSynced = 0;
     for (const sc of configEntries) {
       const [existing] = await db.select().from(siteConfig).where(eq(siteConfig.key, sc.key));
@@ -394,7 +394,7 @@ export async function seedDatabase() {
     }
 
     // ── 5. currencyRates: upsert by currency ──────────────────────────────────
-    const crEntries = seedData.currencyRates ?? [];
+    const crEntries = (sd.currencyRates ?? []) as Array<{id: string; currency: string; rateFromInr: string}>;
     let crSynced = 0;
     for (const cr of crEntries) {
       const [existing] = await db.select().from(currencyRates).where(eq(currencyRates.currency, cr.currency));
@@ -413,7 +413,7 @@ export async function seedDatabase() {
     }
 
     // ── 5a. pricingRules: upsert by currency ──────────────────────────────────
-    const prEntries = seedData.pricingRules ?? [];
+    const prEntries = (sd.pricingRules ?? []) as Array<{id: string; currency: string; symbol: string; displayName?: string; markupPercent?: string; roundingRule?: string; enabled?: boolean}>;
     let prSynced = 0;
     for (const pr of prEntries) {
       const [existing] = await db.select().from(pricingRules).where(eq(pricingRules.currency, pr.currency));
@@ -456,7 +456,7 @@ export async function seedDatabase() {
     // ── 6. categoryTagVariantConfigs: upsert by (categoryId, tagId) ──────────
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
-    const ctvcEntries = seedData.categoryTagVariantConfigs ?? [];
+    const ctvcEntries = (sd.categoryTagVariantConfigs ?? []) as Array<{id: string; categorySlug: string; tagId?: string; sortOrder?: number}>;
     let ctvcSynced = 0;
     // Map seed configId → actual DB configId (in case the DB has a different PK)
     const seedConfigIdToDbId: Record<string, string> = {};
@@ -487,7 +487,7 @@ export async function seedDatabase() {
     }
 
     // ── 7. variantSizes: upsert by (configId, name) ───────────────────────────
-    const vsEntries = seedData.variantSizes ?? [];
+    const vsEntries = (sd.variantSizes ?? []) as Array<{id: string; configId: string; name: string; description?: string; descriptionFontSize?: number; priceAdd?: number; isDefault?: boolean; blurOnFront?: boolean; sortOrder?: number}>;
     let vsSynced = 0;
     // Map seed sizeId → actual DB sizeId (in case the DB has a different PK)
     const seedSizeIdToDbId: Record<string, string> = {};
@@ -531,7 +531,7 @@ export async function seedDatabase() {
     }
 
     // ── 8. variantColors: upsert by (sizeId, name) ───────────────────────────
-    const vcEntries = seedData.variantColors ?? [];
+    const vcEntries = (sd.variantColors ?? []) as Array<{id: string; sizeId: string; name: string; swatchUrl?: string; blurOnFront?: boolean; sortOrder?: number}>;
     let vcSynced = 0;
     for (const vc of vcEntries) {
       // Resolve actual DB sizeId (may differ from seed sizeId if row pre-existed)
@@ -567,7 +567,7 @@ export async function seedDatabase() {
     const allProdsForVariants = await db.select({ id: products.id, slug: products.slug }).from(products);
     const prodSlugToIdV: Record<string, string> = Object.fromEntries(allProdsForVariants.map(p => [p.slug, p.id]));
     type SeedVariant = { id: string; productSlug: string; color: string; size: string; available?: boolean };
-    const pvEntries = ((seedData as Record<string, unknown>).productVariants as SeedVariant[] | undefined) ?? [];
+    const pvEntries = (sd.productVariants as SeedVariant[] | undefined) ?? [];
     let pvSynced = 0;
     for (const pv of pvEntries) {
       const productId = prodSlugToIdV[pv.productSlug];
@@ -692,7 +692,7 @@ export async function seedDatabase() {
       preferredStyles?: string; preferredThemes?: string;
       active?: boolean; sortOrder?: number;
     };
-    const occEntries = ((seedData as Record<string, unknown>).occasions as SeedOccasion[] | undefined) ?? [];
+    const occEntries = (sd.occasions as SeedOccasion[] | undefined) ?? [];
     let occSynced = 0;
     for (const occ of occEntries) {
       const [existing] = await db.select().from(occasions).where(eq(occasions.slug, occ.slug));
