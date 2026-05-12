@@ -32,10 +32,20 @@ interface CompareResult {
   prodUrl: string;
   categories: IdTableDiff;
   products: ProductDiff;
+  tagTypes: IdTableDiff;
   tags: IdTableDiff;
   productTags: ContentTableDiff;
   productImages: IdTableDiff;
   productReviews: IdTableDiff;
+  ageGroups: IdTableDiff;
+  genders: IdTableDiff;
+  themes: IdTableDiff;
+  styles: IdTableDiff;
+  occasions: IdTableDiff;
+  productAgeGroups: ContentTableDiff;
+  productGenders: ContentTableDiff;
+  productThemes: ContentTableDiff;
+  productStyles: ContentTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -79,18 +89,19 @@ function CollapsibleList({ label, items, color }: { label: string; items: string
   );
 }
 
-function FieldMismatches({ mismatches }: { mismatches: IdTableDiff["fieldMismatches"] }) {
+function FieldMismatches({ mismatches, label = "Field mismatches" }: { mismatches: IdTableDiff["fieldMismatches"]; label?: string }) {
   const [open, setOpen] = useState(false);
   if (!mismatches || mismatches.length === 0) return null;
+  const slug = label.replace(/\s+/g, "-").toLowerCase();
   return (
     <div className="mt-2">
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-        data-testid="button-collapse-field-mismatches"
+        data-testid={`button-collapse-${slug}`}
       >
         {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-        Field mismatches ({mismatches.length})
+        {label} ({mismatches.length})
       </button>
       {open && (
         <div className="mt-1 rounded border text-xs max-h-64 overflow-y-auto">
@@ -188,14 +199,7 @@ function SectionShell({ title, clean, devCount, prodCount, children }: {
 interface ReseedResult {
   success: boolean;
   message: string;
-  counts: {
-    categories: number;
-    products: number;
-    tags: number;
-    productTags: number;
-    productImages: number;
-    productReviews: number;
-  };
+  counts: Record<string, number>;
 }
 
 export default function AdminDbCompare() {
@@ -238,7 +242,6 @@ export default function AdminDbCompare() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Re-seed failed");
       setReseedResult(data);
-      // Auto-refresh the comparison after a successful re-seed (keep the success banner visible)
       await runCompare(true);
     } catch (e: any) {
       setReseedError(e.message);
@@ -250,10 +253,20 @@ export default function AdminDbCompare() {
   const allClean = result
     ? isProductClean(result.products) &&
       isIdTableClean(result.categories) &&
+      isIdTableClean(result.tagTypes) &&
       isIdTableClean(result.tags) &&
       isContentTableClean(result.productTags) &&
       isIdTableClean(result.productImages) &&
-      isIdTableClean(result.productReviews)
+      isIdTableClean(result.productReviews) &&
+      isIdTableClean(result.ageGroups) &&
+      isIdTableClean(result.genders) &&
+      isIdTableClean(result.themes) &&
+      isIdTableClean(result.styles) &&
+      isIdTableClean(result.occasions) &&
+      isContentTableClean(result.productAgeGroups) &&
+      isContentTableClean(result.productGenders) &&
+      isContentTableClean(result.productThemes) &&
+      isContentTableClean(result.productStyles)
     : null;
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
@@ -265,6 +278,9 @@ export default function AdminDbCompare() {
     : allClean
     ? "No differences — prod is already in sync"
     : "Overwrite prod catalog with dev data";
+
+  const DEV_COLOR  = "bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300";
+  const PROD_COLOR = "bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300";
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="page-admin-db-compare">
@@ -331,7 +347,10 @@ export default function AdminDbCompare() {
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             {reseedResult.message} —{" "}
-            {reseedResult.counts.products} products, {reseedResult.counts.categories} categories, {reseedResult.counts.tags} tags
+            {reseedResult.counts.products} products, {reseedResult.counts.categories} categories,{" "}
+            {reseedResult.counts.tags} tags, {reseedResult.counts.ageGroups} age groups,{" "}
+            {reseedResult.counts.genders} genders, {reseedResult.counts.themes} themes,{" "}
+            {reseedResult.counts.styles} styles
           </span>
         </div>
       )}
@@ -349,48 +368,103 @@ export default function AdminDbCompare() {
             )}
           </div>
 
-          {/* Categories — ID-based */}
+          {/* ── Core catalog ── */}
           <SectionShell title="Categories" clean={isIdTableClean(result.categories)} devCount={result.categories.devCount} prodCount={result.categories.prodCount}>
-            <CollapsibleList label="IDs only in dev"  items={result.categories.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="IDs only in prod" items={result.categories.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <CollapsibleList label="IDs only in dev"  items={result.categories.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.categories.onlyInProd} color={PROD_COLOR} />
             <FieldMismatches mismatches={result.categories.fieldMismatches} />
           </SectionShell>
 
-          {/* Products — ID-based + SKU cross-check */}
           <SectionShell title="Products" clean={isProductClean(result.products)} devCount={result.products.devCount} prodCount={result.products.prodCount}>
-            <CollapsibleList label="IDs only in dev"   items={result.products.onlyInDev}   color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="IDs only in prod"  items={result.products.onlyInProd}  color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
-            <CollapsibleList label="SKUs only in dev"  items={result.products.onlySkuInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="SKUs only in prod" items={result.products.onlySkuInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <CollapsibleList label="IDs only in dev"   items={result.products.onlyInDev}      color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod"  items={result.products.onlyInProd}     color={PROD_COLOR} />
+            <CollapsibleList label="SKUs only in dev"  items={result.products.onlySkuInDev}   color={DEV_COLOR} />
+            <CollapsibleList label="SKUs only in prod" items={result.products.onlySkuInProd}  color={PROD_COLOR} />
             <FieldMismatches mismatches={result.products.fieldMismatches} />
             <SkuNameMismatches mismatches={result.products.skuNameMismatches} />
           </SectionShell>
 
-          {/* Tags — ID-based */}
-          <SectionShell title="Tags" clean={isIdTableClean(result.tags)} devCount={result.tags.devCount} prodCount={result.tags.prodCount}>
-            <CollapsibleList label="IDs only in dev"  items={result.tags.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="IDs only in prod" items={result.tags.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
-            <FieldMismatches mismatches={result.tags.fieldMismatches} />
-          </SectionShell>
-
-          {/* Product Tags — content-based (product_id + tag_id) */}
-          <SectionShell title="Product Tags" clean={isContentTableClean(result.productTags)} devCount={result.productTags.devCount} prodCount={result.productTags.prodCount}>
-            <CollapsibleList label="Links only in dev"  items={result.productTags.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="Links only in prod" items={result.productTags.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
-          </SectionShell>
-
-          {/* Product Images — ID-based (synced by migration) */}
           <SectionShell title="Product Images" clean={isIdTableClean(result.productImages)} devCount={result.productImages.devCount} prodCount={result.productImages.prodCount}>
-            <CollapsibleList label="IDs only in dev"  items={result.productImages.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="IDs only in prod" items={result.productImages.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <CollapsibleList label="IDs only in dev"  items={result.productImages.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.productImages.onlyInProd} color={PROD_COLOR} />
             <FieldMismatches mismatches={result.productImages.fieldMismatches} />
           </SectionShell>
 
-          {/* Product Reviews — ID-based (synced by migration) */}
           <SectionShell title="Product Reviews" clean={isIdTableClean(result.productReviews)} devCount={result.productReviews.devCount} prodCount={result.productReviews.prodCount}>
-            <CollapsibleList label="IDs only in dev"  items={result.productReviews.onlyInDev}  color="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300" />
-            <CollapsibleList label="IDs only in prod" items={result.productReviews.onlyInProd} color="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-300" />
+            <CollapsibleList label="IDs only in dev"  items={result.productReviews.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.productReviews.onlyInProd} color={PROD_COLOR} />
             <FieldMismatches mismatches={result.productReviews.fieldMismatches} />
+          </SectionShell>
+
+          {/* ── Tag system ── */}
+          <SectionShell title="Tag Types" clean={isIdTableClean(result.tagTypes)} devCount={result.tagTypes.devCount} prodCount={result.tagTypes.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.tagTypes.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.tagTypes.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.tagTypes.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Tags" clean={isIdTableClean(result.tags)} devCount={result.tags.devCount} prodCount={result.tags.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.tags.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.tags.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.tags.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Product Tags" clean={isContentTableClean(result.productTags)} devCount={result.productTags.devCount} prodCount={result.productTags.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productTags.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productTags.onlyInProd} color={PROD_COLOR} />
+          </SectionShell>
+
+          {/* ── Attribute lookup tables ── */}
+          <SectionShell title="Age Groups" clean={isIdTableClean(result.ageGroups)} devCount={result.ageGroups.devCount} prodCount={result.ageGroups.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.ageGroups.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.ageGroups.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.ageGroups.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Genders" clean={isIdTableClean(result.genders)} devCount={result.genders.devCount} prodCount={result.genders.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.genders.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.genders.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.genders.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Themes" clean={isIdTableClean(result.themes)} devCount={result.themes.devCount} prodCount={result.themes.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.themes.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.themes.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.themes.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Styles" clean={isIdTableClean(result.styles)} devCount={result.styles.devCount} prodCount={result.styles.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.styles.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.styles.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.styles.fieldMismatches} />
+          </SectionShell>
+
+          {/* ── Occasions ── */}
+          <SectionShell title="Occasions" clean={isIdTableClean(result.occasions)} devCount={result.occasions.devCount} prodCount={result.occasions.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.occasions.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.occasions.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.occasions.fieldMismatches} />
+          </SectionShell>
+
+          {/* ── Attribute junction tables ── */}
+          <SectionShell title="Product Age Groups" clean={isContentTableClean(result.productAgeGroups)} devCount={result.productAgeGroups.devCount} prodCount={result.productAgeGroups.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productAgeGroups.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productAgeGroups.onlyInProd} color={PROD_COLOR} />
+          </SectionShell>
+
+          <SectionShell title="Product Genders" clean={isContentTableClean(result.productGenders)} devCount={result.productGenders.devCount} prodCount={result.productGenders.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productGenders.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productGenders.onlyInProd} color={PROD_COLOR} />
+          </SectionShell>
+
+          <SectionShell title="Product Themes" clean={isContentTableClean(result.productThemes)} devCount={result.productThemes.devCount} prodCount={result.productThemes.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productThemes.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productThemes.onlyInProd} color={PROD_COLOR} />
+          </SectionShell>
+
+          <SectionShell title="Product Styles" clean={isContentTableClean(result.productStyles)} devCount={result.productStyles.devCount} prodCount={result.productStyles.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productStyles.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productStyles.onlyInProd} color={PROD_COLOR} />
           </SectionShell>
         </div>
       )}

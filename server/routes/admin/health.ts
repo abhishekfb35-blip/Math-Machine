@@ -1180,7 +1180,7 @@ export function registerAdminHealthRoutes(app: Express) {
   app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
         pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1193,15 +1193,33 @@ export function registerAdminHealthRoutes(app: Express) {
           ORDER BY p.slug, t.name`),
         pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
         pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+        pool.query(`SELECT id, name, sort_order FROM age_groups ORDER BY sort_order`),
+        pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
+        pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
+        pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
+        pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
+        pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS age_group_name FROM product_age_groups pag JOIN products p ON p.id = pag.product_id JOIN age_groups ag ON ag.id = pag.age_group_id ORDER BY p.slug, ag.name`),
+        pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
+        pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
+        pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
       ]);
       res.json({
-        categories:     cats.rows,
-        products:       prods.rows,
-        tagTypes:       ttypes.rows,
-        tags:           tgs.rows,
-        productTags:    ptags.rows,
-        productImages:  imgs.rows,
-        productReviews: revs.rows,
+        categories:       cats.rows,
+        products:         prods.rows,
+        tagTypes:         ttypes.rows,
+        tags:             tgs.rows,
+        productTags:      ptags.rows,
+        productImages:    imgs.rows,
+        productReviews:   revs.rows,
+        ageGroups:        ags.rows,
+        genders:          gens.rows,
+        themes:           ths.rows,
+        styles:           sts.rows,
+        occasions:        occs.rows,
+        productAgeGroups: pags.rows,
+        productGenders:   pgens.rows,
+        productThemes:    pths.rows,
+        productStyles:    psts.rows,
       });
     } catch (err: any) {
       console.error("db-snapshot error:", err.message);
@@ -1219,10 +1237,11 @@ export function registerAdminHealthRoutes(app: Express) {
       const [localSnap, prodResp] = await Promise.all([
         (async () => {
           const { pool } = await import("../../db");
-          const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
             pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
             pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
-            pool.query(`SELECT id, name FROM tags ORDER BY name`),
+            pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
+            pool.query(`SELECT id, name, description, tag_type_id AS "tagTypeId", sort_order AS "sortOrder" FROM tags ORDER BY sort_order, name`),
             pool.query(`
               SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
               FROM product_tags pt
@@ -1231,8 +1250,23 @@ export function registerAdminHealthRoutes(app: Express) {
               ORDER BY p.slug, t.name`),
             pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
             pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+            pool.query(`SELECT id, name, sort_order FROM age_groups ORDER BY sort_order`),
+            pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
+            pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
+            pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
+            pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
+            pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS age_group_name FROM product_age_groups pag JOIN products p ON p.id = pag.product_id JOIN age_groups ag ON ag.id = pag.age_group_id ORDER BY p.slug, ag.name`),
+            pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
+            pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
+            pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
           ]);
-          return { categories: cats.rows, products: prods.rows, tags: tgs.rows, productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows };
+          return {
+            categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
+            productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows,
+            ageGroups: ags.rows, genders: gens.rows, themes: ths.rows, styles: sts.rows,
+            occasions: occs.rows, productAgeGroups: pags.rows, productGenders: pgens.rows,
+            productThemes: pths.rows, productStyles: psts.rows,
+          };
         })(),
         fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
           headers: {
@@ -1291,15 +1325,37 @@ export function registerAdminHealthRoutes(app: Express) {
       res.json({
         checkedAt: new Date().toISOString(),
         prodUrl,
-        categories:     diffById(localSnap.categories as any[], prodSnap.categories as any[], ["name", "slug", "sort_order"]),
-        products:       { ...diffById(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
-        tags:           diffById(localSnap.tags as any[], prodSnap.tags as any[], ["name"]),
-        productTags:    diffByContent(
-                          localSnap.productTags  as any[], prodSnap.productTags  as any[],
-                          r => `${r.product_id}|${r.tag_id}`,
-                          r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
-        productImages:  diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
-        productReviews: diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
+        categories:       diffById(localSnap.categories as any[], prodSnap.categories as any[], ["name", "slug", "sort_order"]),
+        products:         { ...diffById(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
+        tagTypes:         diffById(localSnap.tagTypes as any[], (prodSnap as any).tagTypes as any[] ?? [], ["name", "slug", "sort_order"]),
+        tags:             diffById(localSnap.tags as any[], prodSnap.tags as any[], ["name", "sortOrder"]),
+        productTags:      diffByContent(
+                            localSnap.productTags as any[], prodSnap.productTags as any[],
+                            r => `${r.product_id}|${r.tag_id}`,
+                            r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
+        productImages:    diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
+        productReviews:   diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
+        ageGroups:        diffById(localSnap.ageGroups as any[], (prodSnap as any).ageGroups as any[] ?? [], ["name", "sort_order"]),
+        genders:          diffById(localSnap.genders as any[], (prodSnap as any).genders as any[] ?? [], ["name", "sort_order"]),
+        themes:           diffById(localSnap.themes as any[], (prodSnap as any).themes as any[] ?? [], ["name", "sort_order"]),
+        styles:           diffById(localSnap.styles as any[], (prodSnap as any).styles as any[] ?? [], ["name", "sort_order"]),
+        occasions:        diffById(localSnap.occasions as any[], (prodSnap as any).occasions as any[] ?? [], ["name", "slug", "active", "sort_order"]),
+        productAgeGroups: diffByContent(
+                            localSnap.productAgeGroups as any[], (prodSnap as any).productAgeGroups as any[] ?? [],
+                            r => `${r.product_slug}|${r.age_group_name}`,
+                            r => `${r.product_slug} → ${r.age_group_name}`),
+        productGenders:   diffByContent(
+                            localSnap.productGenders as any[], (prodSnap as any).productGenders as any[] ?? [],
+                            r => `${r.product_slug}|${r.gender_name}`,
+                            r => `${r.product_slug} → ${r.gender_name}`),
+        productThemes:    diffByContent(
+                            localSnap.productThemes as any[], (prodSnap as any).productThemes as any[] ?? [],
+                            r => `${r.product_slug}|${r.theme_name}`,
+                            r => `${r.product_slug} → ${r.theme_name}`),
+        productStyles:    diffByContent(
+                            localSnap.productStyles as any[], (prodSnap as any).productStyles as any[] ?? [],
+                            r => `${r.product_slug}|${r.style_name}`,
+                            r => `${r.product_slug} → ${r.style_name}`),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
@@ -1376,7 +1432,11 @@ export function registerAdminHealthRoutes(app: Express) {
       }
 
       // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
-      const catalogTables = ["categories", "tags", "products", "productImages", "productReviews", "productTags"];
+      const catalogTables = [
+        "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
+        "ageGroups", "genders", "themes", "styles", "occasions",
+        "productAgeGroups", "productGenders", "productThemes", "productStyles",
+      ];
       for (const table of catalogTables) {
         await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
       }
@@ -1386,25 +1446,45 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Query final counts for the response summary
       const { pool } = await import("../../db");
-      const [cats, prods, tgs, ptags, imgs, revs] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
         pool.query(`SELECT COUNT(*) FROM categories`),
         pool.query(`SELECT COUNT(*) FROM products`),
+        pool.query(`SELECT COUNT(*) FROM tag_types`),
         pool.query(`SELECT COUNT(*) FROM tags`),
         pool.query(`SELECT COUNT(*) FROM product_tags`),
         pool.query(`SELECT COUNT(*) FROM product_images`),
         pool.query(`SELECT COUNT(*) FROM product_reviews`),
+        pool.query(`SELECT COUNT(*) FROM age_groups`),
+        pool.query(`SELECT COUNT(*) FROM genders`),
+        pool.query(`SELECT COUNT(*) FROM themes`),
+        pool.query(`SELECT COUNT(*) FROM styles`),
+        pool.query(`SELECT COUNT(*) FROM occasions`),
+        pool.query(`SELECT COUNT(*) FROM product_age_groups`),
+        pool.query(`SELECT COUNT(*) FROM product_genders`),
+        pool.query(`SELECT COUNT(*) FROM product_themes`),
+        pool.query(`SELECT COUNT(*) FROM product_styles`),
       ]);
 
       res.json({
         success: true,
         message: "Catalog re-seeded successfully",
         counts: {
-          categories:     Number(cats.rows[0].count),
-          products:       Number(prods.rows[0].count),
-          tags:           Number(tgs.rows[0].count),
-          productTags:    Number(ptags.rows[0].count),
-          productImages:  Number(imgs.rows[0].count),
-          productReviews: Number(revs.rows[0].count),
+          categories:       Number(cats.rows[0].count),
+          products:         Number(prods.rows[0].count),
+          tagTypes:         Number(ttypes.rows[0].count),
+          tags:             Number(tgs.rows[0].count),
+          productTags:      Number(ptags.rows[0].count),
+          productImages:    Number(imgs.rows[0].count),
+          productReviews:   Number(revs.rows[0].count),
+          ageGroups:        Number(ags.rows[0].count),
+          genders:          Number(gens.rows[0].count),
+          themes:           Number(ths.rows[0].count),
+          styles:           Number(sts.rows[0].count),
+          occasions:        Number(occs.rows[0].count),
+          productAgeGroups: Number(pags.rows[0].count),
+          productGenders:   Number(pgens.rows[0].count),
+          productThemes:    Number(pths.rows[0].count),
+          productStyles:    Number(psts.rows[0].count),
         },
       });
     } catch (err: any) {
