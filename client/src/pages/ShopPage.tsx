@@ -114,17 +114,25 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Enhanced horizontally-scrollable row for desktop filter chips
+// Inertial drag-to-scroll row for desktop filter chips (Theme / Style)
 function FilterScrollRow({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ x: 0, scrollLeft: 0 });
+  const [blockClicks, setBlockClicks] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragRef = useRef({ startX: 0, lastX: 0, scrollLeft: 0, moved: 0, vel: 0 });
+  const animRef = useRef<number>(0);
 
+  // Track scroll edges for fade indicators
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () => setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+    const update = () => {
+      setAtStart(el.scrollLeft <= 4);
+      setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+    };
     update();
     el.addEventListener("scroll", update, { passive: true });
     const ro = new ResizeObserver(update);
@@ -132,85 +140,125 @@ function FilterScrollRow({ children }: { children: React.ReactNode }) {
     return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
   }, []);
 
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      e.preventDefault();
-      el.scrollBy({ left: e.deltaY * 1.5 });
-    }
-  };
+  // Document-level drag tracking so fast moves don't lose the handle
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current || !ref.current) return;
+      dragRef.current.vel = e.clientX - dragRef.current.lastX;
+      dragRef.current.moved += Math.abs(dragRef.current.vel);
+      dragRef.current.lastX = e.clientX;
+      ref.current.scrollLeft = dragRef.current.scrollLeft - (e.clientX - dragRef.current.startX);
+    };
+
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+
+      if (dragRef.current.moved > 5) {
+        // Block the click that fires immediately after mouseup
+        setBlockClicks(true);
+        setTimeout(() => setBlockClicks(false), 160);
+
+        // Momentum glide
+        let vel = -dragRef.current.vel;
+        const glide = () => {
+          if (!ref.current || Math.abs(vel) < 0.5) return;
+          ref.current.scrollLeft += vel;
+          vel *= 0.92;
+          animRef.current = requestAnimationFrame(glide);
+        };
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(glide);
+      }
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      cancelAnimationFrame(animRef.current);
+    };
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
+    if (!ref.current) return;
+    cancelAnimationFrame(animRef.current);
+    isDraggingRef.current = true;
     setIsDragging(true);
-    dragRef.current = { x: e.clientX, scrollLeft: el.scrollLeft };
+    dragRef.current = { startX: e.clientX, lastX: e.clientX, scrollLeft: ref.current.scrollLeft, moved: 0, vel: 0 };
   };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !ref.current) return;
-    e.preventDefault();
-    ref.current.scrollLeft = dragRef.current.scrollLeft - (e.clientX - dragRef.current.x);
-  };
-
-  const stopDrag = () => setIsDragging(false);
 
   return (
     <div className="relative flex-1 overflow-hidden">
+      {!atStart && (
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-background/95 to-transparent z-10" />
+      )}
       <div
         ref={ref}
-        className={`flex gap-2 overflow-x-auto scrollbar-none ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
-        onWheel={handleWheel}
+        className={`flex gap-2 overflow-x-auto scrollbar-none select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        style={{ pointerEvents: blockClicks ? "none" : undefined }}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={stopDrag}
-        onMouseLeave={stopDrag}
       >
         {children}
-        <div className="shrink-0 w-6" aria-hidden />
+        <div className="shrink-0 w-8" aria-hidden />
       </div>
       {!atEnd && (
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background/95 to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-l from-background/95 to-transparent" />
       )}
     </div>
   );
 }
 
-function DesktopFilterRow({ label, options, selected, onToggle, counts }: {
+// Chips for the Gender row — static, no drag (options rarely overflow)
+function StaticChipRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-none">
+      {children}
+    </div>
+  );
+}
+
+function DesktopFilterRow({ label, options, selected, onToggle, counts, draggable = true }: {
   label: string;
   options: { label: string; value: string }[];
   selected: string[];
   onToggle: (v: string) => void;
   counts?: Record<string, number>;
+  draggable?: boolean;
 }) {
   if (options.length === 0) return null;
+  const chips = options.map(opt => {
+    const isSelected = selected.includes(opt.value);
+    const count = counts?.[opt.value];
+    return (
+      <button
+        key={opt.value}
+        onClick={() => onToggle(opt.value)}
+        className={`shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-md border text-xs font-medium transition-all ${
+          isSelected
+            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+            : "bg-background text-foreground border-input hover:bg-muted"
+        }`}
+      >
+        {isSelected && <Check className="w-3 h-3 shrink-0" />}
+        <span className="capitalize">{opt.label}</span>
+        {count !== undefined && (
+          <span className={isSelected ? "opacity-60" : "text-muted-foreground"}>({count})</span>
+        )}
+      </button>
+    );
+  });
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground shrink-0 font-medium w-12">{label}</span>
-      <FilterScrollRow>
-        {options.map(opt => {
-          const isSelected = selected.includes(opt.value);
-          const count = counts?.[opt.value];
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onToggle(opt.value)}
-              className={`shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-md border text-xs font-medium transition-all ${
-                isSelected
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-foreground border-input hover:bg-muted"
-              }`}
-            >
-              {isSelected && <Check className="w-3 h-3 shrink-0" />}
-              <span className="capitalize">{opt.label}</span>
-              {count !== undefined && (
-                <span className={isSelected ? "opacity-60" : "text-muted-foreground"}>({count})</span>
-              )}
-            </button>
-          );
-        })}
-      </FilterScrollRow>
+      {draggable ? (
+        <FilterScrollRow>{chips}</FilterScrollRow>
+      ) : (
+        <StaticChipRow>{chips}</StaticChipRow>
+      )}
     </div>
   );
 }
@@ -644,7 +692,7 @@ export default function ShopPage() {
 
             {/* DESKTOP ONLY: scrollable discovery rails */}
             <div className="hidden sm:block space-y-1.5">
-              <DesktopFilterRow label="Gender" options={genderOptions} selected={activeGenders} onToggle={toggleGender} counts={genderCounts} />
+              <DesktopFilterRow label="Gender" options={genderOptions} selected={activeGenders} onToggle={toggleGender} counts={genderCounts} draggable={false} />
               <DesktopFilterRow label="Theme"  options={themeOptions}  selected={activeThemes}  onToggle={toggleTheme}  counts={themeCounts} />
               <DesktopFilterRow label="Style"  options={styleOptions}  selected={activeStyles}  onToggle={toggleStyle}  counts={styleCounts} />
               {hasAttributeFilters && (

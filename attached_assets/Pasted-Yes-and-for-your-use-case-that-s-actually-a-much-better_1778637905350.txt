@@ -1,0 +1,121 @@
+Yes — and for your use case that’s actually a much better desktop interaction model than relying on wheel scrolling.
+
+A draggable horizontal rail solves several problems at once:
+
+removes wheel-scroll ambiguity
+makes overflow obvious
+feels tactile
+works well for theme discovery
+reduces accidental page scroll
+fits your “browse emotionally” shopping style
+
+This pattern is used a lot in:
+
+design-heavy ecommerce
+media streaming UIs
+inspiration/discovery interfaces
+
+—not enterprise filtering systems.
+
+But implementation quality matters enormously.
+
+Bad drag-scroll feels cheap very quickly.
+
+You want:
+
+smooth inertial movement
+grab cursor
+momentum
+no accidental text selection
+no click misfires while dragging
+
+The correct behavior should feel like:
+
+grab → drag sideways → release → momentum glide
+
+NOT:
+
+fighting the browser scroll system
+
+Recommended desktop behavior:
+
+Default
+horizontal rail visible
+subtle fade on right
+partial clipped chip
+Hover
+
+Cursor changes:
+
+cursor: grab;
+Dragging
+cursor: grabbing;
+user-select: none;
+
+This instantly teaches interaction without tutorials.
+
+Very important:
+keep normal touch scrolling on mobile.
+
+Do NOT unify the behaviors.
+
+Desktop:
+
+drag rail
+
+Mobile:
+
+swipe rail
+
+Perfect.
+
+One warning though:
+
+If EVERY row becomes draggable:
+
+audience
+gender
+themes
+styles
+
+then the page starts feeling like a control surface.
+
+I’d strongly recommend:
+
+Row	Behavior
+Audience	static
+Gender	static or tiny overflow
+Themes	draggable
+Styles	maybe draggable
+
+Themes are the real discovery layer.
+That’s where tactile browsing helps.
+
+Also:
+add subtle left/right fade edges ONLY to draggable rows.
+
+This visually communicates:
+
+“this is a movable rail”
+
+without needing arrows everywhere.
+
+Another important detail:
+during drag,
+disable chip clicks unless movement threshold is tiny.
+
+Otherwise users accidentally activate filters while dragging.
+
+That is one of the most common implementation mistakes.
+
+So yes —
+a grab-and-drag rail is probably the strongest desktop solution for TurtleLittle right now.
+
+It aligns with:
+
+emotional browsing
+discovery merchandising
+large theme counts
+aesthetic shopping behavior
+
+much better than wheel-dependent horizontal scrolling.
