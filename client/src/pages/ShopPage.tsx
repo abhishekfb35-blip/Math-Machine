@@ -541,6 +541,13 @@ export default function ShopPage() {
 
   const handleClearFilters = () => pushURL("all", [], [], [], activeTag, searchQuery);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="pb-20 md:pb-8">
       <SEO
@@ -551,7 +558,8 @@ export default function ShopPage() {
 
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
-          {/* Row 1: Search */}
+
+          {/* Search — always visible */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -572,99 +580,142 @@ export default function ShopPage() {
             )}
           </div>
 
-          {/* Row 2: Audience chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
-            {audienceFilters.map(f => {
-              const count = audienceCounts[f.value];
-              return (
-                <Button
-                  key={f.value}
-                  variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleFilterChange(f.value)}
-                  className="shrink-0"
-                  data-testid={`filter-${f.value}`}
+          {/* Collapsible section: audience + all filter rows — hides on scroll */}
+          <div className={`overflow-hidden transition-all duration-200 ease-in-out space-y-2 ${isScrolled ? "max-h-0 opacity-0 pointer-events-none" : "max-h-96 opacity-100"}`}>
+            {/* Audience chips */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
+              {audienceFilters.map(f => {
+                const count = audienceCounts[f.value];
+                return (
+                  <Button
+                    key={f.value}
+                    variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleFilterChange(f.value)}
+                    className="shrink-0"
+                    data-testid={`filter-${f.value}`}
+                  >
+                    {f.label}{count !== undefined ? ` (${count})` : ""}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* MOBILE ONLY: compact dropdown pills */}
+            <div className="sm:hidden flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <MultiSelectDropdown
+                label="Gender"
+                options={genderOptions}
+                selected={activeGenders}
+                onToggle={toggleGender}
+                onClear={() => pushURL(activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
+                counts={genderCounts}
+                testIdPrefix="filter-gender"
+              />
+              <MultiSelectDropdown
+                label="Theme"
+                options={themeOptions}
+                selected={activeThemes}
+                onToggle={toggleTheme}
+                onClear={() => pushURL(activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
+                counts={themeCounts}
+                testIdPrefix="filter-theme"
+              />
+              <MultiSelectDropdown
+                label="Style"
+                options={styleOptions}
+                selected={activeStyles}
+                onToggle={toggleStyle}
+                onClear={() => pushURL(activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
+                counts={styleCounts}
+                testIdPrefix="filter-style"
+              />
+              {hasAttributeFilters && (
+                <button
+                  onClick={handleClearFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors shrink-0 ml-1"
+                  data-testid="button-clear-filters"
                 >
-                  {f.label}{count !== undefined ? ` (${count})` : ""}
-                </Button>
-              );
-            })}
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            {/* DESKTOP ONLY: scrollable discovery rails */}
+            <div className="hidden sm:block space-y-1.5">
+              <DesktopFilterRow label="Gender" options={genderOptions} selected={activeGenders} onToggle={toggleGender} counts={genderCounts} />
+              <DesktopFilterRow label="Theme"  options={themeOptions}  selected={activeThemes}  onToggle={toggleTheme}  counts={themeCounts} />
+              <DesktopFilterRow label="Style"  options={styleOptions}  selected={activeStyles}  onToggle={toggleStyle}  counts={styleCounts} />
+              {hasAttributeFilters && (
+                <button
+                  onClick={handleClearFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                  data-testid="button-clear-filters"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* MOBILE ONLY: compact dropdown pills */}
-          <div className="sm:hidden flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <MultiSelectDropdown
-              label="Gender"
-              options={genderOptions}
-              selected={activeGenders}
-              onToggle={toggleGender}
-              onClear={() => pushURL(activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
-              counts={genderCounts}
-              testIdPrefix="filter-gender"
-            />
-            <MultiSelectDropdown
-              label="Theme"
-              options={themeOptions}
-              selected={activeThemes}
-              onToggle={toggleTheme}
-              onClear={() => pushURL(activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
-              counts={themeCounts}
-              testIdPrefix="filter-theme"
-            />
-            <MultiSelectDropdown
-              label="Style"
-              options={styleOptions}
-              selected={activeStyles}
-              onToggle={toggleStyle}
-              onClear={() => pushURL(activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
-              counts={styleCounts}
-              testIdPrefix="filter-style"
-            />
-            {hasAttributeFilters && (
+          {/* Compact active-filter summary — appears when scrolled + filters active */}
+          <div className={`overflow-hidden transition-all duration-200 ease-in-out ${isScrolled && hasAttributeFilters ? "max-h-10 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}`}>
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
+              {activeFilter !== "all" && (
+                <button
+                  onClick={() => handleFilterChange("all")}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium"
+                  data-testid="active-filter-audience"
+                >
+                  {audienceFilters.find(f => f.value === activeFilter)?.label ?? activeFilter}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {activeGenders.map(g => (
+                <button
+                  key={g}
+                  onClick={() => toggleGender(g)}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium capitalize"
+                  data-testid={`active-filter-gender-${g}`}
+                >
+                  {genderOptions.find(o => o.value === g)?.label ?? g}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+              {activeThemes.map(t => (
+                <button
+                  key={t}
+                  onClick={() => toggleTheme(t)}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium capitalize"
+                  data-testid={`active-filter-theme-${t}`}
+                >
+                  {themeOptions.find(o => o.value === t)?.label ?? t}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+              {activeStyles.map(s => (
+                <button
+                  key={s}
+                  onClick={() => toggleStyle(s)}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium capitalize"
+                  data-testid={`active-filter-style-${s}`}
+                >
+                  {styleOptions.find(o => o.value === s)?.label ?? s}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
               <button
                 onClick={handleClearFilters}
-                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors shrink-0 ml-1"
-                data-testid="button-clear-filters"
+                className="shrink-0 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors ml-1"
+                data-testid="button-clear-filters-compact"
               >
-                Clear all
+                Clear
               </button>
-            )}
+            </div>
           </div>
 
-          {/* DESKTOP ONLY: scrollable discovery rails with fade + drag */}
-          <div className="hidden sm:block space-y-1.5">
-            <DesktopFilterRow
-              label="Gender"
-              options={genderOptions}
-              selected={activeGenders}
-              onToggle={toggleGender}
-              counts={genderCounts}
-            />
-            <DesktopFilterRow
-              label="Theme"
-              options={themeOptions}
-              selected={activeThemes}
-              onToggle={toggleTheme}
-              counts={themeCounts}
-            />
-            <DesktopFilterRow
-              label="Style"
-              options={styleOptions}
-              selected={activeStyles}
-              onToggle={toggleStyle}
-              counts={styleCounts}
-            />
-            {hasAttributeFilters && (
-              <button
-                onClick={handleClearFilters}
-                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-                data-testid="button-clear-filters"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
