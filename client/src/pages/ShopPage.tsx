@@ -337,7 +337,7 @@ function MultiSelectDropdown({ label, options, selected, onToggle, onClear, coun
         <Button
           variant={isActive ? "default" : "outline"}
           size="sm"
-          className="shrink-0 h-8 px-3 text-xs gap-1.5"
+          className="shrink-0 h-8 px-3 text-xs gap-1.5 rounded-full"
           data-testid={`dropdown-${testIdPrefix}`}
         >
           {buttonLabel}
