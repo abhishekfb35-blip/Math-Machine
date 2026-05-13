@@ -114,6 +114,107 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Enhanced horizontally-scrollable row for desktop filter chips
+function FilterScrollRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [atEnd, setAtEnd] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ x: 0, scrollLeft: 0 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
+  }, []);
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      el.scrollBy({ left: e.deltaY * 1.5 });
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    setIsDragging(true);
+    dragRef.current = { x: e.clientX, scrollLeft: el.scrollLeft };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !ref.current) return;
+    e.preventDefault();
+    ref.current.scrollLeft = dragRef.current.scrollLeft - (e.clientX - dragRef.current.x);
+  };
+
+  const stopDrag = () => setIsDragging(false);
+
+  return (
+    <div className="relative flex-1 overflow-hidden">
+      <div
+        ref={ref}
+        className={`flex gap-2 overflow-x-auto scrollbar-none ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={stopDrag}
+        onMouseLeave={stopDrag}
+      >
+        {children}
+        <div className="shrink-0 w-6" aria-hidden />
+      </div>
+      {!atEnd && (
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background/95 to-transparent" />
+      )}
+    </div>
+  );
+}
+
+function DesktopFilterRow({ label, options, selected, onToggle, counts }: {
+  label: string;
+  options: { label: string; value: string }[];
+  selected: string[];
+  onToggle: (v: string) => void;
+  counts?: Record<string, number>;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground shrink-0 font-medium w-12">{label}</span>
+      <FilterScrollRow>
+        {options.map(opt => {
+          const isSelected = selected.includes(opt.value);
+          const count = counts?.[opt.value];
+          return (
+            <button
+              key={opt.value}
+              onClick={() => onToggle(opt.value)}
+              className={`shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-md border text-xs font-medium transition-all ${
+                isSelected
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-background text-foreground border-input hover:bg-muted"
+              }`}
+            >
+              {isSelected && <Check className="w-3 h-3 shrink-0" />}
+              <span className="capitalize">{opt.label}</span>
+              {count !== undefined && (
+                <span className={isSelected ? "opacity-60" : "text-muted-foreground"}>({count})</span>
+              )}
+            </button>
+          );
+        })}
+      </FilterScrollRow>
+    </div>
+  );
+}
+
 interface MultiSelectDropdownProps {
   label: string;
   options: { label: string; value: string }[];
@@ -491,8 +592,8 @@ export default function ShopPage() {
             })}
           </div>
 
-          {/* Row 3: Multi-select dropdowns for Gender / Theme / Style */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          {/* MOBILE ONLY: compact dropdown pills */}
+          <div className="sm:hidden flex items-center gap-2 overflow-x-auto scrollbar-none">
             <MultiSelectDropdown
               label="Gender"
               options={genderOptions}
@@ -524,6 +625,40 @@ export default function ShopPage() {
               <button
                 onClick={handleClearFilters}
                 className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors shrink-0 ml-1"
+                data-testid="button-clear-filters"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+
+          {/* DESKTOP ONLY: scrollable discovery rails with fade + drag */}
+          <div className="hidden sm:block space-y-1.5">
+            <DesktopFilterRow
+              label="Gender"
+              options={genderOptions}
+              selected={activeGenders}
+              onToggle={toggleGender}
+              counts={genderCounts}
+            />
+            <DesktopFilterRow
+              label="Theme"
+              options={themeOptions}
+              selected={activeThemes}
+              onToggle={toggleTheme}
+              counts={themeCounts}
+            />
+            <DesktopFilterRow
+              label="Style"
+              options={styleOptions}
+              selected={activeStyles}
+              onToggle={toggleStyle}
+              counts={styleCounts}
+            />
+            {hasAttributeFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                 data-testid="button-clear-filters"
               >
                 Clear all
