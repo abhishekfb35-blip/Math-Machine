@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
-import { SlidersHorizontal, Search, X, ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
+import { SlidersHorizontal, Search, X, ChevronRight, ChevronLeft, ArrowLeft, ChevronDown, Check } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product, Attributes } from "@shared/types";
@@ -113,36 +114,76 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-interface FilterRowProps {
+interface MultiSelectDropdownProps {
   label: string;
   options: { label: string; value: string }[];
-  value: string;
-  onChange: (v: string) => void;
-  testIdPrefix: string;
+  selected: string[];
+  onToggle: (value: string) => void;
+  onClear: () => void;
   counts?: Record<string, number>;
+  testIdPrefix: string;
 }
 
-function FilterRow({ label, options, value, onChange, testIdPrefix, counts }: FilterRowProps) {
+function MultiSelectDropdown({ label, options, selected, onToggle, onClear, counts, testIdPrefix }: MultiSelectDropdownProps) {
+  const [open, setOpen] = useState(false);
   if (options.length === 0) return null;
+
+  const isActive = selected.length > 0;
+  const buttonLabel = selected.length === 0
+    ? label
+    : selected.length === 1
+      ? (options.find(o => o.value === selected[0])?.label ?? selected[0])
+      : `${label} (${selected.length})`;
+
   return (
-    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-      <span className="text-xs text-muted-foreground shrink-0 font-medium">{label}</span>
-      {options.map(f => {
-        const count = counts?.[f.value];
-        return (
-          <Button
-            key={f.value}
-            variant={value === f.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => onChange(f.value)}
-            className="shrink-0 h-7 px-2.5 text-xs"
-            data-testid={`${testIdPrefix}-${f.value}`}
-          >
-            {f.label}{count !== undefined ? ` (${count})` : ""}
-          </Button>
-        );
-      })}
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant={isActive ? "default" : "outline"}
+          size="sm"
+          className="shrink-0 h-8 px-3 text-xs gap-1.5"
+          data-testid={`dropdown-${testIdPrefix}`}
+        >
+          {buttonLabel}
+          <ChevronDown className="w-3 h-3 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52 p-2" align="start">
+        <div className="max-h-64 overflow-y-auto space-y-0.5">
+          {options.map(opt => {
+            const checked = selected.includes(opt.value);
+            const count = counts?.[opt.value];
+            return (
+              <button
+                key={opt.value}
+                onClick={() => onToggle(opt.value)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left transition-colors hover:bg-muted ${checked ? "text-primary font-medium" : ""}`}
+                data-testid={`${testIdPrefix}-option-${opt.value}`}
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${checked ? "bg-primary border-primary" : "border-input"}`}>
+                  {checked && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                </div>
+                <span className="flex-1 capitalize">{opt.label}</span>
+                {count !== undefined && (
+                  <span className="text-xs text-muted-foreground">{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {isActive && (
+          <div className="border-t mt-2 pt-2">
+            <button
+              onClick={() => { onClear(); setOpen(false); }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-left px-2"
+              data-testid={`${testIdPrefix}-clear`}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -151,11 +192,11 @@ export default function ShopPage() {
   const [, navigate] = useLocation();
 
   const [activeFilter, setActiveFilter] = useState<string>("all");
-  const [activeGender, setActiveGender] = useState<string>("all");
-  const [activeTheme,  setActiveTheme]  = useState<string>("all");
-  const [activeStyle,  setActiveStyle]  = useState<string>("all");
-  const [activeTag,    setActiveTag]    = useState<string>("");
-  const [searchQuery,  setSearchQuery]  = useState<string>("");
+  const [activeGenders, setActiveGenders] = useState<string[]>([]);
+  const [activeThemes,  setActiveThemes]  = useState<string[]>([]);
+  const [activeStyles,  setActiveStyles]  = useState<string[]>([]);
+  const [activeTag,     setActiveTag]     = useState<string>("");
+  const [searchQuery,   setSearchQuery]   = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
@@ -170,30 +211,24 @@ export default function ShopPage() {
   }, [attributes]);
 
   const genderOptions = useMemo(() => {
-    const gs = attributes?.genders ?? [];
-    if (gs.length === 0) return [];
-    return [
-      { label: "All", value: "all" },
-      ...gs.map(g => ({ label: g.name.charAt(0).toUpperCase() + g.name.slice(1), value: g.name })),
-    ];
+    return (attributes?.genders ?? []).map(g => ({
+      label: g.name.charAt(0).toUpperCase() + g.name.slice(1),
+      value: g.name,
+    }));
   }, [attributes]);
 
   const themeOptions = useMemo(() => {
-    const ts = attributes?.themes ?? [];
-    if (ts.length === 0) return [];
-    return [
-      { label: "All", value: "all" },
-      ...ts.map(t => ({ label: t.name.charAt(0).toUpperCase() + t.name.slice(1), value: t.name })),
-    ];
+    return (attributes?.themes ?? []).map(t => ({
+      label: t.name.charAt(0).toUpperCase() + t.name.slice(1),
+      value: t.name,
+    }));
   }, [attributes]);
 
   const styleOptions = useMemo(() => {
-    const ss = attributes?.styles ?? [];
-    if (ss.length === 0) return [];
-    return [
-      { label: "All", value: "all" },
-      ...ss.map(s => ({ label: s.name.charAt(0).toUpperCase() + s.name.slice(1), value: s.name })),
-    ];
+    return (attributes?.styles ?? []).map(s => ({
+      label: s.name.charAt(0).toUpperCase() + s.name.slice(1),
+      value: s.name,
+    }));
   }, [attributes]);
 
   // Read URL → state
@@ -201,9 +236,12 @@ export default function ShopPage() {
     const p = new URLSearchParams(searchString);
     const f = p.get("filter") || "all";
     setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
-    setActiveGender(p.get("gender") || "all");
-    setActiveTheme(p.get("theme") || "all");
-    setActiveStyle(p.get("style") || "all");
+    const g = p.get("gender");
+    setActiveGenders(g ? g.split(",").filter(Boolean) : []);
+    const t = p.get("theme");
+    setActiveThemes(t ? t.split(",").filter(Boolean) : []);
+    const s = p.get("style");
+    setActiveStyles(s ? s.split(",").filter(Boolean) : []);
     setActiveTag(p.get("tag") || "");
     setSearchQuery(p.get("q") || "");
   }, [searchString, audienceFilters]);
@@ -211,31 +249,42 @@ export default function ShopPage() {
   // Write state → URL
   const pushURL = useCallback((
     filter: string,
-    gender: string,
-    theme: string,
-    style: string,
+    genders: string[],
+    themes: string[],
+    styles: string[],
     tag: string,
     query: string,
   ) => {
     const p = new URLSearchParams();
     if (filter !== "all") p.set("filter", filter);
-    if (gender !== "all") p.set("gender", gender);
-    if (theme  !== "all") p.set("theme", theme);
-    if (style  !== "all") p.set("style", style);
+    if (genders.length) p.set("gender", genders.join(","));
+    if (themes.length)  p.set("theme",  themes.join(","));
+    if (styles.length)  p.set("style",  styles.join(","));
     if (tag)   p.set("tag", tag);
     if (query) p.set("q", query);
     const qs = p.toString();
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
   }, [navigate]);
 
-  const handleFilterChange  = (f: string) => pushURL(f, activeGender, activeTheme, activeStyle, "", searchQuery);
-  const handleGenderChange  = (g: string) => pushURL(activeFilter, g, activeTheme, activeStyle, "", searchQuery);
-  const handleThemeChange   = (t: string) => pushURL(activeFilter, activeGender, t, activeStyle, "", searchQuery);
-  const handleStyleChange   = (s: string) => pushURL(activeFilter, activeGender, activeTheme, s, "", searchQuery);
-  const handleTagDrillDown  = (tag: string) => pushURL("all", "all", "all", "all", tag, "");
-  const handleBackToAll     = () => pushURL("all", "all", "all", "all", "", "");
+  const handleFilterChange = (f: string) => pushURL(f, activeGenders, activeThemes, activeStyles, "", searchQuery);
+
+  const toggleGender = (g: string) => {
+    const next = activeGenders.includes(g) ? activeGenders.filter(x => x !== g) : [...activeGenders, g];
+    pushURL(activeFilter, next, activeThemes, activeStyles, "", searchQuery);
+  };
+  const toggleTheme = (t: string) => {
+    const next = activeThemes.includes(t) ? activeThemes.filter(x => x !== t) : [...activeThemes, t];
+    pushURL(activeFilter, activeGenders, next, activeStyles, "", searchQuery);
+  };
+  const toggleStyle = (s: string) => {
+    const next = activeStyles.includes(s) ? activeStyles.filter(x => x !== s) : [...activeStyles, s];
+    pushURL(activeFilter, activeGenders, activeThemes, next, "", searchQuery);
+  };
+
+  const handleTagDrillDown  = (tag: string) => pushURL("all", [], [], [], tag, "");
+  const handleBackToAll     = () => pushURL("all", [], [], [], "", "");
   const handleSearchChange  = (q: string) => {
-    pushURL(activeFilter, activeGender, activeTheme, activeStyle, q ? "" : activeTag, q);
+    pushURL(activeFilter, activeGenders, activeThemes, activeStyles, q ? "" : activeTag, q);
   };
 
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -255,86 +304,83 @@ export default function ShopPage() {
     }));
   }, [shopSectionsConfig]);
 
-  // Shared predicate: apply all attribute filters client-side
+  // Shared predicate: apply all attribute filters client-side (OR within each dimension)
   const attributeFilteredProducts = useMemo(() => {
     if (!products) return [];
     let result = products;
     if (activeFilter !== "all") result = result.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGender !== "all") result = result.filter(p => (p.genders   ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
-    if (activeTheme  !== "all") result = result.filter(p => (p.themes    ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
-    if (activeStyle  !== "all") result = result.filter(p => (p.styles    ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
+    if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return result;
-  }, [products, activeFilter, activeGender, activeTheme, activeStyle]);
+  }, [products, activeFilter, activeGenders, activeThemes, activeStyles]);
 
-  // Base product sets for counting each filter dimension (all OTHER filters applied)
+  // Count bases: each dimension counts with all OTHER filters applied
   const countBaseAudience = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeGender !== "all") r = r.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
-    if (activeTheme  !== "all") r = r.filter(p => (p.themes  ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
-    if (activeStyle  !== "all") r = r.filter(p => (p.styles  ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    if (activeGenders.length) r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
+    if (activeThemes.length)  r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    if (activeStyles.length)  r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeGender, activeTheme, activeStyle]);
+  }, [products, activeGenders, activeThemes, activeStyles]);
 
   const countBaseGender = useMemo(() => {
     if (!products) return [];
     let r = products;
     if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeTheme  !== "all") r = r.filter(p => (p.themes   ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
-    if (activeStyle  !== "all") r = r.filter(p => (p.styles   ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeTheme, activeStyle]);
+  }, [products, activeFilter, activeThemes, activeStyles]);
 
   const countBaseTheme = useMemo(() => {
     if (!products) return [];
     let r = products;
     if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGender !== "all") r = r.filter(p => (p.genders  ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
-    if (activeStyle  !== "all") r = r.filter(p => (p.styles   ?? []).some(s => s.toLowerCase() === activeStyle.toLowerCase()));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeGender, activeStyle]);
+  }, [products, activeFilter, activeGenders, activeStyles]);
 
   const countBaseStyle = useMemo(() => {
     if (!products) return [];
     let r = products;
     if (activeFilter !== "all") r = r.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGender !== "all") r = r.filter(p => (p.genders  ?? []).some(g => g.toLowerCase() === activeGender.toLowerCase()));
-    if (activeTheme  !== "all") r = r.filter(p => (p.themes   ?? []).some(t => t.toLowerCase() === activeTheme.toLowerCase()));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeGender, activeTheme]);
+  }, [products, activeFilter, activeGenders, activeThemes]);
 
   const audienceCounts = useMemo(() => {
     const map: Record<string, number> = { all: countBaseAudience.length };
     for (const f of audienceFilters) {
       if (f.value === "all") continue;
-      map[f.value] = countBaseAudience.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === f.value.toLowerCase())).length;
+      map[f.value] = countBaseAudience.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === f.value)).length;
     }
     return map;
   }, [countBaseAudience, audienceFilters]);
 
   const genderCounts = useMemo(() => {
-    const map: Record<string, number> = { all: countBaseGender.length };
+    const map: Record<string, number> = {};
     for (const f of genderOptions) {
-      if (f.value === "all") continue;
-      map[f.value] = countBaseGender.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === f.value.toLowerCase())).length;
+      map[f.value] = countBaseGender.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === f.value)).length;
     }
     return map;
   }, [countBaseGender, genderOptions]);
 
   const themeCounts = useMemo(() => {
-    const map: Record<string, number> = { all: countBaseTheme.length };
+    const map: Record<string, number> = {};
     for (const f of themeOptions) {
-      if (f.value === "all") continue;
-      map[f.value] = countBaseTheme.filter(p => (p.themes ?? []).some(t => t.toLowerCase() === f.value.toLowerCase())).length;
+      map[f.value] = countBaseTheme.filter(p => (p.themes ?? []).some(t => t.toLowerCase() === f.value)).length;
     }
     return map;
   }, [countBaseTheme, themeOptions]);
 
   const styleCounts = useMemo(() => {
-    const map: Record<string, number> = { all: countBaseStyle.length };
+    const map: Record<string, number> = {};
     for (const f of styleOptions) {
-      if (f.value === "all") continue;
-      map[f.value] = countBaseStyle.filter(p => (p.styles ?? []).some(s => s.toLowerCase() === f.value.toLowerCase())).length;
+      map[f.value] = countBaseStyle.filter(p => (p.styles ?? []).some(s => s.toLowerCase() === f.value)).length;
     }
     return map;
   }, [countBaseStyle, styleOptions]);
@@ -353,7 +399,7 @@ export default function ShopPage() {
     return result;
   }, [attributeFilteredProducts, searchQuery]);
 
-  // Products for tag drill-down — uses the section's attribute filters (same logic as tagSections)
+  // Products for tag drill-down
   const tagProducts = useMemo(() => {
     if (!activeTag) return [];
     const section = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase());
@@ -365,12 +411,11 @@ export default function ShopPage() {
       if (section.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => section.styles!.includes(st)));
       return all;
     }
-    // Fallback: match by tag name for any tag not tied to a section
     const tagLower = activeTag.toLowerCase();
     return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
   }, [attributeFilteredProducts, activeTag, shopSections]);
 
-  // Compute tag sections filtered by all active attributes + section-level attribute pins
+  // Compute tag sections
   const tagSections = useMemo(() => {
     if (!products) return [];
     return shopSections
@@ -391,9 +436,9 @@ export default function ShopPage() {
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
-  const hasAttributeFilters = activeFilter !== "all" || activeGender !== "all" || activeTheme !== "all" || activeStyle !== "all";
+  const hasAttributeFilters = activeFilter !== "all" || activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0;
 
-  const handleClearFilters = () => pushURL("all", "all", "all", "all", activeTag, searchQuery);
+  const handleClearFilters = () => pushURL("all", [], [], [], activeTag, searchQuery);
 
   return (
     <div className="pb-20 md:pb-8">
@@ -405,6 +450,7 @@ export default function ShopPage() {
 
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-2">
+          {/* Row 1: Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -424,6 +470,8 @@ export default function ShopPage() {
               </button>
             )}
           </div>
+
+          {/* Row 2: Audience chips */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
             {audienceFilters.map(f => {
@@ -442,41 +490,46 @@ export default function ShopPage() {
               );
             })}
           </div>
-          <FilterRow
-            label="Gender"
-            options={genderOptions}
-            value={activeGender}
-            onChange={handleGenderChange}
-            testIdPrefix="filter-gender"
-            counts={genderCounts}
-          />
-          <FilterRow
-            label="Theme"
-            options={themeOptions}
-            value={activeTheme}
-            onChange={handleThemeChange}
-            testIdPrefix="filter-theme"
-            counts={themeCounts}
-          />
-          <FilterRow
-            label="Style"
-            options={styleOptions}
-            value={activeStyle}
-            onChange={handleStyleChange}
-            testIdPrefix="filter-style"
-            counts={styleCounts}
-          />
-          {hasAttributeFilters && (
-            <div className="flex">
+
+          {/* Row 3: Multi-select dropdowns for Gender / Theme / Style */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <MultiSelectDropdown
+              label="Gender"
+              options={genderOptions}
+              selected={activeGenders}
+              onToggle={toggleGender}
+              onClear={() => pushURL(activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
+              counts={genderCounts}
+              testIdPrefix="filter-gender"
+            />
+            <MultiSelectDropdown
+              label="Theme"
+              options={themeOptions}
+              selected={activeThemes}
+              onToggle={toggleTheme}
+              onClear={() => pushURL(activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
+              counts={themeCounts}
+              testIdPrefix="filter-theme"
+            />
+            <MultiSelectDropdown
+              label="Style"
+              options={styleOptions}
+              selected={activeStyles}
+              onToggle={toggleStyle}
+              onClear={() => pushURL(activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
+              counts={styleCounts}
+              testIdPrefix="filter-style"
+            />
+            {hasAttributeFilters && (
               <button
                 onClick={handleClearFilters}
-                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors shrink-0 ml-1"
                 data-testid="button-clear-filters"
               >
-                Clear filters
+                Clear all
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -516,7 +569,7 @@ export default function ShopPage() {
                       className="flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
                       data-testid={`link-see-all-${section.tag.replace(/\s+/g, "-")}`}
                     >
-                      See all {section.all.length}
+                      View all {section.all.length}
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   )}
