@@ -245,7 +245,7 @@ function FilterScrollRow({ children, showTrack = false }: { children: React.Reac
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-l from-background/95 to-transparent" />
       )}
       {showTrack && thumb.width < 99 && (
-        <div ref={trackRef} className="relative h-[3px] mt-2 rounded-full bg-border/40 mx-0.5">
+        <div ref={trackRef} className="relative h-[3px] mt-2 mb-1.5 rounded-full bg-border/40 mx-0.5">
           <div
             className="absolute top-0 h-full rounded-full bg-primary/35 hover:bg-primary/55 transition-colors duration-150 cursor-grab active:cursor-grabbing"
             style={{ left: `${thumb.left}%`, width: `${thumb.width}%` }}
