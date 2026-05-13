@@ -70,8 +70,8 @@ function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuic
   const visible = products.slice(offset, offset + HOME_VISIBLE);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-6 space-y-2">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <section className="max-w-7xl mx-auto py-6 space-y-2">
+      <div className="flex items-center justify-between gap-4 flex-wrap px-4">
         <div>
           <h2 className="text-xl font-bold" data-testid={`text-${testIdPrefix}-section`}>{title}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
@@ -82,7 +82,20 @@ function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuic
           </Button>
         </Link>
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* Mobile: horizontal scroll — cards are 44vw wide so ~2 fit naturally with a peek of the next */}
+      <div className="sm:hidden overflow-x-auto scrollbar-none px-4 pb-1">
+        <div className="flex gap-3" style={{ width: "max-content" }}>
+          {products.map(product => (
+            <div key={product.id} className="w-[44vw] shrink-0">
+              <ProductCardNew product={product} onQuickAdd={onQuickAdd} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tablet and up: prev/next buttons with 4-up grid */}
+      <div className="hidden sm:flex items-center gap-2 px-4">
         <Button
           variant="outline" size="icon"
           className="shrink-0 h-9 w-9"
