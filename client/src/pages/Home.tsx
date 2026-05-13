@@ -77,17 +77,17 @@ function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuic
           <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
         <Link href={link}>
-          <Button variant="ghost" size="sm" data-testid={`link-view-all-${testIdPrefix}`}>
+          <Button variant="ghost" data-testid={`link-view-all-${testIdPrefix}`}>
             See All <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </Link>
       </div>
 
-      {/* Mobile: horizontal scroll — cards are 44vw wide so ~2 fit naturally with a peek of the next */}
+      {/* Mobile: horizontal scroll — cards are 40vw wide so ~2 fit with a clear peek of the 3rd */}
       <div className="sm:hidden overflow-x-auto scrollbar-none px-4 pb-1">
         <div className="flex gap-3" style={{ width: "max-content" }}>
           {products.map(product => (
-            <div key={product.id} className="w-[44vw] shrink-0">
+            <div key={product.id} className="w-[40vw] shrink-0">
               <ProductCardNew product={product} onQuickAdd={onQuickAdd} />
             </div>
           ))}
