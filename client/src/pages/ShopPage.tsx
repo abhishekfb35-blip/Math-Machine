@@ -115,34 +115,63 @@ function ScrollRow({ children }: { children: React.ReactNode }) {
 }
 
 // Inertial drag-to-scroll row for desktop filter chips (Theme / Style)
-function FilterScrollRow({ children }: { children: React.ReactNode }) {
+function FilterScrollRow({ children, showTrack = false }: { children: React.ReactNode; showTrack?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [blockClicks, setBlockClicks] = useState(false);
+  const [thumb, setThumb] = useState({ left: 0, width: 100 });
+  const thumbRef = useRef({ left: 0, width: 100 });
   const isDraggingRef = useRef(false);
   const dragRef = useRef({ startX: 0, lastX: 0, scrollLeft: 0, moved: 0, vel: 0 });
   const animRef = useRef<number>(0);
+  const isThumbDraggingRef = useRef(false);
+  const thumbDragRef = useRef({ startX: 0, startScrollLeft: 0 });
 
-  // Track scroll edges for fade indicators
+  const updateEdgesAndThumb = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+    if (showTrack) {
+      const ratio = el.scrollWidth > el.clientWidth ? el.clientWidth / el.scrollWidth : 1;
+      const thumbW = Math.max(ratio * 100, 15);
+      const scrollable = el.scrollWidth - el.clientWidth;
+      const thumbL = scrollable > 0 ? (el.scrollLeft / scrollable) * (100 - thumbW) : 0;
+      thumbRef.current = { left: thumbL, width: thumbW };
+      setThumb({ left: thumbL, width: thumbW });
+    }
+  }, [showTrack]);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const update = () => {
-      setAtStart(el.scrollLeft <= 4);
-      setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    const ro = new ResizeObserver(update);
+    updateEdgesAndThumb();
+    el.addEventListener("scroll", updateEdgesAndThumb, { passive: true });
+    const ro = new ResizeObserver(updateEdgesAndThumb);
     ro.observe(el);
-    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
-  }, []);
+    return () => { el.removeEventListener("scroll", updateEdgesAndThumb); ro.disconnect(); };
+  }, [updateEdgesAndThumb]);
 
-  // Document-level drag tracking so fast moves don't lose the handle
+  // Document-level listeners handle both rail drag and thumb drag
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
+      // Thumb drag
+      if (isThumbDraggingRef.current && ref.current && trackRef.current) {
+        const trackW = trackRef.current.clientWidth;
+        const el = ref.current;
+        const thumbPx = (thumbRef.current.width / 100) * trackW;
+        const scrollable = el.scrollWidth - el.clientWidth;
+        const movableTrack = trackW - thumbPx;
+        if (movableTrack > 0) {
+          const dx = e.clientX - thumbDragRef.current.startX;
+          el.scrollLeft = thumbDragRef.current.startScrollLeft + (dx / movableTrack) * scrollable;
+        }
+        return;
+      }
+      // Rail drag
       if (!isDraggingRef.current || !ref.current) return;
       dragRef.current.vel = e.clientX - dragRef.current.lastX;
       dragRef.current.moved += Math.abs(dragRef.current.vel);
@@ -151,16 +180,16 @@ function FilterScrollRow({ children }: { children: React.ReactNode }) {
     };
 
     const onMouseUp = () => {
+      if (isThumbDraggingRef.current) {
+        isThumbDraggingRef.current = false;
+        return;
+      }
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
       setIsDragging(false);
-
       if (dragRef.current.moved > 5) {
-        // Block the click that fires immediately after mouseup
         setBlockClicks(true);
         setTimeout(() => setBlockClicks(false), 160);
-
-        // Momentum glide
         let vel = -dragRef.current.vel;
         const glide = () => {
           if (!ref.current || Math.abs(vel) < 0.5) return;
@@ -190,6 +219,14 @@ function FilterScrollRow({ children }: { children: React.ReactNode }) {
     dragRef.current = { startX: e.clientX, lastX: e.clientX, scrollLeft: ref.current.scrollLeft, moved: 0, vel: 0 };
   };
 
+  const handleThumbMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!ref.current) return;
+    cancelAnimationFrame(animRef.current);
+    isThumbDraggingRef.current = true;
+    thumbDragRef.current = { startX: e.clientX, startScrollLeft: ref.current.scrollLeft };
+  };
+
   return (
     <div className="relative flex-1 overflow-hidden">
       {!atStart && (
@@ -207,6 +244,15 @@ function FilterScrollRow({ children }: { children: React.ReactNode }) {
       {!atEnd && (
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-14 bg-gradient-to-l from-background/95 to-transparent" />
       )}
+      {showTrack && thumb.width < 99 && (
+        <div ref={trackRef} className="relative h-[3px] mt-2 rounded-full bg-border/40 mx-0.5">
+          <div
+            className="absolute top-0 h-full rounded-full bg-primary/35 hover:bg-primary/55 transition-colors duration-150 cursor-grab active:cursor-grabbing"
+            style={{ left: `${thumb.left}%`, width: `${thumb.width}%` }}
+            onMouseDown={handleThumbMouseDown}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -220,13 +266,14 @@ function StaticChipRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DesktopFilterRow({ label, options, selected, onToggle, counts, draggable = true }: {
+function DesktopFilterRow({ label, options, selected, onToggle, counts, draggable = true, showTrack = false }: {
   label: string;
   options: { label: string; value: string }[];
   selected: string[];
   onToggle: (v: string) => void;
   counts?: Record<string, number>;
   draggable?: boolean;
+  showTrack?: boolean;
 }) {
   if (options.length === 0) return null;
   const chips = options.map(opt => {
@@ -255,7 +302,7 @@ function DesktopFilterRow({ label, options, selected, onToggle, counts, draggabl
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground shrink-0 font-medium w-12">{label}</span>
       {draggable ? (
-        <FilterScrollRow>{chips}</FilterScrollRow>
+        <FilterScrollRow showTrack={showTrack}>{chips}</FilterScrollRow>
       ) : (
         <StaticChipRow>{chips}</StaticChipRow>
       )}
@@ -693,7 +740,7 @@ export default function ShopPage() {
             {/* DESKTOP ONLY: scrollable discovery rails */}
             <div className="hidden sm:block space-y-1.5">
               <DesktopFilterRow label="Gender" options={genderOptions} selected={activeGenders} onToggle={toggleGender} counts={genderCounts} draggable={false} />
-              <DesktopFilterRow label="Theme"  options={themeOptions}  selected={activeThemes}  onToggle={toggleTheme}  counts={themeCounts} />
+              <DesktopFilterRow label="Theme"  options={themeOptions}  selected={activeThemes}  onToggle={toggleTheme}  counts={themeCounts}  showTrack />
               <DesktopFilterRow label="Style"  options={styleOptions}  selected={activeStyles}  onToggle={toggleStyle}  counts={styleCounts} />
               {hasAttributeFilters && (
                 <button

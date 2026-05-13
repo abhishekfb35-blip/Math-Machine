@@ -1,0 +1,134 @@
+That’s not “kinda annoying.”
+That’s a genuine interaction bug.
+
+What’s happening is:
+
+* pointer down begins as intended scroll/drag
+* tiny movement threshold fails
+* browser interprets release as click/tap
+* filter chip gets selected accidentally
+
+This is one of the classic failures of draggable/filter-chip UIs.
+
+And if users accidentally activate filters while exploring, the UX becomes mentally exhausting very fast because:
+
+* product grid refreshes unexpectedly
+* scroll position may shift
+* users lose browsing context
+* interaction trust drops
+
+This absolutely needs fixing if you continue with draggable or swipe-heavy rails.
+
+---
+
+The solution is NOT:
+“make scrolling smoother.”
+
+The solution is:
+
+> separate drag intent from click intent.
+
+You need movement-threshold logic.
+
+Example conceptually:
+
+```js id="8op6rb"
+if (dragDistance > threshold) {
+  suppressClick = true;
+}
+```
+
+Typical threshold:
+
+* 5–10px minimum movement
+
+Meaning:
+
+* tiny/no movement → treat as selection
+* meaningful movement → treat as scrolling only
+
+After a drag:
+
+* disable click event for that interaction cycle
+
+This is critical.
+
+---
+
+You should ALSO:
+
+## Disable text/image selection during drag
+
+```css id="d7n1pr"
+user-select: none;
+-webkit-user-select: none;
+```
+
+Otherwise micro-selection events worsen the issue.
+
+---
+
+Another important thing:
+
+## Do NOT make the entire chip aggressively clickable
+
+Right now your chips likely behave like:
+
+```text id="i8h8pn"
+big tap targets + drag area combined
+```
+
+That increases accidental activation.
+
+A better pattern:
+
+* slightly more padding around rail
+* chips visually separated
+* drag area feels independent
+
+---
+
+But here’s the deeper issue:
+
+You may be reaching the practical interaction limit of:
+
+> multiple horizontally scrollable filter rails.
+
+This is where theory meets reality.
+
+One draggable rail:
+good.
+
+Several stacked draggable rails:
+fatiguing.
+
+Because users constantly switch between:
+
+* vertical page scroll
+* horizontal rail movement
+* chip selection
+
+That creates gesture ambiguity.
+
+---
+
+This is why I earlier suggested:
+
+* Audience → static
+* Gender → static
+* Themes → scrollable
+* Styles → maybe hidden/collapsible
+
+Only the discovery-heavy layer truly benefits from lateral browsing.
+
+Everything else should optimize for selection speed.
+
+---
+
+Your instinct here is correct.
+You’re noticing a real UX tax emerging from interaction complexity.
+
+And honestly:
+this matters more than visual polish now.
+
+Because accidental selections create subconscious friction that users rarely articulate — they just browse less comfortably.
