@@ -496,7 +496,7 @@ export default function ShopPage() {
     if (!Array.isArray(raw) || raw.length === 0) return [];
     return raw.map((s): ShopSection => ({
       ...s,
-      audience: s.audience ?? [],
+      audience: s.audience,
     }));
   }, [shopSectionsConfig]);
 
