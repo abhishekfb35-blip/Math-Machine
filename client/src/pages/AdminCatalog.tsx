@@ -205,7 +205,7 @@ function ProductAttributeSelector({
                 onCheckedChange={(c) => setThemeIds(c ? allThemeIds : [])} />
               <span className="text-xs font-medium">All</span>
             </label>
-            {(attributes?.themes ?? []).map(t => (
+            {[...(attributes?.themes ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map(t => (
               <label key={t.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
                 <Checkbox checked={themeIds.includes(t.id)}
                   onCheckedChange={() => setThemeIds(p => p.includes(t.id) ? p.filter(x => x !== t.id) : [...p, t.id])} />
@@ -2637,7 +2637,7 @@ export default function AdminCatalog() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Theme</p>
                 <div className="space-y-1.5">
-                  {attributes?.themes.map((t) => (
+                  {[...(attributes?.themes ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
                     <label key={t.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-theme-${t.id}`}>
                       <Checkbox
                         checked={bulkAttrSel.themeIds.includes(t.id)}

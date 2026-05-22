@@ -521,7 +521,7 @@ export default function AdminProductEdit() {
           <Label className="mb-1.5 block">Themes</Label>
           <div className="flex flex-wrap gap-x-3 gap-y-1.5">
             {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
-            {(attributes?.themes ?? []).map(th => (
+            {[...(attributes?.themes ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map(th => (
               <div key={th.id} className="flex items-center gap-1.5">
                 <Checkbox
                   id={`theme-${th.id}`}
