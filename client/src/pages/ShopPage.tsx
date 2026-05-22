@@ -618,6 +618,8 @@ export default function ShopPage() {
       .filter(s => s.enabled)
       .filter(s => activeFilter === "all" || (s.audience ?? []).includes(activeFilter))
       .map(s => {
+        const hasFilters = s.audience?.length || s.genders?.length || s.themes?.length || s.styles?.length;
+        if (!hasFilters) return { ...s, all: [], shown: [] };
         let all = attributeFilteredProducts;
         if (s.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => s.audience!.includes(a)));
         if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
