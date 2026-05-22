@@ -320,7 +320,8 @@ function startAbandonedCartScheduler() {
           startGuestCartCleanupScheduler();
           startRateLimitStatsScheduler();
         } catch (err: any) {
-          console.error("Startup task failed:", err.message);
+          console.error("Startup task failed:", err.message ?? err);
+          process.exit(1);
         }
       })();
     },
