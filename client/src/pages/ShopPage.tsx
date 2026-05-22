@@ -619,6 +619,8 @@ export default function ShopPage() {
       .filter(s => activeFilter === "all" || (s.audience ?? []).includes(activeFilter))
       .map(s => {
         let all = attributeFilteredProducts;
+        const tagLower = s.tag.toLowerCase();
+        all = all.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
         if (s.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => s.audience!.includes(a)));
         if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
         if (s.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => s.themes!.includes(t)));
