@@ -10,6 +10,40 @@ export async function ensureAttributeTables(): Promise<void> {
   `);
 
   await pool.query(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'age_groups_pkey' AND conrelid = 'audience'::regclass) THEN
+        ALTER TABLE audience RENAME CONSTRAINT age_groups_pkey TO audience_pkey;
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'age_groups_name_unique' AND conrelid = 'audience'::regclass) THEN
+        ALTER TABLE audience RENAME CONSTRAINT age_groups_name_unique TO audience_name_unique;
+      END IF;
+    END $$
+  `);
+
+  await pool.query(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'product_age_groups') THEN
+        ALTER TABLE product_age_groups RENAME TO product_audience;
+        ALTER TABLE product_audience RENAME COLUMN age_group_id TO audience_id;
+      END IF;
+    END $$
+  `);
+
+  await pool.query(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_age_groups_pkey' AND conrelid = 'product_audience'::regclass) THEN
+        ALTER TABLE product_audience RENAME CONSTRAINT product_age_groups_pkey TO product_audience_pkey;
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_age_groups_product_id_products_id_fk' AND conrelid = 'product_audience'::regclass) THEN
+        ALTER TABLE product_audience RENAME CONSTRAINT product_age_groups_product_id_products_id_fk TO product_audience_product_id_products_id_fk;
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_age_groups_age_group_id_age_groups_id_fk' AND conrelid = 'product_audience'::regclass) THEN
+        ALTER TABLE product_audience RENAME CONSTRAINT product_age_groups_age_group_id_age_groups_id_fk TO product_audience_audience_id_audience_id_fk;
+      END IF;
+    END $$
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS audience (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,
