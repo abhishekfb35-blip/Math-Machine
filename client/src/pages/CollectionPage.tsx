@@ -211,7 +211,7 @@ export default function CollectionPage() {
   // Use the raw URL param as-is. Invalid routes render empty product lists (no hardcoded fallback).
   const audience: string = params.audience || "";
   // Display strings derived from audience route segment.
-  // Explicit entries exist only for "couples" (marketing URL). DB-backed age-group routes
+  // Explicit entries exist only for "couples" (marketing URL). DB-backed audience routes
   // (kids/adults/teens/infant) have their display text computed dynamically — no hardcoding.
   const audienceLabel = audienceLabels[audience] ?? (audience ? `For ${audience.charAt(0).toUpperCase() + audience.slice(1)}` : "Collection");
   const audienceDesc  = audienceDescriptions[audience] ?? "";

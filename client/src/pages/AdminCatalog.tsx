@@ -2820,7 +2820,7 @@ export default function AdminCatalog() {
             </p>
             <ul className="text-sm space-y-1 pl-3 border-l-2 border-destructive/40">
               {bulkAttrSel.audienceIds.length > 0 && (
-                <li data-testid="confirm-remove-age-groups">
+                <li data-testid="confirm-remove-audience">
                   <span className="text-muted-foreground">Audience: </span>
                   {bulkAttrSel.audienceIds.map(id => attributes?.audience.find(a => a.id === id)?.name).filter(Boolean).join(", ")}
                 </li>

@@ -180,7 +180,6 @@ export function registerAdminAttributeRoutes(app: Express) {
 
   for (const [slug, h] of [
     ["audience",   audienceHandlers],
-    ["age-groups", audienceHandlers],
     ["genders",    genderHandlers],
     ["themes",     themeHandlers],
     ["styles",     styleHandlers],
