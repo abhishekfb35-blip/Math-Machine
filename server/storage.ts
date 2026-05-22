@@ -1,12 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, ageGroups, genders, themes, styles, productAgeGroups, productGenders, productThemes, productStyles } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles } from "@shared/schema";
 
 import type {
   Category, InsertCategory,
   Product, InsertProduct,
-  AgeGroup, InsertAgeGroup,
+  Audience, InsertAudience,
   Gender, InsertGender,
   Theme, InsertTheme,
   Style, InsertStyle,
@@ -38,8 +38,8 @@ import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
 
 // Intermediate type: a DB product row before attribute junction enrichment.
-// After withAttributes() runs, ageGroups/genders/themes/styles are filled in → Product.
-type RawProductRow = Omit<Product, 'ageGroups' | 'genders' | 'themes' | 'styles'>;
+// After withAttributes() runs, audience/genders/themes/styles are filled in → Product.
+type RawProductRow = Omit<Product, 'audience' | 'genders' | 'themes' | 'styles'>;
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -197,10 +197,10 @@ export interface IStorage {
   cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }>;
 
   getAttributes(): Promise<Attributes>;
-  getAgeGroups(): Promise<AgeGroup[]>;
-  createAgeGroup(data: InsertAgeGroup): Promise<AgeGroup>;
-  updateAgeGroup(id: string, data: Partial<InsertAgeGroup>): Promise<AgeGroup | undefined>;
-  deleteAgeGroup(id: string): Promise<void>;
+  getAudiences(): Promise<Audience[]>;
+  createAudience(data: InsertAudience): Promise<Audience>;
+  updateAudience(id: string, data: Partial<InsertAudience>): Promise<Audience | undefined>;
+  deleteAudience(id: string): Promise<void>;
   getGenders(): Promise<Gender[]>;
   createGender(data: InsertGender): Promise<Gender>;
   updateGender(id: string, data: Partial<InsertGender>): Promise<Gender | undefined>;
@@ -213,11 +213,11 @@ export interface IStorage {
   createStyle(data: InsertStyle): Promise<Style>;
   updateStyle(id: string, data: Partial<InsertStyle>): Promise<Style | undefined>;
   deleteStyle(id: string): Promise<void>;
-  setProductAgeGroups(productId: string, ageGroupIds: string[]): Promise<void>;
+  setProductAudiences(productId: string, audienceIds: string[]): Promise<void>;
   setProductGenders(productId: string, genderIds: string[]): Promise<void>;
   setProductThemes(productId: string, themeIds: string[]): Promise<void>;
   setProductStyles(productId: string, styleIds: string[]): Promise<void>;
-  getProductAttributeIds(productId: string): Promise<{ ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>;
+  getProductAttributeIds(productId: string): Promise<{ audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -292,9 +292,9 @@ export class DatabaseStorage implements IStorage {
     const ids = prods.map(p => p.id);
 
     const [agRows, genRows, themeRows, styleRows] = await Promise.all([
-      db.select({ productId: productAgeGroups.productId, name: ageGroups.name })
-        .from(productAgeGroups).innerJoin(ageGroups, eq(productAgeGroups.ageGroupId, ageGroups.id))
-        .where(inArray(productAgeGroups.productId, ids)),
+      db.select({ productId: productAudience.productId, name: audience.name })
+        .from(productAudience).innerJoin(audience, eq(productAudience.audienceId, audience.id))
+        .where(inArray(productAudience.productId, ids)),
       db.select({ productId: productGenders.productId, name: genders.name })
         .from(productGenders).innerJoin(genders, eq(productGenders.genderId, genders.id))
         .where(inArray(productGenders.productId, ids)),
@@ -318,7 +318,7 @@ export class DatabaseStorage implements IStorage {
 
     return prods.map(p => ({
       ...p,
-      ageGroups: agMap.get(p.id) ?? [],
+      audience: agMap.get(p.id) ?? [],
       genders:   genMap.get(p.id) ?? [],
       themes:    themeMap.get(p.id) ?? [],
       styles:    styleMap.get(p.id) ?? [],
@@ -1671,30 +1671,30 @@ export class DatabaseStorage implements IStorage {
 
   async getAttributes(): Promise<Attributes> {
     const [ag, gen, th, st] = await Promise.all([
-      db.select().from(ageGroups).orderBy(ageGroups.sortOrder, ageGroups.name),
+      db.select().from(audience).orderBy(audience.sortOrder, audience.name),
       db.select().from(genders).orderBy(genders.sortOrder, genders.name),
       db.select().from(themes).orderBy(themes.sortOrder, themes.name),
       db.select().from(styles).orderBy(styles.sortOrder, styles.name),
     ]);
-    return { ageGroups: ag, genders: gen, themes: th, styles: st };
+    return { audience: ag, genders: gen, themes: th, styles: st };
   }
 
-  async getAgeGroups(): Promise<AgeGroup[]> {
-    return db.select().from(ageGroups).orderBy(ageGroups.sortOrder, ageGroups.name);
+  async getAudiences(): Promise<Audience[]> {
+    return db.select().from(audience).orderBy(audience.sortOrder, audience.name);
   }
 
-  async createAgeGroup(data: InsertAgeGroup): Promise<AgeGroup> {
-    const [created] = await db.insert(ageGroups).values({ id: createId(), ...data }).returning();
+  async createAudience(data: InsertAudience): Promise<Audience> {
+    const [created] = await db.insert(audience).values({ id: createId(), ...data }).returning();
     return created;
   }
 
-  async updateAgeGroup(id: string, data: Partial<InsertAgeGroup>): Promise<AgeGroup | undefined> {
-    const [updated] = await db.update(ageGroups).set(data).where(eq(ageGroups.id, id)).returning();
+  async updateAudience(id: string, data: Partial<InsertAudience>): Promise<Audience | undefined> {
+    const [updated] = await db.update(audience).set(data).where(eq(audience.id, id)).returning();
     return updated;
   }
 
-  async deleteAgeGroup(id: string): Promise<void> {
-    await db.delete(ageGroups).where(eq(ageGroups.id, id));
+  async deleteAudience(id: string): Promise<void> {
+    await db.delete(audience).where(eq(audience.id, id));
   }
 
   async getGenders(): Promise<Gender[]> {
@@ -1751,11 +1751,11 @@ export class DatabaseStorage implements IStorage {
     await db.delete(styles).where(eq(styles.id, id));
   }
 
-  async setProductAgeGroups(productId: string, ageGroupIds: string[]): Promise<void> {
-    await db.delete(productAgeGroups).where(eq(productAgeGroups.productId, productId));
-    if (ageGroupIds.length > 0) {
-      await db.insert(productAgeGroups).values(
-        ageGroupIds.map(ageGroupId => ({ id: createId(), productId, ageGroupId }))
+  async setProductAudiences(productId: string, audienceIds: string[]): Promise<void> {
+    await db.delete(productAudience).where(eq(productAudience.productId, productId));
+    if (audienceIds.length > 0) {
+      await db.insert(productAudience).values(
+        audienceIds.map(audienceId => ({ id: createId(), productId, audienceId }))
       ).onConflictDoNothing();
     }
   }
@@ -1787,15 +1787,15 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getProductAttributeIds(productId: string): Promise<{ ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }> {
+  async getProductAttributeIds(productId: string): Promise<{ audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }> {
     const [agRows, genRows, themeRows, styleRows] = await Promise.all([
-      db.select({ ageGroupId: productAgeGroups.ageGroupId }).from(productAgeGroups).where(eq(productAgeGroups.productId, productId)),
+      db.select({ audienceId: productAudience.audienceId }).from(productAudience).where(eq(productAudience.productId, productId)),
       db.select({ genderId: productGenders.genderId }).from(productGenders).where(eq(productGenders.productId, productId)),
       db.select({ themeId: productThemes.themeId }).from(productThemes).where(eq(productThemes.productId, productId)),
       db.select({ styleId: productStyles.styleId }).from(productStyles).where(eq(productStyles.productId, productId)),
     ]);
     return {
-      ageGroupIds: agRows.map(r => r.ageGroupId),
+      audienceIds: agRows.map(r => r.audienceId),
       genderIds: genRows.map(r => r.genderId),
       themeIds: themeRows.map(r => r.themeId),
       styleIds: styleRows.map(r => r.styleId),

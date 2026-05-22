@@ -234,8 +234,8 @@ export default function CollectionPage() {
   });
 
   // Age group chips — navigate to different collection routes
-  const ageGroupOptions = useMemo(() => {
-    const ags = attributes?.ageGroups ?? [];
+  const audienceOptions = useMemo(() => {
+    const ags = attributes?.audience ?? [];
     return ags.map(ag => ({
       label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1),
       value: ag.name.toLowerCase(),
@@ -300,9 +300,9 @@ export default function CollectionPage() {
     if (!products) return [];
     if (audience === "couples") return [...products];
     const audienceLower = audience.toLowerCase();
-    const dbAgeGroupNames = (attributes?.ageGroups ?? []).map(ag => ag.name.toLowerCase());
-    if (!dbAgeGroupNames.includes(audienceLower)) return [];
-    return products.filter((p) => (p.ageGroups ?? []).some(ag => ag.toLowerCase() === audienceLower));
+    const dbAudienceNames = (attributes?.audience ?? []).map(ag => ag.name.toLowerCase());
+    if (!dbAudienceNames.includes(audienceLower)) return [];
+    return products.filter((p) => (p.audience ?? []).some(ag => ag.toLowerCase() === audienceLower));
   }, [products, attributes, audience]);
 
   const audienceProducts = useMemo(() => {
@@ -363,18 +363,18 @@ export default function CollectionPage() {
   }, [countBaseStyle, styleOptions]);
 
   // Age group chips: count products for each age group with current attribute filters applied
-  const ageGroupCounts = useMemo(() => {
+  const audienceCounts = useMemo(() => {
     if (!products) return {} as Record<string, number>;
     const map: Record<string, number> = {};
-    for (const f of ageGroupOptions) {
-      let r = products.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === f.value.toLowerCase()));
+    for (const f of audienceOptions) {
+      let r = products.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === f.value.toLowerCase()));
       if (genderFilter !== "all") r = r.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === genderFilter.toLowerCase()));
       if (themeFilter  !== "all") r = r.filter(p => (p.themes  ?? []).some(t => t.toLowerCase() === themeFilter.toLowerCase()));
       if (styleFilter  !== "all") r = r.filter(p => (p.styles  ?? []).some(s => s.toLowerCase() === styleFilter.toLowerCase()));
       map[f.value] = r.length;
     }
     return map;
-  }, [products, ageGroupOptions, genderFilter, themeFilter, styleFilter]);
+  }, [products, audienceOptions, genderFilter, themeFilter, styleFilter]);
 
   const productTypeSections = useMemo(() => {
     const categoryOrder = ["towels", "blankets", "bathrobes"];
@@ -435,11 +435,11 @@ export default function CollectionPage() {
         </div>
 
         <div className="space-y-2">
-          {ageGroupOptions.length > 0 && (
+          {audienceOptions.length > 0 && (
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
               <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasFilters ? "text-primary" : "text-muted-foreground"}`} />
-              {ageGroupOptions.map(f => {
-                const count = ageGroupCounts[f.value];
+              {audienceOptions.map(f => {
+                const count = audienceCounts[f.value];
                 return (
                   <Button
                     key={f.value}

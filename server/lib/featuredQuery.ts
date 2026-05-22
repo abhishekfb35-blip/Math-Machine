@@ -2,7 +2,7 @@ import { db } from "../db";
 import { storage } from "../storage";
 import {
   products, categories,
-  productAgeGroups, ageGroups,
+  productAudience, audience,
   productGenders, genders,
   productThemes, themes,
   productStyles, styles,
@@ -13,7 +13,7 @@ import type { SQL } from "drizzle-orm";
 
 export interface SectionFilters {
   categoryFilters: string[];
-  ageGroupFilters: string[];
+  audienceFilters: string[];
   genderFilters: string[];
   themeFilters: string[];
   styleFilters: string[];
@@ -22,7 +22,7 @@ export interface SectionFilters {
 
 export const EMPTY_FILTERS: SectionFilters = {
   categoryFilters: [],
-  ageGroupFilters: [],
+  audienceFilters: [],
   genderFilters: [],
   themeFilters: [],
   styleFilters: [],
@@ -35,7 +35,7 @@ export type SectionKey = typeof SECTION_KEYS[number];
 function normaliseSectionFilters(raw: any): SectionFilters {
   return {
     categoryFilters: Array.isArray(raw?.categoryFilters) ? raw.categoryFilters : [],
-    ageGroupFilters: Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : [],
+    audienceFilters: Array.isArray(raw?.audienceFilters) ? raw.audienceFilters : (Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : []),
     genderFilters:   Array.isArray(raw?.genderFilters)   ? raw.genderFilters   : [],
     themeFilters:    Array.isArray(raw?.themeFilters)    ? raw.themeFilters    : [],
     styleFilters:    Array.isArray(raw?.styleFilters)    ? raw.styleFilters    : [],
@@ -66,11 +66,11 @@ export async function getProductIdsByFilters(filters: SectionFilters): Promise<s
     conditions.push(inArray(categories.slug, filters.categoryFilters));
   }
 
-  if (filters.ageGroupFilters.length > 0) {
-    const names = sql.join(filters.ageGroupFilters.map(n => sql`${n}`), sql`, `);
+  if (filters.audienceFilters.length > 0) {
+    const names = sql.join(filters.audienceFilters.map(n => sql`${n}`), sql`, `);
     conditions.push(sql`EXISTS (
-      SELECT 1 FROM product_age_groups pag
-      JOIN age_groups ag ON ag.id = pag.age_group_id
+      SELECT 1 FROM product_audience pag
+      JOIN audience ag ON ag.id = pag.audience_id
       WHERE pag.product_id = ${products.id}
       AND ag.name = ANY(ARRAY[${names}])
     )`);

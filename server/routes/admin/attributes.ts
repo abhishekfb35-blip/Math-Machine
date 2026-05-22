@@ -1,10 +1,10 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
 import {
-  insertAgeGroupSchema, insertGenderSchema, insertThemeSchema, insertStyleSchema,
-  type InsertAgeGroup, type InsertGender, type InsertTheme, type InsertStyle,
+  insertAudienceSchema, insertGenderSchema, insertThemeSchema, insertStyleSchema,
+  type InsertAudience, type InsertGender, type InsertTheme, type InsertStyle,
 } from "@shared/schema";
-import type { AgeGroup, Gender, Theme, Style } from "@shared/types";
+import type { Audience, Gender, Theme, Style } from "@shared/types";
 import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 
@@ -84,16 +84,16 @@ function makeHandlers<
 
 // ── Per-type handler sets (shared between canonical and alias paths) ───────────
 
-const ageGroupHandlers = makeHandlers<AgeGroup, InsertAgeGroup>({
-  getList:  () => storage.getAgeGroups(),
-  create:   (d) => storage.createAgeGroup(d),
-  update:   (id, d) => storage.updateAgeGroup(id, d),
-  delete:   (id) => storage.deleteAgeGroup(id),
-  schema:   insertAgeGroupSchema,
-  duplicateMsg: "An age group with that name already exists",
-  notFoundMsg:  "Age group not found",
-  failCreate:   "Failed to create age group",
-  failUpdate:   "Failed to update age group",
+const audienceHandlers = makeHandlers<Audience, InsertAudience>({
+  getList:  () => storage.getAudiences(),
+  create:   (d) => storage.createAudience(d),
+  update:   (id, d) => storage.updateAudience(id, d),
+  delete:   (id) => storage.deleteAudience(id),
+  schema:   insertAudienceSchema,
+  duplicateMsg: "An audience entry with that name already exists",
+  notFoundMsg:  "Audience not found",
+  failCreate:   "Failed to create audience",
+  failUpdate:   "Failed to update audience",
 });
 
 const genderHandlers = makeHandlers<Gender, InsertGender>({
@@ -149,6 +149,7 @@ export function registerAdminAttributeRoutes(app: Express) {
   });
 
   const productAttributesSchema = z.object({
+    audienceIds: z.array(z.string()).optional().default([]),
     ageGroupIds: z.array(z.string()).optional().default([]),
     genderIds:   z.array(z.string()).optional().default([]),
     themeIds:    z.array(z.string()).optional().default([]),
@@ -160,16 +161,17 @@ export function registerAdminAttributeRoutes(app: Express) {
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const parsed = productAttributesSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
-    const { ageGroupIds, genderIds, themeIds, styleIds } = parsed.data;
+    const { audienceIds, ageGroupIds, genderIds, themeIds, styleIds } = parsed.data;
+    const resolvedAudienceIds = audienceIds.length > 0 ? audienceIds : ageGroupIds;
     await Promise.all([
-      storage.setProductAgeGroups(id, ageGroupIds),
+      storage.setProductAudiences(id, resolvedAudienceIds),
       storage.setProductGenders(id, genderIds),
       storage.setProductThemes(id, themeIds),
       storage.setProductStyles(id, styleIds),
     ]);
     await storage.createAuditLog({
       entityType: "product", entityId: id, entityName: id,
-      action: "updated", changes: JSON.stringify({ attributes: { ageGroupIds, genderIds, themeIds, styleIds } }),
+      action: "updated", changes: JSON.stringify({ attributes: { audienceIds: resolvedAudienceIds, genderIds, themeIds, styleIds } }),
       username: getAdminUsername(req),
     });
     res.json({ success: true });
@@ -179,7 +181,8 @@ export function registerAdminAttributeRoutes(app: Express) {
   const guard = requirePermission("catalog");
 
   for (const [slug, h] of [
-    ["age-groups", ageGroupHandlers],
+    ["audience",   audienceHandlers],
+    ["age-groups", audienceHandlers],
     ["genders",    genderHandlers],
     ["themes",     themeHandlers],
     ["styles",     styleHandlers],

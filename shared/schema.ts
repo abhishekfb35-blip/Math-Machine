@@ -40,7 +40,7 @@ export const products = pgTable("products", {
 
 // ── Attribute lookup tables ──────────────────────────────────────────────────
 
-export const ageGroups = pgTable("age_groups", {
+export const audience = pgTable("audience", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
   sortOrder: integer("sort_order").default(0),
@@ -66,11 +66,11 @@ export const styles = pgTable("styles", {
 
 // ── Attribute junction tables ────────────────────────────────────────────────
 
-export const productAgeGroups = pgTable("product_age_groups", {
+export const productAudience = pgTable("product_audience", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
-  ageGroupId: text("age_group_id").notNull().references(() => ageGroups.id, { onDelete: "restrict" }),
-}, (t) => [uniqueIndex("product_age_groups_uniq").on(t.productId, t.ageGroupId)]);
+  audienceId: text("audience_id").notNull().references(() => audience.id, { onDelete: "restrict" }),
+}, (t) => [uniqueIndex("product_audience_uniq").on(t.productId, t.audienceId)]);
 
 export const productGenders = pgTable("product_genders", {
   id: text("id").primaryKey(),
@@ -251,7 +251,7 @@ export const variantColors = pgTable("variant_colors", {
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAgeGroupSchema = createInsertSchema(ageGroups).omit({ id: true });
+export const insertAudienceSchema = createInsertSchema(audience).omit({ id: true });
 export const insertGenderSchema = createInsertSchema(genders).omit({ id: true });
 export const insertThemeSchema = createInsertSchema(themes).omit({ id: true });
 export const insertStyleSchema = createInsertSchema(styles).omit({ id: true });
@@ -390,7 +390,7 @@ export const insertRateLimitStatsSchema = createInsertSchema(rateLimitStats).omi
 export type {
   Category, InsertCategory,
   Product, InsertProduct,
-  AgeGroup, InsertAgeGroup,
+  Audience, InsertAudience,
   Gender, InsertGender,
   Theme, InsertTheme,
   Style, InsertStyle,

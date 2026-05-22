@@ -495,7 +495,7 @@ export function registerAdminHealthRoutes(app: Express) {
           { column: "expires_at", type: "timestamp without time zone", nullable: false },
           { column: "created_at", type: "timestamp without time zone", nullable: true },
         ],
-        age_groups: [
+        audience: [
           { column: "id", type: "text", nullable: false },
           { column: "name", type: "text", nullable: false },
           { column: "sort_order", type: "integer", nullable: true },
@@ -515,10 +515,10 @@ export function registerAdminHealthRoutes(app: Express) {
           { column: "name", type: "text", nullable: false },
           { column: "sort_order", type: "integer", nullable: true },
         ],
-        product_age_groups: [
+        product_audience: [
           { column: "id", type: "text", nullable: false },
           { column: "product_id", type: "text", nullable: false },
-          { column: "age_group_id", type: "text", nullable: false },
+          { column: "audience_id", type: "text", nullable: false },
         ],
         product_genders: [
           { column: "id", type: "text", nullable: false },
@@ -1193,12 +1193,12 @@ export function registerAdminHealthRoutes(app: Express) {
           ORDER BY p.slug, t.name`),
         pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
         pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
-        pool.query(`SELECT id, name, sort_order FROM age_groups ORDER BY sort_order`),
+        pool.query(`SELECT id, name, sort_order FROM audience ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
         pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
-        pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS age_group_name FROM product_age_groups pag JOIN products p ON p.id = pag.product_id JOIN age_groups ag ON ag.id = pag.age_group_id ORDER BY p.slug, ag.name`),
+        pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS audience_name FROM product_audience pag JOIN products p ON p.id = pag.product_id JOIN audience ag ON ag.id = pag.audience_id ORDER BY p.slug, ag.name`),
         pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
         pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
         pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
@@ -1211,12 +1211,12 @@ export function registerAdminHealthRoutes(app: Express) {
         productTags:      ptags.rows,
         productImages:    imgs.rows,
         productReviews:   revs.rows,
-        ageGroups:        ags.rows,
+        audience:         ags.rows,
         genders:          gens.rows,
         themes:           ths.rows,
         styles:           sts.rows,
         occasions:        occs.rows,
-        productAgeGroups: pags.rows,
+        productAudience:  pags.rows,
         productGenders:   pgens.rows,
         productThemes:    pths.rows,
         productStyles:    psts.rows,
@@ -1250,12 +1250,12 @@ export function registerAdminHealthRoutes(app: Express) {
               ORDER BY p.slug, t.name`),
             pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
             pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
-            pool.query(`SELECT id, name, sort_order FROM age_groups ORDER BY sort_order`),
+            pool.query(`SELECT id, name, sort_order FROM audience ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
             pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
-            pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS age_group_name FROM product_age_groups pag JOIN products p ON p.id = pag.product_id JOIN age_groups ag ON ag.id = pag.age_group_id ORDER BY p.slug, ag.name`),
+            pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS audience_name FROM product_audience pag JOIN products p ON p.id = pag.product_id JOIN audience ag ON ag.id = pag.audience_id ORDER BY p.slug, ag.name`),
             pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
             pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
             pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
@@ -1263,8 +1263,8 @@ export function registerAdminHealthRoutes(app: Express) {
           return {
             categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
             productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows,
-            ageGroups: ags.rows, genders: gens.rows, themes: ths.rows, styles: sts.rows,
-            occasions: occs.rows, productAgeGroups: pags.rows, productGenders: pgens.rows,
+            audience: ags.rows, genders: gens.rows, themes: ths.rows, styles: sts.rows,
+            occasions: occs.rows, productAudience: pags.rows, productGenders: pgens.rows,
             productThemes: pths.rows, productStyles: psts.rows,
           };
         })(),
@@ -1335,15 +1335,15 @@ export function registerAdminHealthRoutes(app: Express) {
                             r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
         productImages:    diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
         productReviews:   diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
-        ageGroups:        diffById(localSnap.ageGroups as any[], (prodSnap as any).ageGroups as any[] ?? [], ["name", "sort_order"]),
+        audience:         diffById(localSnap.audience as any[], (prodSnap as any).audience as any[] ?? [], ["name", "sort_order"]),
         genders:          diffById(localSnap.genders as any[], (prodSnap as any).genders as any[] ?? [], ["name", "sort_order"]),
         themes:           diffById(localSnap.themes as any[], (prodSnap as any).themes as any[] ?? [], ["name", "sort_order"]),
         styles:           diffById(localSnap.styles as any[], (prodSnap as any).styles as any[] ?? [], ["name", "sort_order"]),
         occasions:        diffById(localSnap.occasions as any[], (prodSnap as any).occasions as any[] ?? [], ["name", "slug", "active", "sort_order"]),
-        productAgeGroups: diffByContent(
-                            localSnap.productAgeGroups as any[], (prodSnap as any).productAgeGroups as any[] ?? [],
-                            r => `${r.product_slug}|${r.age_group_name}`,
-                            r => `${r.product_slug} → ${r.age_group_name}`),
+        productAudience:  diffByContent(
+                            localSnap.productAudience as any[], (prodSnap as any).productAudience as any[] ?? [],
+                            r => `${r.product_slug}|${r.audience_name}`,
+                            r => `${r.product_slug} → ${r.audience_name}`),
         productGenders:   diffByContent(
                             localSnap.productGenders as any[], (prodSnap as any).productGenders as any[] ?? [],
                             r => `${r.product_slug}|${r.gender_name}`,
@@ -1459,8 +1459,8 @@ export function registerAdminHealthRoutes(app: Express) {
 
       const catalogTables = [
         "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
-        "ageGroups", "genders", "themes", "styles", "occasions",
-        "productAgeGroups", "productGenders", "productThemes", "productStyles",
+        "audience", "genders", "themes", "styles", "occasions",
+        "productAudience", "productGenders", "productThemes", "productStyles",
       ];
       for (const table of catalogTables) {
         await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
@@ -1479,12 +1479,12 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT COUNT(*) FROM product_tags`),
         pool.query(`SELECT COUNT(*) FROM product_images`),
         pool.query(`SELECT COUNT(*) FROM product_reviews`),
-        pool.query(`SELECT COUNT(*) FROM age_groups`),
+        pool.query(`SELECT COUNT(*) FROM audience`),
         pool.query(`SELECT COUNT(*) FROM genders`),
         pool.query(`SELECT COUNT(*) FROM themes`),
         pool.query(`SELECT COUNT(*) FROM styles`),
         pool.query(`SELECT COUNT(*) FROM occasions`),
-        pool.query(`SELECT COUNT(*) FROM product_age_groups`),
+        pool.query(`SELECT COUNT(*) FROM product_audience`),
         pool.query(`SELECT COUNT(*) FROM product_genders`),
         pool.query(`SELECT COUNT(*) FROM product_themes`),
         pool.query(`SELECT COUNT(*) FROM product_styles`),
@@ -1501,12 +1501,12 @@ export function registerAdminHealthRoutes(app: Express) {
           productTags:      Number(ptags.rows[0].count),
           productImages:    Number(imgs.rows[0].count),
           productReviews:   Number(revs.rows[0].count),
-          ageGroups:        Number(ags.rows[0].count),
+          audience:         Number(ags.rows[0].count),
           genders:          Number(gens.rows[0].count),
           themes:           Number(ths.rows[0].count),
           styles:           Number(sts.rows[0].count),
           occasions:        Number(occs.rows[0].count),
-          productAgeGroups: Number(pags.rows[0].count),
+          productAudience:  Number(pags.rows[0].count),
           productGenders:   Number(pgens.rows[0].count),
           productThemes:    Number(pths.rows[0].count),
           productStyles:    Number(psts.rows[0].count),
@@ -1551,7 +1551,7 @@ export function registerAdminHealthRoutes(app: Express) {
                 p.bullet_points AS "bulletPoints",
                 p.search_keywords AS "searchKeywords",
                 p.product_type AS "productType",
-                COALESCE((SELECT string_agg(ag.name,',') FROM product_age_groups pag JOIN age_groups ag ON ag.id=pag.age_group_id WHERE pag.product_id=p.id),'') AS "ageGroup",
+                COALESCE((SELECT string_agg(ag.name,',') FROM product_audience pag JOIN audience ag ON ag.id=pag.audience_id WHERE pag.product_id=p.id),'') AS "audience",
                 COALESCE((SELECT string_agg(g.name,',')  FROM product_genders   pg  JOIN genders     g  ON g.id=pg.gender_id     WHERE pg.product_id=p.id),'')  AS "gender",
                 COALESCE((SELECT string_agg(t.name,',')  FROM product_themes    pt  JOIN themes      t  ON t.id=pt.theme_id      WHERE pt.product_id=p.id),'')  AS "themes",
                 COALESCE((SELECT string_agg(s.name,',')  FROM product_styles    ps  JOIN styles      s  ON s.id=ps.style_id      WHERE ps.product_id=p.id),'')  AS "styles",
@@ -1658,7 +1658,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Export attribute lookup tables (age groups, genders, themes, styles)
       const agResult = await pool.query(
-        `SELECT id, name, sort_order AS "sortOrder" FROM age_groups ORDER BY sort_order, name`
+        `SELECT id, name, sort_order AS "sortOrder" FROM audience ORDER BY sort_order, name`
       );
       const genResult = await pool.query(
         `SELECT id, name, sort_order AS "sortOrder" FROM genders ORDER BY sort_order, name`
@@ -1672,10 +1672,10 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Export attribute junction tables
       const pagResult = await pool.query(
-        `SELECT pag.id, p.slug AS "productSlug", ag.name AS "ageGroupName"
-         FROM product_age_groups pag
+        `SELECT pag.id, p.slug AS "productSlug", ag.name AS "audienceName"
+         FROM product_audience pag
          JOIN products p ON p.id = pag.product_id
-         JOIN age_groups ag ON ag.id = pag.age_group_id
+         JOIN audience ag ON ag.id = pag.audience_id
          ORDER BY p.slug, ag.name`
       );
       const pgenResult = await pool.query(
@@ -1727,11 +1727,11 @@ export function registerAdminHealthRoutes(app: Express) {
         productVariants:           pvResult.rows,
         occasions:                 occasionsResult.rows,
         siteConfig:                scResult.rows,
-        ageGroups:                 agResult.rows,
+        audience:                  agResult.rows,
         genders:                   genResult.rows,
         themes:                    thResult.rows,
         styles:                    stResult.rows,
-        productAgeGroups:          pagResult.rows,
+        productAudience:           pagResult.rows,
         productGenders:            pgenResult.rows,
         productThemes:             pthResult.rows,
         productStyles:             pstResult.rows,
@@ -1756,11 +1756,11 @@ export function registerAdminHealthRoutes(app: Express) {
           variantColors:             vcResult.rowCount,
           occasions:                 occasionsResult.rowCount,
           siteConfig:                scResult.rowCount,
-          ageGroups:                 agResult.rowCount,
+          audience:                  agResult.rowCount,
           genders:                   genResult.rowCount,
           themes:                    thResult.rowCount,
           styles:                    stResult.rowCount,
-          productAgeGroups:          pagResult.rowCount,
+          productAudience:           pagResult.rowCount,
           productGenders:            pgenResult.rowCount,
           productThemes:             pthResult.rowCount,
           productStyles:             pstResult.rowCount,

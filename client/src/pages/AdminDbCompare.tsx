@@ -37,12 +37,12 @@ interface CompareResult {
   productTags: ContentTableDiff;
   productImages: IdTableDiff;
   productReviews: IdTableDiff;
-  ageGroups: IdTableDiff;
+  audience: IdTableDiff;
   genders: IdTableDiff;
   themes: IdTableDiff;
   styles: IdTableDiff;
   occasions: IdTableDiff;
-  productAgeGroups: ContentTableDiff;
+  productAudience: ContentTableDiff;
   productGenders: ContentTableDiff;
   productThemes: ContentTableDiff;
   productStyles: ContentTableDiff;
@@ -258,12 +258,12 @@ export default function AdminDbCompare() {
       isContentTableClean(result.productTags) &&
       isIdTableClean(result.productImages) &&
       isIdTableClean(result.productReviews) &&
-      isIdTableClean(result.ageGroups) &&
+      isIdTableClean(result.audience) &&
       isIdTableClean(result.genders) &&
       isIdTableClean(result.themes) &&
       isIdTableClean(result.styles) &&
       isIdTableClean(result.occasions) &&
-      isContentTableClean(result.productAgeGroups) &&
+      isContentTableClean(result.productAudience) &&
       isContentTableClean(result.productGenders) &&
       isContentTableClean(result.productThemes) &&
       isContentTableClean(result.productStyles)
@@ -350,10 +350,10 @@ export default function AdminDbCompare() {
             {reseedResult.counts.categories} categories, {reseedResult.counts.products} products,{" "}
             {reseedResult.counts.tagTypes} tag types, {reseedResult.counts.tags} tags,{" "}
             {reseedResult.counts.productTags} product tags, {reseedResult.counts.productImages} images,{" "}
-            {reseedResult.counts.ageGroups} age groups, {reseedResult.counts.genders} genders,{" "}
+            {reseedResult.counts.audience} audience, {reseedResult.counts.genders} genders,{" "}
             {reseedResult.counts.themes} themes, {reseedResult.counts.styles} styles,{" "}
             {reseedResult.counts.occasions} occasions,{" "}
-            {reseedResult.counts.productAgeGroups}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links
+            {reseedResult.counts.productAudience}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links
           </span>
         </div>
       )}
@@ -418,10 +418,10 @@ export default function AdminDbCompare() {
           </SectionShell>
 
           {/* ── Attribute lookup tables ── */}
-          <SectionShell title="Age Groups" clean={isIdTableClean(result.ageGroups)} devCount={result.ageGroups.devCount} prodCount={result.ageGroups.prodCount}>
-            <CollapsibleList label="IDs only in dev"  items={result.ageGroups.onlyInDev}  color={DEV_COLOR} />
-            <CollapsibleList label="IDs only in prod" items={result.ageGroups.onlyInProd} color={PROD_COLOR} />
-            <FieldMismatches mismatches={result.ageGroups.fieldMismatches} />
+          <SectionShell title="Audience" clean={isIdTableClean(result.audience)} devCount={result.audience.devCount} prodCount={result.audience.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.audience.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.audience.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.audience.fieldMismatches} />
           </SectionShell>
 
           <SectionShell title="Genders" clean={isIdTableClean(result.genders)} devCount={result.genders.devCount} prodCount={result.genders.prodCount}>
@@ -450,9 +450,9 @@ export default function AdminDbCompare() {
           </SectionShell>
 
           {/* ── Attribute junction tables ── */}
-          <SectionShell title="Product Age Groups" clean={isContentTableClean(result.productAgeGroups)} devCount={result.productAgeGroups.devCount} prodCount={result.productAgeGroups.prodCount}>
-            <CollapsibleList label="Links only in dev"  items={result.productAgeGroups.onlyInDev}  color={DEV_COLOR} />
-            <CollapsibleList label="Links only in prod" items={result.productAgeGroups.onlyInProd} color={PROD_COLOR} />
+          <SectionShell title="Product Audience" clean={isContentTableClean(result.productAudience)} devCount={result.productAudience.devCount} prodCount={result.productAudience.prodCount}>
+            <CollapsibleList label="Links only in dev"  items={result.productAudience.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Links only in prod" items={result.productAudience.onlyInProd} color={PROD_COLOR} />
           </SectionShell>
 
           <SectionShell title="Product Genders" clean={isContentTableClean(result.productGenders)} devCount={result.productGenders.devCount} prodCount={result.productGenders.prodCount}>

@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Attributes, AgeGroup, Gender, Theme, Style } from "@shared/types";
+import type { Attributes, Audience, Gender, Theme, Style } from "@shared/types";
 
-type AttrItem = AgeGroup | Gender | Theme | Style;
+type AttrItem = Audience | Gender | Theme | Style;
 
 function AttributeSection({
   title,
@@ -166,7 +166,7 @@ export default function AdminAttributes() {
   };
 
   const sections = [
-    { title: "Age Groups", items: attributes?.ageGroups ?? [], endpoint: "/api/admin/attributes/age-groups" },
+    { title: "Audience", items: attributes?.audience ?? [], endpoint: "/api/admin/attributes/audience" },
     { title: "Genders", items: attributes?.genders ?? [], endpoint: "/api/admin/attributes/genders" },
     { title: "Themes", items: attributes?.themes ?? [], endpoint: "/api/admin/attributes/themes" },
     { title: "Styles", items: attributes?.styles ?? [], endpoint: "/api/admin/attributes/styles" },
@@ -177,7 +177,7 @@ export default function AdminAttributes() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Product Attributes</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Manage age groups, genders, themes, and styles used to classify products. Changes here reflect everywhere with zero hardcoding.
+          Manage audience, genders, themes, and styles used to classify products. Changes here reflect everywhere with zero hardcoding.
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -28,7 +28,7 @@ export default function AdminProductEdit() {
 
   const [product, setProduct] = useState<Partial<Product> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [selectedAgeGroupIds, setSelectedAgeGroupIds] = useState<string[]>([]);
+  const [selectedAudienceIds, setSelectedAudienceIds] = useState<string[]>([]);
   const [selectedGenderIds, setSelectedGenderIds] = useState<string[]>([]);
   const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([]);
   const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
@@ -104,7 +104,7 @@ export default function AdminProductEdit() {
     queryKey: ["/api/attributes"],
   });
 
-  const { data: productAttrIds } = useQuery<{ ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>({
+  const { data: productAttrIds } = useQuery<{ audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>({
     queryKey: ["/api/admin/products", productId, "attributes"],
     queryFn: async () => {
       const res = await fetch(`/api/admin/products/${productId}/attributes`);
@@ -115,7 +115,7 @@ export default function AdminProductEdit() {
 
   useEffect(() => {
     if (productAttrIds) {
-      setSelectedAgeGroupIds(productAttrIds.ageGroupIds ?? []);
+      setSelectedAudienceIds(productAttrIds.audienceIds ?? []);
       setSelectedGenderIds(productAttrIds.genderIds ?? []);
       setSelectedThemeIds(productAttrIds.themeIds ?? []);
       setSelectedStyleIds(productAttrIds.styleIds ?? []);
@@ -130,7 +130,7 @@ export default function AdminProductEdit() {
       await Promise.all([
         apiRequest("PUT", `/api/admin/products/${data.id}/tags`, { tagIds: selectedTagIds }),
         apiRequest("PUT", `/api/admin/products/${data.id}/attributes`, {
-          ageGroupIds: selectedAgeGroupIds,
+          audienceIds: selectedAudienceIds,
           genderIds: selectedGenderIds,
           themeIds: selectedThemeIds,
           styleIds: selectedStyleIds,
@@ -478,15 +478,15 @@ export default function AdminProductEdit() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="mb-1.5 block">Age Group</Label>
+            <Label className="mb-1.5 block">Audience</Label>
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
               {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
-              {(attributes?.ageGroups ?? []).map(ag => (
+              {(attributes?.audience ?? []).map(ag => (
                 <div key={ag.id} className="flex items-center gap-1.5">
                   <Checkbox
                     id={`age-${ag.id}`}
-                    checked={selectedAgeGroupIds.includes(ag.id)}
-                    onCheckedChange={() => setSelectedAgeGroupIds(prev =>
+                    checked={selectedAudienceIds.includes(ag.id)}
+                    onCheckedChange={() => setSelectedAudienceIds(prev =>
                       prev.includes(ag.id) ? prev.filter(x => x !== ag.id) : [...prev, ag.id]
                     )}
                     data-testid={`checkbox-age-${ag.name}`}

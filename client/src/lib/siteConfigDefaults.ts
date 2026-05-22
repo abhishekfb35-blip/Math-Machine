@@ -147,7 +147,7 @@ export interface FeaturedSectionConfig {
   title: string;
   subtitle: string;
   categoryFilters: string[];
-  ageGroupFilters: string[];
+  audienceFilters: string[];
   genderFilters: string[];
   themeFilters: string[];
   styleFilters: string[];
@@ -426,25 +426,25 @@ export interface ShopSection {
   tag: string;
   maxShown: number;
   enabled: boolean;
-  ageGroups?: string[];
+  audience?: string[];
   genders?: string[];
   themes?: string[];
   styles?: string[];
 }
 
 export const defaultShopSections: ShopSection[] = [
-  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, ageGroups: ["kids"] },
-  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, ageGroups: ["adults"] },
-  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, ageGroups: ["adults"] },
-  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, ageGroups: ["kids"] },
-  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, ageGroups: ["kids"] },
-  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, ageGroups: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, ageGroups: ["adults"] },
+  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, audience: ["adults"] },
 ];
 
 const EMPTY_SECTION_FILTERS = {
   categoryFilters: [],
-  ageGroupFilters: [],
+  audienceFilters: [],
   genderFilters: [],
   themeFilters: [],
   styleFilters: [],

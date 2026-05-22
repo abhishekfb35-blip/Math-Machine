@@ -23,7 +23,7 @@ function qs(val: unknown): string {
  * Returns a resolved lowercase name, or undefined if no filter specified.
  *
  * Accepted query param pairs (for each type):
- *   ageGroup / ageGroupId
+ *   audience / audienceId
  *   gender   / genderId
  *   theme    / themeId
  *   style    / styleId
@@ -31,13 +31,13 @@ function qs(val: unknown): string {
 async function resolveAttributeFilters(
   req: Request,
 ): Promise<{
-  ageGroupName?: string;
+  audienceName?: string;
   genderName?: string;
   themeName?: string;
   styleName?: string;
 }> {
-  const ageGroupRaw = qs(req.query.ageGroup);
-  const ageGroupId  = qs(req.query.ageGroupId);
+  const audienceRaw = qs(req.query.audience) || qs(req.query.ageGroup);
+  const audienceId  = qs(req.query.audienceId) || qs(req.query.ageGroupId);
   const genderRaw   = qs(req.query.gender);
   const genderId    = qs(req.query.genderId);
   const themeRaw    = qs(req.query.theme);
@@ -45,7 +45,7 @@ async function resolveAttributeFilters(
   const styleRaw    = qs(req.query.style);
   const styleId     = qs(req.query.styleId);
 
-  const needsLookup = ageGroupId || genderId || themeId || styleId;
+  const needsLookup = audienceId || genderId || themeId || styleId;
 
   let attrs: Attributes | undefined;
   if (needsLookup) {
@@ -57,9 +57,9 @@ async function resolveAttributeFilters(
     list: { id: string; name: string }[],
   ): string | undefined => list.find(a => a.id === id)?.name.toLowerCase();
 
-  const ageGroupName = ageGroupId
-    ? resolveId(ageGroupId, attrs?.ageGroups ?? [])
-    : (ageGroupRaw ? ageGroupRaw.toLowerCase() : undefined);
+  const audienceName = audienceId
+    ? resolveId(audienceId, attrs?.audience ?? [])
+    : (audienceRaw ? audienceRaw.toLowerCase() : undefined);
 
   const genderName = genderId
     ? resolveId(genderId, attrs?.genders ?? [])
@@ -73,15 +73,15 @@ async function resolveAttributeFilters(
     ? resolveId(styleId, attrs?.styles ?? [])
     : (styleRaw ? styleRaw.toLowerCase() : undefined);
 
-  return { ageGroupName, genderName, themeName, styleName };
+  return { audienceName, genderName, themeName, styleName };
 }
 
 function applyAttributeFilters(
   prods: Product[],
-  filters: { ageGroupName?: string; genderName?: string; themeName?: string; styleName?: string },
+  filters: { audienceName?: string; genderName?: string; themeName?: string; styleName?: string },
 ): Product[] {
   let result = prods;
-  if (filters.ageGroupName) result = result.filter(p => (p.ageGroups ?? []).some(a => a.toLowerCase() === filters.ageGroupName));
+  if (filters.audienceName) result = result.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === filters.audienceName));
   if (filters.genderName)   result = result.filter(p => (p.genders   ?? []).some(g => g.toLowerCase() === filters.genderName));
   if (filters.themeName)    result = result.filter(p => (p.themes    ?? []).some(t => t.toLowerCase() === filters.themeName));
   if (filters.styleName)    result = result.filter(p => (p.styles    ?? []).some(s => s.toLowerCase() === filters.styleName));

@@ -912,7 +912,7 @@ function normaliseSectionConfig(raw: any): FeaturedSectionConfig {
     title:           raw?.title           ?? "",
     subtitle:        raw?.subtitle        ?? "",
     categoryFilters: Array.isArray(raw?.categoryFilters) ? raw.categoryFilters : [],
-    ageGroupFilters: Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : [],
+    audienceFilters: Array.isArray(raw?.audienceFilters) ? raw.audienceFilters : (Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : []),
     genderFilters:   Array.isArray(raw?.genderFilters)   ? raw.genderFilters   : [],
     themeFilters:    Array.isArray(raw?.themeFilters)    ? raw.themeFilters    : [],
     styleFilters:    Array.isArray(raw?.styleFilters)    ? raw.styleFilters    : [],
@@ -955,7 +955,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
     mutationFn: async ({ section, filters }: { section: string; filters: FeaturedSectionConfig }) => {
       const res = await apiRequest("POST", "/api/admin/featured-products/preview", {
         categoryFilters: filters.categoryFilters,
-        ageGroupFilters: filters.ageGroupFilters,
+        audienceFilters: filters.audienceFilters,
         genderFilters:   filters.genderFilters,
         themeFilters:    filters.themeFilters,
         styleFilters:    filters.styleFilters,
@@ -1006,7 +1006,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   };
 
   const categoryOptions  = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
-  const ageGroupOptions  = (attributes?.ageGroups ?? []).map(a => ({ value: a.name, label: a.name }));
+  const audienceOptions  = (attributes?.audience ?? []).map(a => ({ value: a.name, label: a.name }));
   const genderOptions    = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
   const themeOptions     = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
   const styleOptions     = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
@@ -1053,9 +1053,9 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               <FilterChips label="Categories" options={categoryOptions} selected={s.categoryFilters}
                 onToggle={v => toggleFilter(section, "categoryFilters", v)}
                 onToggleAll={() => toggleAll(section, "categoryFilters", categoryOptions.map(o => o.value))} />
-              <FilterChips label="Age Groups" options={ageGroupOptions} selected={s.ageGroupFilters}
-                onToggle={v => toggleFilter(section, "ageGroupFilters", v)}
-                onToggleAll={() => toggleAll(section, "ageGroupFilters", ageGroupOptions.map(o => o.value))} />
+              <FilterChips label="Audience" options={audienceOptions} selected={s.audienceFilters}
+                onToggle={v => toggleFilter(section, "audienceFilters", v)}
+                onToggleAll={() => toggleAll(section, "audienceFilters", audienceOptions.map(o => o.value))} />
               <FilterChips label="Genders" options={genderOptions} selected={s.genderFilters}
                 onToggle={v => toggleFilter(section, "genderFilters", v)}
                 onToggleAll={() => toggleAll(section, "genderFilters", genderOptions.map(o => o.value))} />
@@ -1166,7 +1166,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
 
-  const ageGroupOptions = attributes?.ageGroups?.map(ag => ag.name) ?? [];
+  const audienceOptions2 = attributes?.audience?.map(ag => ag.name) ?? [];
   const genderOptions   = attributes?.genders?.map(g => g.name) ?? [];
   const themeOptions    = attributes?.themes?.map(t => t.name) ?? [];
   const styleOptions    = attributes?.styles?.map(s => s.name) ?? [];
@@ -1185,7 +1185,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     setSections(next);
   };
 
-  const toggleMulti = (index: number, field: "ageGroups" | "genders" | "themes" | "styles", value: string) => {
+  const toggleMulti = (index: number, field: "audience" | "genders" | "themes" | "styles", value: string) => {
     const next = [...sections];
     const current: string[] = (next[index][field] as string[]) ?? [];
     next[index] = {
@@ -1198,7 +1198,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   };
 
   const addSection = () => {
-    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, ageGroups: [], genders: [], themes: [], styles: [] }]);
+    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audience: [], genders: [], themes: [], styles: [] }]);
   };
 
   const removeSection = (index: number) => {
@@ -1211,7 +1211,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     sectionIndex, field, options, label, hint, testPrefix,
   }: {
     sectionIndex: number;
-    field: "ageGroups" | "genders" | "themes" | "styles";
+    field: "audience" | "genders" | "themes" | "styles";
     options: string[];
     label: string;
     hint: string;
@@ -1317,9 +1317,9 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
           </div>
           <AttrCheckboxRow
             sectionIndex={i}
-            field="ageGroups"
-            options={ageGroupOptions}
-            label="Age group"
+            field="audience"
+            options={audienceOptions2}
+            label="Audience"
             hint="(all)"
             testPrefix="agegroup"
           />

@@ -11,7 +11,7 @@ const sseClients = new Set<Response>();
 // ── Server-side undo store for bulk-clear-attributes ──
 type ClearSnapshot = {
   productId: string;
-  ageGroupIds: string[];
+  audienceIds: string[];
   genderIds: string[];
   themeIds: string[];
   styleIds: string[];
@@ -561,22 +561,22 @@ export function registerAdminCatalogRoutes(app: Express) {
     try {
       const bodySchema = z.object({
         productIds:   z.array(z.string()).min(1),
-        ageGroupIds:  z.array(z.string()).optional(),
+        audienceIds:  z.array(z.string()).optional(),
         genderIds:    z.array(z.string()).optional(),
         themeIds:     z.array(z.string()).optional(),
         styleIds:     z.array(z.string()).optional(),
         tagIds:       z.array(z.string()).optional(),
       });
-      const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
-      const needsAttrs = ageGroupIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
+      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      const needsAttrs = audienceIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
       const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
       await Promise.all(productIds.map(async (productId) => {
         const [existing, existingTagIds] = await Promise.all([
-          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ ageGroupIds: [], genderIds: [], themeIds: [], styleIds: [] }),
+          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ audienceIds: [], genderIds: [], themeIds: [], styleIds: [] }),
           tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
         ]);
         await Promise.all([
-          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, union(existing.ageGroupIds, ageGroupIds)) : Promise.resolve(),
+          audienceIds !== undefined ? storage.setProductAudiences(productId, union(existing.audienceIds, audienceIds)) : Promise.resolve(),
           genderIds   !== undefined ? storage.setProductGenders(productId, union(existing.genderIds, genderIds))       : Promise.resolve(),
           themeIds    !== undefined ? storage.setProductThemes(productId, union(existing.themeIds, themeIds))           : Promise.resolve(),
           styleIds    !== undefined ? storage.setProductStyles(productId, union(existing.styleIds, styleIds))           : Promise.resolve(),
@@ -586,7 +586,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       await storage.createAuditLog({
         entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
         action: "bulk-update-attributes",
-        changes: JSON.stringify({ productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds }),
+        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
         username: getAdminUsername(req),
       });
       res.json({ updated: productIds.length });
@@ -602,22 +602,22 @@ export function registerAdminCatalogRoutes(app: Express) {
     try {
       const bodySchema = z.object({
         productIds:   z.array(z.string()).min(1),
-        ageGroupIds:  z.array(z.string()).optional(),
+        audienceIds:  z.array(z.string()).optional(),
         genderIds:    z.array(z.string()).optional(),
         themeIds:     z.array(z.string()).optional(),
         styleIds:     z.array(z.string()).optional(),
         tagIds:       z.array(z.string()).optional(),
       });
-      const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
-      const needsAttrs = ageGroupIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
+      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      const needsAttrs = audienceIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
       const subtract = (existing: string[], toRemove: string[]) => existing.filter(id => !toRemove.includes(id));
       await Promise.all(productIds.map(async (productId) => {
         const [existing, existingTagIds] = await Promise.all([
-          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ ageGroupIds: [], genderIds: [], themeIds: [], styleIds: [] }),
+          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ audienceIds: [], genderIds: [], themeIds: [], styleIds: [] }),
           tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
         ]);
         await Promise.all([
-          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, subtract(existing.ageGroupIds, ageGroupIds)) : Promise.resolve(),
+          audienceIds !== undefined ? storage.setProductAudiences(productId, subtract(existing.audienceIds, audienceIds)) : Promise.resolve(),
           genderIds   !== undefined ? storage.setProductGenders(productId, subtract(existing.genderIds, genderIds))       : Promise.resolve(),
           themeIds    !== undefined ? storage.setProductThemes(productId, subtract(existing.themeIds, themeIds))           : Promise.resolve(),
           styleIds    !== undefined ? storage.setProductStyles(productId, subtract(existing.styleIds, styleIds))           : Promise.resolve(),
@@ -627,7 +627,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       await storage.createAuditLog({
         entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
         action: "bulk-remove-attributes",
-        changes: JSON.stringify({ productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds }),
+        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
         username: getAdminUsername(req),
       });
       res.json({ updated: productIds.length });
@@ -643,16 +643,16 @@ export function registerAdminCatalogRoutes(app: Express) {
     try {
       const bodySchema = z.object({
         productIds:   z.array(z.string()).min(1),
-        ageGroupIds:  z.array(z.string()).optional(),
+        audienceIds:  z.array(z.string()).optional(),
         genderIds:    z.array(z.string()).optional(),
         themeIds:     z.array(z.string()).optional(),
         styleIds:     z.array(z.string()).optional(),
         tagIds:       z.array(z.string()).optional(),
       });
-      const { productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
+      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
       await Promise.all(productIds.map(async (productId) => {
         await Promise.all([
-          ageGroupIds !== undefined ? storage.setProductAgeGroups(productId, ageGroupIds) : Promise.resolve(),
+          audienceIds !== undefined ? storage.setProductAudiences(productId, audienceIds) : Promise.resolve(),
           genderIds   !== undefined ? storage.setProductGenders(productId, genderIds)     : Promise.resolve(),
           themeIds    !== undefined ? storage.setProductThemes(productId, themeIds)       : Promise.resolve(),
           styleIds    !== undefined ? storage.setProductStyles(productId, styleIds)       : Promise.resolve(),
@@ -662,7 +662,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       await storage.createAuditLog({
         entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
         action: "bulk-replace-attributes",
-        changes: JSON.stringify({ productIds, ageGroupIds, genderIds, themeIds, styleIds, tagIds }),
+        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
         username: getAdminUsername(req),
       });
       res.json({ updated: productIds.length });
@@ -692,7 +692,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       // 3. Now clear
       await Promise.all(productIds.map(async (productId) => {
         await Promise.all([
-          storage.setProductAgeGroups(productId, []),
+          storage.setProductAudiences(productId, []),
           storage.setProductGenders(productId, []),
           storage.setProductThemes(productId, []),
           storage.setProductStyles(productId, []),
@@ -726,9 +726,9 @@ export function registerAdminCatalogRoutes(app: Express) {
       }
       const { snapshot } = entry;
       clearUndoStore.delete(undoToken);
-      await Promise.all(snapshot.map(async ({ productId, ageGroupIds, genderIds, themeIds, styleIds, tagIds }) => {
+      await Promise.all(snapshot.map(async ({ productId, audienceIds, genderIds, themeIds, styleIds, tagIds }) => {
         await Promise.all([
-          storage.setProductAgeGroups(productId, ageGroupIds),
+          storage.setProductAudiences(productId, audienceIds),
           storage.setProductGenders(productId, genderIds),
           storage.setProductThemes(productId, themeIds),
           storage.setProductStyles(productId, styleIds),

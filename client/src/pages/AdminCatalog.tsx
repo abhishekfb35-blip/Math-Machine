@@ -39,7 +39,7 @@ function ProductAttributeSelector({
   const toIds = (names: string[], lookup: { id: string; name: string }[]) =>
     lookup.filter(item => names.includes(item.name)).map(item => item.id);
 
-  const [ageGroupIds, setAgeGroupIds] = useState<string[]>([]);
+  const [audienceIds, setAudienceIds] = useState<string[]>([]);
   const [genderIds, setGenderIds] = useState<string[]>([]);
   const [themeIds, setThemeIds] = useState<string[]>([]);
   const [styleIds, setStyleIds] = useState<string[]>([]);
@@ -49,26 +49,26 @@ function ProductAttributeSelector({
   const initialTagKey = [...initialTagIds].sort().join(",");
 
   const productAttrKey = [
-    [...(product.ageGroups ?? [])].sort().join(","),
+    [...(product.audience ?? [])].sort().join(","),
     [...(product.genders ?? [])].sort().join(","),
     [...(product.themes ?? [])].sort().join(","),
     [...(product.styles ?? [])].sort().join(","),
   ].join("|");
 
-  const savedAttrRef = useRef({ ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[] });
+  const savedAttrRef = useRef({ audienceIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[] });
   const openPopoverCountRef = useRef(0);
 
   useEffect(() => {
     if (!attributes || openPopoverCountRef.current > 0) return;
-    const newAgeGroupIds = toIds(product.ageGroups ?? [], attributes.ageGroups);
+    const newAudienceIds = toIds(product.audience ?? [], attributes.audience);
     const newGenderIds = toIds(product.genders ?? [], attributes.genders);
     const newThemeIds = toIds(product.themes ?? [], attributes.themes);
     const newStyleIds = toIds(product.styles ?? [], attributes.styles);
-    setAgeGroupIds(newAgeGroupIds);
+    setAudienceIds(newAudienceIds);
     setGenderIds(newGenderIds);
     setThemeIds(newThemeIds);
     setStyleIds(newStyleIds);
-    savedAttrRef.current = { ageGroupIds: newAgeGroupIds, genderIds: newGenderIds, themeIds: newThemeIds, styleIds: newStyleIds };
+    savedAttrRef.current = { audienceIds: newAudienceIds, genderIds: newGenderIds, themeIds: newThemeIds, styleIds: newStyleIds };
   }, [attributes, productAttrKey]);
   const savedTagIdsRef = useRef(initialTagIds);
 
@@ -79,7 +79,7 @@ function ProductAttributeSelector({
   }, [initialTagKey]);
 
   const attrMutation = useMutation({
-    mutationFn: async (data: { ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
+    mutationFn: async (data: { audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
       const res = await apiRequest("PUT", `/api/admin/products/${productId}/attributes`, data);
       return res.json();
     },
@@ -96,7 +96,7 @@ function ProductAttributeSelector({
     onError: () => toast({ title: "Failed to save tags", variant: "destructive" }),
   });
 
-  const saveAttrs = (ids: { ageGroupIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
+  const saveAttrs = (ids: { audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
     if (JSON.stringify(ids) !== JSON.stringify(savedAttrRef.current)) {
       savedAttrRef.current = ids;
       attrMutation.mutate(ids);
@@ -113,7 +113,7 @@ function ProductAttributeSelector({
   const filteredTags = activeTagTypeId === "all" ? allTags : allTags.filter(t => t.tagTypeId === activeTagTypeId);
   const allFilteredTagIds = filteredTags.map(t => t.id);
 
-  const allAgeIds = (attributes?.ageGroups ?? []).map(x => x.id);
+  const allAudienceIds = (attributes?.audience ?? []).map(x => x.id);
   const allGenderIds = (attributes?.genders ?? []).map(x => x.id);
   const allThemeIds = (attributes?.themes ?? []).map(x => x.id);
   const allStyleIds = (attributes?.styles ?? []).map(x => x.id);
@@ -134,26 +134,26 @@ function ProductAttributeSelector({
     <div className="space-y-px mt-1.5 pt-1.5 border-t border-border/40" data-testid={`attr-selector-${productId}`}>
 
       {/* Age */}
-      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ audienceIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-age-${productId}`}>
             <span className={labelCls}>Age</span>
-            {ageGroupIds.length > 0
-              ? <span className={valueCls}>{nameList(ageGroupIds, attributes?.ageGroups ?? [])}</span>
+            {audienceIds.length > 0
+              ? <span className={valueCls}>{nameList(audienceIds, attributes?.audience ?? [])}</span>
               : <span className={emptyCls}>—</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-44 p-2" align="start">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Age Group</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Audience</p>
           <label className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer">
-            <Checkbox checked={ageGroupIds.length === allAgeIds.length && allAgeIds.length > 0}
-              onCheckedChange={(c) => setAgeGroupIds(c ? allAgeIds : [])} />
+            <Checkbox checked={audienceIds.length === allAudienceIds.length && allAudienceIds.length > 0}
+              onCheckedChange={(c) => setAudienceIds(c ? allAudienceIds : [])} />
             <span className="text-xs font-medium">All</span>
           </label>
-          {(attributes?.ageGroups ?? []).map(ag => (
+          {(attributes?.audience ?? []).map(ag => (
             <label key={ag.id} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer capitalize">
-              <Checkbox checked={ageGroupIds.includes(ag.id)}
-                onCheckedChange={() => setAgeGroupIds(p => p.includes(ag.id) ? p.filter(x => x !== ag.id) : [...p, ag.id])} />
+              <Checkbox checked={audienceIds.includes(ag.id)}
+                onCheckedChange={() => setAudienceIds(p => p.includes(ag.id) ? p.filter(x => x !== ag.id) : [...p, ag.id])} />
               <span className="text-xs">{ag.name}</span>
             </label>
           ))}
@@ -161,7 +161,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Gender */}
-      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ audienceIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-gender-${productId}`}>
             <span className={labelCls}>Gender</span>
@@ -188,7 +188,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Theme */}
-      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ audienceIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-themes-${productId}`}>
             <span className={labelCls}>Theme</span>
@@ -217,7 +217,7 @@ function ProductAttributeSelector({
       </Popover>
 
       {/* Style */}
-      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ ageGroupIds, genderIds, themeIds, styleIds }); }}>
+      <Popover onOpenChange={(open) => { open ? openPopoverCountRef.current++ : openPopoverCountRef.current--; if (!open) saveAttrs({ audienceIds, genderIds, themeIds, styleIds }); }}>
         <PopoverTrigger asChild>
           <button className={rowCls} data-testid={`pill-styles-${productId}`}>
             <span className={labelCls}>Style</span>
@@ -905,7 +905,7 @@ export default function AdminCatalog() {
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [editingAgeGroupIds, setEditingAgeGroupIds] = useState<string[]>([]);
+  const [editingAudienceIds, setEditingAudienceIds] = useState<string[]>([]);
   const [editingGenderIds, setEditingGenderIds] = useState<string[]>([]);
   const [editingThemeIds, setEditingThemeIds] = useState<string[]>([]);
   const [editingStyleIds, setEditingStyleIds] = useState<string[]>([]);
@@ -930,7 +930,7 @@ export default function AdminCatalog() {
   const [bulkImageProgress, setBulkImageProgress] = useState<string | null>(null);
 
   const [bulkAttrsOpen, setBulkAttrsOpen] = useState(false);
-  const emptyBulkAttrSel = { ageGroupIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
+  const emptyBulkAttrSel = { audienceIds: [] as string[], genderIds: [] as string[], themeIds: [] as string[], styleIds: [] as string[], tagIds: [] as string[] };
   const [bulkAttrSel, setBulkAttrSel] = useState(emptyBulkAttrSel);
   const [bulkTagTypeTab, setBulkTagTypeTab] = useState<string | null>(null);
   const [bulkAttrMode, setBulkAttrMode] = useState<"add" | "remove" | "replace">("add");
@@ -1164,7 +1164,7 @@ export default function AdminCatalog() {
 
   useEffect(() => {
     if (!editingProduct?.id || isNew) {
-      setEditingAgeGroupIds([]);
+      setEditingAudienceIds([]);
       setEditingGenderIds([]);
       setEditingThemeIds([]);
       setEditingStyleIds([]);
@@ -1174,7 +1174,7 @@ export default function AdminCatalog() {
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data) {
-          setEditingAgeGroupIds(data.ageGroupIds ?? []);
+          setEditingAudienceIds(data.audienceIds ?? []);
           setEditingGenderIds(data.genderIds ?? []);
           setEditingThemeIds(data.themeIds ?? []);
           setEditingStyleIds(data.styleIds ?? []);
@@ -1191,7 +1191,7 @@ export default function AdminCatalog() {
         await Promise.all([
           apiRequest("PUT", `/api/admin/products/${data.id}/tags`, { tagIds: selectedTagIds }),
           apiRequest("PUT", `/api/admin/products/${data.id}/attributes`, {
-            ageGroupIds: editingAgeGroupIds,
+            audienceIds: editingAudienceIds,
             genderIds: editingGenderIds,
             themeIds: editingThemeIds,
             styleIds: editingStyleIds,
@@ -1204,7 +1204,7 @@ export default function AdminCatalog() {
         await Promise.all([
           selectedTagIds.length > 0 && apiRequest("PUT", `/api/admin/products/${product.id}/tags`, { tagIds: selectedTagIds }),
           apiRequest("PUT", `/api/admin/products/${product.id}/attributes`, {
-            ageGroupIds: editingAgeGroupIds,
+            audienceIds: editingAudienceIds,
             genderIds: editingGenderIds,
             themeIds: editingThemeIds,
             styleIds: editingStyleIds,
@@ -1263,7 +1263,7 @@ export default function AdminCatalog() {
   const bulkUpdateAttrsMutation = useMutation({
     mutationFn: async (payload: {
       productIds: string[];
-      ageGroupIds?: string[];
+      audienceIds?: string[];
       genderIds?: string[];
       themeIds?: string[];
       styleIds?: string[];
@@ -1289,7 +1289,7 @@ export default function AdminCatalog() {
   const bulkRemoveAttrsMutation = useMutation({
     mutationFn: async (payload: {
       productIds: string[];
-      ageGroupIds?: string[];
+      audienceIds?: string[];
       genderIds?: string[];
       themeIds?: string[];
       styleIds?: string[];
@@ -1316,7 +1316,7 @@ export default function AdminCatalog() {
   const bulkReplaceAttrsMutation = useMutation({
     mutationFn: async (payload: {
       productIds: string[];
-      ageGroupIds?: string[];
+      audienceIds?: string[];
       genderIds?: string[];
       themeIds?: string[];
       styleIds?: string[];
@@ -2599,13 +2599,13 @@ export default function AdminCatalog() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Age Group</p>
                 <div className="space-y-1.5">
-                  {attributes?.ageGroups.map((ag) => (
+                  {attributes?.audience.map((ag) => (
                     <label key={ag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-age-${ag.id}`}>
                       <Checkbox
-                        checked={bulkAttrSel.ageGroupIds.includes(ag.id)}
+                        checked={bulkAttrSel.audienceIds.includes(ag.id)}
                         onCheckedChange={(checked) => setBulkAttrSel(prev => ({
                           ...prev,
-                          ageGroupIds: checked ? [...prev.ageGroupIds, ag.id] : prev.ageGroupIds.filter(id => id !== ag.id),
+                          audienceIds: checked ? [...prev.audienceIds, ag.id] : prev.audienceIds.filter(id => id !== ag.id),
                         }))}
                       />
                       <span className="text-sm">{ag.name}</span>
@@ -2761,7 +2761,7 @@ export default function AdminCatalog() {
                 variant={bulkAttrMode === "add" ? "default" : "destructive"}
                 disabled={
                   (bulkUpdateAttrsMutation.isPending || bulkRemoveAttrsMutation.isPending || bulkReplaceAttrsMutation.isPending) ||
-                  (bulkAttrSel.ageGroupIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
+                  (bulkAttrSel.audienceIds.length === 0 && bulkAttrSel.genderIds.length === 0 &&
                    bulkAttrSel.themeIds.length === 0 && bulkAttrSel.styleIds.length === 0 &&
                    bulkAttrSel.tagIds.length === 0)
                 }
@@ -2772,7 +2772,7 @@ export default function AdminCatalog() {
                   }
                   const payload = {
                     productIds: Array.from(selectedProductIds),
-                    ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
+                    ...(bulkAttrSel.audienceIds.length > 0 ? { audienceIds: bulkAttrSel.audienceIds } : {}),
                     ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
                     ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
                     ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
@@ -2819,10 +2819,10 @@ export default function AdminCatalog() {
               {bulkAttrMode === "replace" ? "Attributes to be replaced with:" : "Attributes to be removed:"}
             </p>
             <ul className="text-sm space-y-1 pl-3 border-l-2 border-destructive/40">
-              {bulkAttrSel.ageGroupIds.length > 0 && (
+              {bulkAttrSel.audienceIds.length > 0 && (
                 <li data-testid="confirm-remove-age-groups">
-                  <span className="text-muted-foreground">Age Groups: </span>
-                  {bulkAttrSel.ageGroupIds.map(id => attributes?.ageGroups.find(a => a.id === id)?.name).filter(Boolean).join(", ")}
+                  <span className="text-muted-foreground">Audience: </span>
+                  {bulkAttrSel.audienceIds.map(id => attributes?.audience.find(a => a.id === id)?.name).filter(Boolean).join(", ")}
                 </li>
               )}
               {bulkAttrSel.genderIds.length > 0 && (
@@ -2862,7 +2862,7 @@ export default function AdminCatalog() {
               onClick={() => {
                 const payload = {
                   productIds: Array.from(selectedProductIds),
-                  ...(bulkAttrSel.ageGroupIds.length > 0 ? { ageGroupIds: bulkAttrSel.ageGroupIds } : {}),
+                  ...(bulkAttrSel.audienceIds.length > 0 ? { audienceIds: bulkAttrSel.audienceIds } : {}),
                   ...(bulkAttrSel.genderIds.length > 0   ? { genderIds:   bulkAttrSel.genderIds }   : {}),
                   ...(bulkAttrSel.themeIds.length > 0    ? { themeIds:    bulkAttrSel.themeIds }    : {}),
                   ...(bulkAttrSel.styleIds.length > 0    ? { styleIds:    bulkAttrSel.styleIds }    : {}),
@@ -3342,12 +3342,12 @@ export default function AdminCatalog() {
               <Label className="mb-1.5 block">Age Group</Label>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
-                {(attributes?.ageGroups ?? []).map(ag => (
+                {(attributes?.audience ?? []).map(ag => (
                   <div key={ag.id} className="flex items-center gap-1.5">
                     <Checkbox
                       id={`edit-age-${ag.id}`}
-                      checked={editingAgeGroupIds.includes(ag.id)}
-                      onCheckedChange={() => setEditingAgeGroupIds(prev =>
+                      checked={editingAudienceIds.includes(ag.id)}
+                      onCheckedChange={() => setEditingAudienceIds(prev =>
                         prev.includes(ag.id) ? prev.filter(x => x !== ag.id) : [...prev, ag.id]
                       )}
                       data-testid={`checkbox-age-${ag.name}`}

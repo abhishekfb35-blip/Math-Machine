@@ -3,7 +3,15 @@ import { pool } from "../db";
 export async function ensureAttributeTables(): Promise<void> {
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS age_groups (
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'age_groups') THEN
+          ALTER TABLE age_groups RENAME TO audience;
+        END IF;
+      END $$
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audience (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
         sort_order INTEGER DEFAULT 0
@@ -50,11 +58,20 @@ export async function ensureAttributeTables(): Promise<void> {
     `);
 
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS product_age_groups (
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'product_age_groups') THEN
+          ALTER TABLE product_age_groups RENAME TO product_audience;
+          ALTER TABLE product_audience RENAME COLUMN age_group_id TO audience_id;
+        END IF;
+      END $$
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_audience (
         id TEXT PRIMARY KEY,
         product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-        age_group_id TEXT NOT NULL REFERENCES age_groups(id) ON DELETE RESTRICT,
-        CONSTRAINT product_age_groups_uniq UNIQUE (product_id, age_group_id)
+        audience_id TEXT NOT NULL REFERENCES audience(id) ON DELETE RESTRICT,
+        CONSTRAINT product_audience_uniq UNIQUE (product_id, audience_id)
       )
     `);
 

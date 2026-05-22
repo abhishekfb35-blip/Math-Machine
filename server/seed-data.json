@@ -39707,7 +39707,7 @@
       "enabled": true
     }
   ],
-  "ageGroups": [
+  "audience": [
     {
       "id": "lwqf506gvpntza837ulb5e37",
       "name": "infant",
@@ -39965,2271 +39965,2271 @@
       "sortOrder": 4
     }
   ],
-  "productAgeGroups": [
+  "productAudience": [
     {
       "id": "mp5gwyavf3hgf16fh7gbtchz",
       "productSlug": "100-cotton-dhoni-cricket-player-personalised-adult-bath-towel-500-gsm-set-of-1-w",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "relnqrdar3tv5uysm1dmn3mj",
       "productSlug": "100-cotton-footballer-soccer-player-personalised-adult-bath-towel-500-gsm-set-of",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "mhnvq9j1728fjoeeo5h4y2yc",
       "productSlug": "aeroplane-embroidered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gbk3mu4nzj727l1nn2yt744f",
       "productSlug": "aeroplane-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wnx2fy0s8c4lepsijvmjkbbr",
       "productSlug": "aeroplane-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kce2xemzlcd2y91t38psjmks",
       "productSlug": "aeroplane-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zn2felv1n0vnidmskw009jwo",
       "productSlug": "animals-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hug0ir5gqv1sgjamuo83rn77",
       "productSlug": "animals-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yjfe7gjomrfcm580etn83m68",
       "productSlug": "animals-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ogn16ctc01bjry5ixdp84ixp",
       "productSlug": "animals-kids-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "p951ucq6tie56gzgt0havxmd",
       "productSlug": "ant-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ojtubk3icmmdis9mebi06z0t",
       "productSlug": "ant-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jcjanflqreo3fn8vjk2cm9em",
       "productSlug": "ant-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "utuvnj80ou8ng5deyqd98lbj",
       "productSlug": "astronaut-dinosaur-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j70htp1c1zgyx4of269mhman",
       "productSlug": "astronaut-in-space-with-planetssolar-system-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uf7r1shkespe39740l8syfkz",
       "productSlug": "baby-boy-owl-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xrtytt7lvkz3bb0zn5q9pycu",
       "productSlug": "baby-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "it7x3e2w0igve7yveygxm0tx",
       "productSlug": "baby-car-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wdygwvvsidx1g5518d34ng40",
       "productSlug": "baby-croc-in-bath-tub-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "aca9sdmec44tesi8gi3eyr9m",
       "productSlug": "baby-elephant-balloons-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "otsb7rj4adu2gt16afqhjlnq",
       "productSlug": "baby-elephant-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "powpf0lt36c0g8g4o0dvf7dq",
       "productSlug": "baby-fish-and-friends-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "u4ih44dp61jhsepg7ib5i4z4",
       "productSlug": "baby-fish-and-friends-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xpnvk70exj6bggh4tf69trnm",
       "productSlug": "baby-fish-embroidered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pes9dw0o61qhibn7ocg3s16t",
       "productSlug": "baby-girl-elephant-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "tc37f523e6y9wlpxfdlytpae",
       "productSlug": "baby-girl-elephant-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lfkps5f5hiaeff522ihm21b9",
       "productSlug": "baby-girl-owl-embroidered-kids-girls-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fs679fydxoq5susscr5n17ah",
       "productSlug": "baby-girl-super-hero-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hrfxh3rq1ivyr6xa8z44l13p",
       "productSlug": "baby-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "l08c9rc96n3rx1h7v9icuw0b",
       "productSlug": "baby-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "az5lrjqfx4u43p51x7btg2p8",
       "productSlug": "baby-mermaid-sleeping-in-dads-arms-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "upsviwxq91046akecd3jkoit",
       "productSlug": "baby-mickey-and-minnie-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o4tf6379wm2oaf45wxgz8hwm",
       "productSlug": "baby-octopus-girl-with-starfish-friend-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yuep5madugla61k20svtmuji",
       "productSlug": "baby-princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "w70glojov9ys8vmjgavxfxlw",
       "productSlug": "baby-princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "nq2bpwdga1sky841vp2jk0ww",
       "productSlug": "baby-princess-the-bear-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hqbpjef8lion78v662h66aa3",
       "productSlug": "baby-turtle-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "e41px8q4k38rg2kz4ai55x4r",
       "productSlug": "baby-wonder-woman-bathrobe-with-hood-for-kids-4-to-6-years-with-name-and-initial",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vltrsyiy8pzho7q7df9ss8ys",
       "productSlug": "baby-wonder-woman-bathrobe-with-hood-for-kids-7-to-10-years-with-name-and-initia",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "upmlgc743qyypbybfhelrojk",
       "productSlug": "bahubali-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xmkx1ygl5ikjpxhlvelgsnji",
       "productSlug": "barbie-princess-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "azsjza2f4645a2udc9xktih4",
       "productSlug": "basketball-adult-sports-bath-towel-for-men",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "vm9cidfqexum8zhhej976twy",
       "productSlug": "basketball-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n2duvp40ldpp8omjp0cvu7xi",
       "productSlug": "basketball-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kwckank3ha60dkkj2zgnx50h",
       "productSlug": "bathing-baby-crocodile-embroidered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jm0f0gxzrsj7onb1aa1rqlck",
       "productSlug": "bathing-baby-elephant-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g30uk54j80ly2y412t8a70et",
       "productSlug": "bathrobe-for-adults-menwomen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "mbbsekplyoq7gpi8g5vj0fl0",
       "productSlug": "batman-justice-league-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "i0e3qu0lagzequgj475uzn6z",
       "productSlug": "beach-shorts-bathrobe-for-adultsmen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "zzr6w66bzie05e2neumgrn5c",
       "productSlug": "beach-shorts-bathrobe-for-teenager-boys-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c8rrwxfg9hv0dtxgur9czx5n",
       "productSlug": "beach-wear-swimsuit-bathrobe-for-adultswomen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "v0tu15nmhamv739cgxm7c225",
       "productSlug": "bird-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "es7ay3ft35pxwh21leb1s5tq",
       "productSlug": "blue-lizard-friend-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ibvgf9zenknkdt397bbawhuu",
       "productSlug": "blue-mustang-car-adult-bath-towel-white-150-x-75-cm",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "eyt6x7i7zcerwugrkvdj3b5i",
       "productSlug": "blue-sports-car-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "gp8i101ouhjk4r77f26qqo1i",
       "productSlug": "boss-baby-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y4vo1mvawrplhmygsx8vgkrx",
       "productSlug": "boy-and-girl-owl-kids-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kv53yqmhlg1lkmogy7l72ete",
       "productSlug": "boy-girl-owl-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cl3qbt7h74a4vmd3ocq7xqp8",
       "productSlug": "boy-on-cycle-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ymplup5gq3bbjr542xnlvcv6",
       "productSlug": "boy-on-cyclebike-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fcf109fg4jqdp1qtgb0yfern",
       "productSlug": "boy-on-cyclebike-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gum293y48gwil6wrf3bijg6a",
       "productSlug": "bts-bathrobe-for-teenager-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mc0b5i9flkjdiztc226op1d0",
       "productSlug": "bts-bathrobe-with-hood-for-kids-4-to-6-years-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "h3oesxr2qtinovb6owm2bcl8",
       "productSlug": "bts-bathrobe-with-hood-for-kids-7-to-10-years-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ylulke12dhl1olsxpe04km19",
       "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rjkx4cfz9cjp9v2p6k8rnndm",
       "productSlug": "butterfly-adult-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "h9dso2mtvpx2o5wtsv1jj2zc",
       "productSlug": "butterfly-kids-bath-and-hand-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wu2f4bc5qjx5cwhgh6qb1q1c",
       "productSlug": "butterfly-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ao5325t62evu654ssoo8mjjh",
       "productSlug": "butterfly-twine-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qktmgtgcruiq1c9e8psjsg0r",
       "productSlug": "captain-america-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "chy84fja935silhy2xh9lcjc",
       "productSlug": "cat-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "i327sckfffyl4smuw8px8h0x",
       "productSlug": "cat-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dmvkueqs0upnloa3jh943vsl",
       "productSlug": "caterpillar-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lz2hn5hsy69b1cokh1h7i8dl",
       "productSlug": "caterpillar-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a6i8dxspuzb02drbhmgwem81",
       "productSlug": "christmas-bells-handkitchen-towels-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jbdchu61k8g3m2tokufcj3iw",
       "productSlug": "cotton-fcb-barcelona-soccer-club-personalised-adult-bath-towel-600-gsm-set-of-1-",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "kemto50rhey3bxmqaj938rik",
       "productSlug": "cotton-ninja-hattori-personalised-embroidered-kids-bath-towel-500-gsm-set-of-1-b",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uk9led10gr2qfg9weujbxvf8",
       "productSlug": "cotton-rio-bird-personalised-kids-bath-towel-500-gsm-set-of-1-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "h3vlp2iitq25wz9kln0vqnz1",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "e7fh7a3sjthajajjl2a8fjmg",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "wq6py9awllqjqg3d6bq0ffjv",
       "productSlug": "cow-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n0woowosnz76j1lhph953db8",
       "productSlug": "cow-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ffk8ips856ruec2ig8amfpuz",
       "productSlug": "cow-with-butterfly-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "m7ag7rt3ufi2isy2qgln57nz",
       "productSlug": "crciket-player-sports-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kfxxza0mwuesx6ymk0m7t22h",
       "productSlug": "cricket-bat-and-ball-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a68i7vmx6gsxsm91pkzxkptd",
       "productSlug": "cricket-bat-ball-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g0b0ytrc8dwsbrz85ht1ux3i",
       "productSlug": "cricket-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "w882l71rgml7c2mtbwojx0ro",
       "productSlug": "crocodile-and-its-bird-friend-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wuzb342gysoc6xroasqa26fz",
       "productSlug": "crocodile-with-heart-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "au9w6uxvbwy6izg1oz3k6jyf",
       "productSlug": "cruiser-motorcyclebike-biker-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "lyjwmyntmel000ifdgpz3b6y",
       "productSlug": "cup-cake-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gk7wpeqa23qnnmdrh5h2xym3",
       "productSlug": "cute-baby-butterfly-kids-bath-towel-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fmnrq586b0xulvhaasinc059",
       "productSlug": "cute-baby-butterfly-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n0r50miz893dvyddlfejg783",
       "productSlug": "cute-baby-dinosaur-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o57y9s27tx9uegr1hrqxs1d7",
       "productSlug": "cute-baby-dinosaur-kids-bath-towel-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a1glszpxvfwwqbco52ldtug1",
       "productSlug": "cute-baby-dinosaur-with-flower-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hn68848cd6174actajf9nsbp",
       "productSlug": "cute-cow-kids-boys-girls-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "szrlpo38tlzkkwy3j9rewdgf",
       "productSlug": "cute-sheep-bathrobe-for-girl-kids-with-name-and-initials-in-age-4-years-6-years",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g5r043n2dnagynwrpx41z7gn",
       "productSlug": "cute-sheep-hooded-bathrobe-for-girl-kids-with-name-and-initials-in-age-11-years",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "prds3cbygd3y8rowv7fc29x5",
       "productSlug": "cute-sheep-hooded-bathrobe-for-girl-kids-with-name-and-initials-in-age-7-years-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ihyhg3q0h4i50gg9r3ayegfw",
       "productSlug": "dhoni-cricket-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "cwwpeabfo6zoilfcpddb244y",
       "productSlug": "dhoni-cricket-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "r4lay7k0hgafiinkp92fsm9k",
       "productSlug": "dhoni-cricket-player-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qalhgl1z7zzs0znkh1o68sd1",
       "productSlug": "dinosaur-0-to-5-yrs-baby-kids-blanket35-6-ft-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xs6v6sn4h4ky36qn6boin2tz",
       "productSlug": "dinosaur-blue-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a4z5vo6ztocigr0q37o7en5y",
       "productSlug": "dinosaur-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b8in2nyebc67e05njpg8ios6",
       "productSlug": "dinosaur-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n662rfbwcl3it9e8p43fzs66",
       "productSlug": "dinosaur-kids-embroidered-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pesingi2i4enipaabdq34yyj",
       "productSlug": "dinosaur-towel-tiger",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qyozswjpsl3qum29ehhbinfm",
       "productSlug": "dog-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rpsurvbf38kmqv2znfs7cg6g",
       "productSlug": "dog-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y4z90r7jccrhakiznd6xoie3",
       "productSlug": "dora-explorer-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hu97w0iahbl9fintgucyinx4",
       "productSlug": "doraemon-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qdfopx14yhvq8b8dj6j76smi",
       "productSlug": "dori-finding-nemo-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z1uz9u3yn2cldustio86592w",
       "productSlug": "dragonfly-initials-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "euo0gzpsqhxm3utfa6o8dv6l",
       "productSlug": "elephant-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gepn2f5gqv2avdedq53shske",
       "productSlug": "elsa-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s344whqxn5qqvfa44f9vunrl",
       "productSlug": "elvis-adult-bath-towel-king",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "mwmawwzza4qqwsfxcy26yf16",
       "productSlug": "elvis-kids-bath-towel-queen",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "klwd042uuhqgyqe5j1jvzdrt",
       "productSlug": "fabric-handsome-and-gorgeous-valentines-couple-bath-towels-multicolour-5-by-25ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mydm30p9e4h7sam1aro7izmv",
       "productSlug": "fabric-mr-and-mrs-bath-towels-5x25ft-white-pack-of-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wti0m67se4kgvlzhymou3n9a",
       "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ot3ptlfntbfub77mwopn15e1",
       "productSlug": "floral-bee-ladies-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ct4red3iubdo7f9vfrtsno39",
       "productSlug": "floral-butterfly-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "rlbib99aicqspcf5q0fr6haq",
       "productSlug": "floral-emblem-couple",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rlj39b1b0wifd06fx306x9bo",
       "productSlug": "floral-emblem-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pxjxo4ypgjkgue82o07boqup",
       "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o2fjga3v970d9acjp2ft6ta7",
       "productSlug": "floral-heart-ladybird-couple",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cltlsi8451348k646p54zwu6",
       "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ox6binz78y0s46trtwlwpmal",
       "productSlug": "floral-with-lady-bug-adult-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "b48gurxv9mkpyxgkgeblndmr",
       "productSlug": "flower-pot-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kv1ahx5ryzqmy8aseaoekpxa",
       "productSlug": "flower-pot-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s8b7hb54a1j08g1vzob9cy34",
       "productSlug": "flowers-bee-couple",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "byj8wd40h7gq7n173zijhoxd",
       "productSlug": "footballersoccer-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "y1vfdosr87r814fupyeuzkk8",
       "productSlug": "footballersoccer-player-sports-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "p7sycxme4st4yw8y97ztmi9l",
       "productSlug": "footballersoccer-player-sports-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b9x39smvuxvfg7qpokx6rx3p",
       "productSlug": "george-peppa-brother-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wzufagjewsjmowu7e3gqud5x",
       "productSlug": "giraffe-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s2oo63laqq2po6cho6rkg1io",
       "productSlug": "girl-dino-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "axc4te4knogn30fo7nru18qt",
       "productSlug": "girl-minion-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pp5wrsotagzbgupusdevz9kg",
       "productSlug": "girl-with-fruit-basket-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j53bi0nrkaignepajwbzb4ab",
       "productSlug": "girls-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uv5oh25ir00ew03a2a13wiha",
       "productSlug": "girls-bicycle-with-flowers-adult-white-bath-towel-for-women-teenagers",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "b8sn5aw004333sk685x0hbdp",
       "productSlug": "girls-cycle-with-flowers-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mguvio4pkun01tqye4qpe64u",
       "productSlug": "girls-heart-adult-bath-towel-for-women-teenagers",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "pnccjmec770y940vukxldhpp",
       "productSlug": "girls-heart-adult-bath-towel-for-women-teenagers-1",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "zy1yjv8vhhops1kxbtj58h9y",
       "productSlug": "girls-heart-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rn52ln4bfjg1gsnkl664p1ol",
       "productSlug": "girls-heart-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ikoawqdn0jr8o1xajp9g95w0",
       "productSlug": "girls-superhero-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "p4wpeysw9tuts1h2th4vyekv",
       "productSlug": "goku-dragon-ball-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y242f7aqqzgksjahbl25l6ew",
       "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "isd5rwqkd9fkn2yaeb0lbjev",
       "productSlug": "golden-crown-bathrobe",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "eo458hp0o5b6mr2su3vhbxny",
       "productSlug": "golden-crown-bathrobe-for-adults-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "cua8fbvqz0bhqtdinyrr5nhg",
       "productSlug": "golden-crown-towel-set-1-bath-plus-2-hand-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b0unrxsysbjics4hrjmx1c2x",
       "productSlug": "golden-emblem-with-initials-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qqj7wxz8ghskxk6letk8zx3w",
       "productSlug": "golden-laurel-bathrobe",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j322zup8tmdxov3lxfo5te7r",
       "productSlug": "golden-laurel-initials-3-hand-towel-set-for-men-and-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "tc9elnckvc077cpn519ru1yh",
       "productSlug": "golden-laurel-with-initials-1-bath-plus-2-hand-valentines-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "iej6slunrfzetfruyyoc319c",
       "productSlug": "happy-frog-under-rainbow-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o3a64v7hpcb6daojo04ssslf",
       "productSlug": "happy-frog-under-rainbow-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z3ro7zi79oemnj40itopvgiy",
       "productSlug": "he-and-she-devil-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "e0y05f7s1b2aot6snty6mm4c",
       "productSlug": "he-and-she-owls-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zemicmevt9nkte2p51gfjdt8",
       "productSlug": "he-devil-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "y7xk0j95x4ss2h39iawf2qay",
       "productSlug": "he-devil-bathrobe-for-adults-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "t8hbpognk98zff1549bx8jra",
       "productSlug": "heart-bathrobe-for-4-to-6-yrs-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wa4voaro1w4actf1janbcduv",
       "productSlug": "heart-ladieswomens-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "u9c1jw3ss9295xqkd5yd7pn9",
       "productSlug": "heart-personalised-bathrobe",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "sityfw3w3x4czmszewgzg6qf",
       "productSlug": "hearts-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "i321x8epzp05wmdf3zvtuugm",
       "productSlug": "hello-kitty-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "nvhrg4mx6lwqtwxy6ta85ane",
       "productSlug": "hello-kitty-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o3a4mzhx761x5xnv128xjqid",
       "productSlug": "his-and-her-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "thifmq4b266wwbdp0ntnskrw",
       "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ps41kko57rukhj3jil4zw5dc",
       "productSlug": "his-her-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bdpnjv8ela70rrz7n0qdhd9b",
       "productSlug": "homer-simpson-playing-guitar-luxury-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "gnjiia6jmo9511g29uh4uhzk",
       "productSlug": "honey-bee-in-love-with-flower-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "v2w6k5siky7qpklmdb5czj3q",
       "productSlug": "honey-bee-with-flower-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "inihjoo0dcmod6yhja1fr3l0",
       "productSlug": "honey-bee-with-flower-kids-bath-towel-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "csc5su0jeen8pkxfsts956rk",
       "productSlug": "honey-bee-with-flower-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "w0lrzb01wkr7gxi7tvhbabv7",
       "productSlug": "honey-bee-with-honey-bucket-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bkbenlu8652nnaiknqgcqoaw",
       "productSlug": "honey-bee-with-honey-bucket-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s7qimbkl87t1qn9ivumcsm9l",
       "productSlug": "hulk-avengers-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c4k70evxwn3e40bn9x8dyos4",
       "productSlug": "hulk-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qfgvfl6f5tpfmghxtsbnztwh",
       "productSlug": "initials-with-butterfly-design-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y3rpetsvqugm6nung4ckc2y9",
       "productSlug": "initialsmonogram-kids-white-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rfpxmdo9f3nw5sx74oi2kn4y",
       "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "anco4d1jeo8vv3n4zft9vjsj",
       "productSlug": "initialsmonogram-ladieswomens-adult-white-bath-towel-1",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "v64t942puicdi9g0ybysmjhg",
       "productSlug": "iron-man-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hgjkm6oe4popfdnkq5lpovuu",
       "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kv0zrxk1893arh038v9r2v0d",
       "productSlug": "kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "sah0uqslknvdk1cjf0ia8d5e",
       "productSlug": "kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pggkrmj44dwxlq9takphc672",
       "productSlug": "kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yq0rafd8dy4s4xwjeod29q1n",
       "productSlug": "kids-bath-towel-3",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "h0qgcwl81is9rfjzcdn6bspb",
       "productSlug": "kids-bath-towel-4",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ajhw368ve39ri3i788pbamqz",
       "productSlug": "kids-bath-towel-5",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bujddetrcp22w44ddtn6l5cy",
       "productSlug": "kids-bath-towel-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y0wb8tl00es9a0c48fdocfwk",
       "productSlug": "kids-girls-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vt3x4euty3rv52iru70bffzu",
       "productSlug": "king-and-queen-crown-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ftyp87i04l53ayta0u3h0a9f",
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a78f0pldw6kneojdw925a27a",
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mo131w2rht9eset9y2vthkd3",
       "productSlug": "king-of-hearts-with-crown-bathrobe-for-adults-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "pf3wlcfkgfkdyxuz2ndoi75l",
       "productSlug": "king-queen-crown-couple",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "fp8qd8u8gwhjff49hc04w8d7",
       "productSlug": "king-queen-crown-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ugnl72rh0gbitku4ucxy7j2q",
       "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uwvy86p0h0mrmmtah1miuw3f",
       "productSlug": "kitty-with-heart-bathrobe-for-7-to-10-yrs-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ztxc6ns0nd3bqxaclexu5i8q",
       "productSlug": "kohli-cricket-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "sj2eautwjps7wdi2648wd7to",
       "productSlug": "laurel-initials-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "zp6wobir582q6z14yxgn77bx",
       "productSlug": "laurel-initials-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ljcatzmdpowv87nthy2hxigr",
       "productSlug": "laurel-with-initials-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rp04cwp1w0vp995ghxm0z1jx",
       "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lz3nh5s7y08txiqa9whsmlcw",
       "productSlug": "laurelemblem-with-initials-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "eb45qz9p7ji2oupd28rird3b",
       "productSlug": "lion-and-cub-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dbuo5tx7tx8g5vc9u63ng2og",
       "productSlug": "lion-cub-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "noybsvns4njzjx8bukivrkoo",
       "productSlug": "little-singham-superhero-bathrobe-for-7-to-10-yrs-for-boys-with-name-and-initial",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "q8f482rlhyybk9n06gxfgt8m",
       "productSlug": "little-singham-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "sub4gmp12jk6uirbgubf3qqb",
       "productSlug": "little-unicorn-pony-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o9i3bh88gvpb40lklffyicey",
       "productSlug": "lizard-friend-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rzsmaeyv8zxfcfjzp9tsl5zf",
       "productSlug": "love-turtles-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "x2j3qxuofcbry7t961jxxb5s",
       "productSlug": "mama-duck-with-ducklings-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "msfee4ip3otsstz0k1uy482f",
       "productSlug": "maradona-footballersoccer-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "uekz0mau4ug7e11edjbfmscq",
       "productSlug": "maradona-footballersoccer-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mth5lpo4v9zqlqqgzrx5z3wr",
       "productSlug": "masha-and-bear-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gla9g5ub9ocpnqs151mxeapa",
       "productSlug": "mermaid-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dmtpevjy1sbunruw9su31di1",
       "productSlug": "mermaid-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g7sih4hdkwvbjbn5asiyk8x4",
       "productSlug": "mermaid-baby-ariel-in-dads-arms-0-to-5-yrs-baby-kids-blanket4-4x-3-4-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dedncl912lo19dz7pk596kmy",
       "productSlug": "mermaid-baby-ariel-in-dads-arms-pink-kids-blanket-6-to-12-yrs",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "avna9ub0q7o0fkx9ebxtvgrz",
       "productSlug": "mermaid-princess-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rddur57hjpqz8q0jdpwmubcc",
       "productSlug": "mermaid-princess-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gy0vj7oiybntv7hluq7f4cmm",
       "productSlug": "mermaid-princess-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "q2piqby48oaxklk87un5gioz",
       "productSlug": "messi-argentina-footballersoccer-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "dgpgdh9kamrsbx4swdg2hesr",
       "productSlug": "messi-argentina-footballersoccer-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dvglypsmzdgd5alm9rf51884",
       "productSlug": "mickey-painter-artist-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wli0610rcbcldim99pw4v5kg",
       "productSlug": "mickey-pluto-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uuix3rrc6ep00kcqjuf19j6z",
       "productSlug": "mickey-with-aero-plane-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "nfs4vfcm2f26vtdcmlaqal5d",
       "productSlug": "minnie-mouse-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "okvl5n8mdgytjjznyd0klc4b",
       "productSlug": "motorcyclebike-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xppa4r2w8mbwguomn49ums92",
       "productSlug": "mr-and-mrs-mush-lips-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j04o55a7aag31yu8662tokhl",
       "productSlug": "mr-and-mrs-right-throw-pillowscushion-covers-with-cushion-fillers-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ax0ckuv6gb4956u2bvrek9ak",
       "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gq3vfs492t8jw1cidgasfxek",
       "productSlug": "mr-mrs-mush-lips-couple",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "l5n0msdmdgt64ih79flo0o6l",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "njnm6vq6ymee5h1akr3741lv",
       "productSlug": "mr-right-mrs-always-right-bathrobe-gold",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "vccd76pnqjch1gr9ty3i6nsj",
       "productSlug": "mr-right-mrs-always-right-bathrobe-set",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "utvclxk7tekhjjx4ch4v505j",
       "productSlug": "mr-right-mrs-always-right-couple-towel-set",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "pspog54fkh8r9hbe6jrhxd2f",
       "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ajmtokqwkbsxmzna2i6zzp28",
       "productSlug": "mrs-always-right-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ryeayltm8av1or2ixsw5mjff",
       "productSlug": "my-little-pony-pinkie-pie-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zodr5sxliot981y44b3fefwl",
       "productSlug": "my-little-pony-rainbow-dash-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "t7mhp7r73oz7a3vuxm0vi2t5",
       "productSlug": "new-born-baby-girl-chick-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dhy318gk34zfhxvl807uvmw7",
       "productSlug": "new-born-baby-with-bottle-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hglni4dmjt9qqdf4n7hihy2c",
       "productSlug": "olaf-frozen-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "f05ytn3wospz7mzhr3x6tsav",
       "productSlug": "olaf-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jw93jfxpjhdue3pqo55dfnaf",
       "productSlug": "owls-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zebmsvesm65px7in17krj5sg",
       "productSlug": "panda-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hgakz8ox0tioor39qvua1f2k",
       "productSlug": "panda-on-bamboo-tree-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kc4hdnpdgyitcgow8orxg3xf",
       "productSlug": "panda-on-bamboo-tree-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kmi8ngza5kvtim8yo7a0oizf",
       "productSlug": "panda-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "svo0kzrdlirkiz5v26r3fom9",
       "productSlug": "party-elephant-with-baloons-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "i19ngmstcv1qv2jeyx5zmn2b",
       "productSlug": "party-elephant-with-baloons-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dmsfev1d6r8gsn7nieigeyod",
       "productSlug": "party-elephant-with-baloons-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "m8m2ukleigvczxvbitupzgyp",
       "productSlug": "paw-patrol-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "gdi3eck088wf0ne0ejll8nhp",
       "productSlug": "peacock-feather-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "l3d3d5u60mg8bf7y9c47s3qu",
       "productSlug": "peacock-feather-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ogmu6nlbg8pmrmfhsy16jvu1",
       "productSlug": "penguin-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o2w0u0nszn3twt5xyuiylgxu",
       "productSlug": "peppa-fairy-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ubaokgzr1y725r9zlp2qrdyw",
       "productSlug": "peppa-pig-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cy5orjch1idy8ahwheodcga6",
       "productSlug": "pink-butterfly-adult-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ar0laosdkqv36tnj6tkn0hyt",
       "productSlug": "pink-butterfly-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xhlpqs9lejcmaozfm23p0lfp",
       "productSlug": "pink-doll-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ae1a0grgzzb7kwrthpbjckpq",
       "productSlug": "pink-heart-bathrobe-for-adults-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "dvebnbstnuxjko2j3i288prc",
       "productSlug": "pink-heart-bathrobe-for-teenager-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "tfqbplevh3asqw7o0v5sdcqs",
       "productSlug": "pony-pink-ponyunicorn-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jbwppfpro6rw909qe0cs5b54",
       "productSlug": "pony-unicorn-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rlxqaf57tdj45dz05fldzv56",
       "productSlug": "pony-unicorn-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pleqcljkq45a6pl85haq3qvc",
       "productSlug": "pony-unicorn-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ql6os1o6ccq95hcm5eevzcna",
       "productSlug": "pony-unicorn-kids-bath-towel-3",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g8cduj832vxvh300mlfg2buw",
       "productSlug": "pony-unicorn-kids-girls-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b7oedkfcf38a1cx9gai35yh7",
       "productSlug": "pony-unicorn-on-cloud-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s9gj1weuiaqhmyuo5f5zk23t",
       "productSlug": "pony-unicorn-on-cloud-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bzo0j3fwr53r8uc8u0ir0b5q",
       "productSlug": "pony-unicorn-on-rainbow-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ehj7ll9z7rnnu1jq5uc3yvzj",
       "productSlug": "pony-unicornpony-on-cloud-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n8hxgmmf5pfsbitjtlfm6kqi",
       "productSlug": "ponyunicorn-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "q34ayquzaf341xyjcv7w5jnp",
       "productSlug": "prince-and-princess-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vzwrdrvotrmwp3ye9ng76u8m",
       "productSlug": "princess-0-to-5-yrs-kids-ac-blanket-pink-35ft-by-6ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bw05aie7xsz1tvg575itifz7",
       "productSlug": "princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rvg4dw5g7v0u1ioeyjcw9818",
       "productSlug": "princess-6-to-12-yrs-kids-ac-blanket4-x-6-yellow",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xtrss3xln5ozp58r04hgg9ti",
       "productSlug": "princess-6-to-13-yrs-kids-ac-blanket-pink-4ft-by-6ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "le00v2sbqjiwszns1f96bgzl",
       "productSlug": "princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "t7305vzf4lit8xj9y0in6dwp",
       "productSlug": "princess-anna-frozen-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jnd33d37qap7zclpebvtu5bu",
       "productSlug": "princess-bathrobe-for-adultswomen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "m6v6mc1lfmiz5rorqvccpeqe",
       "productSlug": "princess-bell-beauty-beast-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "w0ldncstocxpe2suu4kfne2a",
       "productSlug": "princess-belle-beauty-beast-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z1786nw4glklalscxmx0a1l2",
       "productSlug": "princess-dorothy-6-to-12-yrs-kids-ac-blanket4-x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c4ewcpzeloyhujhlbadns324",
       "productSlug": "princess-elsa-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ls0ndjj0get2ziff9rufq6kf",
       "productSlug": "princess-embroidered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qvewjopau51bvkxqwojm862g",
       "productSlug": "princess-embroidered-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vu8vbcw1miua12csfyvw5lcc",
       "productSlug": "princess-in-blue-dress-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "acwossfwc6mcqp4ic3kwuxgy",
       "productSlug": "princess-in-pink-dress-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lt28vqt4n3icqy4ug9jncmzo",
       "productSlug": "princess-in-pink-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mh9xknuat2ih1rbx0t6h8kvr",
       "productSlug": "princess-in-purple-dress-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jktcmesz1lbg725nrib041tf",
       "productSlug": "princess-jasmine-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z16cvff9tm19xdk89jdd16ny",
       "productSlug": "princess-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yku2vymdsvnfizzg59qc87gw",
       "productSlug": "princess-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "u6arcj7qsgoxw8ij6lmpd8cd",
       "productSlug": "princess-kids-bath-towel-10",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ds1pg9dnw1crmj36rukzw6jp",
       "productSlug": "princess-kids-bath-towel-11",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c5kerl8cvpa8cb8gy1kyv0qy",
       "productSlug": "princess-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "oy9ewb3jzqq9wptelhyst8v8",
       "productSlug": "princess-kids-bath-towel-3",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cjq3vusbumd9rqobfncp3z33",
       "productSlug": "princess-kids-bath-towel-4",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "x1l3fejzgkl48rz4udcami4q",
       "productSlug": "princess-kids-bath-towel-5",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vndbribe1sq11u7oaa40nf0o",
       "productSlug": "princess-kids-bath-towel-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z2cza6zio3izsbnmewef5w3b",
       "productSlug": "princess-kids-bath-towel-7",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fitc41x8ggazvvg7t4qkhv1x",
       "productSlug": "princess-kids-bath-towel-8",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mw14eexzqh01d7sll2v5pbv3",
       "productSlug": "princess-kids-bath-towel-9",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "im54pgpnqn2799boofmu8j7g",
       "productSlug": "princess-kids-bath-towel-white-contemporary",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s1g04okppkjm73xmo9e68p9d",
       "productSlug": "princess-moana-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c2iktqt4jc3pvuq1btxa13mi",
       "productSlug": "princess-princess-with-magic-lamp-0-to-5-yrs-kids-ac-blanket-pink-35-by-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "paeaucxr431bm8mfh5ju6udq",
       "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pb7bklqh3t6as9dxt9zi9t6m",
       "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yld5pba5qt5qttpid40l95f7",
       "productSlug": "princess-rapunzel-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "k25w0mpf7dbbo74j0yrcfb57",
       "productSlug": "princess-sisters-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n3rdx7642xva4b28bdneeyhe",
       "productSlug": "princess-sophia-0-to-5-yrs-baby-kids-blanket4-4-x-3-4-yellow",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "r7iu9n2uhxaw3k41xdbm9rtk",
       "productSlug": "princess-sophia-embroidered-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "r20fmqcsu1b30ahvwsfvsmpy",
       "productSlug": "princess-with-a-rose-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "a5dhto6yli6x4jcjtpo3ax4b",
       "productSlug": "princess-with-bird-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dylsv7rs5vkybx5kl1u4icoi",
       "productSlug": "princess-with-butterflies-0-to-5-yrs-kids-ac-blanket-pink-35-x-6-ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "phyugwfmq25g4ya8bxlf5q4s",
       "productSlug": "princess-with-butterflies-6-to-13-yrs-kids-ac-blanket-pink-4-x-6-ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lmmeq6txhjxf93ti94qp1kko",
       "productSlug": "princess-with-butterflies-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fy6cpaesdp5l4oxd1rs13zg6",
       "productSlug": "princess-with-flowers-0-to-5-yrs-kids-blanket-pink-35-by-6-ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mc9gfmx2oycb91zck5mi2qsm",
       "productSlug": "princess-with-flowers-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-ft",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b8z8nzz70wi4izh8puxavja6",
       "productSlug": "princess-with-fruit-basket-embroidered-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lnzmmztl24rjkfq1v2192l7i",
       "productSlug": "princess-with-magic-lamp-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uezotfxut9lqm0n31tl1lwaq",
       "productSlug": "princess-with-rose-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ho0mdkcpigx7v8dnewjf83t5",
       "productSlug": "princess-with-rose-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "alv2dgvr3u14etlz3w76msps",
       "productSlug": "purple-flower-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "dhuhcwkiothmy5rf9x3nctwx",
       "productSlug": "purple-flower-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "k9o10cbqhh9p14ivp99outtm",
       "productSlug": "purple-flowers-floral-bathrobe-for-adultswomen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "tduce2w78soysydqxqzd55c1",
       "productSlug": "queen-bee-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "snwyh8b2t3aox3impkvqx2lj",
       "productSlug": "queen-bee-bathrobe-for-adultswomen-with-name-and-initials",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "jdspollf91l217ynp6u39f0a",
       "productSlug": "queen-crown-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "dj5sv1ode02mm6npk1z9vsya",
       "productSlug": "queen-of-hearts-on-pink-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j35kfgxv5pqvevj59g06kagy",
       "productSlug": "rabbit-with-carrot-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zrukywy4cp3m03gqfcibj0vu",
       "productSlug": "rabbit-with-carrot-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mwwfjwljgx4jai67ztcn4ug8",
       "productSlug": "red-beetle-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "vbq41qhxj39fp3h9h93g3s35",
       "productSlug": "red-beetle-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "y7q62tckqitr5hnfszsf25uf",
       "productSlug": "red-car-adult-men-women-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "dj1woo7i7x8gabzfduey0x1r",
       "productSlug": "red-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hlagsfle79i50p0lbt6jhhce",
       "productSlug": "red-sports-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fatnu98snqa5ind8uiz8kes6",
       "productSlug": "red-sports-car-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hcuww9s1z8hfb1kic1qcde64",
       "productSlug": "red-sports-car-kids-embroidered-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z1j3m9325jn8itpx00133m3c",
       "productSlug": "red-sports-race-car-embrodiered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ygk2iesw5jbuezc60ne3qy5x",
       "productSlug": "red-sports-race-car-embrodiered-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o2f1udjfuxghv79h87fo03c1",
       "productSlug": "robot-superhero-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cjnswqoldgtauedxei2yslud",
       "productSlug": "ronaldo-footballersoccer-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "zb6vtfmhr8e03a3h7sfnsppx",
       "productSlug": "ronaldo-footballersoccer-player-adult-bath-towel-for-men",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "ov85s2l9pdgzk99v2dz715e1",
       "productSlug": "ronaldo-soccer-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pyasrxgdyzv9susg9hfoodpi",
       "productSlug": "ronaldo-soccer-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "pftv0jsj1qyaai0vmxqj6rva",
       "productSlug": "ronaldo-soccerfootball-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kv643ftbhh1mq9cawsajmgri",
       "productSlug": "ronaldo-soccerfootball-player-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "u2mq0gctm6qsenvzhp4q5cpu",
       "productSlug": "royal-lion-emblem-adult-bath-towel-for-men-and-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "jx6gu1z7segocw729qrz9il4",
       "productSlug": "santa-claus-christmas-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kv4gt7gn011c8mv1wsa2xt3w",
       "productSlug": "santa-claus-in-chimney-christmas-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "swmv7be74hc5u3bcbyh03sek",
       "productSlug": "santa-claus-with-guitar-christmas-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mfr6bwe9wxfk7t3l3shycrtn",
       "productSlug": "santa-claus-with-his-reindeer-christmas-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "f1ili3psmh9glgrwkcbu4kab",
       "productSlug": "she-devil-ladieswomens-adult-white-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "c5y8djjj3x9uc8mrc1ygg5gd",
       "productSlug": "shiva-bike-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o4xpqs7d9txgirjuedw3txf2",
       "productSlug": "shorts-frock-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cf3fawelccrcjy05jee4hx7o",
       "productSlug": "sleeping-crocodile-and-its-bird-friend-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jryf2ysttgulfmxqde2kev7a",
       "productSlug": "sleeping-crocodile-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "h1b6y79sx9o87co5vdge2t3w",
       "productSlug": "snow-man-with-christmas-tree-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vvvmf470aarjw8n6d3o87ugo",
       "productSlug": "snow-man-with-christmas-tree-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "r9uhjxnlxqfj7jzi4r6dzg4v",
       "productSlug": "snowhite-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "w62ogn8g5l18202vyaqhvjf6",
       "productSlug": "soccerfootball-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "kgan8qmzcjm3wp5fewudy4ng",
       "productSlug": "soccerfootball-embroidered-luxury-adult-bath-hand-towel-set",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "tnynoar7uq5msni8gsmzxja5",
       "productSlug": "soccerfootball-player-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "z0e6aeqhvx4yw9x64nz1i1y3",
       "productSlug": "soccerfootball-player-adult-bath-towel-1",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "f78uqxowmikx4qgp66unsq28",
       "productSlug": "soccerfootball-player-adult-bath-towel-2",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "guxtbacwrdefd3s0k4o25v77",
       "productSlug": "space-rocket-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fao143pzwr63rwb8x7hyvpii",
       "productSlug": "space-rocket-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wewo06th4kaixl01i1yr49ll",
       "productSlug": "space-rocket-with-astronaut-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b1qf0s5upbdby0nv2uld1zdh",
       "productSlug": "space-rocket-with-astronaut-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cdw4suwhhikdem0d4f821w1d",
       "productSlug": "space-rocket-with-astronaut-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "t6a89ol6eia8dowxpd86iyp1",
       "productSlug": "speedo-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "lq79se2ay6f5l010pwhjjwk4",
       "productSlug": "spiderman-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "m7s3r8ad9ybms7cftm3umgqt",
       "productSlug": "spiderman-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ht94tt4vpum1ujrhoqsoqy7f",
       "productSlug": "sports-adult-teenager-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "oecctxqypcm8op3onmju7y0b",
       "productSlug": "sports-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "iinmokfojzvnncp50uinl8fl",
       "productSlug": "sports-kids-boys-girls-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cfwsef4j8qyh0nnr1xi1v2nl",
       "productSlug": "sports-racing-car-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "v5fts3m3dvccmnczjnxnmdfd",
       "productSlug": "strawberry-hat-girl-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "oitlzp2tfax721eepy0f8a96",
       "productSlug": "superhero-0-to-5-yrs-baby-kids-ac-blanket-blue-3-5-by-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qxphiwhxpka98cmnjz1psaba",
       "productSlug": "superhero-6-to-13-yrs-baby-kids-ac-blanket-blue-4-by-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "l307rikftppbqvs3zclth3pi",
       "productSlug": "superhero-bathrobe-for-4-to-6-yrs-for-boys-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "p5cnriz72volrdvluqoihcj5",
       "productSlug": "superhero-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c0ulrpt5aa1haryw34vyu9eq",
       "productSlug": "superhero-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "b619k2158gm3l26adrmvnqlk",
       "productSlug": "superhero-kids-bath-towel-10",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ql24m3rjrtckuyx0o4ucgtax",
       "productSlug": "superhero-kids-bath-towel-11",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kjul4fsh6uwqgtct31g88s0p",
       "productSlug": "superhero-kids-bath-towel-120-x-60-cm-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hchg8k6r8cxnj2zz2xj9rfhk",
       "productSlug": "superhero-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "u2mdokztjug7seb1i5049jwv",
       "productSlug": "superhero-kids-bath-towel-3",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zmdhz00ipszyylzg52npxpsw",
       "productSlug": "superhero-kids-bath-towel-4",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xe3orbsfniw5t4zibybvnodq",
       "productSlug": "superhero-kids-bath-towel-5",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "n9dbaocpke7vpyb9fhxordzj",
       "productSlug": "superhero-kids-bath-towel-6",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xhsitzngkx548jp5at8lowjb",
       "productSlug": "superhero-kids-bath-towel-7",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ymnyelwtulpbdz8miv1edzje",
       "productSlug": "superhero-kids-bath-towel-8",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "c9j1wrkt1rjh0944wljhfrh9",
       "productSlug": "superhero-kids-bath-towel-9",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kr0mewm2ekis4eozpl4zryr3",
       "productSlug": "superhero-kids-bath-towel-blue",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xy3wpi47xf2z67nsst1f2u84",
       "productSlug": "superhero-kids-bath-towel-white",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cm68b3bi330fqulorkkcrinx",
       "productSlug": "superhero-logo-couple-towel-set",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cgxt32vhwfxpigwc78jy381l",
       "productSlug": "superman-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "x9qn010bnnh0nu88ahzm5q5j",
       "productSlug": "superman-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ctkcifiq33iujk57nrgb8tzv",
       "productSlug": "teddy-bear-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "hlfvfdskh0bgxmq1fl73hsa9",
       "productSlug": "teddy-bear-on-bike-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "alhr6opw0km13lmgg9k5w220",
       "productSlug": "teddy-bear-on-plain-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "uiuyjnf9fttei3wnjswh92u4",
       "productSlug": "tennis-player-adult-bath-towel-for-men",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "rwin6j3ga4sfjgrracp8umhe",
       "productSlug": "tiara-crown-hooded-bathrobe-for-girl-kids-with-name-and-initials-in-age-4-years",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "mtgkia9osatgxghghj1pzrt1",
       "productSlug": "tiara-crown-hooded-bathrobe-for-girl-kids-with-name-and-initials-in-age-7-years",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ryhy5olpqh5berw0iiv4v967",
       "productSlug": "tigger-tiger-superhero-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "z7dgplwyup9voxe0rksx9s25",
       "productSlug": "tinkerbell-fairy-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "cl41syeu331k71yehsna4l2p",
       "productSlug": "tinkerbell-princess-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "yt87s2wga39iuw7mvadsz5jr",
       "productSlug": "train-engine-embroidered-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "tkkoy912yygzpmy4613dcv5c",
       "productSlug": "turtle-surfing-in-the-ocean-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "bpiwjqz3futz2fgorhs82boe",
       "productSlug": "turtle-surfing-in-the-ocean-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wkjnt5tuutwx27yr2ko7dgmo",
       "productSlug": "unicorn-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "wywdpto74zy34dr8nk3zjdzx",
       "productSlug": "unicorn-pony-bathrobe-for-teenager-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vdetr6n7ehi5macr8dbhvc6o",
       "productSlug": "unicorn-pony-bathrobe-for-teenager-girls-with-name-and-initials-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "jx5wb4hkygsg3xkx4d87vb48",
       "productSlug": "unicorn-pony-bathrobe-with-hood-for-kids-4-to-6-years-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "o6punuzmnbx4qfq86m5sx8mo",
       "productSlug": "unicorn-pony-bathrobe-with-hood-for-kids-teenager-girls-with-name-and-initials",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "kqao6dw4cns9am8aeahtg0r8",
       "productSlug": "unicorn-pony-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "fuaswp3cr0v8azj645g10xf4",
       "productSlug": "unicorn-pony-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "g1jpmhgz7y5cn9c27wdyzvb4",
       "productSlug": "unicorn-pony-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ke1r00x6ki2vtwluifksz0q1",
       "productSlug": "unicorn-pony-on-rainbow-0-to-5-yrs-pink-kids-ac-blanket35x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "d9i50q1ov2pgnapk3ptl2exc",
       "productSlug": "unicorn-pony-on-rainbow-6-to-12-yrs-pink-kids-ac-blanket4x-6-ft-pink",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ogetap7sq2gs1wclgj4t8nxj",
       "productSlug": "unicorn-pony-princess-bathrobe-with-hood-for-kids-4-to-6-years-with-name-and-ini",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vwn6w0ctpcxa14gyzfwagjn9",
       "productSlug": "unicorn-pony-princess-bathrobe-with-hood-for-kids-4-to-6-years-with-name-and-ini-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "it64mpfnr4uqplux4ux1t5zk",
       "productSlug": "unicorn-pony-princess-bathrobe-with-hood-for-kids-7-to-10-years-with-name-and-in",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ghjoxxfq7guymuo6dsl21m5n",
       "productSlug": "unicorn-pony-princess-bathrobe-with-hood-for-kids-7-to-10-years-with-name-and-in-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "j1xpw2801xoyp7yprmej2rbx",
       "productSlug": "valentines-hearts-valentines-couple-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "icbut4i6cyn5vk4dxfodi518",
       "productSlug": "vanity-butterfly-lady-adult-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "q5hbozhg5ufsa07blu17cxnw",
       "productSlug": "vanity-butterfly-lady-adult-white-bath-towel-for-women-1",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "vk4vw5b8at8ttvmhayxztdcr",
       "productSlug": "vanity-cat-adult-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "mm32q5tl40sxwpr361gxp073",
       "productSlug": "vanity-winking-cat-adult-white-bath-towel-for-women",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "rcnecgtdfcpq9rwirghxf59j",
       "productSlug": "vanity-winking-cat-adult-white-bath-towel-for-women-2",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "v5025h87bv0hrz4h27eiabio",
       "productSlug": "whale-fish-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "xowfhqziwokm72xp0wbwhyu6",
       "productSlug": "whale-fish-kids-bath-towel-1",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "s8cfedupn30vvrjt614ao07x",
       "productSlug": "whale-fish-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rqkxnwj1cvtn4sp5cdq4lcr3",
       "productSlug": "wings-emblem-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "qg9fizge3cqvkzwkwe0s4455",
       "productSlug": "wings-emblem-valentines-couple-bath-towels",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "zpubft955yz8oiazphlmt8rh",
       "productSlug": "winking-cat-kids-bath-towel",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "rjl5x181elbh6rwabk59khoj",
       "productSlug": "winking-cat-kids-bath-towel-2",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "reudvasi24a1o0uwl6w0783y",
       "productSlug": "wolverine-blanket",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "ibr0j0fboaq9eteoyskvo9gi",
       "productSlug": "womens-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "d9n5b4494of38hdemrnjuriy",
       "productSlug": "yellow-car-adult-bath-towel-blue-150-x-75-cm",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     },
     {
       "id": "zcgixobty5zjtdh3qlk1r06c",
       "productSlug": "yellow-car-kids-bath-towel-blue-120-x-60-cm",
-      "ageGroupName": "kids"
+      "audienceName": "kids"
     },
     {
       "id": "vvpnjj055k3xz9rgepi7tsae",
       "productSlug": "yellow-mustang-adult-bath-towel",
-      "ageGroupName": "adults"
+      "audienceName": "adults"
     }
   ],
   "productGenders": [

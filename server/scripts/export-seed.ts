@@ -2,8 +2,8 @@ import { db } from "../db";
 import {
   categories, products, productImages, productReviews, tags, tagTypes, productTags, siteConfig,
   categoryTagVariantConfigs, variantSizes, variantColors, currencyRates, pricingRules,
-  ageGroups, genders, themes, styles,
-  productAgeGroups, productGenders, productThemes, productStyles,
+  audience, genders, themes, styles,
+  productAudience, productGenders, productThemes, productStyles,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import * as fs from "fs";
@@ -17,18 +17,18 @@ async function exportSeed() {
   const ttList = await db.select().from(tagTypes).orderBy(tagTypes.sortOrder);
 
   // Fetch attribute lookup tables
-  const agList  = await db.select().from(ageGroups).orderBy(ageGroups.sortOrder);
+  const agList  = await db.select().from(audience).orderBy(audience.sortOrder);
   const genList = await db.select().from(genders).orderBy(genders.sortOrder);
   const thList  = await db.select().from(themes).orderBy(themes.sortOrder);
   const stList  = await db.select().from(styles).orderBy(styles.sortOrder);
 
   // Fetch junction attribute assignments (used for both product enrichment and separate junction export)
   const pagList = await db.select({
-    id: productAgeGroups.id, productSlug: products.slug, ageGroupName: ageGroups.name,
-  }).from(productAgeGroups)
-    .innerJoin(products,   eq(productAgeGroups.productId,  products.id))
-    .innerJoin(ageGroups,  eq(productAgeGroups.ageGroupId, ageGroups.id))
-    .orderBy(products.slug, ageGroups.name);
+    id: productAudience.id, productSlug: products.slug, audienceName: audience.name,
+  }).from(productAudience)
+    .innerJoin(products,   eq(productAudience.productId,  products.id))
+    .innerJoin(audience,   eq(productAudience.audienceId, audience.id))
+    .orderBy(products.slug, audience.name);
 
   const pgenList = await db.select({
     id: productGenders.id, productSlug: products.slug, genderName: genders.name,
@@ -56,7 +56,7 @@ async function exportSeed() {
   const genMap = new Map<string, string[]>();
   const thMap  = new Map<string, string[]>();
   const stMap  = new Map<string, string[]>();
-  for (const r of pagList)  agMap.set(r.productSlug,  [...(agMap.get(r.productSlug)   ?? []), r.ageGroupName]);
+  for (const r of pagList)  agMap.set(r.productSlug,  [...(agMap.get(r.productSlug)   ?? []), r.audienceName]);
   for (const r of pgenList) genMap.set(r.productSlug, [...(genMap.get(r.productSlug)  ?? []), r.genderName]);
   for (const r of pthList)  thMap.set(r.productSlug,  [...(thMap.get(r.productSlug)   ?? []), r.themeName]);
   for (const r of pstList)  stMap.set(r.productSlug,  [...(stMap.get(r.productSlug)   ?? []), r.styleName]);
@@ -222,7 +222,7 @@ async function exportSeed() {
       bulletPoints: p.bulletPoints,
       searchKeywords: p.searchKeywords,
       productType: p.productType,
-      ageGroup: (agMap.get(p.slug)  ?? []).join(","),
+      audience: (agMap.get(p.slug)  ?? []).join(","),
       gender:   (genMap.get(p.slug) ?? []).join(","),
       themes:   (thMap.get(p.slug)  ?? []).join(","),
       styles:   (stMap.get(p.slug)  ?? []).join(","),
@@ -301,11 +301,11 @@ async function exportSeed() {
       roundingRule: pr.roundingRule,
       enabled: pr.enabled,
     })),
-    ageGroups: agList.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
+    audience: agList.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
     genders:   genList.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
     themes:    thList.map(r  => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
     styles:    stList.map(r  => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
-    productAgeGroups: pagList.map(r  => ({ id: r.id, productSlug: r.productSlug, ageGroupName: r.ageGroupName })),
+    productAudience: pagList.map(r  => ({ id: r.id, productSlug: r.productSlug, audienceName: r.audienceName })),
     productGenders:   pgenList.map(r => ({ id: r.id, productSlug: r.productSlug, genderName:   r.genderName   })),
     productThemes:    pthList.map(r  => ({ id: r.id, productSlug: r.productSlug, themeName:    r.themeName    })),
     productStyles:    pstList.map(r  => ({ id: r.id, productSlug: r.productSlug, styleName:    r.styleName    })),
@@ -328,11 +328,11 @@ async function exportSeed() {
   console.log(`  variantColors:             ${seedData.variantColors.length}`);
   console.log(`  currencyRates:             ${seedData.currencyRates.length}`);
   console.log(`  pricingRules:              ${seedData.pricingRules.length}`);
-  console.log(`  ageGroups:                 ${seedData.ageGroups.length}`);
+  console.log(`  audience:                  ${seedData.audience.length}`);
   console.log(`  genders:                   ${seedData.genders.length}`);
   console.log(`  themes:                    ${seedData.themes.length}`);
   console.log(`  styles:                    ${seedData.styles.length}`);
-  console.log(`  productAgeGroups:          ${seedData.productAgeGroups.length}`);
+  console.log(`  productAudience:           ${seedData.productAudience.length}`);
   console.log(`  productGenders:            ${seedData.productGenders.length}`);
   console.log(`  productThemes:             ${seedData.productThemes.length}`);
   console.log(`  productStyles:             ${seedData.productStyles.length}`);

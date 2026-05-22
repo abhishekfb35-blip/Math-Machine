@@ -15,13 +15,13 @@ export interface InsertCategory {
   sortOrder?: number | null;
 }
 
-export interface AgeGroup {
+export interface Audience {
   id: string;
   name: string;
   sortOrder: number | null;
 }
 
-export interface InsertAgeGroup {
+export interface InsertAudience {
   name: string;
   sortOrder?: number | null;
 }
@@ -60,7 +60,7 @@ export interface InsertStyle {
 }
 
 export interface Attributes {
-  ageGroups: AgeGroup[];
+  audience: Audience[];
   genders: Gender[];
   themes: Theme[];
   styles: Style[];
@@ -87,7 +87,7 @@ export interface Product {
   bulletPoints: string | null;
   searchKeywords: string | null;
   productType: string | null;
-  ageGroups: string[];
+  audience: string[];
   genders: string[];
   themes: string[];
   styles: string[];
