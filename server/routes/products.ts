@@ -36,8 +36,8 @@ async function resolveAttributeFilters(
   themeName?: string;
   styleName?: string;
 }> {
-  const audienceRaw = qs(req.query.audience) || qs(req.query.ageGroup);
-  const audienceId  = qs(req.query.audienceId) || qs(req.query.ageGroupId);
+  const audienceRaw = qs(req.query.audience);
+  const audienceId  = qs(req.query.audienceId);
   const genderRaw   = qs(req.query.gender);
   const genderId    = qs(req.query.genderId);
   const themeRaw    = qs(req.query.theme);

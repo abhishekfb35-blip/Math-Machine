@@ -45,7 +45,7 @@ export function registerAdminFeaturedRoutes(app: Express) {
     try {
       const filters: SectionFilters = {
         categoryFilters: Array.isArray(req.body.categoryFilters) ? req.body.categoryFilters : [],
-        audienceFilters: Array.isArray(req.body.audienceFilters) ? req.body.audienceFilters : (Array.isArray(req.body.ageGroupFilters) ? req.body.ageGroupFilters : []),
+        audienceFilters: Array.isArray(req.body.audienceFilters) ? req.body.audienceFilters : [],
         genderFilters:   Array.isArray(req.body.genderFilters)   ? req.body.genderFilters   : [],
         themeFilters:    Array.isArray(req.body.themeFilters)    ? req.body.themeFilters    : [],
         styleFilters:    Array.isArray(req.body.styleFilters)    ? req.body.styleFilters    : [],

@@ -150,7 +150,6 @@ export function registerAdminAttributeRoutes(app: Express) {
 
   const productAttributesSchema = z.object({
     audienceIds: z.array(z.string()).optional().default([]),
-    ageGroupIds: z.array(z.string()).optional().default([]),
     genderIds:   z.array(z.string()).optional().default([]),
     themeIds:    z.array(z.string()).optional().default([]),
     styleIds:    z.array(z.string()).optional().default([]),
@@ -161,10 +160,9 @@ export function registerAdminAttributeRoutes(app: Express) {
     if (!id) return res.status(400).json({ message: "Invalid product ID" });
     const parsed = productAttributesSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid input", errors: parsed.error.errors });
-    const { audienceIds, ageGroupIds, genderIds, themeIds, styleIds } = parsed.data;
-    const resolvedAudienceIds = audienceIds.length > 0 ? audienceIds : ageGroupIds;
+    const { audienceIds, genderIds, themeIds, styleIds } = parsed.data;
     await Promise.all([
-      storage.setProductAudiences(id, resolvedAudienceIds),
+      storage.setProductAudiences(id, audienceIds),
       storage.setProductGenders(id, genderIds),
       storage.setProductThemes(id, themeIds),
       storage.setProductStyles(id, styleIds),

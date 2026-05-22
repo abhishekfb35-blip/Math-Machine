@@ -100,11 +100,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       productImages:    sd.productImages     ?? [],
       productReviews:   sd.productReviews    ?? [],
       productTags:      (sd.productTags      ?? []) as SeedProductTag[],
-      audience:         ((sd.audience              ?? sd.ageGroups             ?? []) as SeedAttr[]),
+      audience:         ((sd.audience              ?? []) as SeedAttr[]),
       genders:          ((sd.genders               ?? []) as SeedAttr[]),
       themes:           ((sd.themes                ?? []) as SeedAttr[]),
       styles:           ((sd.styles                ?? []) as SeedAttr[]),
-      productAudience:  ((sd.productAudience        ?? sd.productAgeGroups      ?? []) as SeedJunctionAg[]),
+      productAudience:  ((sd.productAudience        ?? []) as SeedJunctionAg[]),
       productGenders:   ((sd.productGenders        ?? []) as SeedJunctionGen[]),
       productThemes:    ((sd.productThemes         ?? []) as SeedJunctionTh[]),
       productStyles:    ((sd.productStyles         ?? []) as SeedJunctionSt[]),
@@ -656,7 +656,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
       if (effective.productAudience) {
         const rows = tableData.productAudience
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: agByName[r.audienceName ?? (r as any).ageGroupName] }))
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: agByName[r.audienceName] }))
           .filter((r): r is { id: string; productId: string; audienceId: string } => !!(r.productId && r.audienceId));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productAudience).values(rows.slice(i, i + BATCH)).onConflictDoNothing();

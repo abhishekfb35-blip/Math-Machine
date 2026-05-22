@@ -35,7 +35,7 @@ export type SectionKey = typeof SECTION_KEYS[number];
 function normaliseSectionFilters(raw: any): SectionFilters {
   return {
     categoryFilters: Array.isArray(raw?.categoryFilters) ? raw.categoryFilters : [],
-    audienceFilters: Array.isArray(raw?.audienceFilters) ? raw.audienceFilters : (Array.isArray(raw?.ageGroupFilters) ? raw.ageGroupFilters : []),
+    audienceFilters: Array.isArray(raw?.audienceFilters) ? raw.audienceFilters : [],
     genderFilters:   Array.isArray(raw?.genderFilters)   ? raw.genderFilters   : [],
     themeFilters:    Array.isArray(raw?.themeFilters)    ? raw.themeFilters    : [],
     styleFilters:    Array.isArray(raw?.styleFilters)    ? raw.styleFilters    : [],
