@@ -15,7 +15,6 @@ function rows(res: unknown): any[] {
   return Array.isArray(res) ? res : (res as any).rows ?? [];
 }
 
-/** Rescue any rows left in mig_tmp_ state from a previous crashed run. */
 async function cleanupStuckRows(
   tableName: string,
   seedRows: any[],
@@ -54,7 +53,6 @@ async function syncTable(
   seedIdField = "id",
   seedSlugField = "productSlug",
 ): Promise<number> {
-  // All valid seed IDs — if a row already has one of these IDs, it's correctly placed
   const allSeedIds = new Set(seedRows.map(s => s[seedIdField]));
 
   const seenFromIds = new Set<string>();
@@ -71,11 +69,9 @@ async function syncTable(
     const targetId: string = seed[seedIdField];
 
     if (currentId === targetId) continue;
-    // Row already has a valid seed ID (just for a different entry) — don't rename it
     if (allSeedIds.has(currentId)) continue;
     if (seenFromIds.has(currentId)) continue;
 
-    // Skip if target already exists (another row is already correctly placed there)
     const targetExists = rows(await execRaw(`SELECT id FROM ${tableName} WHERE id='${esc(targetId)}' LIMIT 1`)).length > 0;
     if (targetExists) continue;
 
@@ -85,7 +81,6 @@ async function syncTable(
 
   if (updates.length === 0) return 0;
 
-  // Two-pass with indexed temp IDs to avoid any PK collisions
   for (let i = 0; i < updates.length; i++) {
     await execRaw(`UPDATE ${tableName} SET id='mig_tmp_${i}' WHERE id='${esc(updates[i].from)}'`);
   }
@@ -97,55 +92,49 @@ async function syncTable(
 }
 
 export async function syncImageReviewIds() {
-  try {
-    const seedPath = path.join(process.cwd(), "server/seed-data.json");
-    if (!fs.existsSync(seedPath)) {
-      console.log("[migration] sync-image-review-ids: seed-data.json not found, skipping");
-      return;
-    }
-
-    const data = JSON.parse(fs.readFileSync(seedPath, "utf8"));
-    const seedImages: any[]  = data.productImages  || [];
-    const seedReviews: any[] = data.productReviews || [];
-
-    const prodRows = rows(await db.execute(sql`SELECT id, slug FROM products`));
-    const slugToId: Record<string, string> = Object.fromEntries(prodRows.map((r: any) => [r.slug, r.id]));
-
-    // Rescue any rows stranded in mig_tmp_ state from a previous crashed run
-    await cleanupStuckRows(
-      "product_images", seedImages, slugToId,
-      (seed, pid, row) =>
-        pid === row.product_id &&
-        seed.imageUrl === row.image_url &&
-        (seed.sortOrder ?? 0) === (row.sort_order ?? 0),
-    );
-    await cleanupStuckRows(
-      "product_reviews", seedReviews, slugToId,
-      (seed, pid, row) =>
-        pid === row.product_id &&
-        seed.reviewerName === row.reviewer_name &&
-        seed.rating === row.rating &&
-        seed.body === row.body,
-    );
-
-    // Now sync IDs
-    const imgFixed = await syncTable(
-      "product_images", seedImages, slugToId,
-      (seed, pid) =>
-        `product_id='${esc(pid)}' AND image_url='${esc(seed.imageUrl)}' AND COALESCE(sort_order,0)=${seed.sortOrder ?? 0}`,
-    );
-
-    const revFixed = await syncTable(
-      "product_reviews", seedReviews, slugToId,
-      (seed, pid) =>
-        `product_id='${esc(pid)}' AND reviewer_name='${esc(seed.reviewerName ?? "")}' AND rating=${seed.rating} AND body='${esc(seed.body ?? "")}'`,
-    );
-
-    console.log(
-      `[migration] sync-image-review-ids: images ${imgFixed > 0 ? `fixed ${imgFixed}` : "all correct"}, ` +
-      `reviews ${revFixed > 0 ? `fixed ${revFixed}` : "all correct"}`
-    );
-  } catch (err: any) {
-    console.error("[migration] sync-image-review-ids failed:", err.message);
+  const seedPath = path.join(process.cwd(), "server/seed-data.json");
+  if (!fs.existsSync(seedPath)) {
+    console.log("[migration] sync-image-review-ids: seed-data.json not found, skipping");
+    return;
   }
+
+  const data = JSON.parse(fs.readFileSync(seedPath, "utf8"));
+  const seedImages: any[]  = data.productImages  || [];
+  const seedReviews: any[] = data.productReviews || [];
+
+  const prodRows = rows(await db.execute(sql`SELECT id, slug FROM products`));
+  const slugToId: Record<string, string> = Object.fromEntries(prodRows.map((r: any) => [r.slug, r.id]));
+
+  await cleanupStuckRows(
+    "product_images", seedImages, slugToId,
+    (seed, pid, row) =>
+      pid === row.product_id &&
+      seed.imageUrl === row.image_url &&
+      (seed.sortOrder ?? 0) === (row.sort_order ?? 0),
+  );
+  await cleanupStuckRows(
+    "product_reviews", seedReviews, slugToId,
+    (seed, pid, row) =>
+      pid === row.product_id &&
+      seed.reviewerName === row.reviewer_name &&
+      seed.rating === row.rating &&
+      seed.body === row.body,
+  );
+
+  const imgFixed = await syncTable(
+    "product_images", seedImages, slugToId,
+    (seed, pid) =>
+      `product_id='${esc(pid)}' AND image_url='${esc(seed.imageUrl)}' AND COALESCE(sort_order,0)=${seed.sortOrder ?? 0}`,
+  );
+
+  const revFixed = await syncTable(
+    "product_reviews", seedReviews, slugToId,
+    (seed, pid) =>
+      `product_id='${esc(pid)}' AND reviewer_name='${esc(seed.reviewerName ?? "")}' AND rating=${seed.rating} AND body='${esc(seed.body ?? "")}'`,
+  );
+
+  console.log(
+    `[migration] sync-image-review-ids: images ${imgFixed > 0 ? `fixed ${imgFixed}` : "all correct"}, ` +
+    `reviews ${revFixed > 0 ? `fixed ${revFixed}` : "all correct"}`
+  );
 }

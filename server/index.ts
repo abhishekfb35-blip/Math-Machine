@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { seedDatabase } from "./seed";
+import { runMigrations } from "./migrations/runner";
 import { ensurePolicyPages } from "./migrations/policy-pages";
 import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
@@ -290,27 +291,29 @@ function startAbandonedCartScheduler() {
 
       (async () => {
         try {
-          await migrateSiteConfigKeyPk();
-          await ensureVariantTables();
-          await ensureVariantSizeFontColumn();
-          await ensureCurrencyTables();
-          await ensureProductVariantColumns();
-          await ensureShippingFeeColumn();
-          await ensureCartCustomerColumns();
-          await ensureReviewCustomerColumn();
-          await ensureAttributeTables();
+          await runMigrations([
+            { id: "migrate-site-config-key-pk",      run: migrateSiteConfigKeyPk },
+            { id: "ensure-variant-tables",            run: ensureVariantTables },
+            { id: "ensure-variant-size-font",         run: ensureVariantSizeFontColumn },
+            { id: "ensure-currency-tables",           run: ensureCurrencyTables },
+            { id: "ensure-product-variant-columns",   run: ensureProductVariantColumns },
+            { id: "ensure-shipping-fee",              run: ensureShippingFeeColumn },
+            { id: "ensure-cart-customer-columns",     run: ensureCartCustomerColumns },
+            { id: "ensure-review-customer-column",    run: ensureReviewCustomerColumn },
+            { id: "ensure-attribute-tables",          run: ensureAttributeTables },
+            { id: "ensure-sku-not-null",              run: ensureSkuNotNull },
+            { id: "sync-image-review-ids",            run: syncImageReviewIds },
+            { id: "ensure-policy-pages",              run: ensurePolicyPages },
+            { id: "nullify-swatch-uploads",           run: nullifySwatchUploads },
+            { id: "ensure-admin-users-table",         run: ensureAdminUsersTable },
+            { id: "ensure-wishlists-table",           run: ensureWishlistsTable },
+            { id: "ensure-rate-limit-stats-table",    run: ensureRateLimitStatsTable },
+            { id: "consolidate-product-images",       run: consolidateProductImages },
+            { id: "drop-product-image-url",           run: dropProductImageUrl },
+          ]);
           await seedDatabase();
           await initializeExchangeRateService();
-          await ensureSkuNotNull();
-          await syncImageReviewIds();
-          await ensurePolicyPages();
           await restoreBrandLogosFromDB();
-          await nullifySwatchUploads();
-          await ensureAdminUsersTable();
-          await ensureWishlistsTable();
-          await ensureRateLimitStatsTable();
-          await consolidateProductImages();
-          await dropProductImageUrl();
           await loadRateLimitConfig();
           log("startup tasks complete");
           startAbandonedCartScheduler();

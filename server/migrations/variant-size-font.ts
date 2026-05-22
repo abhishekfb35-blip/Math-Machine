@@ -6,20 +6,16 @@ function rows(res: unknown): unknown[] {
 }
 
 export async function ensureVariantSizeFontColumn() {
-  try {
-    const check = await db.execute<{ column_name: string }>(sql`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_schema = 'public'
-        AND table_name = 'variant_sizes'
-        AND column_name = 'description_font_size'
+  const check = await db.execute<{ column_name: string }>(sql`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'variant_sizes'
+      AND column_name = 'description_font_size'
+  `);
+  if (rows(check).length === 0) {
+    await db.execute(sql`
+      ALTER TABLE variant_sizes ADD COLUMN description_font_size INTEGER DEFAULT 12
     `);
-    if (rows(check).length === 0) {
-      await db.execute(sql`
-        ALTER TABLE variant_sizes ADD COLUMN description_font_size INTEGER DEFAULT 12
-      `);
-      console.log("[migration] variant-size-font: added description_font_size column");
-    }
-  } catch (err) {
-    console.error("[migration] variant-size-font error:", err);
+    console.log("[migration] variant-size-font: added description_font_size column");
   }
 }

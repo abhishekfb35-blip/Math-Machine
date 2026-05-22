@@ -2,6 +2,15 @@ import { db } from "../db";
 import { sql } from "drizzle-orm";
 
 export async function consolidateProductImages(): Promise<void> {
+  const colCheck = await db.execute(sql`
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'products' AND column_name = 'image_url'
+  `);
+  if (colCheck.rows.length === 0) {
+    console.log("[consolidateProductImages] products.image_url already dropped, skipping");
+    return;
+  }
+
   // Step 1: Insert sort_order=0 for products that have NO sort_order=0 row at all.
   await db.execute(sql`
     INSERT INTO product_images (id, product_id, image_url, sort_order, is_primary, created_at, updated_at)
