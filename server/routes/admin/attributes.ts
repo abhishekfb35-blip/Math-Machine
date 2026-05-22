@@ -169,7 +169,7 @@ export function registerAdminAttributeRoutes(app: Express) {
     ]);
     await storage.createAuditLog({
       entityType: "product", entityId: id, entityName: id,
-      action: "updated", changes: JSON.stringify({ attributes: { audienceIds: resolvedAudienceIds, genderIds, themeIds, styleIds } }),
+      action: "updated", changes: JSON.stringify({ attributes: { audienceIds, genderIds, themeIds, styleIds } }),
       username: getAdminUsername(req),
     });
     res.json({ success: true });
