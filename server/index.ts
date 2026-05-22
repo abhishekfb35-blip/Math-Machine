@@ -314,7 +314,11 @@ function startAbandonedCartScheduler() {
             { id: "drop-product-image-url",           run: dropProductImageUrl },
           ]);
           currentStep = "seed-database";
-          await seedDatabase();
+          if (process.env.NODE_ENV === "production") {
+            await seedDatabase();
+          } else {
+            log("seed-database: skipped in development");
+          }
           currentStep = "initialize-exchange-rate-service";
           await initializeExchangeRateService();
           currentStep = "restore-brand-logos";
