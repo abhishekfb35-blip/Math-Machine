@@ -2595,9 +2595,9 @@ export default function AdminCatalog() {
           <div className="overflow-y-auto max-h-[60vh] pr-1 -mr-1">
             <div className="space-y-5 pb-2">
 
-              {/* Age Group */}
+              {/* Audience */}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Age Group</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Audience</p>
                 <div className="space-y-1.5">
                   {attributes?.audience.map((ag) => (
                     <label key={ag.id} className="flex items-center gap-2 cursor-pointer" data-testid={`bulk-attr-age-${ag.id}`}>
@@ -3339,7 +3339,7 @@ export default function AdminCatalog() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1.5 block">Age Group</Label>
+              <Label className="mb-1.5 block">Audience</Label>
               <div className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {isAttributesLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
                 {(attributes?.audience ?? []).map(ag => (

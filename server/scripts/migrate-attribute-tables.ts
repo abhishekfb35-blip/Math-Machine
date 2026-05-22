@@ -38,8 +38,8 @@
 
 import { db } from "../db";
 import {
-  products, ageGroups, genders, themes, styles,
-  productAgeGroups, productGenders, productThemes, productStyles,
+  products, audience as audienceTable, genders, themes, styles,
+  productAudience, productGenders, productThemes, productStyles,
 } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
@@ -60,7 +60,7 @@ async function legacyColumnsExist(): Promise<boolean> {
 
 async function loadLookupMaps() {
   const [agRows, genRows, thRows, stRows] = await Promise.all([
-    db.select({ id: ageGroups.id, name: ageGroups.name }).from(ageGroups),
+    db.select({ id: audienceTable.id, name: audienceTable.name }).from(audienceTable),
     db.select({ id: genders.id, name: genders.name }).from(genders),
     db.select({ id: themes.id, name: themes.name }).from(themes),
     db.select({ id: styles.id, name: styles.name }).from(styles),
@@ -86,7 +86,7 @@ async function insertJunctions(
 
   if (ageGroup) {
     const agId = agByName[ageGroup.toLowerCase().trim()];
-    if (agId) await db.insert(productAgeGroups).values({ id: createId(), productId, ageGroupId: agId }).onConflictDoNothing();
+    if (agId) await db.insert(productAudience).values({ id: createId(), productId, audienceId: agId }).onConflictDoNothing();
   }
   if (gender) {
     const genId = genByName[gender.toLowerCase().trim()];
@@ -159,7 +159,7 @@ async function main() {
     console.log("[migrate-attribute-tables] MODE B: legacy columns absent — verifying junction coverage");
 
     const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
-    const junctionRows = await db.select({ productId: productAgeGroups.productId }).from(productAgeGroups);
+    const junctionRows = await db.select({ productId: productAudience.productId }).from(productAudience);
     const coveredIds = new Set(junctionRows.map(r => r.productId));
     const orphaned = allProducts.filter(p => !coveredIds.has(p.id));
 
@@ -192,7 +192,7 @@ async function main() {
   // ── Final coverage report (all 4 junction tables) ───────────────────────
   const allProducts = await db.select({ id: products.id, slug: products.slug }).from(products);
   const [finalAg, finalGen, finalTheme, finalStyle] = await Promise.all([
-    db.select({ productId: productAgeGroups.productId }).from(productAgeGroups),
+    db.select({ productId: productAudience.productId }).from(productAudience),
     db.select({ productId: productGenders.productId }).from(productGenders),
     db.select({ productId: productThemes.productId }).from(productThemes),
     db.select({ productId: productStyles.productId }).from(productStyles),
