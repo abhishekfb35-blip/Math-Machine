@@ -290,7 +290,9 @@ function startAbandonedCartScheduler() {
       log(`serving on port ${port}`);
 
       (async () => {
+        let currentStep = "unknown";
         try {
+          currentStep = "run-migrations";
           await runMigrations([
             { id: "migrate-site-config-key-pk",      run: migrateSiteConfigKeyPk },
             { id: "ensure-variant-tables",            run: ensureVariantTables },
@@ -311,16 +313,27 @@ function startAbandonedCartScheduler() {
             { id: "consolidate-product-images",       run: consolidateProductImages },
             { id: "drop-product-image-url",           run: dropProductImageUrl },
           ]);
+          currentStep = "seed-database";
           await seedDatabase();
+          currentStep = "initialize-exchange-rate-service";
           await initializeExchangeRateService();
+          currentStep = "restore-brand-logos";
           await restoreBrandLogosFromDB();
+          currentStep = "load-rate-limit-config";
           await loadRateLimitConfig();
           log("startup tasks complete");
           startAbandonedCartScheduler();
           startGuestCartCleanupScheduler();
           startRateLimitStatsScheduler();
         } catch (err: any) {
-          console.error("Startup task failed:", err.message ?? err);
+          const structuredError = {
+            level: "fatal",
+            timestamp: new Date().toISOString(),
+            step: currentStep,
+            message: err?.message ?? String(err),
+            stack: err?.stack ?? null,
+          };
+          process.stderr.write(JSON.stringify(structuredError) + "\n");
           process.exit(1);
         }
       })();
