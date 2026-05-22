@@ -83,8 +83,17 @@ function ProductAttributeSelector({
       const res = await apiRequest("PUT", `/api/admin/products/${productId}/attributes`, data);
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] }),
-    onError: () => toast({ title: "Failed to save attributes", variant: "destructive" }),
+    onSuccess: (_data, vars) => {
+      savedAttrRef.current = vars;
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
+    },
+    onError: () => {
+      setAudienceIds(savedAttrRef.current.audienceIds);
+      setGenderIds(savedAttrRef.current.genderIds);
+      setThemeIds(savedAttrRef.current.themeIds);
+      setStyleIds(savedAttrRef.current.styleIds);
+      toast({ title: "Failed to save attributes", variant: "destructive" });
+    },
   });
 
   const tagMutation = useMutation({
@@ -92,20 +101,24 @@ function ProductAttributeSelector({
       const res = await apiRequest("PUT", `/api/admin/products/${productId}/tags`, { tagIds: ids });
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] }),
-    onError: () => toast({ title: "Failed to save tags", variant: "destructive" }),
+    onSuccess: (_data, vars) => {
+      savedTagIdsRef.current = vars;
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", categoryId] });
+    },
+    onError: () => {
+      setTagIds(savedTagIdsRef.current);
+      toast({ title: "Failed to save tags", variant: "destructive" });
+    },
   });
 
   const saveAttrs = (ids: { audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }) => {
     if (JSON.stringify(ids) !== JSON.stringify(savedAttrRef.current)) {
-      savedAttrRef.current = ids;
       attrMutation.mutate(ids);
     }
   };
 
   const saveTags = (ids: string[]) => {
     if (JSON.stringify([...ids].sort()) !== JSON.stringify([...savedTagIdsRef.current].sort())) {
-      savedTagIdsRef.current = ids;
       tagMutation.mutate(ids);
     }
   };
