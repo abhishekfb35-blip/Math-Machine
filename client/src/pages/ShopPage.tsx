@@ -490,6 +490,7 @@ export default function ShopPage() {
   const { data: shopSectionsConfig } = useQuery<{ value: ShopSection[] }>({
     queryKey: ["/api/site-config", "shop-sections"],
     queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
+    staleTime: 0,
   });
   const shopSections: ShopSection[] = useMemo(() => {
     const raw = shopSectionsConfig?.value;
@@ -618,6 +619,7 @@ export default function ShopPage() {
       .filter(s => s.enabled)
       .filter(s => activeFilter === "all" || (s.audience ?? []).includes(activeFilter))
       .map(s => {
+        if (!s.audience?.length && !s.genders?.length && !s.themes?.length && !s.styles?.length) return { ...s, all: [], shown: [] };
         let all = attributeFilteredProducts;
         if (s.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => s.audience!.includes(a)));
         if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
