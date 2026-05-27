@@ -1157,198 +1157,226 @@ function InstallBannerSection({ data }: { data: PwaInstallConfig }) {
 
 function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   const [sections, setSections] = useState<ShopSection[]>(data);
+  const [selectedTagTypes, setSelectedTagTypes] = useState<string[][]>(() => data.map(() => []));
+  const [previewResults, setPreviewResults] = useState<Record<number, { products: Product[]; total: number }>>({});
   const save = useSaveConfig("shop-sections");
 
-  const { data: allTags } = useQuery<{ id: string; name: string }[]>({
-    queryKey: ["/api/admin/tags"],
-    queryFn: () => fetch("/api/admin/tags").then(r => r.ok ? r.json() : []),
+  const { data: attributes }  = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+  const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: allTags }     = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
+  const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
+
+  useEffect(() => {
+    setSections(data);
+    setSelectedTagTypes(data.map(() => []));
+    setPreviewResults({});
+  }, [data]);
+
+  const previewMutation = useMutation({
+    mutationFn: async ({ index, s }: { index: number; s: ShopSection }) => {
+      const res = await apiRequest("POST", "/api/admin/featured-products/preview", {
+        categoryFilters: s.categories ?? [],
+        audienceFilters: s.audience   ?? [],
+        genderFilters:   s.genders    ?? [],
+        themeFilters:    s.themes     ?? [],
+        styleFilters:    s.styles     ?? [],
+        tagFilters:      s.tags       ?? [],
+      });
+      const json = await res.json() as { products: Product[]; total: number };
+      return { index, products: json.products ?? [], total: json.total ?? 0 };
+    },
+    onSuccess: ({ index, products, total }) => {
+      setPreviewResults(prev => ({ ...prev, [index]: { products, total } }));
+    },
   });
-
-  const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
-
-  const audienceOptions2 = attributes?.audience?.map(ag => ag.name) ?? [];
-  const genderOptions   = attributes?.genders?.map(g => g.name) ?? [];
-  const themeOptions    = attributes?.themes?.map(t => t.name) ?? [];
-  const styleOptions    = attributes?.styles?.map(s => s.name) ?? [];
 
   const move = (index: number, dir: "up" | "down") => {
     const next = [...sections];
     const swap = dir === "up" ? index - 1 : index + 1;
     if (swap < 0 || swap >= next.length) return;
     [next[index], next[swap]] = [next[swap], next[index]];
+    const nextTT = [...selectedTagTypes];
+    [nextTT[index], nextTT[swap]] = [nextTT[swap], nextTT[index]];
+    setSelectedTagTypes(nextTT);
     setSections(next);
   };
 
-  const update = (index: number, field: keyof ShopSection, value: string | number | boolean) => {
+  const update = (index: number, field: keyof ShopSection, value: any) => {
     const next = [...sections];
     next[index] = { ...next[index], [field]: value };
     setSections(next);
+    if (!["label", "maxShown", "enabled"].includes(field as string)) {
+      setPreviewResults(prev => { const n = { ...prev }; delete n[index]; return n; });
+    }
   };
 
-  const toggleMulti = (index: number, field: "audience" | "genders" | "themes" | "styles", value: string) => {
-    const next = [...sections];
-    const current: string[] = (next[index][field] as string[]) ?? [];
-    next[index] = {
-      ...next[index],
-      [field]: current.includes(value)
-        ? current.filter(v => v !== value)
-        : [...current, value],
-    };
-    setSections(next);
+  const toggleArr = (index: number, field: keyof ShopSection, value: string) => {
+    const current: string[] = (sections[index][field] as string[]) ?? [];
+    update(index, field, current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
+  };
+
+  const toggleAll = (index: number, field: keyof ShopSection, allValues: string[]) => {
+    const current: string[] = (sections[index][field] as string[]) ?? [];
+    const allSelected = allValues.length > 0 && allValues.every(v => current.includes(v));
+    update(index, field, allSelected ? [] : allValues);
+  };
+
+  const toggleTagType = (index: number, typeId: string) => {
+    const next = [...selectedTagTypes];
+    const cur = next[index] ?? [];
+    next[index] = cur.includes(typeId) ? cur.filter(t => t !== typeId) : [...cur, typeId];
+    setSelectedTagTypes(next);
+  };
+
+  const toggleAllTagTypes = (index: number) => {
+    const allTypeIds = (allTagTypes ?? []).map(t => t.id);
+    const next = [...selectedTagTypes];
+    const cur = next[index] ?? [];
+    const allSel = allTypeIds.length > 0 && allTypeIds.every(id => cur.includes(id));
+    next[index] = allSel ? [] : allTypeIds;
+    setSelectedTagTypes(next);
   };
 
   const addSection = () => {
-    setSections([...sections, { label: "", tag: "", maxShown: 8, enabled: true, audience: [], genders: [], themes: [], styles: [] }]);
+    setSections([...sections, { label: "", tags: [], categories: [], maxShown: 8, enabled: true, audience: [], genders: [], themes: [], styles: [] }]);
+    setSelectedTagTypes([...selectedTagTypes, []]);
   };
 
   const removeSection = (index: number) => {
     setSections(sections.filter((_, i) => i !== index));
+    setSelectedTagTypes(selectedTagTypes.filter((_, i) => i !== index));
+    setPreviewResults(prev => {
+      const n: Record<number, { products: Product[]; total: number }> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const ki = parseInt(k);
+        if (ki !== index) n[ki > index ? ki - 1 : ki] = v;
+      });
+      return n;
+    });
   };
 
-  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-  const AttrCheckboxRow = ({
-    sectionIndex, field, options, label, hint, testPrefix,
-  }: {
-    sectionIndex: number;
-    field: "audience" | "genders" | "themes" | "styles";
-    options: string[];
-    label: string;
-    hint: string;
-    testPrefix: string;
-  }) => {
-    const selected: string[] = (sections[sectionIndex][field] as string[]) ?? [];
-    return (
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">{label}</Label>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {attributes === undefined ? (
-            <span className="text-xs text-muted-foreground">Loading…</span>
-          ) : options.length === 0 ? (
-            <span className="text-xs text-muted-foreground italic">No options in DB</span>
-          ) : (
-            options.map(opt => (
-              <label key={opt} className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={selected.includes(opt)}
-                  onChange={() => toggleMulti(sectionIndex, field, opt)}
-                  className="w-3.5 h-3.5 rounded"
-                  data-testid={`checkbox-${testPrefix}-${opt}-${sectionIndex}`}
-                />
-                <span className="text-sm capitalize">{cap(opt)}</span>
-              </label>
-            ))
-          )}
-          {selected.length === 0 && attributes !== undefined && options.length > 0 && (
-            <span className="text-xs text-muted-foreground italic">{hint}</span>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
+  const audienceOptions = (attributes?.audience ?? []).map(a => ({ value: a.name, label: a.name }));
+  const genderOptions   = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
+  const themeOptions    = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
+  const styleOptions    = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
+  const tagTypeOptions  = (allTagTypes ?? []).map(tt => ({ value: tt.id, label: tt.name }));
+  const allTagsFlat     = allTags ?? [];
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Control which sections appear on the Shop page, in what order, and how many products each shows. Use the attribute selectors to define which age group, gender, theme and style a section targets.
+        Control which sections appear on the Shop page, in what order, and how many products each shows.
       </p>
-      {sections.map((s, i) => (
-        <Card key={i} className="p-4 space-y-3" data-testid={`card-shop-section-${i}`}>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={s.enabled}
-                onCheckedChange={(v) => update(i, "enabled", v)}
-                data-testid={`switch-shop-section-enabled-${i}`}
-              />
-              <span className="text-sm font-medium">{s.label || `Section ${i + 1}`}</span>
+      {sections.map((s, i) => {
+        const preview = previewResults[i];
+        const isPreviewing = !!preview;
+        const previewingThis = previewMutation.isPending && (previewMutation.variables as any)?.index === i;
+        const activeSectionTagTypes = selectedTagTypes[i] ?? [];
+        const tagOptions = activeSectionTagTypes.length === 0
+          ? allTagsFlat.map(t => ({ value: t.name, label: t.name }))
+          : allTagsFlat
+              .filter(t => t.tagTypeId && activeSectionTagTypes.includes(t.tagTypeId))
+              .map(t => ({ value: t.name, label: t.name }));
+        const displayProducts: Product[] = preview?.products ?? [];
+
+        return (
+          <Card key={i} className="p-4 space-y-4" data-testid={`card-shop-section-${i}`}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={s.enabled}
+                  onCheckedChange={(v) => update(i, "enabled", v)}
+                  data-testid={`switch-shop-section-enabled-${i}`}
+                />
+                <span className="text-sm font-medium">{s.label || `Section ${i + 1}`}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button size="icon" variant="ghost" onClick={() => move(i, "up")} disabled={i === 0} data-testid={`button-shop-section-up-${i}`}>
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => move(i, "down")} disabled={i === sections.length - 1} data-testid={`button-shop-section-down-${i}`}>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => removeSection(i)} data-testid={`button-shop-section-delete-${i}`}>
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <Button size="icon" variant="ghost" onClick={() => move(i, "up")} disabled={i === 0} data-testid={`button-shop-section-up-${i}`}>
-                <ChevronUp className="w-4 h-4" />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => move(i, "down")} disabled={i === sections.length - 1} data-testid={`button-shop-section-down-${i}`}>
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => removeSection(i)} data-testid={`button-shop-section-delete-${i}`}>
-                <Trash2 className="w-4 h-4 text-destructive" />
-              </Button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label className="text-xs">Display Label</Label>
+                <Input
+                  value={s.label}
+                  onChange={(e) => update(i, "label", e.target.value)}
+                  placeholder="e.g. Kids Towels"
+                  data-testid={`input-shop-section-label-${i}`}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Max Products Shown</Label>
+                <Input
+                  type="number" min={1} max={24}
+                  value={s.maxShown}
+                  onChange={(e) => update(i, "maxShown", Math.max(1, parseInt(e.target.value) || 1))}
+                  data-testid={`input-shop-section-max-${i}`}
+                />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Display Label</Label>
-              <Input
-                value={s.label}
-                onChange={(e) => update(i, "label", e.target.value)}
-                placeholder="e.g. Kids Towels"
-                data-testid={`input-shop-section-label-${i}`}
-              />
+
+            <div className="space-y-3 rounded-md border p-3 bg-muted/30">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
+              <FilterChips label="Categories" options={categoryOptions} selected={s.categories ?? []}
+                onToggle={v => toggleArr(i, "categories", v)}
+                onToggleAll={() => toggleAll(i, "categories", categoryOptions.map(o => o.value))} />
+              <FilterChips label="Audience" options={audienceOptions} selected={s.audience ?? []}
+                onToggle={v => toggleArr(i, "audience", v)}
+                onToggleAll={() => toggleAll(i, "audience", audienceOptions.map(o => o.value))} />
+              <FilterChips label="Genders" options={genderOptions} selected={s.genders ?? []}
+                onToggle={v => toggleArr(i, "genders", v)}
+                onToggleAll={() => toggleAll(i, "genders", genderOptions.map(o => o.value))} />
+              <FilterChips label="Themes" options={themeOptions} selected={s.themes ?? []}
+                onToggle={v => toggleArr(i, "themes", v)}
+                onToggleAll={() => toggleAll(i, "themes", themeOptions.map(o => o.value))} />
+              <FilterChips label="Styles" options={styleOptions} selected={s.styles ?? []}
+                onToggle={v => toggleArr(i, "styles", v)}
+                onToggleAll={() => toggleAll(i, "styles", styleOptions.map(o => o.value))} />
+              <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
+                onToggle={v => toggleTagType(i, v)}
+                onToggleAll={() => toggleAllTagTypes(i)} />
+              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []}
+                onToggle={v => toggleArr(i, "tags", v)}
+                onToggleAll={() => toggleAll(i, "tags", tagOptions.map(o => o.value))} />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Tag</Label>
-              <select
-                value={s.tag}
-                onChange={(e) => update(i, "tag", e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                data-testid={`select-shop-section-tag-${i}`}
-              >
-                <option value="">— select a tag —</option>
-                {(allTags ?? []).map(t => (
-                  <option key={t.id} value={t.name}>{t.name}</option>
-                ))}
-                {s.tag && !(allTags ?? []).some(t => t.name === s.tag) && (
-                  <option value={s.tag}>{s.tag} (saved)</option>
-                )}
-              </select>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {isPreviewing
+                    ? `Preview — ${preview.total ?? 0} matched, showing ${preview.products?.length ?? 0}`
+                    : "Click Preview to see matched products"}
+                </p>
+                <Button
+                  size="sm" variant="outline" className="h-7 text-xs"
+                  disabled={previewingThis}
+                  onClick={() => previewMutation.mutate({ index: i, s })}
+                  data-testid={`button-preview-shop-section-${i}`}
+                >
+                  {previewingThis ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Previewing…</> : "Preview"}
+                </Button>
+              </div>
+              {isPreviewing && (
+                <FeaturedProductCarousel
+                  products={displayProducts}
+                  isLoading={previewingThis}
+                  sectionKey={`shop-${i}`}
+                />
+              )}
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Max Products Shown</Label>
-              <Input
-                type="number"
-                min={1}
-                max={24}
-                value={s.maxShown}
-                onChange={(e) => update(i, "maxShown", Math.max(1, parseInt(e.target.value) || 1))}
-                data-testid={`input-shop-section-max-${i}`}
-              />
-            </div>
-          </div>
-          <AttrCheckboxRow
-            sectionIndex={i}
-            field="audience"
-            options={audienceOptions2}
-            label="Audience"
-            hint="(all)"
-            testPrefix="agegroup"
-          />
-          <AttrCheckboxRow
-            sectionIndex={i}
-            field="genders"
-            options={genderOptions}
-            label="Gender filter (all if none selected)"
-            hint="(all)"
-            testPrefix="gender"
-          />
-          <AttrCheckboxRow
-            sectionIndex={i}
-            field="themes"
-            options={themeOptions}
-            label="Theme filter (all if none selected)"
-            hint="(all)"
-            testPrefix="theme"
-          />
-          <AttrCheckboxRow
-            sectionIndex={i}
-            field="styles"
-            options={styleOptions}
-            label="Style filter (all if none selected)"
-            hint="(all)"
-            testPrefix="style"
-          />
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
       <div className="flex gap-2">
         <Button variant="outline" onClick={addSection} data-testid="button-add-shop-section">
           <Plus className="w-4 h-4 mr-2" /> Add Section

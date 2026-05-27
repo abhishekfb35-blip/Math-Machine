@@ -423,7 +423,9 @@ export const defaultShippingPage: ShippingPageConfig = {
 
 export interface ShopSection {
   label: string;
-  tag: string;
+  tag?: string;           // legacy — kept for reading old saved data
+  tags?: string[];        // replaces tag; used for product tag filtering + section key
+  categories?: string[];  // category slug filter
   maxShown: number;
   enabled: boolean;
   audience?: string[];
@@ -433,13 +435,13 @@ export interface ShopSection {
 }
 
 export const defaultShopSections: ShopSection[] = [
-  { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true, audience: ["kids"] },
-  { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true, audience: ["adults"] },
-  { label: "Couple Towels",    tag: "couple towels",    maxShown: 8, enabled: true, audience: ["adults"] },
-  { label: "Kids Blankets",    tag: "kids blankets",    maxShown: 8, enabled: true, audience: ["kids"] },
-  { label: "Kids Bathrobes",   tag: "kids bathrobes",   maxShown: 8, enabled: true, audience: ["kids"] },
-  { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true, audience: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Kids Towels",      tags: ["kids towels"],      maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Adult Towels",     tags: ["adult towels"],     maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Couple Towels",    tags: ["couple towels"],    maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Kids Blankets",    tags: ["kids blankets"],    maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Kids Bathrobes",   tags: ["kids bathrobes"],   maxShown: 8, enabled: true, audience: ["kids"] },
+  { label: "Adult Bathrobes",  tags: ["adult bathrobes"],  maxShown: 8, enabled: true, audience: ["adults"] },
+  { label: "Couple Bathrobes", tags: ["couple bathrobes"], maxShown: 8, enabled: true, audience: ["adults"] },
 ];
 
 const EMPTY_SECTION_FILTERS = {

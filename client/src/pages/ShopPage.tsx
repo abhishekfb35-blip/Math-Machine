@@ -515,10 +515,15 @@ export default function ShopPage() {
   const shopSections: ShopSection[] = useMemo(() => {
     const raw = shopSectionsConfig?.value;
     if (!Array.isArray(raw) || raw.length === 0) return [];
-    return raw.map((s): ShopSection => ({
-      ...s,
-      audience: s.audience,
-    }));
+    return raw.map((s): ShopSection => {
+      const tags = s.tags ?? (s.tag ? [s.tag] : []);
+      return {
+        ...s,
+        tags,
+        tag: tags[0] ?? s.tag ?? "",
+        audience: s.audience,
+      };
+    });
   }, [shopSectionsConfig]);
 
   // Shared predicate: apply all attribute filters client-side (OR within each dimension)
@@ -644,18 +649,23 @@ export default function ShopPage() {
   // Products for tag drill-down
   const tagProducts = useMemo(() => {
     if (!activeTag) return [];
-    const section = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase());
+    const tagLower = activeTag.toLowerCase();
+    const section = shopSections.find(s => (s.tags ?? []).some(t => t.toLowerCase() === tagLower));
     if (section) {
       let all = attributeFilteredProducts;
+      if (section.categories?.length) {
+        const catIds = (categories ?? []).filter(c => section.categories!.includes(c.slug)).map(c => c.id);
+        if (catIds.length) all = all.filter(p => catIds.includes(p.categoryId));
+      }
       if (section.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => section.audience!.includes(a)));
       if (section.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => section.genders!.includes(g)));
       if (section.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => section.themes!.includes(t)));
       if (section.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => section.styles!.includes(st)));
+      if (section.tags?.length)      all = all.filter(p => (p.tagNames  ?? []).some(t => section.tags!.some(st => st.toLowerCase() === t.toLowerCase())));
       return all;
     }
-    const tagLower = activeTag.toLowerCase();
     return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
-  }, [attributeFilteredProducts, activeTag, shopSections]);
+  }, [attributeFilteredProducts, activeTag, shopSections, categories]);
 
   // Compute tag sections
   const tagSections = useMemo(() => {
@@ -664,15 +674,22 @@ export default function ShopPage() {
       .filter(s => s.enabled)
       .filter(s => activeFilter === "all" || (s.audience ?? []).includes(activeFilter))
       .map(s => {
-        if (!s.audience?.length && !s.genders?.length && !s.themes?.length && !s.styles?.length) return { ...s, all: [], shown: [] };
+        const sTags = s.tags ?? [];
+        if (!sTags.length && !s.categories?.length && !s.audience?.length && !s.genders?.length && !s.themes?.length && !s.styles?.length)
+          return { ...s, all: [], shown: [] };
         let all = attributeFilteredProducts;
+        if (s.categories?.length) {
+          const catIds = (categories ?? []).filter(c => s.categories!.includes(c.slug)).map(c => c.id);
+          if (catIds.length) all = all.filter(p => catIds.includes(p.categoryId));
+        }
         if (s.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => s.audience!.includes(a)));
         if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
         if (s.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => s.themes!.includes(t)));
         if (s.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => s.styles!.includes(st)));
+        if (sTags.length)        all = all.filter(p => (p.tagNames  ?? []).some(t => sTags.some(st => st.toLowerCase() === t.toLowerCase())));
         return { ...s, all, shown: all.slice(0, s.maxShown) };
       });
-  }, [attributeFilteredProducts, shopSections, products, activeFilter]);
+  }, [attributeFilteredProducts, shopSections, products, activeFilter, categories]);
 
   const hasAttributeFilters = activeFilter !== "all" || activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0;
 
