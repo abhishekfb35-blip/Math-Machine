@@ -1176,11 +1176,11 @@ export function registerAdminHealthRoutes(app: Express) {
     }
   });
 
-  // ── DB Snapshot (catalog tables only) ────────────────────────────────────
+  // ── DB Snapshot (catalog + site_content tables) ──────────────────────────
   app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc] = await Promise.all([
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
         pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1202,6 +1202,7 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
         pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
         pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
+        pool.query(`SELECT key, value FROM site_content ORDER BY key`),
       ]);
       res.json({
         categories:       cats.rows,
@@ -1220,6 +1221,7 @@ export function registerAdminHealthRoutes(app: Express) {
         productGenders:   pgens.rows,
         productThemes:    pths.rows,
         productStyles:    psts.rows,
+        siteContent:      sc.rows,
       });
     } catch (err: any) {
       console.error("db-snapshot error:", err.message);
@@ -1237,7 +1239,7 @@ export function registerAdminHealthRoutes(app: Express) {
       const [localSnap, prodResp] = await Promise.all([
         (async () => {
           const { pool } = await import("../../db");
-          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
+          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc] = await Promise.all([
             pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
             pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
             pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1259,13 +1261,14 @@ export function registerAdminHealthRoutes(app: Express) {
             pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
             pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
             pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
+            pool.query(`SELECT key, value FROM site_content ORDER BY key`),
           ]);
           return {
             categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
             productTags: ptags.rows, productImages: imgs.rows, productReviews: revs.rows,
             audience: ags.rows, genders: gens.rows, themes: ths.rows, styles: sts.rows,
             occasions: occs.rows, productAudience: pags.rows, productGenders: pgens.rows,
-            productThemes: pths.rows, productStyles: psts.rows,
+            productThemes: pths.rows, productStyles: psts.rows, siteContent: sc.rows,
           };
         })(),
         fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
@@ -1356,6 +1359,10 @@ export function registerAdminHealthRoutes(app: Express) {
                             localSnap.productStyles as any[], (prodSnap as any).productStyles as any[] ?? [],
                             r => `${r.product_slug}|${r.style_name}`,
                             r => `${r.product_slug} → ${r.style_name}`),
+        siteContent:      diffByContent(
+                            (localSnap as any).siteContent as any[] ?? [], (prodSnap as any).siteContent as any[] ?? [],
+                            r => r.key,
+                            r => r.key),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
@@ -1700,14 +1707,9 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.slug, s.name`
       );
 
-      // Export site_config — exclude base64 brand images and runtime-only keys
+      // Export site_content — all shared admin-configured content rows
       const scResult = await pool.query(
-        `SELECT key, value FROM site_config
-         WHERE key NOT LIKE 'brand-logo-%'
-           AND key NOT LIKE 'brand-pwa-%'
-           AND key NOT LIKE 'seed-hash-%'
-           AND key NOT IN ('cleanup-history', 'stats')
-         ORDER BY key`
+        `SELECT key, value FROM site_content ORDER BY key`
       );
 
       const updated = {
@@ -1726,7 +1728,7 @@ export function registerAdminHealthRoutes(app: Express) {
         variantColors:             vcResult.rows,
         productVariants:           pvResult.rows,
         occasions:                 occasionsResult.rows,
-        siteConfig:                scResult.rows,
+        siteContent:               scResult.rows,
         audience:                  agResult.rows,
         genders:                   genResult.rows,
         themes:                    thResult.rows,
@@ -1755,7 +1757,7 @@ export function registerAdminHealthRoutes(app: Express) {
           variantSizes:              vsResult.rowCount,
           variantColors:             vcResult.rowCount,
           occasions:                 occasionsResult.rowCount,
-          siteConfig:                scResult.rowCount,
+          siteContent:               scResult.rowCount,
           audience:                  agResult.rowCount,
           genders:                   genResult.rowCount,
           themes:                    thResult.rowCount,

@@ -55,7 +55,7 @@ const DEFAULT_SEO = {
 
 async function getSeoConfig(storage: IStorage): Promise<typeof DEFAULT_SEO> {
   try {
-    const row = await storage.getSiteConfig("seo");
+    const row = await storage.getSiteContent("seo");
     if (row?.value) {
       const parsed = JSON.parse(row.value);
       return { ...DEFAULT_SEO, ...parsed };

@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { siteConfig } from "@shared/schema";
+import { siteContent } from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 const POLICY_PAGES: { key: string; value: string }[] = [
@@ -13,9 +13,9 @@ const POLICY_PAGES: { key: string; value: string }[] = [
 export async function ensurePolicyPages() {
   let inserted = 0;
   for (const page of POLICY_PAGES) {
-    const existing = await db.select({ key: siteConfig.key }).from(siteConfig).where(sql`${siteConfig.key} = ${page.key}`);
+    const existing = await db.select({ key: siteContent.key }).from(siteContent).where(sql`${siteContent.key} = ${page.key}`);
     if (existing.length === 0) {
-      await db.insert(siteConfig).values({ key: page.key, value: page.value });
+      await db.insert(siteContent).values({ key: page.key, value: page.value });
       inserted++;
       console.log(`Inserted policy page: ${page.key}`);
     }

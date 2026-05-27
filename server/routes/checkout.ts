@@ -151,17 +151,35 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  // Keys stored in site_content (shared, syncs dev → prod).
+  // Everything else stays in site_config (env-specific / runtime).
+  const SITE_CONTENT_KEYS = new Set([
+    "featuredSections", "shop-sections", "homepage-collections", "homepageCollections",
+    "seo", "announcement", "hero", "header", "footer",
+    "offer-tiers", "delivery-tiers", "promise", "testimonials",
+    "consent-popup", "pwa-install", "wishlist-signup-prompt",
+    "terms", "privacy", "refund", "shipping", "about",
+    "page-terms", "page-privacy", "page-refund", "page-shipping", "page-about",
+  ]);
+
   app.get("/api/site-config", async (_req, res) => {
-    const configs = await storage.getAllSiteConfigs();
+    const [configs, contents] = await Promise.all([
+      storage.getAllSiteConfigs(),
+      storage.getAllSiteContents(),
+    ]);
     const result: Record<string, any> = {};
-    for (const c of configs) {
+    for (const c of [...configs, ...contents]) {
       try { result[c.key] = JSON.parse(c.value); } catch { result[c.key] = c.value; }
     }
     res.json(result);
   });
 
   app.get("/api/site-config/:key", async (req, res) => {
-    const config = await storage.getSiteConfig(req.params.key as string);
+    const key = req.params.key as string;
+    // Check site_content first (content keys), then site_config (env keys)
+    const config = SITE_CONTENT_KEYS.has(key)
+      ? await storage.getSiteContent(key)
+      : (await storage.getSiteContent(key)) ?? (await storage.getSiteConfig(key));
     if (!config) return res.status(404).json({ message: "Config not found" });
     try {
       res.json({ key: config.key, value: JSON.parse(config.value) });
@@ -196,7 +214,10 @@ export function registerCheckoutRoutes(app: Express) {
     try {
       const key = req.params.key as string;
       const value = JSON.stringify(req.body.value);
-      const config = await storage.upsertSiteConfig(key, value);
+      // Route to the correct table based on whether this is shared content or env config
+      const config = SITE_CONTENT_KEYS.has(key)
+        ? await storage.upsertSiteContent(key, value)
+        : await storage.upsertSiteConfig(key, value);
       if (key === "featuredSections") {
         const { bustHomeCache } = await import("./home");
         bustHomeCache();

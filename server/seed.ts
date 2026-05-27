@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { db } from "./db";
 import {
-  categories, products, siteConfig, productImages, productReviews, tags, tagTypes, productTags,
+  categories, products, siteConfig, siteContent, productImages, productReviews, tags, tagTypes, productTags,
   currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
   audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles,
   occasions,
@@ -384,7 +384,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       }
     }
 
-    // ── 4. siteConfig: row-level upsert, skip seed-hash-* keys ───────────────
+    // ── 4a. siteConfig: row-level upsert, skip seed-hash-* and content keys ──
     const configEntries = ((sd.siteConfig ?? []) as Array<{key: string; value: string}>).filter((sc) => !sc.key.startsWith("seed-hash-"));
     let configSynced = 0;
     for (const sc of configEntries) {
@@ -401,6 +401,25 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       console.log(`[seed] siteConfig: synced ${configSynced} entries`);
     } else {
       console.log(`[seed] siteConfig: all entries up to date`);
+    }
+
+    // ── 4b. siteContent: row-level upsert (shared content, syncs dev → prod) ─
+    const contentEntries = ((sd as any).siteContent ?? []) as Array<{key: string; value: string}>;
+    let contentSynced = 0;
+    for (const sc of contentEntries) {
+      const [existing] = await db.select().from(siteContent).where(eq(siteContent.key, sc.key));
+      if (!existing) {
+        await db.insert(siteContent).values({ key: sc.key, value: sc.value });
+        contentSynced++;
+      } else if (existing.value !== sc.value) {
+        await db.update(siteContent).set({ value: sc.value }).where(eq(siteContent.key, sc.key));
+        contentSynced++;
+      }
+    }
+    if (contentSynced > 0) {
+      console.log(`[seed] siteContent: synced ${contentSynced} entries`);
+    } else {
+      console.log(`[seed] siteContent: all entries up to date`);
     }
 
     // ── 5. currencyRates: upsert by currency ──────────────────────────────────
@@ -750,9 +769,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // ── 10. Default shop-sections config (first-time seed only) ──────────────
     const [existingShopSections] = await db
-      .select({ key: siteConfig.key })
-      .from(siteConfig)
-      .where(eq(siteConfig.key, "shop-sections"));
+      .select({ key: siteContent.key })
+      .from(siteContent)
+      .where(eq(siteContent.key, "shop-sections"));
     if (!existingShopSections) {
       const defaultSections = JSON.stringify([
         { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true },
@@ -763,7 +782,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
         { label: "Adult Bathrobes",  tag: "adult bathrobes",  maxShown: 8, enabled: true },
         { label: "Couple Bathrobes", tag: "couple bathrobes", maxShown: 8, enabled: true },
       ]);
-      await db.insert(siteConfig).values({ key: "shop-sections", value: defaultSections });
+      await db.insert(siteContent).values({ key: "shop-sections", value: defaultSections });
       console.log("[seed] shop-sections: inserted default 7 sections");
     } else {
       console.log("[seed] shop-sections: already present, skipping");

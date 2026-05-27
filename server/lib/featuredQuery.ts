@@ -48,7 +48,7 @@ export async function loadAllSectionFilters(): Promise<Record<SectionKey, Sectio
   for (const k of SECTION_KEYS) result[k] = { ...EMPTY_FILTERS };
 
   try {
-    const config = await storage.getSiteConfig("featuredSections");
+    const config = await storage.getSiteContent("featuredSections");
     if (!config) return result;
     const parsed = JSON.parse(config.value) ?? {};
     for (const k of SECTION_KEYS) {

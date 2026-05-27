@@ -269,6 +269,16 @@ export interface InsertSiteConfig {
   value: string;
 }
 
+export interface SiteContent {
+  key: string;
+  value: string;
+}
+
+export interface InsertSiteContent {
+  key: string;
+  value: string;
+}
+
 export interface ProductImage {
   id: string;
   productId: string;

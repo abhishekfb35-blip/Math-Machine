@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles } from "@shared/schema";
 
 import type {
   Category, InsertCategory,
@@ -16,6 +16,7 @@ import type {
   Order, InsertOrder,
   OrderItem, InsertOrderItem,
   SiteConfig,
+  SiteContent,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
   TagType, InsertTagType,
@@ -85,6 +86,10 @@ export interface IStorage {
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
   upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
+
+  getSiteContent(key: string): Promise<SiteContent | undefined>;
+  getAllSiteContents(): Promise<SiteContent[]>;
+  upsertSiteContent(key: string, value: string): Promise<SiteContent>;
 
   getProductImages(productId: string): Promise<ProductImage[]>;
   getProductImagesByCategory(categoryId: string): Promise<Record<string, ProductImage[]>>;
@@ -691,6 +696,25 @@ export class DatabaseStorage implements IStorage {
       return updated;
     }
     const [created] = await db.insert(siteConfig).values({ key, value }).returning();
+    return created;
+  }
+
+  async getSiteContent(key: string): Promise<SiteContent | undefined> {
+    const [row] = await db.select().from(siteContent).where(eq(siteContent.key, key));
+    return row;
+  }
+
+  async getAllSiteContents(): Promise<SiteContent[]> {
+    return await db.select().from(siteContent);
+  }
+
+  async upsertSiteContent(key: string, value: string): Promise<SiteContent> {
+    const [existing] = await db.select().from(siteContent).where(eq(siteContent.key, key));
+    if (existing) {
+      const [updated] = await db.update(siteContent).set({ value }).where(eq(siteContent.key, key)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(siteContent).values({ key, value }).returning();
     return created;
   }
 

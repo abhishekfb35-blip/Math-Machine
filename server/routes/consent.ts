@@ -103,7 +103,7 @@ export function registerConsentRoutes(app: Express) {
       if (recipientEmail && consent.discountCode) {
         let discountPercent = 10;
         try {
-          const config = await storage.getSiteConfig("consent-popup");
+          const config = await storage.getSiteContent("consent-popup");
           if (config?.value?.discountPercent) {
             discountPercent = config.value.discountPercent;
           }

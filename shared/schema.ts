@@ -155,6 +155,13 @@ export const siteConfig = pgTable("site_config", {
   value: text("value").notNull(),
 });
 
+// Shared content settings that sync dev → prod (layout, featured sections, offers, policy pages, etc.)
+export const siteContent = pgTable("site_content", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+export const insertSiteContentSchema = createInsertSchema(siteContent);
+
 export const productImages = pgTable("product_images", {
   id: text("id").primaryKey(),
   productId: text("product_id").notNull(),
@@ -400,6 +407,7 @@ export type {
   Order, InsertOrder,
   OrderItem, InsertOrderItem,
   SiteConfig, InsertSiteConfig,
+  SiteContent, InsertSiteContent,
   ProductImage, InsertProductImage,
   ProductReview, InsertProductReview,
   TagType, InsertTagType,

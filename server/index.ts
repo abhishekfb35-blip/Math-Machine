@@ -26,6 +26,7 @@ import { ensureRateLimitStatsTable } from "./migrations/rate-limit-stats-table";
 import { consolidateProductImages } from "./migrations/consolidate-product-images";
 import { dropProductImageUrl } from "./migrations/drop-product-image-url";
 import { ensureAttributeTables } from "./migrations/attribute-tables";
+import { ensureSiteContentTable } from "./migrations/site-content-table";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
@@ -312,6 +313,7 @@ function startAbandonedCartScheduler() {
             { id: "ensure-rate-limit-stats-table",    run: ensureRateLimitStatsTable },
             { id: "consolidate-product-images",       run: consolidateProductImages },
             { id: "drop-product-image-url",           run: dropProductImageUrl },
+            { id: "ensure-site-content-table",        run: ensureSiteContentTable },
           ]);
           currentStep = "seed-database";
           if (process.env.NODE_ENV === "production") {

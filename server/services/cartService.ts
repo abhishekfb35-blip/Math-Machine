@@ -96,7 +96,7 @@ export class CartService {
 
   private async loadOfferTiers(): Promise<OfferTier[]> {
     try {
-      const config = await this.storage.getSiteConfig("offer-tiers");
+      const config = await this.storage.getSiteContent("offer-tiers");
       if (config) {
         const parsed = JSON.parse(config.value);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -107,7 +107,7 @@ export class CartService {
 
   private async loadDeliveryTiers(): Promise<DeliveryTier[]> {
     try {
-      const config = await this.storage.getSiteConfig("delivery-tiers");
+      const config = await this.storage.getSiteContent("delivery-tiers");
       if (config) {
         const parsed = JSON.parse(config.value);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
