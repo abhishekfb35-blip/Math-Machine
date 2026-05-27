@@ -470,7 +470,7 @@ export default function ShopPage() {
     query: string,
   ) => {
     const p = new URLSearchParams();
-    if (category && category !== "towels") p.set("category", category);
+    if (category) p.set("category", category);
     if (filter !== "all") p.set("filter", filter);
     if (genders.length) p.set("gender", genders.join(","));
     if (themes.length)  p.set("theme",  themes.join(","));
