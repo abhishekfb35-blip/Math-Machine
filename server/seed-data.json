@@ -38981,7 +38981,7 @@
     },
     {
       "key": "featuredSections",
-      "value": "{\"kids\":{\"title\":\"Popular for Kids Towels\",\"subtitle\":\"Disney princesses, superheroes & more\",\"link\":\"/shop?filter=kids\"},\"couples\":{\"title\":\"Couple Sets\",\"subtitle\":\"Elegant matching towel sets for two\",\"link\":\"/shop?filter=couples\"},\"blankets\":{\"title\":\"Cozy Blankets\",\"subtitle\":\"Soft personalised AC blankets for kids\",\"link\":\"/shop?filter=kids\"},\"bathrobes\":{\"title\":\"Luxury Bathrobes\",\"subtitle\":\"Premium personalised cotton bathrobes\",\"link\":\"/category/bathrobes\"}}"
+      "value": "{\"kids\":{\"title\":\"Popular for Kids Towels\",\"subtitle\":\"Disney princesses, superheroes & more\",\"categoryFilters\":[\"towels\"],\"audienceFilters\":[\"infant\",\"kids\",\"teens\"],\"genderFilters\":[\"male\",\"female\"],\"themeFilters\":[],\"styleFilters\":[],\"tagFilters\":[]},\"couples\":{\"title\":\"Couple Towel Sets\",\"subtitle\":\"Elegant matching towel sets for two\",\"categoryFilters\":[\"towels\"],\"audienceFilters\":[\"couples\"],\"genderFilters\":[],\"themeFilters\":[],\"styleFilters\":[],\"tagFilters\":[]},\"blankets\":{\"title\":\"Cozy Blankets\",\"subtitle\":\"Soft personalised AC blankets for kids\",\"categoryFilters\":[\"blankets\"],\"audienceFilters\":[\"kids\"],\"genderFilters\":[],\"themeFilters\":[],\"styleFilters\":[],\"tagFilters\":[]},\"bathrobes\":{\"title\":\"Luxury Bathrobes\",\"subtitle\":\"Premium personalised cotton bathrobes\",\"categoryFilters\":[\"bathrobes\"],\"audienceFilters\":[\"couples\",\"kids\",\"teens\",\"adults\"],\"genderFilters\":[],\"themeFilters\":[],\"styleFilters\":[],\"tagFilters\":[]}}"
     },
     {
       "key": "guest-cart-cleanup",
@@ -39045,7 +39045,7 @@
     },
     {
       "key": "shop-sections",
-      "value": "[{\"label\":\"Kids Towels\",\"tag\":\"kids towels\",\"maxShown\":15,\"enabled\":true,\"audience\":[\"kids\",\"infant\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Adult Towels\",\"tag\":\"adult towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"]},{\"label\":\"Couple Towels\",\"tag\":\"couple towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"]},{\"label\":\"Kids Blankets\",\"tag\":\"kids blankets\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Kids Bathrobes\",\"tag\":\"kids bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Adult Bathrobes\",\"tag\":\"adult bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"]},{\"label\":\"Couple Bathrobes\",\"tag\":\"couple bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"]}]"
+      "value": "[{\"label\":\"Kids Towels\",\"tag\":\"kids towels\",\"maxShown\":15,\"enabled\":true,\"audience\":[\"kids\",\"infant\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Adult Towels\",\"tag\":\"adult towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Couple Towels\",\"tag\":\"couple towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"],\"genders\":[]},{\"label\":\"Kids Blankets\",\"tag\":\"kids blankets\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Kids Bathrobes\",\"tag\":\"kids bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Adult Bathrobes\",\"tag\":\"adult bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"]},{\"label\":\"Couple Bathrobes\",\"tag\":\"couple bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"]}]"
     },
     {
       "key": "wishlist-signup-prompt",
@@ -39432,22 +39432,22 @@
     {
       "id": "areo97vgmhji0y6aooerlf0r",
       "currency": "AED",
-      "rateFromInr": "0.038855"
+      "rateFromInr": "0.038378"
     },
     {
       "id": "lkojlaycg2x7k4lv31kbn89j",
       "currency": "AUD",
-      "rateFromInr": "0.014630"
+      "rateFromInr": "0.014660"
     },
     {
       "id": "dly9xbqt8mx5iwew44n9gt1n",
       "currency": "CAD",
-      "rateFromInr": "0.014450"
+      "rateFromInr": "0.014460"
     },
     {
       "id": "fjchlp46qf0qmcy2qjoru08d",
       "currency": "EUR",
-      "rateFromInr": "0.009000"
+      "rateFromInr": "0.008980"
     },
     {
       "id": "lfhgv2bgfc6msxk19uex8e25",
@@ -39457,12 +39457,12 @@
     {
       "id": "lqbiu2aztljnowd9fosrlkkm",
       "currency": "SGD",
-      "rateFromInr": "0.013420"
+      "rateFromInr": "0.013350"
     },
     {
       "id": "vm31e274ch378a72nsi3uba9",
       "currency": "USD",
-      "rateFromInr": "0.010580"
+      "rateFromInr": "0.010450"
     }
   ],
   "pricingRules": [
