@@ -530,11 +530,10 @@ export function registerAdminCatalogRoutes(app: Express) {
         colors: z.array(colorSchema).default([]),
       });
       const bodySchema = z.object({
-        tagId: z.string().min(1, "Tag is required"),
         sizes: z.array(sizeSchema).default([]),
       });
-      const { tagId, sizes } = bodySchema.parse(req.body);
-      const configId = await storage.upsertVariantConfig(categoryId, tagId, sizes);
+      const { sizes } = bodySchema.parse(req.body);
+      const configId = await storage.upsertVariantConfig(categoryId, null, sizes);
       const config = await storage.getVariantConfig(configId);
       res.json(config);
     } catch (err) {
@@ -808,5 +807,92 @@ export function registerAdminCatalogRoutes(app: Express) {
       console.error("Delete occasion error:", err);
       res.status(500).json({ message: "Failed to delete occasion" });
     }
+  });
+
+  // ── Global Colour Swatches ──
+  app.get("/api/admin/color-swatches", requirePermission("catalog"), async (_req, res) => {
+    res.json(await storage.listColorSwatches());
+  });
+
+  app.post("/api/admin/color-swatches", requirePermission("catalog"), async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        name: z.string().min(1),
+        swatchUrl: z.string().optional().nullable(),
+        sortOrder: z.number().int().default(0),
+      });
+      const data = bodySchema.parse(req.body);
+      const swatch = await storage.createColorSwatch(data);
+      res.status(201).json(swatch);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      res.status(500).json({ message: "Failed to create colour swatch" });
+    }
+  });
+
+  app.patch("/api/admin/color-swatches/:id", requirePermission("catalog"), async (req, res) => {
+    const { id } = req.params;
+    try {
+      const bodySchema = z.object({
+        name: z.string().min(1).optional(),
+        swatchUrl: z.string().optional().nullable(),
+        sortOrder: z.number().int().optional(),
+      });
+      const data = bodySchema.parse(req.body);
+      const swatch = await storage.updateColorSwatch(id, data);
+      if (!swatch) return res.status(404).json({ message: "Swatch not found" });
+      res.json(swatch);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      res.status(500).json({ message: "Failed to update colour swatch" });
+    }
+  });
+
+  app.delete("/api/admin/color-swatches/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteColorSwatch(req.params.id);
+    res.json({ success: true });
+  });
+
+  // ── Category Size Definitions ──
+  app.get("/api/admin/categories/:id/size-definitions", requirePermission("catalog"), async (req, res) => {
+    res.json(await storage.listCategorySizeDefinitions(req.params.id));
+  });
+
+  app.post("/api/admin/categories/:id/size-definitions", requirePermission("catalog"), async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        name: z.string().min(1),
+        description: z.string().optional().nullable(),
+        sortOrder: z.number().int().default(0),
+      });
+      const data = bodySchema.parse(req.body);
+      const def = await storage.createCategorySizeDefinition({ categoryId: req.params.id, ...data });
+      res.status(201).json(def);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      res.status(500).json({ message: "Failed to create size definition" });
+    }
+  });
+
+  app.patch("/api/admin/categories/:categoryId/size-definitions/:id", requirePermission("catalog"), async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        name: z.string().min(1).optional(),
+        description: z.string().optional().nullable(),
+        sortOrder: z.number().int().optional(),
+      });
+      const data = bodySchema.parse(req.body);
+      const def = await storage.updateCategorySizeDefinition(req.params.id, data);
+      if (!def) return res.status(404).json({ message: "Size definition not found" });
+      res.json(def);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      res.status(500).json({ message: "Failed to update size definition" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:categoryId/size-definitions/:id", requirePermission("catalog"), async (req, res) => {
+    await storage.deleteCategorySizeDefinition(req.params.id);
+    res.json({ success: true });
   });
 }

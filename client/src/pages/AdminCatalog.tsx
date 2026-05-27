@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  Loader2, Undo2, Save, Palette, ExternalLink
+  Loader2, Undo2, Save, Palette, ExternalLink, Ruler
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor, Attributes } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor, Attributes, ColorSwatch, CategorySizeDefinition } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product";
 
@@ -628,15 +628,123 @@ function makeLocalColor(overrides?: Partial<LocalColor>): LocalColor {
   };
 }
 
-function VariantConfigModal({ open, onClose, categoryId, allTags }: {
-  open: boolean; onClose: () => void; categoryId: string; allTags: Tag[];
+function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
+  open: boolean; onClose: () => void; categoryId: string; categoryName: string;
 }) {
   const { toast } = useToast();
-  const [activeConfigTagId, setActiveConfigTagId] = useState<string>("");
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+
+  const { data: sizeDefs, isLoading } = useQuery<CategorySizeDefinition[]>({
+    queryKey: ["/api/admin/categories", categoryId, "size-definitions"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/categories/${categoryId}/size-definitions`);
+      return res.json();
+    },
+    enabled: open && !!categoryId,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/admin/categories/${categoryId}/size-definitions`, { name: newName.trim(), description: newDesc.trim() || null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "size-definitions"] });
+      setNewName(""); setNewDesc("");
+      toast({ title: "Size added" });
+    },
+    onError: () => toast({ title: "Failed to add size", variant: "destructive" }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("PATCH", `/api/admin/categories/${categoryId}/size-definitions/${id}`, { name: editName.trim(), description: editDesc.trim() || null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "size-definitions"] });
+      setEditingId(null);
+      toast({ title: "Size updated" });
+    },
+    onError: () => toast({ title: "Failed to update size", variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/categories/${categoryId}/size-definitions/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "size-definitions"] });
+      toast({ title: "Size removed" });
+    },
+    onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Size Repository — {categoryName}</DialogTitle>
+          <DialogDescription>Define available sizes for this category's variant config.</DialogDescription>
+        </DialogHeader>
+        {isLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin mx-auto my-4" />
+        ) : (
+          <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
+            {sizeDefs?.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No sizes defined yet</p>}
+            {sizeDefs?.map(sz => (
+              <div key={sz.id} className="flex items-center gap-2 bg-muted/30 rounded p-2">
+                {editingId === sz.id ? (
+                  <>
+                    <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-7 text-xs flex-1" placeholder="Name" />
+                    <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 text-xs flex-1" placeholder="Description" />
+                    <Button size="sm" className="h-7 text-xs px-2" onClick={() => updateMutation.mutate(sz.id)} disabled={updateMutation.isPending || !editName.trim()}>
+                      <Save className="w-3 h-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => setEditingId(null)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate" data-testid={`text-size-def-name-${sz.id}`}>{sz.name}</p>
+                      {sz.description && <p className="text-xs text-muted-foreground truncate">{sz.description}</p>}
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => { setEditingId(sz.id); setEditName(sz.name); setEditDesc(sz.description ?? ""); }}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => { if (confirm("Remove this size?")) deleteMutation.mutate(sz.id); }}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="border-t pt-3 space-y-2">
+          <Label className="text-xs font-medium">Add Size</Label>
+          <div className="flex gap-2">
+            <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. 50×70 cm" className="h-8 text-xs flex-1" data-testid="input-new-size-name" />
+            <Input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)" className="h-8 text-xs flex-1" />
+            <Button size="sm" className="h-8 text-xs shrink-0" onClick={() => addMutation.mutate()} disabled={addMutation.isPending || !newName.trim()} data-testid="button-add-size-def">
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </div>
+        <div className="flex justify-end pt-1">
+          <Button variant="outline" onClick={onClose}>Done</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
+  open: boolean; onClose: () => void; categoryId: string; categoryName: string;
+}) {
+  const { toast } = useToast();
   const [sizes, setSizes] = useState<LocalSize[]>([makeLocalSize()]);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
-  const { data: configs, isLoading: configsLoading } = useQuery<CategoryTagVariantConfig[]>({
+  const { data: configs } = useQuery<CategoryTagVariantConfig[]>({
     queryKey: ["/api/admin/categories", categoryId, "variant-configs"],
     queryFn: async () => {
       const res = await fetch(`/api/admin/categories/${categoryId}/variant-configs`);
@@ -645,11 +753,26 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     enabled: open && !!categoryId,
   });
 
-  const configForActiveTag = configs?.find(c => c.tagId === activeConfigTagId) ?? null;
+  const { data: globalSwatches } = useQuery<ColorSwatch[]>({
+    queryKey: ["/api/admin/color-swatches"],
+    enabled: open,
+  });
+
+  const { data: sizeDefinitions } = useQuery<CategorySizeDefinition[]>({
+    queryKey: ["/api/admin/categories", categoryId, "size-definitions"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/categories/${categoryId}/size-definitions`);
+      return res.json();
+    },
+    enabled: open && !!categoryId,
+  });
+
+  const currentConfig = configs?.find(c => c.tagId === null) ?? configs?.[0] ?? null;
 
   useEffect(() => {
-    if (configForActiveTag) {
-      setSizes(configForActiveTag.sizes.map(s => ({
+    if (!open) return;
+    if (currentConfig) {
+      setSizes(currentConfig.sizes.map(s => ({
         localId: s.id,
         name: s.name,
         description: s.description ?? "",
@@ -669,12 +792,11 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     } else {
       setSizes([makeLocalSize()]);
     }
-  }, [activeConfigTagId, open, configs?.length]);
+  }, [open, currentConfig?.id]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, {
-        tagId: activeConfigTagId || null,
         sizes: sizes.map((s, si) => ({
           name: s.name,
           description: s.description || undefined,
@@ -730,6 +852,17 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
     }
   }, [toast]);
 
+  const addSizeFromDef = (def: CategorySizeDefinition) => {
+    setSizes(prev => [...prev, makeLocalSize({ name: def.name, description: def.description ?? "", sortOrder: prev.length })]);
+  };
+
+  const addColorFromSwatch = (si: number, swatch: ColorSwatch) => {
+    setSizes(prev => prev.map((s, i) => i === si ? {
+      ...s,
+      colors: [...s.colors, makeLocalColor({ name: swatch.name, swatchUrl: swatch.swatchUrl ?? undefined, sortOrder: s.colors.length })],
+    } : s));
+  };
+
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent
@@ -738,31 +871,20 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Variant Palettes</DialogTitle>
-          <DialogDescription>Configure size + colour options for this category per product tag.</DialogDescription>
+          <DialogTitle>Variant Palettes — {categoryName}</DialogTitle>
+          <DialogDescription>Configure size + colour options for <strong>{categoryName}</strong>.</DialogDescription>
         </DialogHeader>
-        <div className="flex gap-2 items-center mb-2">
-          <Label className="text-xs shrink-0">Tag:</Label>
-          <Select value={activeConfigTagId} onValueChange={setActiveConfigTagId}>
-            <SelectTrigger className="h-8 text-xs" data-testid="select-variant-config-tag">
-              <SelectValue placeholder="Select a tag..." />
-            </SelectTrigger>
-            <SelectContent>
-              {allTags.map(t => (
-                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {configForActiveTag && (
-            <Button size="sm" variant="destructive" className="h-8 text-xs"
-              onClick={() => { if (confirm("Delete this config?")) deleteMutation.mutate(configForActiveTag.id); }}
+        {currentConfig && (
+          <div className="flex justify-end -mt-1 mb-1">
+            <Button size="sm" variant="destructive" className="h-7 text-xs"
+              onClick={() => { if (confirm("Delete this variant config?")) deleteMutation.mutate(currentConfig.id); }}
               disabled={deleteMutation.isPending}
               data-testid="button-delete-variant-config"
             >
-              <Trash2 className="w-3 h-3 mr-1" /> Delete
+              <Trash2 className="w-3 h-3 mr-1" /> Delete Config
             </Button>
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           <div className="space-y-4">
             {sizes.map((size, si) => (
@@ -772,7 +894,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                     <div>
                       <Label className="text-xs">Size Name</Label>
                       <Input value={size.name} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, name: e.target.value } : s))}
-                        placeholder="e.g. 50x70cm" className="h-7 text-xs mt-0.5" data-testid={`input-size-name-${si}`} />
+                        placeholder="e.g. 50×70cm" className="h-7 text-xs mt-0.5" data-testid={`input-size-name-${si}`} />
                     </div>
                     <div>
                       <Label className="text-xs">Price Add (INR)</Label>
@@ -791,7 +913,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                   <div className="flex items-center justify-between mb-0.5">
                     <Label className="text-xs">Description (optional)</Label>
                     <div className="flex items-center gap-1">
-                      <Label className="text-xs text-muted-foreground">Size</Label>
+                      <Label className="text-xs text-muted-foreground">Font</Label>
                       <select
                         value={size.descriptionFontSize ?? 12}
                         onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, descriptionFontSize: parseInt(e.target.value) } : s))}
@@ -804,7 +926,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                     </div>
                   </div>
                   <Input value={size.description || ""} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, description: e.target.value } : s))}
-                    placeholder="Optional description" className="h-7 text-xs mt-0" />
+                    placeholder="Optional description" className="h-7 text-xs" />
                 </div>
                 <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-1 text-xs cursor-pointer">
@@ -823,7 +945,7 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                       onClick={() => setSizes(prev => prev.map((s, i) => i === si ? { ...s, colors: [...s.colors, makeLocalColor()] } : s))}
                       data-testid={`button-add-color-${si}`}
                     >
-                      <Plus className="w-3 h-3 mr-1" /> Add
+                      <Plus className="w-3 h-3 mr-1" /> Custom
                     </Button>
                     {size.colors.length > 0 && (
                       <label className="ml-auto flex items-center gap-1 text-xs cursor-pointer text-muted-foreground">
@@ -838,6 +960,28 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                       </label>
                     )}
                   </div>
+                  {globalSwatches && globalSwatches.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-background rounded border">
+                      <span className="text-xs text-muted-foreground self-center mr-1 shrink-0">From palette:</span>
+                      {globalSwatches.map(sw => (
+                        <button
+                          key={sw.id}
+                          onClick={() => addColorFromSwatch(si, sw)}
+                          title={sw.name}
+                          className="group relative"
+                          data-testid={`button-pick-swatch-${sw.id}-${si}`}
+                        >
+                          {sw.swatchUrl ? (
+                            <img src={sw.swatchUrl} alt={sw.name} className="w-6 h-6 rounded-full object-cover border-2 border-transparent group-hover:border-primary transition-all" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted border-2 border-transparent group-hover:border-primary transition-all flex items-center justify-center">
+                              <span className="text-[8px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span>
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {size.colors.map((color, ci) => (
                     <div key={color.localId} className="flex items-center gap-2 bg-background rounded p-1.5">
                       <div className="flex-1 grid grid-cols-2 gap-1">
@@ -884,16 +1028,35 @@ function VariantConfigModal({ open, onClose, categoryId, allTags }: {
                 </div>
               </div>
             ))}
-            <Button variant="outline" size="sm" onClick={() => setSizes(prev => [...prev, makeLocalSize({ sortOrder: prev.length })])}
-              data-testid="button-add-size"
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add Size
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => setSizes(prev => [...prev, makeLocalSize({ sortOrder: prev.length })])}
+                data-testid="button-add-size"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Size
+              </Button>
+              {sizeDefinitions && sizeDefinitions.length > 0 && (
+                <Select onValueChange={(id) => {
+                  const def = sizeDefinitions.find(d => d.id === id);
+                  if (def) addSizeFromDef(def);
+                }}>
+                  <SelectTrigger className="h-8 text-xs w-52" data-testid="select-add-size-from-repo">
+                    <SelectValue placeholder="Pick from size repo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizeDefinitions.map(d => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}{d.description ? ` — ${d.description}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !activeConfigTagId} data-testid="button-save-variant-config">
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-variant-config">
             {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save Config</>}
           </Button>
         </div>
@@ -967,6 +1130,7 @@ export default function AdminCatalog() {
   }, [currentPage, tagFilter, categoryFilter, pageSize]);
 
   const [variantConfigCategoryId, setVariantConfigCategoryId] = useState<string | null>(null);
+  const [sizesModalCategoryId, setSizesModalCategoryId] = useState<string | null>(null);
   const [reviewDialogProduct, setReviewDialogProduct] = useState<Product | null>(null);
   const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
   const [showAddReviewForm, setShowAddReviewForm] = useState(false);
@@ -1779,6 +1943,18 @@ export default function AdminCatalog() {
                       variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
+                        setSizesModalCategoryId(cat.id);
+                      }}
+                      title="Size Repository"
+                      data-testid={`button-sizes-category-${cat.id}`}
+                    >
+                      <Ruler className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setVariantConfigCategoryId(cat.id);
                       }}
                       title="Variant Palettes"
@@ -1825,12 +2001,20 @@ export default function AdminCatalog() {
             )}
           </div>
         )}
+        {sizesModalCategoryId && (
+          <CategorySizesModal
+            open={!!sizesModalCategoryId}
+            onClose={() => setSizesModalCategoryId(null)}
+            categoryId={sizesModalCategoryId}
+            categoryName={categories?.find(c => c.id === sizesModalCategoryId)?.name ?? ""}
+          />
+        )}
         {variantConfigCategoryId && (
           <VariantConfigModal
             open={!!variantConfigCategoryId}
             onClose={() => setVariantConfigCategoryId(null)}
             categoryId={variantConfigCategoryId}
-            allTags={allTags ?? []}
+            categoryName={categories?.find(c => c.id === variantConfigCategoryId)?.name ?? ""}
           />
         )}
       </div>

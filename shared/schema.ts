@@ -256,6 +256,21 @@ export const variantColors = pgTable("variant_colors", {
   sortOrder: integer("sort_order").default(0),
 });
 
+export const colorSwatches = pgTable("color_swatches", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  swatchUrl: text("swatch_url"),
+  sortOrder: integer("sort_order").default(0),
+});
+
+export const categorySizeDefinitions = pgTable("category_size_definitions", {
+  id: text("id").primaryKey(),
+  categoryId: text("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  sortOrder: integer("sort_order").default(0),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAudienceSchema = createInsertSchema(audience).omit({ id: true });

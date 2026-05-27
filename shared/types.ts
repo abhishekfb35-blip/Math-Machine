@@ -498,6 +498,34 @@ export interface ProductVariantOptions {
   sizes: VariantSize[];
 }
 
+export interface ColorSwatch {
+  id: string;
+  name: string;
+  swatchUrl: string | null;
+  sortOrder: number | null;
+}
+
+export interface InsertColorSwatch {
+  name: string;
+  swatchUrl?: string | null;
+  sortOrder?: number;
+}
+
+export interface CategorySizeDefinition {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  sortOrder: number | null;
+}
+
+export interface InsertCategorySizeDefinition {
+  categoryId: string;
+  name: string;
+  description?: string | null;
+  sortOrder?: number;
+}
+
 export interface ProductVariant {
   id: string;
   productId: string;

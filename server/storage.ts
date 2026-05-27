@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions } from "@shared/schema";
 
 import type {
   Category, InsertCategory,
@@ -34,9 +34,11 @@ import type {
   PricingRule, InsertPricingRule,
   AdminUser, InsertAdminUser,
   RateLimitStats,
+  ColorSwatch, InsertColorSwatch,
+  CategorySizeDefinition, InsertCategorySizeDefinition,
 } from "@shared/types";
 import { db } from "./db";
-import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 
 // Intermediate type: a DB product row before attribute junction enrichment.
 // After withAttributes() runs, audience/genders/themes/styles are filled in → Product.
@@ -167,11 +169,21 @@ export interface IStorage {
 
   listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]>;
   getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null>;
-  upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
+  upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
     name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string>;
   deleteVariantConfig(id: string): Promise<void>;
+
+  listColorSwatches(): Promise<ColorSwatch[]>;
+  createColorSwatch(data: InsertColorSwatch): Promise<ColorSwatch>;
+  updateColorSwatch(id: string, data: Partial<InsertColorSwatch>): Promise<ColorSwatch | undefined>;
+  deleteColorSwatch(id: string): Promise<void>;
+
+  listCategorySizeDefinitions(categoryId: string): Promise<CategorySizeDefinition[]>;
+  createCategorySizeDefinition(data: InsertCategorySizeDefinition): Promise<CategorySizeDefinition>;
+  updateCategorySizeDefinition(id: string, data: Partial<InsertCategorySizeDefinition>): Promise<CategorySizeDefinition | undefined>;
+  deleteCategorySizeDefinition(id: string): Promise<void>;
 
   getCurrencyRates(): Promise<CurrencyRate[]>;
   upsertCurrencyRate(currency: string, rateFromInr: number): Promise<CurrencyRate>;
@@ -1226,20 +1238,14 @@ export class DatabaseStorage implements IStorage {
 
   async getProductVariantOptions(productId: string): Promise<ProductVariantOptions> {
     const productResult = await db.execute(sql`
-      SELECT p.category_id, pt.tag_id
-      FROM products p
-      LEFT JOIN product_tags pt ON pt.product_id = p.id
-      WHERE p.id = ${productId}
-      ORDER BY pt.id
-      LIMIT 1
+      SELECT category_id FROM products WHERE id = ${productId} LIMIT 1
     `);
-    const productRows = (Array.isArray(productResult) ? productResult : ((productResult as { rows?: unknown[] }).rows ?? [])) as { category_id: string; tag_id: string | null }[];
+    const productRows = (Array.isArray(productResult) ? productResult : ((productResult as { rows?: unknown[] }).rows ?? [])) as { category_id: string }[];
     if (productRows.length === 0) return { productId, sizes: [] };
-    const { category_id: categoryId, tag_id: tagId } = productRows[0];
+    const { category_id: categoryId } = productRows[0];
 
-    if (!tagId) return { productId, sizes: [] };
     const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
-      and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+      and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
     );
     if (!cfg) return { productId, sizes: [] };
     const configId = cfg.id;
@@ -1392,13 +1398,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async upsertVariantConfig(categoryId: string, tagId: string, sizes: Array<{
+  async upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
     name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string> {
-    const [existing] = await db.select().from(categoryTagVariantConfigs).where(
-      and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
-    );
+    const whereClause = tagId
+      ? and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
+      : and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId));
+    const [existing] = await db.select().from(categoryTagVariantConfigs).where(whereClause);
 
     let configId: string;
     let oldSwatchUrls: (string | null)[] = [];
@@ -1444,6 +1451,44 @@ export class DatabaseStorage implements IStorage {
     }
     await this.cleanupSwatchFiles(oldSwatchUrls);
     return configId;
+  }
+
+  async listColorSwatches(): Promise<ColorSwatch[]> {
+    return await db.select().from(colorSwatches).orderBy(colorSwatches.sortOrder);
+  }
+
+  async createColorSwatch(data: InsertColorSwatch): Promise<ColorSwatch> {
+    const id = createId();
+    const [row] = await db.insert(colorSwatches).values({ id, name: data.name, swatchUrl: data.swatchUrl ?? null, sortOrder: data.sortOrder ?? 0 }).returning();
+    return row;
+  }
+
+  async updateColorSwatch(id: string, data: Partial<InsertColorSwatch>): Promise<ColorSwatch | undefined> {
+    const [row] = await db.update(colorSwatches).set(data).where(eq(colorSwatches.id, id)).returning();
+    return row;
+  }
+
+  async deleteColorSwatch(id: string): Promise<void> {
+    await db.delete(colorSwatches).where(eq(colorSwatches.id, id));
+  }
+
+  async listCategorySizeDefinitions(categoryId: string): Promise<CategorySizeDefinition[]> {
+    return await db.select().from(categorySizeDefinitions).where(eq(categorySizeDefinitions.categoryId, categoryId)).orderBy(categorySizeDefinitions.sortOrder);
+  }
+
+  async createCategorySizeDefinition(data: InsertCategorySizeDefinition): Promise<CategorySizeDefinition> {
+    const id = createId();
+    const [row] = await db.insert(categorySizeDefinitions).values({ id, categoryId: data.categoryId, name: data.name, description: data.description ?? null, sortOrder: data.sortOrder ?? 0 }).returning();
+    return row;
+  }
+
+  async updateCategorySizeDefinition(id: string, data: Partial<InsertCategorySizeDefinition>): Promise<CategorySizeDefinition | undefined> {
+    const [row] = await db.update(categorySizeDefinitions).set(data).where(eq(categorySizeDefinitions.id, id)).returning();
+    return row;
+  }
+
+  async deleteCategorySizeDefinition(id: string): Promise<void> {
+    await db.delete(categorySizeDefinitions).where(eq(categorySizeDefinitions.id, id));
   }
 
   async deleteVariantConfig(id: string): Promise<void> {

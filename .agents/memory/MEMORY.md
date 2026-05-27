@@ -1,0 +1,2 @@
+- [Variant config null-tagId pattern](variant-config-null-tagid.md) — configs now use tagId=NULL (one per category); old tag-based rows stay but are ignored by queries.
+- [Color-size repo tables](color-size-repo-tables.md) — `color_swatches` and `category_size_definitions` tables added; migration runs via `color-size-repos.ts`.

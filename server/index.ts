@@ -27,6 +27,7 @@ import { consolidateProductImages } from "./migrations/consolidate-product-image
 import { dropProductImageUrl } from "./migrations/drop-product-image-url";
 import { ensureAttributeTables } from "./migrations/attribute-tables";
 import { ensureSiteContentTable } from "./migrations/site-content-table";
+import { runColorSizeReposMigration } from "./migrations/color-size-repos";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { createServer } from "http";
@@ -314,6 +315,7 @@ function startAbandonedCartScheduler() {
             { id: "consolidate-product-images",       run: consolidateProductImages },
             { id: "drop-product-image-url",           run: dropProductImageUrl },
             { id: "ensure-site-content-table",        run: ensureSiteContentTable },
+            { id: "color-size-repos",                  run: runColorSizeReposMigration },
           ]);
           currentStep = "seed-database";
           if (process.env.NODE_ENV === "production") {
