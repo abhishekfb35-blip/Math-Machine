@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, VariantSize, VariantColor, Attributes, ColorSwatch, CategorySizeDefinition } from "@shared/types";
+import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, Attributes, ColorSwatch, CategorySizeDefinition } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product";
 
@@ -609,24 +609,6 @@ function ProductImageManager({ productId, categoryId, mainImageUrl, initialImage
   );
 }
 
-type LocalSize = Omit<VariantSize, 'id'> & { localId: string; colors: LocalColor[] };
-type LocalColor = Omit<VariantColor, 'id'> & { localId: string };
-
-function makeLocalSize(overrides?: Partial<LocalSize>): LocalSize {
-  return {
-    localId: Math.random().toString(36).slice(2),
-    name: "", description: "", descriptionFontSize: 12, priceAdd: 0, isDefault: false, blurOnFront: false, sortOrder: 0,
-    colors: [],
-    ...overrides,
-  };
-}
-function makeLocalColor(overrides?: Partial<LocalColor>): LocalColor {
-  return {
-    localId: Math.random().toString(36).slice(2),
-    name: "", swatchUrl: undefined, blurOnFront: false, sortOrder: 0,
-    ...overrides,
-  };
-}
 
 function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
   open: boolean; onClose: () => void; categoryId: string; categoryName: string;
@@ -741,8 +723,13 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   open: boolean; onClose: () => void; categoryId: string; categoryName: string;
 }) {
   const { toast } = useToast();
-  const [sizes, setSizes] = useState<LocalSize[]>([makeLocalSize()]);
-  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+
+  const [selectedSizeIds, setSelectedSizeIds] = useState<string[]>([]);
+  const [sizePriceAdds, setSizePriceAdds] = useState<Record<string, number>>({});
+  const [sizeDefaultId, setSizeDefaultId] = useState<string | null>(null);
+  const [sizeHide, setSizeHide] = useState<Record<string, boolean>>({});
+  const [selectedSwatchIds, setSelectedSwatchIds] = useState<string[]>([]);
+  const [colorHide, setColorHide] = useState<Record<string, boolean>>({});
 
   const { data: configs } = useQuery<CategoryTagVariantConfig[]>({
     queryKey: ["/api/admin/categories", categoryId, "variant-configs"],
@@ -770,49 +757,62 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   const currentConfig = configs?.find(c => c.tagId === null) ?? configs?.[0] ?? null;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !sizeDefinitions || !globalSwatches) return;
     if (currentConfig) {
-      setSizes(currentConfig.sizes.map(s => ({
-        localId: s.id,
-        name: s.name,
-        description: s.description ?? "",
-        descriptionFontSize: s.descriptionFontSize ?? 12,
-        priceAdd: s.priceAdd,
-        isDefault: s.isDefault,
-        blurOnFront: s.blurOnFront,
-        sortOrder: s.sortOrder,
-        colors: s.colors.map(c => ({
-          localId: c.id,
-          name: c.name,
-          swatchUrl: c.swatchUrl,
-          blurOnFront: c.blurOnFront,
-          sortOrder: c.sortOrder,
-        })),
-      })));
+      const ids: string[] = [];
+      const priceAdds: Record<string, number> = {};
+      const hide: Record<string, boolean> = {};
+      let defaultId: string | null = null;
+      for (const sz of currentConfig.sizes) {
+        const def = sizeDefinitions.find(d => d.name === sz.name);
+        if (def) {
+          ids.push(def.id);
+          priceAdds[def.id] = sz.priceAdd;
+          hide[def.id] = sz.blurOnFront;
+          if (sz.isDefault) defaultId = def.id;
+        }
+      }
+      setSelectedSizeIds(ids);
+      setSizePriceAdds(priceAdds);
+      setSizeHide(hide);
+      setSizeDefaultId(defaultId);
+      const firstColors = currentConfig.sizes[0]?.colors ?? [];
+      const swatchIds: string[] = [];
+      const cHide: Record<string, boolean> = {};
+      for (const c of firstColors) {
+        const sw = globalSwatches.find(s => s.name === c.name);
+        if (sw) { swatchIds.push(sw.id); cHide[sw.id] = c.blurOnFront; }
+      }
+      setSelectedSwatchIds(swatchIds);
+      setColorHide(cHide);
     } else {
-      setSizes([makeLocalSize()]);
+      setSelectedSizeIds([]);
+      setSizePriceAdds({});
+      setSizeHide({});
+      setSizeDefaultId(null);
+      setSelectedSwatchIds([]);
+      setColorHide({});
     }
-  }, [open, currentConfig?.id]);
+  }, [open, currentConfig?.id, sizeDefinitions?.length, globalSwatches?.length]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, {
-        sizes: sizes.map((s, si) => ({
-          name: s.name,
-          description: s.description || undefined,
-          descriptionFontSize: s.descriptionFontSize ?? 12,
-          priceAdd: s.priceAdd,
-          isDefault: s.isDefault,
-          blurOnFront: s.blurOnFront,
+      const sizes = selectedSizeIds.map((id, si) => {
+        const def = sizeDefinitions?.find(d => d.id === id);
+        return {
+          name: def?.name ?? "",
+          description: def?.description ?? undefined,
+          priceAdd: sizePriceAdds[id] ?? 0,
+          isDefault: sizeDefaultId === id,
+          blurOnFront: sizeHide[id] ?? false,
           sortOrder: si,
-          colors: s.colors.map((c, ci) => ({
-            name: c.name,
-            swatchUrl: c.swatchUrl,
-            blurOnFront: c.blurOnFront,
-            sortOrder: ci,
-          })),
-        })),
+          colors: selectedSwatchIds.map((swId, ci) => {
+            const sw = globalSwatches?.find(s => s.id === swId);
+            return { name: sw?.name ?? "", swatchUrl: sw?.swatchUrl ?? undefined, blurOnFront: colorHide[swId] ?? false, sortOrder: ci };
+          }),
+        };
       });
+      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
@@ -827,55 +827,34 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
-      setSizes([makeLocalSize()]);
+      setSelectedSizeIds([]); setSizePriceAdds({}); setSizeHide({}); setSizeDefaultId(null);
+      setSelectedSwatchIds([]); setColorHide({});
       toast({ title: "Config deleted" });
     },
     onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
   });
 
-  const uploadSwatch = useCallback(async (file: File, sizeLocalId: string, colorLocalId: string) => {
-    setUploading(prev => ({ ...prev, [`${sizeLocalId}-${colorLocalId}`]: true }));
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/upload-swatch", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
-      setSizes(prev => prev.map(s => s.localId === sizeLocalId ? {
-        ...s,
-        colors: s.colors.map(c => c.localId === colorLocalId ? { ...c, swatchUrl: url } : c),
-      } : s));
-    } catch {
-      toast({ title: "Swatch upload failed", variant: "destructive" });
-    } finally {
-      setUploading(prev => ({ ...prev, [`${sizeLocalId}-${colorLocalId}`]: false }));
-    }
-  }, [toast]);
-
-  const addSizeFromDef = (def: CategorySizeDefinition) => {
-    setSizes(prev => [...prev, makeLocalSize({ name: def.name, description: def.description ?? "", sortOrder: prev.length })]);
-  };
-
-  const addColorFromSwatch = (si: number, swatch: ColorSwatch) => {
-    setSizes(prev => prev.map((s, i) => i === si ? {
-      ...s,
-      colors: [...s.colors, makeLocalColor({ name: swatch.name, swatchUrl: swatch.swatchUrl ?? undefined, sortOrder: s.colors.length })],
-    } : s));
-  };
+  function toggleSize(id: string) {
+    setSelectedSizeIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  }
+  function toggleSwatch(id: string) {
+    setSelectedSwatchIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  }
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Variant Palettes — {categoryName}</DialogTitle>
-          <DialogDescription>Configure size + colour options for <strong>{categoryName}</strong>.</DialogDescription>
+          <DialogDescription>Pick sizes and colours for <strong>{categoryName}</strong>.</DialogDescription>
         </DialogHeader>
+
         {currentConfig && (
-          <div className="flex justify-end -mt-1 mb-1">
+          <div className="flex justify-end -mt-1">
             <Button size="sm" variant="destructive" className="h-7 text-xs"
               onClick={() => { if (confirm("Delete this variant config?")) deleteMutation.mutate(currentConfig.id); }}
               disabled={deleteMutation.isPending}
@@ -885,185 +864,117 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
             </Button>
           </div>
         )}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-          <div className="space-y-4">
-            {sizes.map((size, si) => (
-              <div key={size.localId} className="border rounded-md p-3 space-y-2 bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Size Name</Label>
-                      <Input value={size.name} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, name: e.target.value } : s))}
-                        placeholder="e.g. 50×70cm" className="h-7 text-xs mt-0.5" data-testid={`input-size-name-${si}`} />
+
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
+          <div>
+            <Label className="text-sm font-semibold mb-2 block">Sizes</Label>
+            {!sizeDefinitions || sizeDefinitions.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">
+                No sizes defined — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add size presets.
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {sizeDefinitions.map(def => {
+                  const selected = selectedSizeIds.includes(def.id);
+                  return (
+                    <div key={def.id} className={`flex items-center gap-3 rounded-md border p-2.5 transition-colors ${selected ? "bg-muted/50 border-primary/30" : "bg-background"}`}>
+                      <Checkbox checked={selected} onCheckedChange={() => toggleSize(def.id)} data-testid={`checkbox-size-${def.id}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-none">{def.name}</p>
+                        {def.description && <p className="text-xs text-muted-foreground mt-0.5">{def.description}</p>}
+                      </div>
+                      {selected && (
+                        <>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-xs text-muted-foreground">+₹</span>
+                            <Input type="number" value={sizePriceAdds[def.id] ?? 0}
+                              onChange={e => setSizePriceAdds(prev => ({ ...prev, [def.id]: parseInt(e.target.value) || 0 }))}
+                              className="h-7 w-20 text-xs" data-testid={`input-size-price-${def.id}`} />
+                          </div>
+                          <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
+                            <Checkbox checked={sizeDefaultId === def.id} onCheckedChange={() => setSizeDefaultId(sizeDefaultId === def.id ? null : def.id)} />
+                            Default
+                          </label>
+                          <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
+                            <Checkbox checked={sizeHide[def.id] ?? false} onCheckedChange={v => setSizeHide(prev => ({ ...prev, [def.id]: !!v }))} />
+                            Hide
+                          </label>
+                        </>
+                      )}
                     </div>
-                    <div>
-                      <Label className="text-xs">Price Add (INR)</Label>
-                      <Input type="number" value={size.priceAdd}
-                        onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, priceAdd: parseInt(e.target.value) || 0 } : s))}
-                        className="h-7 text-xs mt-0.5" data-testid={`input-size-price-${si}`} />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setSizes(prev => prev.filter((_, i) => i !== si))} data-testid={`button-remove-size-${si}`}>
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <Label className="text-xs">Description (optional)</Label>
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs text-muted-foreground">Font</Label>
-                      <select
-                        value={size.descriptionFontSize ?? 12}
-                        onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, descriptionFontSize: parseInt(e.target.value) } : s))}
-                        className="h-6 text-xs border border-input rounded px-1 bg-background"
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold mb-2 block">Colours</Label>
+            {!globalSwatches || globalSwatches.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">
+                No colours in palette —{" "}
+                <a href="/admin/color-swatches" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-primary">
+                  add some in the Colour Swatches page
+                </a>.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {globalSwatches.map(sw => {
+                    const selected = selectedSwatchIds.includes(sw.id);
+                    return (
+                      <button key={sw.id} onClick={() => toggleSwatch(sw.id)} title={sw.name}
+                        className={`relative flex flex-col items-center gap-1 p-1 rounded-md border-2 transition-all ${selected ? "border-primary bg-primary/5" : "border-transparent hover:border-muted-foreground/30"}`}
+                        data-testid={`button-swatch-${sw.id}`}
                       >
-                        {[10, 11, 12, 13, 14, 16, 18].map(fs => (
-                          <option key={fs} value={fs}>{fs}px</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <Input value={size.description || ""} onChange={e => setSizes(prev => prev.map((s, i) => i === si ? { ...s, description: e.target.value } : s))}
-                    placeholder="Optional description" className="h-7 text-xs" />
-                </div>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="flex items-center gap-1 text-xs cursor-pointer">
-                    <Checkbox checked={size.isDefault} onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? { ...s, isDefault: !!v } : s))} />
-                    Default
-                  </label>
-                  <label className="flex items-center gap-1 text-xs cursor-pointer">
-                    <Checkbox checked={size.blurOnFront} onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? { ...s, blurOnFront: !!v } : s))} />
-                    Hide (blurred in shop)
-                  </label>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs font-medium">Colours</Label>
-                    <Button size="sm" variant="outline" className="h-6 text-xs px-2"
-                      onClick={() => setSizes(prev => prev.map((s, i) => i === si ? { ...s, colors: [...s.colors, makeLocalColor()] } : s))}
-                      data-testid={`button-add-color-${si}`}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Custom
-                    </Button>
-                    {size.colors.length > 0 && (
-                      <label className="ml-auto flex items-center gap-1 text-xs cursor-pointer text-muted-foreground">
-                        <Checkbox
-                          checked={size.colors.every(c => c.blurOnFront)}
-                          onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si
-                            ? { ...s, colors: s.colors.map(c => ({ ...c, blurOnFront: !!v })) }
-                            : s))}
-                          data-testid={`checkbox-hide-all-colors-${si}`}
-                        />
-                        Hide all
-                      </label>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 p-2 bg-background rounded border min-h-[2.25rem] items-center">
-                    <span className="text-xs text-muted-foreground self-center mr-1 shrink-0">From palette:</span>
-                    {globalSwatches && globalSwatches.length > 0 ? globalSwatches.map(sw => (
-                      <button
-                        key={sw.id}
-                        onClick={() => addColorFromSwatch(si, sw)}
-                        title={sw.name}
-                        className="group relative"
-                        data-testid={`button-pick-swatch-${sw.id}-${si}`}
-                      >
-                        {sw.swatchUrl ? (
-                          <img src={sw.swatchUrl} alt={sw.name} className="w-6 h-6 rounded-full object-cover border-2 border-transparent group-hover:border-primary transition-all" />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-muted border-2 border-transparent group-hover:border-primary transition-all flex items-center justify-center">
-                            <span className="text-[8px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span>
+                        {sw.swatchUrl
+                          ? <img src={sw.swatchUrl} alt={sw.name} className="w-9 h-9 rounded-full object-cover" />
+                          : <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"><span className="text-[10px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span></div>
+                        }
+                        <span className="text-[10px] text-muted-foreground max-w-[3rem] truncate">{sw.name}</span>
+                        {selected && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-[8px] text-primary-foreground font-bold">✓</span>
                           </div>
                         )}
                       </button>
-                    )) : (
-                      <a href="/admin/color-swatches" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary underline underline-offset-2">
-                        No colours yet — add some in the Colour Swatches page
-                      </a>
-                    )}
-                  </div>
-                  {size.colors.map((color, ci) => (
-                    <div key={color.localId} className="flex items-center gap-2 bg-background rounded p-1.5">
-                      <div className="flex-1 grid grid-cols-2 gap-1">
-                        <Input value={color.name}
-                          onChange={e => setSizes(prev => prev.map((s, i) => i === si ? {
-                            ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, name: e.target.value } : c)
-                          } : s))}
-                          placeholder="Colour name" className="h-6 text-xs" data-testid={`input-color-name-${si}-${ci}`} />
-                        <div className="flex items-center gap-1">
-                          {color.swatchUrl ? (
-                            <img src={color.swatchUrl} alt="" className="w-6 h-6 rounded-full object-cover border" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-muted border" />
-                          )}
-                          <label className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                            {uploading[`${size.localId}-${color.localId}`] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                            <input type="file" accept="image/*" className="hidden"
-                              onChange={e => e.target.files?.[0] && uploadSwatch(e.target.files[0], size.localId, color.localId)} />
-                          </label>
-                          {color.swatchUrl && (
-                            <button onClick={() => setSizes(prev => prev.map((s, i) => i === si ? {
-                              ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, swatchUrl: undefined } : c)
-                            } : s))} className="text-muted-foreground hover:text-destructive">
-                              <X className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
-                        <Checkbox checked={color.blurOnFront}
-                          onCheckedChange={v => setSizes(prev => prev.map((s, i) => i === si ? {
-                            ...s, colors: s.colors.map((c, j) => j === ci ? { ...c, blurOnFront: !!v } : c)
-                          } : s))} />
-                        Hide
-                      </label>
-                      <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0"
-                        onClick={() => setSizes(prev => prev.map((s, i) => i === si ? { ...s, colors: s.colors.filter((_, j) => j !== ci) } : s))}
-                        data-testid={`button-remove-color-${si}-${ci}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+                {selectedSwatchIds.length > 0 && (
+                  <div className="space-y-1 border-t pt-2">
+                    <p className="text-xs text-muted-foreground font-medium">Selected:</p>
+                    {selectedSwatchIds.map(swId => {
+                      const sw = globalSwatches.find(s => s.id === swId);
+                      if (!sw) return null;
+                      return (
+                        <div key={swId} className="flex items-center gap-2">
+                          {sw.swatchUrl
+                            ? <img src={sw.swatchUrl} alt={sw.name} className="w-5 h-5 rounded-full object-cover border shrink-0" />
+                            : <div className="w-5 h-5 rounded-full bg-muted border shrink-0" />
+                          }
+                          <span className="text-xs flex-1">{sw.name}</span>
+                          <label className="flex items-center gap-1 text-xs cursor-pointer">
+                            <Checkbox checked={colorHide[swId] ?? false} onCheckedChange={v => setColorHide(prev => ({ ...prev, [swId]: !!v }))} />
+                            Hide
+                          </label>
+                          <button onClick={() => toggleSwatch(swId)} className="text-muted-foreground hover:text-destructive">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={() => setSizes(prev => [...prev, makeLocalSize({ sortOrder: prev.length })])}
-                data-testid="button-add-size"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Size
-              </Button>
-              {sizeDefinitions && sizeDefinitions.length > 0 ? (
-                <Select onValueChange={(id) => {
-                  const def = sizeDefinitions.find(d => d.id === id);
-                  if (def) addSizeFromDef(def);
-                }}>
-                  <SelectTrigger className="h-8 text-xs w-52" data-testid="select-add-size-from-repo">
-                    <SelectValue placeholder="Pick from size repo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sizeDefinitions.map(d => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}{d.description ? ` — ${d.description}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <span className="text-xs text-muted-foreground self-center">
-                  No sizes in repo — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add presets
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
+
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-variant-config">
-            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save Config</>}
+            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save</>}
           </Button>
         </div>
       </DialogContent>
