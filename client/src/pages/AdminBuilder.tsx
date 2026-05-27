@@ -1088,7 +1088,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(section, v)}
                 onToggleAll={() => toggleAllTagTypes(section)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "tagFilters", v)}
                 onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
@@ -1381,7 +1381,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(i, v)}
                 onToggleAll={() => toggleAllTagTypes(i)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "tags", v)}
                 onToggleAll={() => toggleAll(i, "tags", tagOptions.map(o => o.value))} />
             </div>
