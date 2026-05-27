@@ -962,11 +962,10 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
     for (const p of allProducts) {
       const catSlug = (categories ?? []).find(c => c.id === p.categoryId)?.slug;
       if (catSlug) counts[catSlug] = (counts[catSlug] ?? 0) + 1;
-      for (const v of p.audience  ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.genders   ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.themes    ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.styles    ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.tagNames  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.audience ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.genders  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.themes   ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.styles   ?? []) counts[v] = (counts[v] ?? 0) + 1;
     }
     return counts;
   }, [allProducts, categories]);
@@ -1088,7 +1087,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(section, v)}
                 onToggleAll={() => toggleAllTagTypes(section)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters} counts={productCounts}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
                 onToggle={v => toggleFilter(section, "tagFilters", v)}
                 onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
@@ -1193,11 +1192,10 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
     for (const p of allProducts) {
       const catSlug = (categories ?? []).find(c => c.id === p.categoryId)?.slug;
       if (catSlug) counts[catSlug] = (counts[catSlug] ?? 0) + 1;
-      for (const v of p.audience  ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.genders   ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.themes    ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.styles    ?? []) counts[v] = (counts[v] ?? 0) + 1;
-      for (const v of p.tagNames  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.audience ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.genders  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.themes   ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.styles   ?? []) counts[v] = (counts[v] ?? 0) + 1;
     }
     return counts;
   }, [allProducts, categories]);
@@ -1381,7 +1379,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(i, v)}
                 onToggleAll={() => toggleAllTagTypes(i)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []} counts={productCounts}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []}
                 onToggle={v => toggleArr(i, "tags", v)}
                 onToggleAll={() => toggleAll(i, "tags", tagOptions.map(o => o.value))} />
             </div>
