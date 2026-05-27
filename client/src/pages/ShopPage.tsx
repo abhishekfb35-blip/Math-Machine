@@ -387,7 +387,7 @@ export default function ShopPage() {
   const searchString = useSearch();
   const [, navigate] = useLocation();
 
-  const [activeCategory, setActiveCategory] = useState<string>("towels");
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [activeGenders, setActiveGenders] = useState<string[]>([]);
   const [activeThemes,  setActiveThemes]  = useState<string[]>([]);

@@ -25,7 +25,7 @@ import {
   defaultHomepageCollections,
   type HeroConfig, type PromiseConfig, type CollectionsConfig,
   type ProductTypesConfig, type PromoConfig, type TestimonialsConfig,
-  type StatsConfig, type FeaturedSectionsConfig,
+  type StatsConfig, type FeaturedSectionsConfig, type FeaturedSectionConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
 } from "@/lib/siteConfigDefaults";
 
@@ -348,7 +348,7 @@ export default function Home() {
               products={featuredBathrobes}
               title={featured.bathrobes?.title || "Luxury Bathrobes"}
               subtitle={featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}
-              link={buildSeeAllHref(featured.bathrobes)}
+              link={buildSeeAllHref(featured.bathrobes ?? defaultFeaturedSections.bathrobes)}
               testIdPrefix="bathrobes"
               onQuickAdd={setQuickAddProduct}
             />
