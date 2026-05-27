@@ -837,7 +837,7 @@ function FilterChips({
           >
             {opt.label}
             {counts !== undefined && (
-              <span className="ml-1 opacity-60 text-[10px]">({counts[opt.value] ?? 0})</span>
+              <span className="ml-1 opacity-90 text-[10px]">({counts[opt.value] ?? 0})</span>
             )}
           </button>
         ))}
