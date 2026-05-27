@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
-  Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Package, FolderOpen,
+  Plus, Pencil, Trash2, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
   Loader2, Undo2, Save, Palette, ExternalLink, Ruler
 } from "lucide-react";
@@ -619,6 +619,7 @@ function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [localIds, setLocalIds] = useState<string[]>([]);
 
   const { data: sizeDefs, isLoading } = useQuery<CategorySizeDefinition[]>({
     queryKey: ["/api/admin/categories", categoryId, "size-definitions"],
@@ -628,6 +629,14 @@ function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
     },
     enabled: open && !!categoryId,
   });
+
+  useEffect(() => {
+    if (sizeDefs) setLocalIds(sizeDefs.map(s => s.id));
+  }, [sizeDefs]);
+
+  const orderedDefs = localIds
+    .map(id => sizeDefs?.find(s => s.id === id))
+    .filter(Boolean) as CategorySizeDefinition[];
 
   const addMutation = useMutation({
     mutationFn: () => apiRequest("POST", `/api/admin/categories/${categoryId}/size-definitions`, { name: newName.trim(), description: newDesc.trim() || null }),
@@ -658,6 +667,24 @@ function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
     onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (newIds: string[]) => {
+      await Promise.all(newIds.map((id, i) =>
+        apiRequest("PATCH", `/api/admin/categories/${categoryId}/size-definitions/${id}`, { sortOrder: i })
+      ));
+    },
+    onError: () => toast({ title: "Failed to save order", variant: "destructive" }),
+  });
+
+  function move(index: number, dir: -1 | 1) {
+    const next = [...localIds];
+    const swapIdx = index + dir;
+    if (swapIdx < 0 || swapIdx >= next.length) return;
+    [next[index], next[swapIdx]] = [next[swapIdx], next[index]];
+    setLocalIds(next);
+    reorderMutation.mutate(next);
+  }
+
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
@@ -669,9 +696,17 @@ function CategorySizesModal({ open, onClose, categoryId, categoryName }: {
           <Loader2 className="w-5 h-5 animate-spin mx-auto my-4" />
         ) : (
           <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
-            {sizeDefs?.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No sizes defined yet</p>}
-            {sizeDefs?.map(sz => (
-              <div key={sz.id} className="flex items-center gap-2 bg-muted/30 rounded p-2">
+            {orderedDefs.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No sizes defined yet</p>}
+            {orderedDefs.map((sz, idx) => (
+              <div key={sz.id} className="flex items-center gap-1.5 bg-muted/30 rounded p-2">
+                <div className="flex flex-col shrink-0">
+                  <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => move(idx, -1)} disabled={idx === 0} data-testid={`button-size-up-${sz.id}`}>
+                    <ChevronUp className="w-3 h-3" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => move(idx, 1)} disabled={idx === orderedDefs.length - 1} data-testid={`button-size-down-${sz.id}`}>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </div>
                 {editingId === sz.id ? (
                   <>
                     <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-7 text-xs flex-1" placeholder="Name" />
