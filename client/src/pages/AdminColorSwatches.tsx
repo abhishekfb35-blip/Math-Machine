@@ -19,7 +19,6 @@ export default function AdminColorSwatches() {
   const [editName, setEditName] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editPreview, setEditPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
 
   const { data: swatches, isLoading } = useQuery<ColorSwatch[]>({
@@ -37,14 +36,9 @@ export default function AdminColorSwatches() {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      setUploading(true);
-      try {
-        let swatchUrl: string | null = null;
-        if (newFile) swatchUrl = await uploadSwatchFile(newFile);
-        await apiRequest("POST", "/api/admin/color-swatches", { name: newName.trim(), swatchUrl });
-      } finally {
-        setUploading(false);
-      }
+      let swatchUrl: string | null = null;
+      if (newFile) swatchUrl = await uploadSwatchFile(newFile);
+      await apiRequest("POST", "/api/admin/color-swatches", { name: newName.trim(), swatchUrl });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/color-swatches"] });
@@ -59,16 +53,11 @@ export default function AdminColorSwatches() {
 
   const updateMutation = useMutation({
     mutationFn: async (id: string) => {
-      setUploading(true);
-      try {
-        let swatchUrl: string | undefined = undefined;
-        if (editFile) swatchUrl = await uploadSwatchFile(editFile);
-        const body: Record<string, unknown> = { name: editName.trim() };
-        if (swatchUrl !== undefined) body.swatchUrl = swatchUrl;
-        await apiRequest("PATCH", `/api/admin/color-swatches/${id}`, body);
-      } finally {
-        setUploading(false);
-      }
+      let swatchUrl: string | undefined = undefined;
+      if (editFile) swatchUrl = await uploadSwatchFile(editFile);
+      const body: Record<string, unknown> = { name: editName.trim() };
+      if (swatchUrl !== undefined) body.swatchUrl = swatchUrl;
+      await apiRequest("PATCH", `/api/admin/color-swatches/${id}`, body);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/color-swatches"] });
@@ -164,11 +153,11 @@ export default function AdminColorSwatches() {
           </div>
           <Button
             onClick={() => addMutation.mutate()}
-            disabled={addMutation.isPending || uploading || !newName.trim()}
+            disabled={addMutation.isPending || !newName.trim()}
             className="h-8 text-sm"
             data-testid="button-add-swatch"
           >
-            {addMutation.isPending || uploading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+            {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
             Add
           </Button>
         </div>
@@ -206,8 +195,8 @@ export default function AdminColorSwatches() {
                     className="h-8 text-sm flex-1 min-w-32"
                     data-testid={`input-edit-swatch-name-${sw.id}`}
                   />
-                  <Button size="sm" className="h-8" onClick={() => updateMutation.mutate(sw.id)} disabled={updateMutation.isPending || uploading || !editName.trim()} data-testid={`button-save-swatch-${sw.id}`}>
-                    {updateMutation.isPending || uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  <Button size="sm" className="h-8" onClick={() => updateMutation.mutate(sw.id)} disabled={updateMutation.isPending || !editName.trim()} data-testid={`button-save-swatch-${sw.id}`}>
+                    {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                   </Button>
                   <Button size="sm" variant="ghost" className="h-8" onClick={() => { setEditingId(null); setEditFile(null); setEditPreview(null); }}>
                     <X className="w-3 h-3" />
