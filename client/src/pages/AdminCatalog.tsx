@@ -960,28 +960,30 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                       </label>
                     )}
                   </div>
-                  {globalSwatches && globalSwatches.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 p-2 bg-background rounded border">
-                      <span className="text-xs text-muted-foreground self-center mr-1 shrink-0">From palette:</span>
-                      {globalSwatches.map(sw => (
-                        <button
-                          key={sw.id}
-                          onClick={() => addColorFromSwatch(si, sw)}
-                          title={sw.name}
-                          className="group relative"
-                          data-testid={`button-pick-swatch-${sw.id}-${si}`}
-                        >
-                          {sw.swatchUrl ? (
-                            <img src={sw.swatchUrl} alt={sw.name} className="w-6 h-6 rounded-full object-cover border-2 border-transparent group-hover:border-primary transition-all" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-muted border-2 border-transparent group-hover:border-primary transition-all flex items-center justify-center">
-                              <span className="text-[8px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span>
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-background rounded border min-h-[2.25rem] items-center">
+                    <span className="text-xs text-muted-foreground self-center mr-1 shrink-0">From palette:</span>
+                    {globalSwatches && globalSwatches.length > 0 ? globalSwatches.map(sw => (
+                      <button
+                        key={sw.id}
+                        onClick={() => addColorFromSwatch(si, sw)}
+                        title={sw.name}
+                        className="group relative"
+                        data-testid={`button-pick-swatch-${sw.id}-${si}`}
+                      >
+                        {sw.swatchUrl ? (
+                          <img src={sw.swatchUrl} alt={sw.name} className="w-6 h-6 rounded-full object-cover border-2 border-transparent group-hover:border-primary transition-all" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-muted border-2 border-transparent group-hover:border-primary transition-all flex items-center justify-center">
+                            <span className="text-[8px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span>
+                          </div>
+                        )}
+                      </button>
+                    )) : (
+                      <a href="/admin/color-swatches" target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-primary underline underline-offset-2">
+                        No colours yet — add some in the Colour Swatches page
+                      </a>
+                    )}
+                  </div>
                   {size.colors.map((color, ci) => (
                     <div key={color.localId} className="flex items-center gap-2 bg-background rounded p-1.5">
                       <div className="flex-1 grid grid-cols-2 gap-1">
@@ -1034,7 +1036,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Size
               </Button>
-              {sizeDefinitions && sizeDefinitions.length > 0 && (
+              {sizeDefinitions && sizeDefinitions.length > 0 ? (
                 <Select onValueChange={(id) => {
                   const def = sizeDefinitions.find(d => d.id === id);
                   if (def) addSizeFromDef(def);
@@ -1050,6 +1052,10 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                     ))}
                   </SelectContent>
                 </Select>
+              ) : (
+                <span className="text-xs text-muted-foreground self-center">
+                  No sizes in repo — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add presets
+                </span>
               )}
             </div>
           </div>
