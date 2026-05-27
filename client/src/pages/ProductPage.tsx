@@ -27,7 +27,7 @@ import ShareButton from "@/components/ShareButton";
 import { useWishlist } from "@/hooks/useWishlist";
 
 type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string };
-type CoupleAudienceConfig = { type: "couple"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
+type CoupleAudienceConfig = { type: "couples"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
@@ -90,7 +90,7 @@ export default function ProductPage() {
     if (!cfg || !product?.audience?.length) return null;
     for (const a of product.audience) {
       const c = cfg[a.toLowerCase()];
-      if (c?.type === "couple") return c;
+      if (c?.type === "couples") return c;
     }
     for (const a of product.audience) {
       const c = cfg[a.toLowerCase()];
@@ -99,7 +99,7 @@ export default function ProductPage() {
     return null;
   }, [productPageConfigData, product?.audience]);
 
-  const isCoupleProduct = audienceConfig?.type === "couple";
+  const isCoupleProduct = audienceConfig?.type === "couples";
 
   const { data: productImages } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", product?.id, "images"],
@@ -240,7 +240,7 @@ export default function ProductPage() {
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity: 1,
-        personalizationName: audienceConfig?.type === "couple"
+        personalizationName: audienceConfig?.type === "couples"
           ? (gentlemanName.trim() || ladyName.trim()
             ? `${audienceConfig.person1Prefix}: ${gentlemanName.trim() || "—"} & ${audienceConfig.person2Prefix}: ${ladyName.trim() || "—"}`
             : undefined)
@@ -644,7 +644,7 @@ export default function ProductPage() {
               </div>
             )}
 
-            {audienceConfig?.type === "couple" ? (
+            {audienceConfig?.type === "couples" ? (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
                   {audienceConfig.heading}

@@ -13,7 +13,7 @@ import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, ProductVariantOptions, VariantSize } from "@shared/types";
 
 type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string };
-type CoupleAudienceConfig = { type: "couple"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
+type CoupleAudienceConfig = { type: "couples"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
@@ -55,7 +55,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     if (!cfg || !product?.audience?.length) return null;
     for (const a of product.audience) {
       const c = cfg[a.toLowerCase()];
-      if (c?.type === "couple") return c;
+      if (c?.type === "couples") return c;
     }
     for (const a of product.audience) {
       const c = cfg[a.toLowerCase()];
@@ -64,7 +64,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     return null;
   }, [productPageConfigData, product?.audience]);
 
-  const isCoupleProduct = audienceConfig?.type === "couple";
+  const isCoupleProduct = audienceConfig?.type === "couples";
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
@@ -133,7 +133,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity,
-        personalizationName: audienceConfig?.type === "couple"
+        personalizationName: audienceConfig?.type === "couples"
           ? (gentlemanName.trim() || ladyName.trim()
             ? `${audienceConfig.person1Prefix}: ${gentlemanName.trim() || "—"} & ${audienceConfig.person2Prefix}: ${ladyName.trim() || "—"}`
             : undefined)
@@ -285,7 +285,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           )}
 
-          {audienceConfig?.type === "couple" ? (
+          {audienceConfig?.type === "couples" ? (
             <div className="space-y-2">
               <Label className="text-sm font-medium">{audienceConfig.heading}</Label>
               <div>

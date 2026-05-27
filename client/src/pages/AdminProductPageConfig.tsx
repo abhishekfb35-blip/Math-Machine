@@ -18,7 +18,7 @@ type SingleAudienceConfig = {
 };
 
 type CoupleAudienceConfig = {
-  type: "couple";
+  type: "couples";
   heading: string;
   person1Label: string;
   person2Label: string;
@@ -70,7 +70,7 @@ export default function AdminProductPageConfig() {
     } else {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "couple", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "" } as CoupleAudienceConfig,
+        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "" } as CoupleAudienceConfig,
       }));
     }
   };
@@ -150,7 +150,7 @@ export default function AdminProductPageConfig() {
                     </div>
                   )}
 
-                  {cfg.type === "couple" && (
+                  {cfg.type === "couples" && (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Person 1 field label</Label>
