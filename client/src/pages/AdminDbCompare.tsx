@@ -46,6 +46,7 @@ interface CompareResult {
   productGenders: ContentTableDiff;
   productThemes: ContentTableDiff;
   productStyles: ContentTableDiff;
+  siteContent: ContentTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -266,7 +267,8 @@ export default function AdminDbCompare() {
       isContentTableClean(result.productAudience) &&
       isContentTableClean(result.productGenders) &&
       isContentTableClean(result.productThemes) &&
-      isContentTableClean(result.productStyles)
+      isContentTableClean(result.productStyles) &&
+      isContentTableClean(result.siteContent)
     : null;
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
@@ -353,7 +355,8 @@ export default function AdminDbCompare() {
             {reseedResult.counts.audience} audience, {reseedResult.counts.genders} genders,{" "}
             {reseedResult.counts.themes} themes, {reseedResult.counts.styles} styles,{" "}
             {reseedResult.counts.occasions} occasions,{" "}
-            {reseedResult.counts.productAudience}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links
+            {reseedResult.counts.productAudience}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links,{" "}
+            {reseedResult.counts.siteContent ?? 0} site content entries
           </span>
         </div>
       )}
@@ -468,6 +471,12 @@ export default function AdminDbCompare() {
           <SectionShell title="Product Styles" clean={isContentTableClean(result.productStyles)} devCount={result.productStyles.devCount} prodCount={result.productStyles.prodCount}>
             <CollapsibleList label="Links only in dev"  items={result.productStyles.onlyInDev}  color={DEV_COLOR} />
             <CollapsibleList label="Links only in prod" items={result.productStyles.onlyInProd} color={PROD_COLOR} />
+          </SectionShell>
+
+          {/* ── Site content ── */}
+          <SectionShell title="Site Content" clean={isContentTableClean(result.siteContent)} devCount={result.siteContent.devCount} prodCount={result.siteContent.prodCount}>
+            <CollapsibleList label="Keys only in dev"  items={result.siteContent.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="Keys only in prod" items={result.siteContent.onlyInProd} color={PROD_COLOR} />
           </SectionShell>
         </div>
       )}
