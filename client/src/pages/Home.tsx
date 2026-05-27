@@ -51,9 +51,16 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
 
 const HOME_VISIBLE = 4;
 
-function deriveSeeAllLink(categoryFilters?: string[]): string {
-  if (categoryFilters && categoryFilters.length === 1) return `/category/${categoryFilters[0]}`;
-  return "/shop";
+function buildSeeAllHref(cfg: FeaturedSectionConfig): string {
+  const p = new URLSearchParams();
+  if (cfg.categoryFilters.length === 1) p.set("category", cfg.categoryFilters[0]);
+  if (cfg.audienceFilters.length === 1) p.set("filter",   cfg.audienceFilters[0]);
+  if (cfg.genderFilters.length)         p.set("gender",   cfg.genderFilters.join(","));
+  if (cfg.themeFilters.length)          p.set("theme",    cfg.themeFilters.join(","));
+  if (cfg.styleFilters.length)          p.set("style",    cfg.styleFilters.join(","));
+  if (cfg.tagFilters.length === 1)      p.set("tag",      cfg.tagFilters[0]);
+  const qs = p.toString();
+  return qs ? `/shop?${qs}` : "/shop";
 }
 
 function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuickAdd }: {
@@ -291,7 +298,7 @@ export default function Home() {
               products={featuredKids}
               title={featured.kids.title}
               subtitle={featured.kids.subtitle}
-              link={deriveSeeAllLink(featured.kids.categoryFilters)}
+              link={buildSeeAllHref(featured.kids)}
               testIdPrefix="kids"
               onQuickAdd={setQuickAddProduct}
             />
@@ -319,7 +326,7 @@ export default function Home() {
               products={featuredAdults}
               title={featured.couples.title}
               subtitle={featured.couples.subtitle}
-              link={deriveSeeAllLink(featured.couples.categoryFilters)}
+              link={buildSeeAllHref(featured.couples)}
               testIdPrefix="couples"
               onQuickAdd={setQuickAddProduct}
             />
@@ -330,7 +337,7 @@ export default function Home() {
               products={featuredBlankets}
               title={featured.blankets.title}
               subtitle={featured.blankets.subtitle}
-              link={deriveSeeAllLink(featured.blankets.categoryFilters)}
+              link={buildSeeAllHref(featured.blankets)}
               testIdPrefix="blankets"
               onQuickAdd={setQuickAddProduct}
             />
@@ -341,7 +348,7 @@ export default function Home() {
               products={featuredBathrobes}
               title={featured.bathrobes?.title || "Luxury Bathrobes"}
               subtitle={featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}
-              link={deriveSeeAllLink(featured.bathrobes?.categoryFilters)}
+              link={buildSeeAllHref(featured.bathrobes)}
               testIdPrefix="bathrobes"
               onQuickAdd={setQuickAddProduct}
             />

@@ -408,7 +408,8 @@ export default function ShopPage() {
   }, [categories]);
 
   const activeCategoryObj = useMemo(() => {
-    return categoryOptions.find(c => c.name.toLowerCase() === activeCategory) ?? categoryOptions[0] ?? null;
+    if (!activeCategory) return null;
+    return categoryOptions.find(c => c.name.toLowerCase() === activeCategory) ?? null;
   }, [categoryOptions, activeCategory]);
 
   const audienceFilters = useMemo(() => {
@@ -444,7 +445,7 @@ export default function ShopPage() {
   // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
-    const cat = p.get("category") || "towels";
+    const cat = p.get("category") || "";
     setActiveCategory(cat);
     const f = p.get("filter") || "all";
     setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
