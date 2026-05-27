@@ -201,6 +201,7 @@ export function registerCheckoutRoutes(app: Express) {
     seo: "seo",
     "offer-tiers": "offers",
     "delivery-tiers": "offers",
+    "product-page-config": "builder",
   };
 
   app.post("/api/site-config/:key", requireAdmin, async (req: Request, res: Response, next: NextFunction) => {

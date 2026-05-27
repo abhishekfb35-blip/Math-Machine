@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -25,6 +25,11 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useAuth } from "@/hooks/useAuth";
 import ShareButton from "@/components/ShareButton";
 import { useWishlist } from "@/hooks/useWishlist";
+
+type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string };
+type CoupleAudienceConfig = { type: "couple"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
+type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
+type ProductPageConfig = Record<string, AudiencePageConfig>;
 
 const REVIEWS_PER_PAGE = 10;
 
@@ -73,6 +78,28 @@ export default function ProductPage() {
   const { data: allProducts } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
+
+  const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
+    queryKey: ["/api/site-config", "product-page-config"],
+    queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const audienceConfig = useMemo((): AudiencePageConfig | null => {
+    const cfg = productPageConfigData?.value ?? null;
+    if (!cfg || !product?.audience?.length) return null;
+    for (const a of product.audience) {
+      const c = cfg[a.toLowerCase()];
+      if (c?.type === "couple") return c;
+    }
+    for (const a of product.audience) {
+      const c = cfg[a.toLowerCase()];
+      if (c?.type === "single") return c;
+    }
+    return null;
+  }, [productPageConfigData, product?.audience]);
+
+  const isCoupleProduct = audienceConfig?.type === "couple";
 
   const { data: productImages } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", product?.id, "images"],
@@ -213,11 +240,13 @@ export default function ProductPage() {
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity: 1,
-        personalizationName: product!.tagNames?.some((t) => t.toLowerCase().includes("couple"))
+        personalizationName: audienceConfig?.type === "couple"
           ? (gentlemanName.trim() || ladyName.trim()
-            ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
+            ? `${audienceConfig.person1Prefix}: ${gentlemanName.trim() || "—"} & ${audienceConfig.person2Prefix}: ${ladyName.trim() || "—"}`
             : undefined)
-          : (personalizationName.trim() || undefined),
+          : audienceConfig?.type === "single"
+            ? (personalizationName.trim() || undefined)
+            : undefined,
         selectedColor: selectedColor || undefined,
         selectedSize: selectedSize || undefined,
       });
@@ -615,16 +644,16 @@ export default function ProductPage() {
               </div>
             )}
 
-            {product.tagNames?.some((t) => t.toLowerCase().includes("couple")) ? (
+            {audienceConfig?.type === "couple" ? (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
-                  Personalise with Names
+                  {audienceConfig.heading}
                 </Label>
                 <div className="space-y-2">
                   <div>
                     <Input
                       id="gentleman-name"
-                      placeholder="Name of Gentleman"
+                      placeholder={audienceConfig.person1Label}
                       value={gentlemanName}
                       onChange={(e) => setGentlemanName(e.target.value)}
                       maxLength={NAME_MAX}
@@ -635,7 +664,7 @@ export default function ProductPage() {
                   <div>
                     <Input
                       id="lady-name"
-                      placeholder="Name of Lady"
+                      placeholder={audienceConfig.person2Label}
                       value={ladyName}
                       onChange={(e) => setLadyName(e.target.value)}
                       maxLength={NAME_MAX}
@@ -648,14 +677,14 @@ export default function ProductPage() {
                   Both names will be embroidered on the set
                 </p>
               </div>
-            ) : (
+            ) : audienceConfig?.type === "single" ? (
               <div className="space-y-1">
                 <Label htmlFor="personalization" className="text-sm font-medium">
-                  Personalise with a Name
+                  {audienceConfig.heading}
                 </Label>
                 <Input
                   id="personalization"
-                  placeholder="Enter name to embroider"
+                  placeholder={audienceConfig.nameLabel}
                   value={personalizationName}
                   onChange={(e) => setPersonalizationName(e.target.value)}
                   maxLength={NAME_MAX}
@@ -663,14 +692,13 @@ export default function ProductPage() {
                 />
                 {(() => { const h = nameCharHint(personalizationName); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
               </div>
-            )}
+            ) : null}
 
             <div className="flex gap-2">
             <Button
               className="flex-1"
               size="lg"
               onClick={() => {
-                const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
                 const nameInvalid = isCoupleProduct
                   ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
                   : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
@@ -681,12 +709,11 @@ export default function ProductPage() {
                 if (nameEmpty) { setShowNameConfirm(true); return; }
                 addToCartMutation.mutate();
               }}
-              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
-                const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
-                return isCoupleProduct
+              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (
+                isCoupleProduct
                   ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
-                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
-              })()}
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN
+              )}
               data-testid="button-add-to-cart"
             >
               {addToCartMutation.isPending ? (

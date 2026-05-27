@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -11,6 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, ProductVariantOptions, VariantSize } from "@shared/types";
+
+type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string };
+type CoupleAudienceConfig = { type: "couple"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
+type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
+type ProductPageConfig = Record<string, AudiencePageConfig>;
 
 const NAME_MIN = 3;
 const NAME_MAX = 11;
@@ -39,7 +44,27 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [selectedColorName, setSelectedColorName] = useState<string | null>(null);
-  const isCoupleProduct = product?.tagNames?.some((t) => t.toLowerCase().includes("couple")) ?? false;
+  const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
+    queryKey: ["/api/site-config", "product-page-config"],
+    queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const audienceConfig = useMemo((): AudiencePageConfig | null => {
+    const cfg = productPageConfigData?.value ?? null;
+    if (!cfg || !product?.audience?.length) return null;
+    for (const a of product.audience) {
+      const c = cfg[a.toLowerCase()];
+      if (c?.type === "couple") return c;
+    }
+    for (const a of product.audience) {
+      const c = cfg[a.toLowerCase()];
+      if (c?.type === "single") return c;
+    }
+    return null;
+  }, [productPageConfigData, product?.audience]);
+
+  const isCoupleProduct = audienceConfig?.type === "couple";
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
@@ -108,11 +133,13 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       const res = await apiRequest("POST", "/api/cart/items", {
         productId: product!.id,
         quantity,
-        personalizationName: isCoupleProduct
+        personalizationName: audienceConfig?.type === "couple"
           ? (gentlemanName.trim() || ladyName.trim()
-            ? `His: ${gentlemanName.trim() || "—"} & Hers: ${ladyName.trim() || "—"}`
+            ? `${audienceConfig.person1Prefix}: ${gentlemanName.trim() || "—"} & ${audienceConfig.person2Prefix}: ${ladyName.trim() || "—"}`
             : undefined)
-          : (personalizationName.trim() || undefined),
+          : audienceConfig?.type === "single"
+            ? (personalizationName.trim() || undefined)
+            : undefined,
         selectedColor: selectedColorName || undefined,
         selectedSize: selectedSizeName || undefined,
       });
@@ -258,13 +285,13 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           )}
 
-          {isCoupleProduct ? (
+          {audienceConfig?.type === "couple" ? (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Personalise with Names</Label>
+              <Label className="text-sm font-medium">{audienceConfig.heading}</Label>
               <div>
                 <Input
                   id="qa-gentleman-name"
-                  placeholder="Name of Gentleman"
+                  placeholder={audienceConfig.person1Label}
                   value={gentlemanName}
                   onChange={(e) => setGentlemanName(e.target.value)}
                   maxLength={NAME_MAX}
@@ -275,7 +302,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               <div>
                 <Input
                   id="qa-lady-name"
-                  placeholder="Name of Lady"
+                  placeholder={audienceConfig.person2Label}
                   value={ladyName}
                   onChange={(e) => setLadyName(e.target.value)}
                   maxLength={NAME_MAX}
@@ -284,14 +311,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 {(() => { const h = nameCharHint(ladyName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
               </div>
             </div>
-          ) : (
+          ) : audienceConfig?.type === "single" ? (
             <div className="space-y-1">
               <Label htmlFor="qa-personalization" className="text-sm font-medium">
-                Personalise with a Name
+                {audienceConfig.heading}
               </Label>
               <Input
                 id="qa-personalization"
-                placeholder="Enter name to embroider (optional)"
+                placeholder={audienceConfig.nameLabel}
                 value={personalizationName}
                 onChange={(e) => setPersonalizationName(e.target.value)}
                 maxLength={NAME_MAX}
@@ -299,7 +326,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               />
               {(() => { const h = nameCharHint(personalizationName); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
             </div>
-          )}
+          ) : null}
 
           <div className="flex items-center justify-between gap-4">
             <Label className="text-sm font-medium">Quantity</Label>
