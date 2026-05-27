@@ -19,6 +19,7 @@ interface ContentTableDiff {
   prodCount: number;
   onlyInDev: string[];
   onlyInProd: string[];
+  valueChanged?: string[];
 }
 
 interface ProductDiff extends IdTableDiff {
@@ -60,7 +61,7 @@ function isIdTableClean(d: IdTableDiff) {
 }
 
 function isContentTableClean(d: ContentTableDiff) {
-  return d.devCount === d.prodCount && d.onlyInDev.length === 0 && d.onlyInProd.length === 0;
+  return d.devCount === d.prodCount && d.onlyInDev.length === 0 && d.onlyInProd.length === 0 && (d.valueChanged?.length ?? 0) === 0;
 }
 
 function isProductClean(d: ProductDiff) {
@@ -475,8 +476,9 @@ export default function AdminDbCompare() {
 
           {/* ── Site content ── */}
           <SectionShell title="Site Content" clean={isContentTableClean(result.siteContent)} devCount={result.siteContent.devCount} prodCount={result.siteContent.prodCount}>
-            <CollapsibleList label="Keys only in dev"  items={result.siteContent.onlyInDev}  color={DEV_COLOR} />
-            <CollapsibleList label="Keys only in prod" items={result.siteContent.onlyInProd} color={PROD_COLOR} />
+            <CollapsibleList label="Keys only in dev"   items={result.siteContent.onlyInDev}            color={DEV_COLOR} />
+            <CollapsibleList label="Keys only in prod"  items={result.siteContent.onlyInProd}           color={PROD_COLOR} />
+            <CollapsibleList label="Value changed"      items={result.siteContent.valueChanged ?? []}   color="text-amber-600 dark:text-amber-400" />
           </SectionShell>
         </div>
       )}

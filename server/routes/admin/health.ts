@@ -1359,10 +1359,21 @@ export function registerAdminHealthRoutes(app: Express) {
                             localSnap.productStyles as any[], (prodSnap as any).productStyles as any[] ?? [],
                             r => `${r.product_slug}|${r.style_name}`,
                             r => `${r.product_slug} → ${r.style_name}`),
-        siteContent:      diffByContent(
-                            (localSnap as any).siteContent as any[] ?? [], (prodSnap as any).siteContent as any[] ?? [],
-                            r => r.key,
-                            r => r.key),
+        siteContent: (() => {
+                            const devSC: any[] = (localSnap as any).siteContent ?? [];
+                            const prodSC: any[] = (prodSnap as any).siteContent ?? [];
+                            const devMap  = new Map(devSC.map((r: any)  => [r.key, r.value]));
+                            const prodMap = new Map(prodSC.map((r: any) => [r.key, r.value]));
+                            return {
+                              devCount:     devSC.length,
+                              prodCount:    prodSC.length,
+                              onlyInDev:    devSC.filter((r: any)  => !prodMap.has(r.key)).map((r: any) => r.key),
+                              onlyInProd:   prodSC.filter((r: any) => !devMap.has(r.key)).map((r: any) => r.key),
+                              valueChanged: devSC
+                                .filter((r: any) => prodMap.has(r.key) && prodMap.get(r.key) !== r.value)
+                                .map((r: any) => r.key),
+                            };
+                          })(),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
