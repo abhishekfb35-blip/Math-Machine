@@ -20,6 +20,7 @@ export default function AdminColorSwatches() {
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editPreview, setEditPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   const { data: swatches, isLoading } = useQuery<ColorSwatch[]>({
     queryKey: ["/api/admin/color-swatches"],
@@ -50,6 +51,7 @@ export default function AdminColorSwatches() {
       setNewName("");
       setNewFile(null);
       setNewPreview(null);
+      setFileInputKey(k => k + 1);
       toast({ title: "Colour added" });
     },
     onError: () => toast({ title: "Failed to add colour", variant: "destructive" }),
@@ -150,11 +152,11 @@ export default function AdminColorSwatches() {
               )}
               <label className="cursor-pointer text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border rounded px-2 h-8">
                 <Upload className="w-3 h-3" /> Upload
-                <input type="file" accept="image/*" className="hidden"
+                <input key={fileInputKey} type="file" accept="image/*" className="hidden"
                   onChange={e => e.target.files?.[0] && handleNewFile(e.target.files[0])} />
               </label>
               {newPreview && (
-                <button onClick={() => { setNewFile(null); setNewPreview(null); }} className="text-muted-foreground hover:text-destructive">
+                <button onClick={() => { setNewFile(null); setNewPreview(null); setFileInputKey(k => k + 1); }} className="text-muted-foreground hover:text-destructive">
                   <X className="w-4 h-4" />
                 </button>
               )}
