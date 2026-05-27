@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
-import type { Product, Attributes } from "@shared/types";
+import type { Product, Attributes, Category } from "@shared/types";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
 
 function GridSkeleton() {
@@ -387,6 +387,7 @@ export default function ShopPage() {
   const searchString = useSearch();
   const [, navigate] = useLocation();
 
+  const [activeCategory, setActiveCategory] = useState<string>("towels");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [activeGenders, setActiveGenders] = useState<string[]>([]);
   const [activeThemes,  setActiveThemes]  = useState<string[]>([]);
@@ -396,6 +397,19 @@ export default function ShopPage() {
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+  const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+
+  const CATEGORY_ORDER = ["towels", "bathrobes", "blankets"];
+  const categoryOptions = useMemo(() => {
+    if (!categories) return [];
+    return CATEGORY_ORDER
+      .map(name => categories.find(c => c.name.toLowerCase() === name))
+      .filter(Boolean) as Category[];
+  }, [categories]);
+
+  const activeCategoryObj = useMemo(() => {
+    return categoryOptions.find(c => c.name.toLowerCase() === activeCategory) ?? categoryOptions[0] ?? null;
+  }, [categoryOptions, activeCategory]);
 
   const audienceFilters = useMemo(() => {
     const ags = attributes?.audience ?? [];
@@ -430,6 +444,8 @@ export default function ShopPage() {
   // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
+    const cat = p.get("category") || "towels";
+    setActiveCategory(cat);
     const f = p.get("filter") || "all";
     setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
     const g = p.get("gender");
@@ -444,6 +460,7 @@ export default function ShopPage() {
 
   // Write state → URL
   const pushURL = useCallback((
+    category: string,
     filter: string,
     genders: string[],
     themes: string[],
@@ -452,6 +469,7 @@ export default function ShopPage() {
     query: string,
   ) => {
     const p = new URLSearchParams();
+    if (category && category !== "towels") p.set("category", category);
     if (filter !== "all") p.set("filter", filter);
     if (genders.length) p.set("gender", genders.join(","));
     if (themes.length)  p.set("theme",  themes.join(","));
@@ -462,25 +480,26 @@ export default function ShopPage() {
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
   }, [navigate]);
 
-  const handleFilterChange = (f: string) => pushURL(f, activeGenders, activeThemes, activeStyles, "", searchQuery);
+  const handleCategoryChange = (cat: string) => pushURL(cat, activeFilter, activeGenders, activeThemes, activeStyles, "", searchQuery);
+  const handleFilterChange   = (f: string)   => pushURL(activeCategory, f, activeGenders, activeThemes, activeStyles, "", searchQuery);
 
   const toggleGender = (g: string) => {
     const next = activeGenders.includes(g) ? activeGenders.filter(x => x !== g) : [...activeGenders, g];
-    pushURL(activeFilter, next, activeThemes, activeStyles, "", searchQuery);
+    pushURL(activeCategory, activeFilter, next, activeThemes, activeStyles, "", searchQuery);
   };
   const toggleTheme = (t: string) => {
     const next = activeThemes.includes(t) ? activeThemes.filter(x => x !== t) : [...activeThemes, t];
-    pushURL(activeFilter, activeGenders, next, activeStyles, "", searchQuery);
+    pushURL(activeCategory, activeFilter, activeGenders, next, activeStyles, "", searchQuery);
   };
   const toggleStyle = (s: string) => {
     const next = activeStyles.includes(s) ? activeStyles.filter(x => x !== s) : [...activeStyles, s];
-    pushURL(activeFilter, activeGenders, activeThemes, next, "", searchQuery);
+    pushURL(activeCategory, activeFilter, activeGenders, activeThemes, next, "", searchQuery);
   };
 
-  const handleTagDrillDown  = (tag: string) => pushURL("all", [], [], [], tag, "");
-  const handleBackToAll     = () => pushURL("all", [], [], [], "", "");
+  const handleTagDrillDown  = (tag: string) => pushURL(activeCategory, "all", [], [], [], tag, "");
+  const handleBackToAll     = () => pushURL(activeCategory, "all", [], [], [], "", "");
   const handleSearchChange  = (q: string) => {
-    pushURL(activeFilter, activeGenders, activeThemes, activeStyles, q ? "" : activeTag, q);
+    pushURL(activeCategory, activeFilter, activeGenders, activeThemes, activeStyles, q ? "" : activeTag, q);
   };
 
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -505,49 +524,74 @@ export default function ShopPage() {
   const attributeFilteredProducts = useMemo(() => {
     if (!products) return [];
     let result = products;
+    if (activeCategoryObj) result = result.filter(p => p.categoryId === activeCategoryObj.id);
     if (activeFilter !== "all") result = result.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
     if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
     if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
     if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return result;
-  }, [products, activeFilter, activeGenders, activeThemes, activeStyles]);
+  }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes, activeStyles]);
 
   // Count bases: each dimension counts with all OTHER filters applied
+  // Category is always active — apply it in every count base
   const countBaseAudience = useMemo(() => {
     if (!products) return [];
     let r = products;
+    if (activeCategoryObj) r = r.filter(p => p.categoryId === activeCategoryObj.id);
     if (activeGenders.length) r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
     if (activeThemes.length)  r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
     if (activeStyles.length)  r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeGenders, activeThemes, activeStyles]);
+  }, [products, activeCategoryObj, activeGenders, activeThemes, activeStyles]);
 
   const countBaseGender = useMemo(() => {
     if (!products) return [];
     let r = products;
+    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
     if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeThemes, activeStyles]);
+  }, [products, activeCategoryObj, activeFilter, activeThemes, activeStyles]);
 
   const countBaseTheme = useMemo(() => {
     if (!products) return [];
     let r = products;
+    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
     if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeGenders, activeStyles]);
+  }, [products, activeCategoryObj, activeFilter, activeGenders, activeStyles]);
 
   const countBaseStyle = useMemo(() => {
+    if (!products) return [];
+    let r = products;
+    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    return r;
+  }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes]);
+
+  // Count base for category chips: all other filters applied, but NOT category
+  const countBaseCategory = useMemo(() => {
     if (!products) return [];
     let r = products;
     if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
     return r;
-  }, [products, activeFilter, activeGenders, activeThemes]);
+  }, [products, activeFilter, activeGenders, activeThemes, activeStyles]);
+
+  const categoryCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const cat of categoryOptions) {
+      map[cat.name.toLowerCase()] = countBaseCategory.filter(p => p.categoryId === cat.id).length;
+    }
+    return map;
+  }, [countBaseCategory, categoryOptions]);
 
   const audienceCounts = useMemo(() => {
     const map: Record<string, number> = { all: countBaseAudience.length };
@@ -636,7 +680,7 @@ export default function ShopPage() {
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
-  const handleClearFilters = () => pushURL("all", [], [], [], activeTag, searchQuery);
+  const handleClearFilters = () => pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
 
   const [isScrolled, setIsScrolled] = useState(false);
   useEffect(() => {
@@ -677,8 +721,32 @@ export default function ShopPage() {
             )}
           </div>
 
-          {/* Collapsible section: audience + all filter rows — hides on scroll */}
+          {/* Collapsible section: category + audience + all filter rows — hides on scroll */}
           <div className={`overflow-hidden transition-all duration-200 ease-in-out space-y-2 ${isScrolled ? "max-h-0 opacity-0 pointer-events-none" : "max-h-96 opacity-100"}`}>
+
+            {/* Category chips — always one selected, no All option */}
+            {categoryOptions.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+                {categoryOptions.map(cat => {
+                  const key = cat.name.toLowerCase();
+                  const count = categoryCounts[key];
+                  const isActive = activeCategory === key || (activeCategoryObj?.id === cat.id);
+                  return (
+                    <Button
+                      key={cat.id}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleCategoryChange(key)}
+                      className="shrink-0 capitalize"
+                      data-testid={`filter-category-${key}`}
+                    >
+                      {cat.name}{count !== undefined ? ` (${count})` : ""}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Audience chips */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
               <SlidersHorizontal className={`w-4 h-4 shrink-0 ${hasAttributeFilters ? "text-primary" : "text-muted-foreground"}`} />
