@@ -836,8 +836,8 @@ function FilterChips({
             data-testid={`chip-${label.toLowerCase().replace(/\s/g, "-")}-${opt.value}`}
           >
             {opt.label}
-            {counts && counts[opt.value] !== undefined && (
-              <span className="ml-1 opacity-60 text-[10px]">({counts[opt.value]})</span>
+            {counts !== undefined && (
+              <span className="ml-1 opacity-60 text-[10px]">({counts[opt.value] ?? 0})</span>
             )}
           </button>
         ))}
@@ -1088,7 +1088,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(section, v)}
                 onToggleAll={() => toggleAllTagTypes(section)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters} counts={productCounts}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
                 onToggle={v => toggleFilter(section, "tagFilters", v)}
                 onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
@@ -1381,7 +1381,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(i, v)}
                 onToggleAll={() => toggleAllTagTypes(i)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []} counts={productCounts}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []}
                 onToggle={v => toggleArr(i, "tags", v)}
                 onToggleAll={() => toggleAll(i, "tags", tagOptions.map(o => o.value))} />
             </div>
