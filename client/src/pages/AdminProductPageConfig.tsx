@@ -57,7 +57,7 @@ export default function AdminProductPageConfig() {
     onError: () => toast({ title: "Error", description: "Failed to save.", variant: "destructive" }),
   });
 
-  const setAudienceType = (slug: string, type: "none" | "single" | "couple") => {
+  const setAudienceType = (slug: string, type: "none" | "single" | "couples") => {
     if (type === "none") {
       setConfig(prev => { const n = { ...prev }; delete n[slug]; return n; });
       return;
@@ -113,7 +113,7 @@ export default function AdminProductPageConfig() {
                 <h2 className="font-semibold capitalize">{aud.name}</h2>
                 <Select
                   value={cfg?.type ?? "none"}
-                  onValueChange={v => setAudienceType(slug, v as "none" | "single" | "couple")}
+                  onValueChange={v => setAudienceType(slug, v as "none" | "single" | "couples")}
                 >
                   <SelectTrigger className="w-48" data-testid={`select-type-${slug}`}>
                     <SelectValue />
@@ -121,7 +121,7 @@ export default function AdminProductPageConfig() {
                   <SelectContent>
                     <SelectItem value="none">No personalisation</SelectItem>
                     <SelectItem value="single">Single name</SelectItem>
-                    <SelectItem value="couple">Couple — two names</SelectItem>
+                    <SelectItem value="couples">Couple — two names</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
