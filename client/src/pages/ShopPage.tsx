@@ -693,7 +693,7 @@ export default function ShopPage() {
 
   const hasAttributeFilters = activeFilter !== "all" || activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0;
 
-  const isAllView = !activeTag && !searchQuery.trim() && !hasAttributeFilters;
+  const isAllView = !activeTag && !searchQuery.trim() && !hasAttributeFilters && !activeCategory;
   const isTagView = !!activeTag && !searchQuery.trim();
 
   const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
