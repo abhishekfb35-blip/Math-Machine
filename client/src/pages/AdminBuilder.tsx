@@ -792,13 +792,14 @@ function FooterSection({ data }: { data: FooterConfig }) {
 const FEATURED_VISIBLE = 4;
 
 function FilterChips({
-  label, options, selected, onToggle, onToggleAll,
+  label, options, selected, onToggle, onToggleAll, counts,
 }: {
   label: string;
   options: { value: string; label: string }[];
   selected: string[];
   onToggle: (v: string) => void;
   onToggleAll?: () => void;
+  counts?: Record<string, number>;
 }) {
   if (options.length === 0) return null;
   const allSelected = options.length > 0 && options.every(o => selected.includes(o.value));
@@ -835,6 +836,9 @@ function FilterChips({
             data-testid={`chip-${label.toLowerCase().replace(/\s/g, "-")}-${opt.value}`}
           >
             {opt.label}
+            {counts && counts[opt.value] !== undefined && (
+              <span className="ml-1 opacity-60 text-[10px]">({counts[opt.value]})</span>
+            )}
           </button>
         ))}
       </div>
@@ -950,6 +954,22 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
   const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
+  const { data: allProducts } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+
+  const productCounts = useMemo(() => {
+    if (!allProducts) return {};
+    const counts: Record<string, number> = {};
+    for (const p of allProducts) {
+      const catSlug = (categories ?? []).find(c => c.id === p.categoryId)?.slug;
+      if (catSlug) counts[catSlug] = (counts[catSlug] ?? 0) + 1;
+      for (const v of p.audience  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.genders   ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.themes    ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.styles    ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.tagNames  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+    }
+    return counts;
+  }, [allProducts, categories]);
 
   const previewMutation = useMutation({
     mutationFn: async ({ section, filters }: { section: string; filters: FeaturedSectionConfig }) => {
@@ -1050,25 +1070,25 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
 
             <div className="space-y-3 rounded-md border p-3 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
-              <FilterChips label="Categories" options={categoryOptions} selected={s.categoryFilters}
+              <FilterChips label="Categories" options={categoryOptions} selected={s.categoryFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "categoryFilters", v)}
                 onToggleAll={() => toggleAll(section, "categoryFilters", categoryOptions.map(o => o.value))} />
-              <FilterChips label="Audience" options={audienceOptions} selected={s.audienceFilters}
+              <FilterChips label="Audience" options={audienceOptions} selected={s.audienceFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "audienceFilters", v)}
                 onToggleAll={() => toggleAll(section, "audienceFilters", audienceOptions.map(o => o.value))} />
-              <FilterChips label="Genders" options={genderOptions} selected={s.genderFilters}
+              <FilterChips label="Genders" options={genderOptions} selected={s.genderFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "genderFilters", v)}
                 onToggleAll={() => toggleAll(section, "genderFilters", genderOptions.map(o => o.value))} />
-              <FilterChips label="Themes" options={themeOptions} selected={s.themeFilters}
+              <FilterChips label="Themes" options={themeOptions} selected={s.themeFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "themeFilters", v)}
                 onToggleAll={() => toggleAll(section, "themeFilters", themeOptions.map(o => o.value))} />
-              <FilterChips label="Styles" options={styleOptions} selected={s.styleFilters}
+              <FilterChips label="Styles" options={styleOptions} selected={s.styleFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "styleFilters", v)}
                 onToggleAll={() => toggleAll(section, "styleFilters", styleOptions.map(o => o.value))} />
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(section, v)}
                 onToggleAll={() => toggleAllTagTypes(section)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters} counts={productCounts}
                 onToggle={v => toggleFilter(section, "tagFilters", v)}
                 onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
@@ -1165,6 +1185,22 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: allTags }     = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
   const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
+  const { data: allProducts } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+
+  const productCounts = useMemo(() => {
+    if (!allProducts) return {};
+    const counts: Record<string, number> = {};
+    for (const p of allProducts) {
+      const catSlug = (categories ?? []).find(c => c.id === p.categoryId)?.slug;
+      if (catSlug) counts[catSlug] = (counts[catSlug] ?? 0) + 1;
+      for (const v of p.audience  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.genders   ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.themes    ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.styles    ?? []) counts[v] = (counts[v] ?? 0) + 1;
+      for (const v of p.tagNames  ?? []) counts[v] = (counts[v] ?? 0) + 1;
+    }
+    return counts;
+  }, [allProducts, categories]);
 
   useEffect(() => {
     setSections(data);
@@ -1327,25 +1363,25 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
 
             <div className="space-y-3 rounded-md border p-3 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
-              <FilterChips label="Categories" options={categoryOptions} selected={s.categories ?? []}
+              <FilterChips label="Categories" options={categoryOptions} selected={s.categories ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "categories", v)}
                 onToggleAll={() => toggleAll(i, "categories", categoryOptions.map(o => o.value))} />
-              <FilterChips label="Audience" options={audienceOptions} selected={s.audience ?? []}
+              <FilterChips label="Audience" options={audienceOptions} selected={s.audience ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "audience", v)}
                 onToggleAll={() => toggleAll(i, "audience", audienceOptions.map(o => o.value))} />
-              <FilterChips label="Genders" options={genderOptions} selected={s.genders ?? []}
+              <FilterChips label="Genders" options={genderOptions} selected={s.genders ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "genders", v)}
                 onToggleAll={() => toggleAll(i, "genders", genderOptions.map(o => o.value))} />
-              <FilterChips label="Themes" options={themeOptions} selected={s.themes ?? []}
+              <FilterChips label="Themes" options={themeOptions} selected={s.themes ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "themes", v)}
                 onToggleAll={() => toggleAll(i, "themes", themeOptions.map(o => o.value))} />
-              <FilterChips label="Styles" options={styleOptions} selected={s.styles ?? []}
+              <FilterChips label="Styles" options={styleOptions} selected={s.styles ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "styles", v)}
                 onToggleAll={() => toggleAll(i, "styles", styleOptions.map(o => o.value))} />
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
                 onToggle={v => toggleTagType(i, v)}
                 onToggleAll={() => toggleAllTagTypes(i)} />
-              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []}
+              <FilterChips label="Tags" options={tagOptions} selected={s.tags ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "tags", v)}
                 onToggleAll={() => toggleAll(i, "tags", tagOptions.map(o => o.value))} />
             </div>
