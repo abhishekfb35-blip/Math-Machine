@@ -18,6 +18,7 @@ import { registerAdminUserRoutes } from "./admin/users";
 import { registerAdminSecurityRoutes } from "./admin/security";
 import { registerAdminAttributeRoutes } from "./admin/attributes";
 import { registerAdminFeaturedRoutes } from "./admin/featured";
+import { registerAdminReportRoutes } from "./admin/reports";
 import { registerWishlistRoutes } from "./wishlist";
 import { globalLimiter, moderateLimiter, strictLimiter } from "../middleware/rateLimiter";
 
@@ -64,6 +65,7 @@ export async function registerRoutes(
   registerAdminSecurityRoutes(app);
   registerAdminAttributeRoutes(app);
   registerAdminFeaturedRoutes(app);
+  registerAdminReportRoutes(app);
   registerWishlistRoutes(app);
 
   return httpServer;

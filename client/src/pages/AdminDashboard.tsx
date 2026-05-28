@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -169,6 +169,15 @@ const sections = [
     color: "text-sky-600 dark:text-sky-400",
     bg: "bg-sky-50 dark:bg-sky-950/30",
     permission: "builder",
+  },
+  {
+    title: "Funnel Report",
+    description: "Cart-to-order journey: checkout rates, payment failures, abandoned carts",
+    href: "/admin/reports/funnel",
+    icon: BarChart3,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    permission: "orders",
   },
 ];
 

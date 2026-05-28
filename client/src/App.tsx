@@ -50,6 +50,7 @@ import AdminColorSwatches from "@/pages/AdminColorSwatches";
 import AdminTags from "@/pages/AdminTags";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminSecurity from "@/pages/AdminSecurity";
+import AdminFunnelReport from "@/pages/admin/AdminFunnelReport";
 import AdminProductPageConfig from "@/pages/AdminProductPageConfig";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminGuard from "@/components/AdminGuard";
@@ -110,6 +111,7 @@ function Router() {
       <Route path="/admin/tags" component={() => <PermissionGuard permission="catalog"><AdminTags /></PermissionGuard>} />
       <Route path="/admin/users" component={() => <SuperAdminGuard><AdminUsers /></SuperAdminGuard>} />
       <Route path="/admin/security" component={() => <SuperAdminGuard><AdminSecurity /></SuperAdminGuard>} />
+      <Route path="/admin/reports/funnel" component={() => <PermissionGuard permission="orders"><AdminFunnelReport /></PermissionGuard>} />
       <Route path="/admin/product-page" component={() => <PermissionGuard permission="builder"><AdminProductPageConfig /></PermissionGuard>} />
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />

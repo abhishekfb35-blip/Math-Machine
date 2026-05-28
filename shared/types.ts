@@ -647,3 +647,36 @@ export interface FunnelStats {
   paymentAttemptsByStatus: Record<string, number>;
   recentFailures: Array<{ reason: string | null; code: string | null; count: number }>;
 }
+
+export interface FunnelReport {
+  cartsCreated: number;
+  cartsWithItems: number;
+  checkoutStarted: number;
+  paymentAttempted: number;
+  ordersCompleted: number;
+  conversionRate: number;
+  recoveryEmailsSent: number;
+  paymentFailuresByReason: Array<{ reason: string | null; code: string | null; count: number }>;
+  recentFailedAttempts: Array<{
+    id: string;
+    cartId: string;
+    attemptAt: string | null;
+    failureReason: string | null;
+    failureCode: string | null;
+    amount: number | null;
+    razorpayOrderId: string | null;
+  }>;
+  abandonedCarts: Array<{
+    cartId: string;
+    createdAt: string | null;
+    checkoutEmail: string | null;
+    itemCount: number;
+    estimatedValue: number;
+    recoveryEmailSent: boolean;
+  }>;
+  leadsTotal: number;
+  registeredCustomers: number;
+  checkoutEmailsCaptured: number;
+  discountCodesIssued: number;
+  discountCodesRedeemed: number;
+}

@@ -81,6 +81,7 @@ export interface IStorage {
   updatePaymentAttemptByRazorpayOrderId(razorpayOrderId: string, status: string, failureReason?: string, failureCode?: string): Promise<void>;
   linkPaymentAttemptToOrder(razorpayOrderId: string, orderId: string): Promise<void>;
   getCartFunnelStats(): Promise<import("@shared/types").FunnelStats>;
+  getFunnelReport(from: Date, to: Date): Promise<import("@shared/types").FunnelReport>;
 
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
@@ -654,6 +655,190 @@ export class DatabaseStorage implements IStorage {
       emailCapturedCount: Number(emailCapturedRow[0]?.count ?? 0),
       paymentAttemptsByStatus,
       recentFailures: failureRows.map(r => ({ reason: r.reason, code: r.code, count: Number(r.count) })),
+    };
+  }
+
+  async getFunnelReport(from: Date, to: Date): Promise<import("@shared/types").FunnelReport> {
+    const [
+      cartsCreatedRow,
+      cartsWithItemsRow,
+      checkoutStartedRow,
+      paymentAttemptedRow,
+      ordersCompletedRow,
+      recoveryEmailsSentRow,
+      failuresByReason,
+      recentFailedAttempts,
+      abandonedCartsRows,
+      leadsTotalRow,
+      registeredCustomersRow,
+      checkoutEmailsCapturedRow,
+      codesIssuedRow,
+      codesRedeemedRow,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(and(sql`${carts.createdAt} >= ${from}`, sql`${carts.createdAt} <= ${to}`)),
+
+      db.select({ count: sql<number>`count(distinct ${cartItems.cartId})::int` })
+        .from(cartItems)
+        .innerJoin(carts, eq(carts.id, cartItems.cartId))
+        .where(and(sql`${carts.createdAt} >= ${from}`, sql`${carts.createdAt} <= ${to}`)),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(and(
+          sql`${carts.checkoutStartedAt} IS NOT NULL`,
+          sql`${carts.createdAt} >= ${from}`,
+          sql`${carts.createdAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(paymentAttempts)
+        .where(and(
+          sql`${paymentAttempts.attemptAt} >= ${from}`,
+          sql`${paymentAttempts.attemptAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(and(
+          sql`${orders.createdAt} >= ${from}`,
+          sql`${orders.createdAt} <= ${to}`,
+          sql`${orders.status} != 'cancelled'`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(and(
+          sql`${carts.abandonedEmailSentAt} IS NOT NULL`,
+          sql`${carts.createdAt} >= ${from}`,
+          sql`${carts.createdAt} <= ${to}`
+        )),
+
+      db.select({
+        reason: paymentAttempts.failureReason,
+        code: paymentAttempts.failureCode,
+        count: sql<number>`count(*)::int`,
+      }).from(paymentAttempts)
+        .where(and(
+          eq(paymentAttempts.status, "failed"),
+          sql`${paymentAttempts.attemptAt} >= ${from}`,
+          sql`${paymentAttempts.attemptAt} <= ${to}`
+        ))
+        .groupBy(paymentAttempts.failureReason, paymentAttempts.failureCode)
+        .orderBy(desc(sql`count(*)`))
+        .limit(10),
+
+      db.select({
+        id: paymentAttempts.id,
+        cartId: paymentAttempts.cartId,
+        attemptAt: paymentAttempts.attemptAt,
+        failureReason: paymentAttempts.failureReason,
+        failureCode: paymentAttempts.failureCode,
+        amount: paymentAttempts.amount,
+        razorpayOrderId: paymentAttempts.razorpayOrderId,
+      }).from(paymentAttempts)
+        .where(and(
+          eq(paymentAttempts.status, "failed"),
+          sql`${paymentAttempts.attemptAt} >= ${from}`,
+          sql`${paymentAttempts.attemptAt} <= ${to}`
+        ))
+        .orderBy(desc(paymentAttempts.attemptAt))
+        .limit(50),
+
+      db.select({
+        cartId: carts.id,
+        createdAt: carts.createdAt,
+        checkoutEmail: carts.checkoutEmail,
+        itemCount: sql<number>`count(${cartItems.id})::int`,
+        estimatedValue: sql<number>`coalesce(sum(${products.price} * ${cartItems.quantity}), 0)::int`,
+        recoveryEmailSent: sql<boolean>`${carts.abandonedEmailSentAt} IS NOT NULL`,
+      }).from(carts)
+        .innerJoin(cartItems, eq(cartItems.cartId, carts.id))
+        .leftJoin(products, eq(products.id, cartItems.productId))
+        .where(and(
+          sql`${carts.createdAt} >= ${from}`,
+          sql`${carts.createdAt} <= ${to}`,
+          sql`${carts.updatedAt} < NOW() - INTERVAL '1 hour'`,
+          sql`NOT EXISTS (SELECT 1 FROM payment_attempts pa WHERE pa.cart_id = ${carts.id} AND pa.order_id IS NOT NULL)`
+        ))
+        .groupBy(carts.id, carts.createdAt, carts.checkoutEmail, carts.abandonedEmailSentAt)
+        .orderBy(desc(carts.createdAt))
+        .limit(50),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(customerConsents)
+        .where(and(
+          sql`${customerConsents.consentedAt} >= ${from}`,
+          sql`${customerConsents.consentedAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(customers)
+        .where(and(
+          sql`${customers.createdAt} >= ${from}`,
+          sql`${customers.createdAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(and(
+          sql`${carts.checkoutEmail} IS NOT NULL`,
+          sql`${carts.createdAt} >= ${from}`,
+          sql`${carts.createdAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(customerConsents)
+        .where(and(
+          sql`${customerConsents.discountCode} IS NOT NULL`,
+          sql`${customerConsents.consentedAt} >= ${from}`,
+          sql`${customerConsents.consentedAt} <= ${to}`
+        )),
+
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(customerConsents)
+        .where(and(
+          eq(customerConsents.discountUsed, true),
+          sql`${customerConsents.consentedAt} >= ${from}`,
+          sql`${customerConsents.consentedAt} <= ${to}`
+        )),
+    ]);
+
+    const cartsWithItems = Number(cartsWithItemsRow[0]?.count ?? 0);
+    const ordersCompleted = Number(ordersCompletedRow[0]?.count ?? 0);
+
+    return {
+      cartsCreated: Number(cartsCreatedRow[0]?.count ?? 0),
+      cartsWithItems,
+      checkoutStarted: Number(checkoutStartedRow[0]?.count ?? 0),
+      paymentAttempted: Number(paymentAttemptedRow[0]?.count ?? 0),
+      ordersCompleted,
+      conversionRate: cartsWithItems > 0 ? Math.round((ordersCompleted / cartsWithItems) * 100) : 0,
+      recoveryEmailsSent: Number(recoveryEmailsSentRow[0]?.count ?? 0),
+      paymentFailuresByReason: failuresByReason.map(r => ({ reason: r.reason, code: r.code, count: Number(r.count) })),
+      recentFailedAttempts: recentFailedAttempts.map(r => ({
+        id: r.id,
+        cartId: r.cartId,
+        attemptAt: r.attemptAt ? r.attemptAt.toISOString() : null,
+        failureReason: r.failureReason,
+        failureCode: r.failureCode,
+        amount: r.amount,
+        razorpayOrderId: r.razorpayOrderId,
+      })),
+      abandonedCarts: abandonedCartsRows.map(c => ({
+        cartId: c.cartId,
+        createdAt: c.createdAt ? c.createdAt.toISOString() : null,
+        checkoutEmail: c.checkoutEmail,
+        itemCount: Number(c.itemCount),
+        estimatedValue: Number(c.estimatedValue),
+        recoveryEmailSent: Boolean(c.recoveryEmailSent),
+      })),
+      leadsTotal: Number(leadsTotalRow[0]?.count ?? 0),
+      registeredCustomers: Number(registeredCustomersRow[0]?.count ?? 0),
+      checkoutEmailsCaptured: Number(checkoutEmailsCapturedRow[0]?.count ?? 0),
+      discountCodesIssued: Number(codesIssuedRow[0]?.count ?? 0),
+      discountCodesRedeemed: Number(codesRedeemedRow[0]?.count ?? 0),
     };
   }
 
