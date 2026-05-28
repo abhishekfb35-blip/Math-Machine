@@ -759,9 +759,8 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
 }) {
   const { toast } = useToast();
 
-  // which config is being edited: null = default, string = audience ID
-  const [activeAudienceId, setActiveAudienceId] = useState<string | null>(null);
-  const [addingAudienceId, setAddingAudienceId] = useState<string>("");
+  // which audience config is being edited — empty string = none selected
+  const [activeAudienceId, setActiveAudienceId] = useState<string>("");
 
   const [selectedSizeIds, setSelectedSizeIds] = useState<string[]>([]);
   const [sizePriceAdds, setSizePriceAdds] = useState<Record<string, number>>({});
@@ -799,11 +798,10 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   });
   const allAudiences = attributes?.audience ?? [];
 
-  const defaultConfig = configs?.find(c => c.audienceId === null && c.tagId === null) ?? null;
   const audienceConfigs = configs?.filter(c => c.audienceId !== null) ?? [];
-  const activeConfig = activeAudienceId === null
-    ? defaultConfig
-    : audienceConfigs.find(c => c.audienceId === activeAudienceId) ?? null;
+  const activeConfig = activeAudienceId
+    ? audienceConfigs.find(c => c.audienceId === activeAudienceId) ?? null
+    : null;
 
   const usedAudienceIds = new Set(audienceConfigs.map(c => c.audienceId).filter(Boolean));
   const availableAudiences = allAudiences.filter(a => !usedAudienceIds.has(a.id));
@@ -850,6 +848,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!activeAudienceId) throw new Error("Select an audience first");
       const sizes = selectedSizeIds.map((id, si) => {
         const def = sizeDefinitions?.find(d => d.id === id);
         const swIds = sizeSwatchIds[id] ?? [];
@@ -870,9 +869,9 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
-      toast({ title: "Variant config saved" });
+      toast({ title: "Variant saved" });
     },
-    onError: () => toast({ title: "Failed to save", variant: "destructive" }),
+    onError: (err: Error) => toast({ title: err.message ?? "Failed to save", variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -881,10 +880,10 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
-      setActiveAudienceId(null);
+      setActiveAudienceId("");
       setSelectedSizeIds([]); setSizePriceAdds({}); setSizeHide({}); setSizeDefaultId(null);
       setSizeSwatchIds({}); setSizeColorHide({});
-      toast({ title: "Config deleted" });
+      toast({ title: "Variant deleted" });
     },
     onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
   });
@@ -917,18 +916,11 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
       >
         <DialogHeader>
           <DialogTitle>Variant Palettes — {categoryName}</DialogTitle>
-          <DialogDescription>Pick sizes and colours for <strong>{categoryName}</strong>.</DialogDescription>
+          <DialogDescription>Configure size &amp; colour options per audience for <strong>{categoryName}</strong>.</DialogDescription>
         </DialogHeader>
 
-        {/* Config selector: Default + audience overrides */}
+        {/* Audience variant chips + selector */}
         <div className="flex flex-wrap gap-1.5 items-center -mt-1">
-          <button
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${activeAudienceId === null ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"}`}
-            onClick={() => setActiveAudienceId(null)}
-            data-testid="chip-config-default"
-          >
-            Default
-          </button>
           {audienceConfigs.map(cfg => {
             const audience = allAudiences.find(a => a.id === cfg.audienceId);
             return (
@@ -943,26 +935,21 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
             );
           })}
           {availableAudiences.length > 0 && (
-            <div className="flex items-center gap-1">
-              <select
-                className="h-6 text-xs rounded border border-dashed border-border bg-background px-1 cursor-pointer"
-                value={addingAudienceId}
-                onChange={e => {
-                  const id = e.target.value;
-                  if (id) { setAddingAudienceId(""); setActiveAudienceId(id); }
-                }}
-                data-testid="select-add-audience-override"
-              >
-                <option value="">+ Add audience override…</option>
-                {availableAudiences.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              className="h-6 text-xs rounded border border-dashed border-border bg-background px-1 cursor-pointer"
+              value=""
+              onChange={e => { const id = e.target.value; if (id) setActiveAudienceId(id); }}
+              data-testid="select-add-audience-variant"
+            >
+              <option value="">+ Add audience variant…</option>
+              {availableAudiences.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
           )}
           {activeConfig && (
             <Button size="sm" variant="destructive" className="h-6 text-xs ml-auto"
-              onClick={() => { if (confirm("Delete this variant config?")) deleteMutation.mutate(activeConfig.id); }}
+              onClick={() => { if (confirm(`Delete the ${allAudiences.find(a => a.id === activeAudienceId)?.name ?? "this"} variant?`)) deleteMutation.mutate(activeConfig.id); }}
               disabled={deleteMutation.isPending}
               data-testid="button-delete-variant-config"
             >
@@ -971,23 +958,25 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           )}
         </div>
 
-        {activeAudienceId !== null && (
-          <p className="text-xs text-muted-foreground -mt-1">
-            Audience override: <strong>{allAudiences.find(a => a.id === activeAudienceId)?.name ?? activeAudienceId}</strong>. Products with this audience will use these sizes instead of the default.
-          </p>
-        )}
-
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
-          <Label className="text-sm font-semibold block">Sizes &amp; Colours</Label>
-          <p className="text-xs text-muted-foreground -mt-1">Select a size to expand its colour picker.</p>
-
-          {!sizeDefinitions || sizeDefinitions.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-2">
-              No sizes defined — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add size presets.
+          {!activeAudienceId ? (
+            <p className="text-xs text-muted-foreground py-3 text-center">
+              Select an audience above — or add a new one — to configure its sizes and colours.
             </p>
           ) : (
-            <div className="space-y-2">
-              {sizeDefinitions.map(def => {
+            <>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Editing: <strong>{allAudiences.find(a => a.id === activeAudienceId)?.name ?? activeAudienceId}</strong> — products tagged with this audience will use these sizes.
+              </p>
+              <Label className="text-sm font-semibold block">Sizes &amp; Colours</Label>
+              <p className="text-xs text-muted-foreground -mt-1">Select a size to expand its colour picker.</p>
+              {!sizeDefinitions || sizeDefinitions.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">
+                  No sizes defined — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add size presets.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {sizeDefinitions.map(def => {
                 const selected = selectedSizeIds.includes(def.id);
                 const thisSizeSwatchIds = sizeSwatchIds[def.id] ?? [];
                 return (
@@ -1105,14 +1094,16 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                   </div>
                 );
               })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-variant-config">
-            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save</>}
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !activeAudienceId} data-testid="button-save-variant-config">
+            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save as Variant</>}
           </Button>
         </div>
       </DialogContent>
