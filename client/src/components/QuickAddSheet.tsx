@@ -43,7 +43,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
-  const [selectedColorName, setSelectedColorName] = useState<string | null>(null);
+  const [sizeColorMap, setSizeColorMap] = useState<Record<string, string>>({});
   const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
     queryKey: ["/api/site-config", "product-page-config"],
     queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
@@ -100,7 +100,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront);
       if (def) {
         setSelectedSizeName(def.name);
-        setSelectedColorName(getFirstSelectableColor(def.name));
+        const firstColor = getFirstSelectableColor(def.name);
+        if (firstColor) setSizeColorMap(prev => ({ ...prev, [def.name]: firstColor }));
       }
     }
   }, [showVariantSelectors, variantOptions]);
@@ -112,7 +113,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       setLadyName("");
       setQuantity(1);
       setSelectedSizeName(null);
-      setSelectedColorName(null);
+      setSizeColorMap({});
     }
   }, [open]);
 
@@ -121,10 +122,16 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     return selectedSizeObj.colors;
   })();
 
-  const variantSelectionIncomplete = showVariantSelectors && (
-    ((variantOptions?.sizes.length ?? 0) > 0 && !selectedSizeName) ||
-    (colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !selectedColorName)
-  );
+  const variantSelectionIncomplete = showVariantSelectors && (() => {
+    if (!variantOptions) return false;
+    const selectableSizes = variantOptions.sizes.filter(s => !s.blurOnFront);
+    if (selectableSizes.length === 0) return false;
+    if (!selectedSizeName) return true;
+    if (isCoupleProduct) {
+      return selectableSizes.some(s => s.colors.filter(c => !c.blurOnFront).length > 0 && !sizeColorMap[s.name]);
+    }
+    return colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !sizeColorMap[selectedSizeName];
+  })();
 
   const effectivePrice = (product?.price ?? 0) + (selectedSizeObj?.priceAdd ?? 0);
 
@@ -140,7 +147,9 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           : audienceConfig?.type === "single"
             ? (personalizationName.trim() || undefined)
             : undefined,
-        selectedColor: selectedColorName || undefined,
+        selectedColor: isCoupleProduct
+          ? (variantOptions?.sizes.filter(s => sizeColorMap[s.name]).map(s => `${s.name}: ${sizeColorMap[s.name]}`).join(" · ") || undefined)
+          : (sizeColorMap[selectedSizeName ?? ""] || undefined),
         selectedSize: selectedSizeName || undefined,
       });
       return res.json();
@@ -215,26 +224,36 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                       onClick={() => {
                         if (available) {
                           setSelectedSizeName(size.name);
-                          const currentColorStillAvailable = selectedColorName && isColorAvailable(size.name, selectedColorName);
-                          if (!currentColorStillAvailable) {
-                            setSelectedColorName(getFirstSelectableColor(size.name));
+                          if (!isCoupleProduct && !sizeColorMap[size.name]) {
+                            const firstColor = getFirstSelectableColor(size.name);
+                            if (firstColor) setSizeColorMap(prev => ({ ...prev, [size.name]: firstColor }));
                           }
                         }
                       }}
                       disabled={!available}
-                      className={`px-3 py-1 text-xs rounded border transition-all ${
+                      className={`flex items-center px-3 py-1 text-xs rounded border transition-all ${
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
                           : blurred || !isSizeAvailable(size.name)
                           ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
+                          : sizeColorMap[size.name]
+                          ? "border-primary/50 hover:border-primary"
                           : "border-border hover:border-primary"
                       }`}
                       data-testid={`button-quickadd-size-${size.name}`}
                     >
-                      {size.name}
+                      <span>{size.name}</span>
                       {size.priceAdd > 0 && (
                         <span className="ml-1 text-[10px] opacity-70">+{formatPrice(size.priceAdd)}</span>
                       )}
+                      {sizeColorMap[size.name] && (() => {
+                        const picked = size.colors.find(c => c.name === sizeColorMap[size.name]);
+                        return picked ? (
+                          picked.swatchUrl
+                            ? <img src={picked.swatchUrl} alt={picked.name} className="w-4 h-4 rounded-full object-cover border border-white/20 ml-1.5 shrink-0" />
+                            : <span className="w-4 h-4 rounded-full bg-muted border inline-block ml-1.5 shrink-0" />
+                        ) : null;
+                      })()}
                     </button>
                   );
                 })}
@@ -252,11 +271,11 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 {colorsForSelectedSize.map((color) => {
                   const available = !color.blurOnFront && isColorAvailable(selectedSizeName!, color.name);
                   const blurred = color.blurOnFront;
-                  const isSelected = selectedColorName === color.name;
+                  const isSelected = sizeColorMap[selectedSizeName ?? ""] === color.name;
                   return (
                     <button
                       key={color.name}
-                      onClick={() => { if (available) setSelectedColorName(color.name); }}
+                      onClick={() => { if (available) setSizeColorMap(prev => ({ ...prev, [selectedSizeName!]: color.name })); }}
                       disabled={!available}
                       className={`flex items-center gap-1.5 p-1 text-xs rounded border transition-all ${
                         isSelected

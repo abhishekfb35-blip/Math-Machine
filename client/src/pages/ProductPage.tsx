@@ -60,7 +60,7 @@ export default function ProductPage() {
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [sizeColorMap, setSizeColorMap] = useState<Record<string, string>>({});
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -179,10 +179,16 @@ export default function ProductPage() {
     return selectedSizeObj.colors;
   })();
 
-  const variantSelectionIncomplete = showVariantSelectors && (
-    ((variantOptions?.sizes.length ?? 0) > 0 && !selectedSize) ||
-    (colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !selectedColor)
-  );
+  const variantSelectionIncomplete = showVariantSelectors && (() => {
+    if (!variantOptions) return false;
+    const selectableSizes = variantOptions.sizes.filter(s => !s.blurOnFront);
+    if (selectableSizes.length === 0) return false;
+    if (!selectedSize) return true;
+    if (isCoupleProduct) {
+      return selectableSizes.some(s => s.colors.filter(c => !c.blurOnFront).length > 0 && !sizeColorMap[s.name]);
+    }
+    return colorsForSelectedSize.filter(c => !c.blurOnFront).length > 0 && !sizeColorMap[selectedSize];
+  })();
 
   const getFirstSelectableColor = (sizeName: string): string | null => {
     const sizeObj = variantOptions?.sizes.find(s => s.name === sizeName);
@@ -200,7 +206,8 @@ export default function ProductPage() {
       const def = sizes.find(s => s.isDefault && !s.blurOnFront) || sizes.find(s => !s.blurOnFront);
       if (def) {
         setSelectedSize(def.name);
-        setSelectedColor(getFirstSelectableColor(def.name));
+        const firstColor = getFirstSelectableColor(def.name);
+        if (firstColor) setSizeColorMap(prev => ({ ...prev, [def.name]: firstColor }));
       }
     }
   }, [showVariantSelectors, variantOptions]);
@@ -229,9 +236,9 @@ export default function ProductPage() {
 
   const handleSizeSelect = (sizeName: string) => {
     setSelectedSize(sizeName);
-    const currentColorStillAvailable = selectedColor && isColorAvailable(sizeName, selectedColor);
-    if (!currentColorStillAvailable) {
-      setSelectedColor(getFirstSelectableColor(sizeName));
+    if (!isCoupleProduct && !sizeColorMap[sizeName]) {
+      const firstColor = getFirstSelectableColor(sizeName);
+      if (firstColor) setSizeColorMap(prev => ({ ...prev, [sizeName]: firstColor }));
     }
   };
 
@@ -247,7 +254,9 @@ export default function ProductPage() {
           : audienceConfig?.type === "single"
             ? (personalizationName.trim() || undefined)
             : undefined,
-        selectedColor: selectedColor || undefined,
+        selectedColor: isCoupleProduct
+          ? (variantOptions?.sizes.filter(s => sizeColorMap[s.name]).map(s => `${s.name}: ${sizeColorMap[s.name]}`).join(" · ") || undefined)
+          : (sizeColorMap[selectedSize ?? ""] || undefined),
         selectedSize: selectedSize || undefined,
       });
       return res.json();
@@ -516,6 +525,8 @@ export default function ProductPage() {
                             ? "border-primary bg-primary text-primary-foreground"
                             : blurred || !isSizeAvailable(size.name)
                             ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
+                            : sizeColorMap[size.name]
+                            ? "border-primary/50 hover:border-primary"
                             : "border-border hover:border-primary"
                         }`}
                         data-testid={`button-size-${size.name}`}
@@ -531,6 +542,17 @@ export default function ProductPage() {
                             +{formatPrice(size.priceAdd)}
                           </span>
                         )}
+                        {sizeColorMap[size.name] && (() => {
+                          const picked = size.colors.find(c => c.name === sizeColorMap[size.name]);
+                          return picked ? (
+                            <div className="flex items-center gap-1 mt-1">
+                              {picked.swatchUrl
+                                ? <img src={picked.swatchUrl} alt={picked.name} className="w-4 h-4 rounded-full object-cover border border-white/30 shrink-0" />
+                                : <span className="w-4 h-4 rounded-full bg-muted border inline-block shrink-0" />}
+                              <span className={`text-[10px] ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{picked.name}</span>
+                            </div>
+                          ) : null;
+                        })()}
                       </button>
                     );
                   })}
@@ -545,11 +567,11 @@ export default function ProductPage() {
                   {colorsForSelectedSize.map((color) => {
                     const available = !color.blurOnFront && isColorAvailable(selectedSize!, color.name);
                     const blurred = color.blurOnFront;
-                    const isSelected = selectedColor === color.name;
+                    const isSelected = sizeColorMap[selectedSize ?? ""] === color.name;
                     return (
                       <button
                         key={color.name}
-                        onClick={() => { if (available) setSelectedColor(color.name); }}
+                        onClick={() => { if (available) setSizeColorMap(prev => ({ ...prev, [selectedSize!]: color.name })); }}
                         disabled={!available}
                         className={`flex items-center gap-1.5 p-1.5 rounded border transition-all ${
                           isSelected ? "border-primary ring-1 ring-primary"
