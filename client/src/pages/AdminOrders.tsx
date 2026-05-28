@@ -227,12 +227,28 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
                   <p className="text-xs text-muted-foreground font-mono" data-testid={`text-item-sku-${idx}`}>SKU: {item.sku}</p>
                 )}
                 {(item.selectedSize || item.selectedColor) && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
-                  </p>
+                  item.selectedColor?.includes(" · ") ? (
+                    <div className="space-y-0.5 mt-0.5">
+                      {item.selectedColor.split(" · ").map((line, i) => (
+                        <p key={i} className="text-xs text-muted-foreground">{line}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+                    </p>
+                  )
                 )}
                 {item.personalizationName && (
-                  <p className="text-xs text-muted-foreground mt-0.5">Personalisation: <strong>{item.personalizationName}</strong></p>
+                  item.personalizationName.includes(" & ") ? (
+                    <div className="space-y-0.5 mt-0.5">
+                      {item.personalizationName.split(" & ").map((line, i) => (
+                        <p key={i} className="text-xs text-muted-foreground"><strong>{line}</strong></p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-0.5">Personalisation: <strong>{item.personalizationName}</strong></p>
+                  )
                 )}
               </div>
               <div className="flex items-center gap-3 shrink-0">

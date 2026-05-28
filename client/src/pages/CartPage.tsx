@@ -55,14 +55,30 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
           </h3>
         </Link>
         {(item.selectedSize || item.selectedColor) && (
-          <p className="text-xs text-muted-foreground" data-testid={`text-variant-${item.id}`}>
-            {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
-          </p>
+          item.selectedColor?.includes(" · ") ? (
+            <div className="space-y-0.5" data-testid={`text-variant-${item.id}`}>
+              {item.selectedColor.split(" · ").map((line, i) => (
+                <p key={i} className="text-xs text-muted-foreground">{line}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground" data-testid={`text-variant-${item.id}`}>
+              {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+            </p>
+          )
         )}
         {item.personalizationName && (
-          <p className="text-xs text-muted-foreground" data-testid={`text-personalization-${item.id}`}>
-            Embroidered: {item.personalizationName}
-          </p>
+          item.personalizationName.includes(" & ") ? (
+            <div className="space-y-0.5" data-testid={`text-personalization-${item.id}`}>
+              {item.personalizationName.split(" & ").map((line, i) => (
+                <p key={i} className="text-xs text-muted-foreground">{line}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground" data-testid={`text-personalization-${item.id}`}>
+              Embroidered: {item.personalizationName}
+            </p>
+          )
         )}
         <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
           {formatPrice(item.effectivePrice ?? item.product.price)}

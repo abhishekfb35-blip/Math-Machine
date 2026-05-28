@@ -576,10 +576,26 @@ export default function CheckoutPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium line-clamp-1">{item.product!.name}</p>
                     {(item.selectedSize || item.selectedColor) && (
-                      <p className="text-xs text-muted-foreground">{[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}</p>
+                      item.selectedColor?.includes(" · ") ? (
+                        <div className="space-y-0.5">
+                          {item.selectedColor.split(" · ").map((line, i) => (
+                            <p key={i} className="text-xs text-muted-foreground">{line}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">{[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}</p>
+                      )
                     )}
                     {item.personalizationName && (
-                      <p className="text-xs text-muted-foreground">Name: {item.personalizationName}</p>
+                      item.personalizationName.includes(" & ") ? (
+                        <div className="space-y-0.5">
+                          {item.personalizationName.split(" & ").map((line, i) => (
+                            <p key={i} className="text-xs text-muted-foreground">{line}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Name: {item.personalizationName}</p>
+                      )
                     )}
                     <p className="text-xs text-muted-foreground">Qty: {item.quantity} x {formatPrice(item.product!.price)}</p>
                   </div>
