@@ -39066,6 +39066,30 @@
       "sortOrder": 0
     },
     {
+      "id": "xknyzlm12zi0wxlez9kf9rzd",
+      "categorySlug": "towels",
+      "tagId": null,
+      "sortOrder": 0
+    },
+    {
+      "id": "l95zbytewwa6l4b121hntbh6",
+      "categorySlug": "towels",
+      "tagId": null,
+      "sortOrder": 0
+    },
+    {
+      "id": "tlx6raml5tp2zre2nob0pgsm",
+      "categorySlug": "towels",
+      "tagId": null,
+      "sortOrder": 0
+    },
+    {
+      "id": "o1ym8idgoz6525paz2fonir2",
+      "categorySlug": "towels",
+      "tagId": null,
+      "sortOrder": 0
+    },
+    {
       "id": "guijaogqg2jpcenv1cb8rkyr",
       "categorySlug": "towels",
       "tagId": "aq8bd6fppxlidzna32bee0ve",
@@ -39073,6 +39097,17 @@
     }
   ],
   "variantSizes": [
+    {
+      "id": "bb0kxhnsamomnwquwd9uarjq",
+      "configId": "l95zbytewwa6l4b121hntbh6",
+      "name": "150*75 cm",
+      "description": "Adult Bath Towel (King Size)",
+      "descriptionFontSize": 12,
+      "priceAdd": 300,
+      "isDefault": true,
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
     {
       "id": "hgz3b9rvpw92rj4gwra1k03c",
       "configId": "guijaogqg2jpcenv1cb8rkyr",
@@ -39107,6 +39142,72 @@
       "sortOrder": 0
     },
     {
+      "id": "ywul5mfe4lun5jo6detv58lb",
+      "configId": "o1ym8idgoz6525paz2fonir2",
+      "name": "120*60 cm",
+      "description": "Kids Bath Towel (0 to 15 Yrs)",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": true,
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "zb4cym4nzor6zobm4eivg5cc",
+      "configId": "tlx6raml5tp2zre2nob0pgsm",
+      "name": "His Towel, 150*75 cm",
+      "description": "Adult Bath Towel (King Size)",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "zroznyhlauieavi9mcn71tn7",
+      "configId": "xknyzlm12zi0wxlez9kf9rzd",
+      "name": "120*60 cm",
+      "description": "Kids Bath Towel (0 to 15 Yrs)",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": true,
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "chrcn6thghq5oba7xipc8ci1",
+      "configId": "o1ym8idgoz6525paz2fonir2",
+      "name": "150*75 cm",
+      "description": "Adult Bath Towel (King Size)",
+      "descriptionFontSize": 12,
+      "priceAdd": 300,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "dv5pbphtjcvaktvqk16b9p0t",
+      "configId": "xknyzlm12zi0wxlez9kf9rzd",
+      "name": "150*75 cm",
+      "description": "Adult Bath Towel (King Size)",
+      "descriptionFontSize": 12,
+      "priceAdd": 300,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "jtxg4rslopiw8wen0l9dlyp8",
+      "configId": "l95zbytewwa6l4b121hntbh6",
+      "name": "120*60 cm",
+      "description": "Kids Bath Towel (0 to 15 Yrs)",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
       "id": "n21pl3zmee4l507hrz72l8rw",
       "configId": "guijaogqg2jpcenv1cb8rkyr",
       "name": "75*150 cm, Adult Size",
@@ -39133,6 +39234,17 @@
       "configId": "hu7mycy4dy5xwmafi830si6z",
       "name": "4 to 6 Yrs Size",
       "description": "37 cm shoulder, 70 cm shoulder to bottom. ",
+      "descriptionFontSize": 12,
+      "priceAdd": 0,
+      "isDefault": false,
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "zjws1asstmkpyftn4guvvbyi",
+      "configId": "tlx6raml5tp2zre2nob0pgsm",
+      "name": "Her Towel, 150*75 cm",
+      "description": "Adult Bath Towel (King Size)",
       "descriptionFontSize": 12,
       "priceAdd": 0,
       "isDefault": false,
@@ -39172,6 +39284,22 @@
       "sortOrder": 0
     },
     {
+      "id": "fxqj850ph7qicltjscywm867",
+      "sizeId": "dv5pbphtjcvaktvqk16b9p0t",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "iytzxg25wt2i6djockvxbhml",
+      "sizeId": "bb0kxhnsamomnwquwd9uarjq",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
       "id": "j7b2zs7pue0ro00bos8h3m4z",
       "sizeId": "hgz3b9rvpw92rj4gwra1k03c",
       "name": "Turquoise Blue",
@@ -39188,10 +39316,26 @@
       "sortOrder": 0
     },
     {
+      "id": "kazufse6nt2u4wlddil6c9cf",
+      "sizeId": "chrcn6thghq5oba7xipc8ci1",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
       "id": "ppz7td95lh3ycj8d3pgivdiv",
       "sizeId": "q285kx26euyiohaev9md1fqb",
       "name": "Baby Pink",
       "swatchUrl": "/images/swatches/1775522964077-c59ae25c5c9a.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "q0od70b9s6alem2lz3w35c16",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
       "blurOnFront": false,
       "sortOrder": 0
     },
@@ -39204,10 +39348,34 @@
       "sortOrder": 0
     },
     {
+      "id": "tpuu9gfcn5e5qogj6nko6wtd",
+      "sizeId": "zb4cym4nzor6zobm4eivg5cc",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "u6xywkk0eokqjjfrbst0wplh",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
       "id": "updeei0gam07m0x210m0svyx",
       "sizeId": "ustoetmebk8uzti3s0zg0q2g",
       "name": "Baby Pink",
       "swatchUrl": "/images/swatches/1775523108304-bfb2aa62785c.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
+      "id": "v16xlb7q4zo83w6dsztqhqn8",
+      "sizeId": "zjws1asstmkpyftn4guvvbyi",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
       "blurOnFront": false,
       "sortOrder": 0
     },
@@ -39228,10 +39396,34 @@
       "sortOrder": 0
     },
     {
+      "id": "whqh4d8o99f6xyzax9l5oq8r",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 0
+    },
+    {
       "id": "a6l53kun93gr5cl63ezlr10s",
       "sizeId": "kltmfsf1z03ew2g17ewnet7u",
       "name": "Turquoise Blue",
       "swatchUrl": "/images/swatches/1775423479480-0881b4956762.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "aktwl8df8122g1uicjeyapt2",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "doc6jjshx1gxgsjb0rlgs49v",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
       "blurOnFront": false,
       "sortOrder": 1
     },
@@ -39252,6 +39444,14 @@
       "sortOrder": 1
     },
     {
+      "id": "kn1y1daum0sznjmgvyfgm1yb",
+      "sizeId": "zjws1asstmkpyftn4guvvbyi",
+      "name": "Gray",
+      "swatchUrl": "/images/swatches/1779926265387-04ece4c85604.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
       "id": "kn96q12q8ofg8ra042y0q8uz",
       "sizeId": "roed2npbfmkjz4tkr320tbju",
       "name": "Turquoise Blue",
@@ -39264,6 +39464,22 @@
       "sizeId": "xd5ktrjbhsfjqvl73nentjun",
       "name": "Turquoise Blue",
       "swatchUrl": "/images/swatches/1775423391075-a2efe96dddb4.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "ofo3xqqph68tlc68tv52980z",
+      "sizeId": "zb4cym4nzor6zobm4eivg5cc",
+      "name": "Gray",
+      "swatchUrl": "/images/swatches/1779926265387-04ece4c85604.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "p6l3wu2lxz1enu5rt0s4w5o0",
+      "sizeId": "chrcn6thghq5oba7xipc8ci1",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
       "blurOnFront": false,
       "sortOrder": 1
     },
@@ -39284,10 +39500,34 @@
       "sortOrder": 1
     },
     {
+      "id": "tbf2cotjf2r1g792r2n7j3td",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "v9giey7ixfc7bjw2mx9kskyj",
+      "sizeId": "dv5pbphtjcvaktvqk16b9p0t",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
       "id": "vd6af8gdqaisldz1ofkyaun4",
       "sizeId": "ustoetmebk8uzti3s0zg0q2g",
       "name": "Sky Blue",
       "swatchUrl": "/images/swatches/1775523110642-b192f74d23be.jpg",
+      "blurOnFront": false,
+      "sortOrder": 1
+    },
+    {
+      "id": "ychip00s3rychjbef5shp7xl",
+      "sizeId": "bb0kxhnsamomnwquwd9uarjq",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
       "blurOnFront": false,
       "sortOrder": 1
     },
@@ -39308,6 +39548,14 @@
       "sortOrder": 2
     },
     {
+      "id": "gxs4z2royuj8sr48rf4v9dn1",
+      "sizeId": "chrcn6thghq5oba7xipc8ci1",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
       "id": "hhc5lcfzso0rqacsfk71dj2k",
       "sizeId": "po6cxn0eitsrts7u59df0rhg",
       "name": "Baby Pink",
@@ -39324,10 +39572,34 @@
       "sortOrder": 2
     },
     {
+      "id": "i12mn007jfhuwzb0szv7p72w",
+      "sizeId": "dv5pbphtjcvaktvqk16b9p0t",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
       "id": "i7w62zsvqtjskbkw95j7jyv6",
       "sizeId": "q285kx26euyiohaev9md1fqb",
       "name": "Lemon Yellow",
       "swatchUrl": "/images/swatches/1775522967406-a056382d2779.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "lpdt9cg62yqii5kes2bid223",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "Lemon Yellow",
+      "swatchUrl": "/images/swatches/1779924905093-2d43ec39c81b.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "m3cahxf5qjg332not8tphtia",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "Lemon Yellow",
+      "swatchUrl": "/images/swatches/1779924905093-2d43ec39c81b.jpg",
       "blurOnFront": false,
       "sortOrder": 2
     },
@@ -39348,6 +39620,38 @@
       "sortOrder": 2
     },
     {
+      "id": "nf0o21qxz8frqng36d1sadu9",
+      "sizeId": "bb0kxhnsamomnwquwd9uarjq",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "qyivol6p882rstl5zwy9vubv",
+      "sizeId": "zjws1asstmkpyftn4guvvbyi",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "r9dv2p6hlw6xgxo1tom0mpe3",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "Lemon Yellow",
+      "swatchUrl": "/images/swatches/1779924905093-2d43ec39c81b.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
+      "id": "tjeyv25hf5evtwuu6cp0s1je",
+      "sizeId": "zb4cym4nzor6zobm4eivg5cc",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 2
+    },
+    {
       "id": "w8cft5wjkxnzzjw2eadwejvh",
       "sizeId": "roed2npbfmkjz4tkr320tbju",
       "name": "Baby Pink",
@@ -39356,10 +39660,42 @@
       "sortOrder": 2
     },
     {
+      "id": "cr4xqlrkfqm55dwjzq51yzq1",
+      "sizeId": "zb4cym4nzor6zobm4eivg5cc",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "gc6jwglu8qxjsctpzou8dt1l",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "gjoywfyubwyzrnewefdcum16",
+      "sizeId": "chrcn6thghq5oba7xipc8ci1",
+      "name": "Gray",
+      "swatchUrl": "/images/swatches/1779926265387-04ece4c85604.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
       "id": "j13q0u0see9g87rybf0e3z2t",
       "sizeId": "roed2npbfmkjz4tkr320tbju",
       "name": "Red",
       "swatchUrl": "/images/swatches/1775421788301-7b49054b742f.png",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "lbhquzteym9txgks4qg8ffbm",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
       "blurOnFront": false,
       "sortOrder": 3
     },
@@ -39372,6 +39708,14 @@
       "sortOrder": 3
     },
     {
+      "id": "pxwk9rs8diaawm88k0m83rae",
+      "sizeId": "bb0kxhnsamomnwquwd9uarjq",
+      "name": "Gray",
+      "swatchUrl": "/images/swatches/1779926265387-04ece4c85604.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
       "id": "q3nzagdo5qrfkztjzen6usks",
       "sizeId": "n21pl3zmee4l507hrz72l8rw",
       "name": "Gray",
@@ -39380,10 +39724,34 @@
       "sortOrder": 3
     },
     {
+      "id": "r6qaj8u6x2rjg0k9t7nitwe7",
+      "sizeId": "zjws1asstmkpyftn4guvvbyi",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "rcjmc4hqqthzqahhj2ysrixb",
+      "sizeId": "dv5pbphtjcvaktvqk16b9p0t",
+      "name": "Gray",
+      "swatchUrl": "/images/swatches/1779926265387-04ece4c85604.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
       "id": "rqnyzruwqi0uj9a0iti4elpb",
       "sizeId": "hgz3b9rvpw92rj4gwra1k03c",
       "name": "Purple ",
       "swatchUrl": "/images/swatches/1776015223797-e2f7746389ff.jpg",
+      "blurOnFront": false,
+      "sortOrder": 3
+    },
+    {
+      "id": "v77znbzmcblynl7aavb4jy76",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "White",
+      "swatchUrl": "/images/swatches/1779926418081-f7d98f001e25.jpg",
       "blurOnFront": false,
       "sortOrder": 3
     },
@@ -39420,10 +39788,98 @@
       "sortOrder": 4
     },
     {
+      "id": "fpr234aa53i18gbo9286bk97",
+      "sizeId": "dv5pbphtjcvaktvqk16b9p0t",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "pba5q66y7dr7ly0iwfmdn2l5",
+      "sizeId": "chrcn6thghq5oba7xipc8ci1",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "pxwopk9nl2y2b8qxshykb8qc",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "Purple",
+      "swatchUrl": "/images/swatches/1779925303404-4c8fe9db4239.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "sq11ogy37bx3itro1bjf13dn",
+      "sizeId": "bb0kxhnsamomnwquwd9uarjq",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "tctymsf1xzqd969pbybf1bj1",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "Purple",
+      "swatchUrl": "/images/swatches/1779925303404-4c8fe9db4239.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "tzix4m052snufm30nl1n4mmq",
+      "sizeId": "zb4cym4nzor6zobm4eivg5cc",
+      "name": "Baby Pink",
+      "swatchUrl": "/images/swatches/1779924549770-ce6877713ea3.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "w3zzh2ud26i1x27i9t39zjid",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "Purple",
+      "swatchUrl": "/images/swatches/1779925303404-4c8fe9db4239.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "wpqtgf57cv72c99arkbql805",
+      "sizeId": "zjws1asstmkpyftn4guvvbyi",
+      "name": "Turquoise Blue",
+      "swatchUrl": "/images/swatches/1779924511412-1336f7c7d85f.jpg",
+      "blurOnFront": false,
+      "sortOrder": 4
+    },
+    {
+      "id": "dc5q8cf2jedbn0v8s0q9jwp8",
+      "sizeId": "zroznyhlauieavi9mcn71tn7",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 5
+    },
+    {
+      "id": "o6qr43whukw5hemd3nli82r2",
+      "sizeId": "ywul5mfe4lun5jo6detv58lb",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
+      "blurOnFront": false,
+      "sortOrder": 5
+    },
+    {
       "id": "orlay69rxfyhu20u8nsr640z",
       "sizeId": "hgz3b9rvpw92rj4gwra1k03c",
       "name": "White",
       "swatchUrl": "/images/swatches/1776015256753-302c33074862.jpg",
+      "blurOnFront": false,
+      "sortOrder": 5
+    },
+    {
+      "id": "trk6ollndriy6zzsm23p8vdd",
+      "sizeId": "jtxg4rslopiw8wen0l9dlyp8",
+      "name": "Orange",
+      "swatchUrl": "/images/swatches/1779926604391-240b17d5f1e0.jpg",
       "blurOnFront": false,
       "sortOrder": 5
     }
@@ -50279,6 +50735,10 @@
     {
       "key": "page-terms",
       "value": "{\"title\":\"Terms & Conditions\",\"lastUpdated\":\"February 2026\",\"sections\":[{\"heading\":\"1. Introduction\",\"body\":\"Welcome to TurtleLittle. These Terms & Conditions govern your use of our website turtlelittle.com and the purchase of our products. By accessing our website or placing an order, you agree to be bound by these terms. Please read them carefully before using our services.\"},{\"heading\":\"2. Products & Personalisation\",\"body\":\"TurtleLittle offers personalised embroidered towels, blankets, and bathrobes. All personalisation details (names, initials or any other text) provided by the customer must be accurate. We are not responsible for errors in personalisation caused by incorrect information provided by the customer. Due to the personalised nature of our products, please double-check all details before confirming your order.\"},{\"heading\":\"3. Pricing & Payment\",\"body\":\"All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise. We reserve the right to change prices at any time without prior notice. Payment must be completed at the time of placing an order through our accepted payment methods. We use secure, industry-standard payment processing to protect your financial information.\"},{\"heading\":\"4. Orders & Confirmation\",\"body\":\"Once you place an order, you will receive an order confirmation. This confirmation does not guarantee acceptance of your order. We reserve the right to cancel or refuse any order for reasons including product availability, pricing errors, or suspected fraudulent activity. In such cases, you will be notified and any payment made will be refunded.\"},{\"heading\":\"5. Shipping & Delivery\",\"body\":\"We aim to dispatch all orders within 1-2 business days after order confirmation. During festive seasons or high-demand periods, processing may take slightly longer. Delivery timelines depend on your location and the shipping partner. Please refer to our Shipping Policy for detailed information on delivery timelines and charges.\"},{\"heading\":\"6. Returns & Refunds\",\"body\":\"Due to the personalised nature of our products, returns and exchanges are accepted only in cases of manufacturing defects or incorrect items delivered. Please refer to our Refund & Cancellation Policy for complete details on the return process and eligibility.\"},{\"heading\":\"7. Intellectual Property\",\"body\":\"All content on turtlelittle.com, including text, images, logos, designs, and graphics, is the property of TurtleLittle and is protected by applicable intellectual property laws. You may not reproduce, distribute, or use any content from our website without our prior written permission.\"},{\"heading\":\"8. Limitation of Liability\",\"body\":\"TurtleLittle shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products. Our total liability shall not exceed the amount paid by you for the specific product in question.\"},{\"heading\":\"9. Governing Law\",\"body\":\"These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts in New Delhi, India.\"},{\"heading\":\"10. Contact Us\",\"body\":\"If you have any questions about these Terms & Conditions, please reach out to us at hello@turtlelittle.com or call us at +91 99900 79722.\"}]}"
+    },
+    {
+      "key": "product-page-config",
+      "value": "{\"infant\":{\"type\":\"single\",\"heading\":\"Personalize with a Name\",\"nameLabel\":\"Enter Name to Embroider!\",\"nameMin\":3,\"nameMax\":11},\"kids\":{\"type\":\"single\",\"heading\":\"Personalize with a Name\",\"nameLabel\":\"Enter Name to Embroider...\",\"nameMin\":3,\"nameMax\":11},\"teens\":{\"type\":\"single\",\"heading\":\"Personalize with a Name:\",\"nameLabel\":\"Enter Name to Embroider...\",\"nameMin\":3,\"nameMax\":11},\"adults\":{\"type\":\"single\",\"heading\":\"Personalize with a Name:\",\"nameLabel\":\"Enter Name to Embroider...\",\"nameMin\":3,\"nameMax\":11},\"couples\":{\"type\":\"couples\",\"heading\":\"Personalize with a Name\",\"person1Prefix\":\"His Name\",\"person2Prefix\":\"Her Name\",\"nameMin\":3,\"nameMax\":11,\"person1Label\":\"Enter Name to Embroider...\",\"person2Label\":\"Enter Name to Embroider...\"}}"
     },
     {
       "key": "seo",

@@ -482,21 +482,18 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       console.log(`[seed] pricingRules: all entries up to date`);
     }
 
-    // ── 6. categoryTagVariantConfigs: upsert by (categoryId, tagId) ──────────
+    // ── 6. categoryTagVariantConfigs: upsert by id ────────────────────────────
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
     const ctvcEntries = (sd.categoryTagVariantConfigs ?? []) as Array<{id: string; categorySlug: string; tagId?: string; sortOrder?: number}>;
     let ctvcSynced = 0;
-    // Map seed configId → actual DB configId (in case the DB has a different PK)
+    // Map seed configId → actual DB configId (always 1:1 since we key by id)
     const seedConfigIdToDbId: Record<string, string> = {};
     for (const ctvc of ctvcEntries) {
       const catId = catSlugToIdV[ctvc.categorySlug];
       if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
       const tagId = ctvc.tagId ?? null;
-      const whereClause = tagId
-        ? and(eq(categoryTagVariantConfigs.categoryId, catId), eq(categoryTagVariantConfigs.tagId, tagId))
-        : and(eq(categoryTagVariantConfigs.categoryId, catId));
-      const [existing] = await db.select().from(categoryTagVariantConfigs).where(whereClause);
+      const [existing] = await db.select().from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, ctvc.id));
       if (!existing) {
         await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId, sortOrder: ctvc.sortOrder ?? 0 });
         seedConfigIdToDbId[ctvc.id] = ctvc.id;
