@@ -250,8 +250,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                         const picked = size.colors.find(c => c.name === sizeColorMap[size.name]);
                         return picked ? (
                           picked.swatchUrl
-                            ? <img src={picked.swatchUrl} alt={picked.name} className="w-4 h-4 rounded-full object-cover border border-white/20 ml-1.5 shrink-0" />
-                            : <span className="w-4 h-4 rounded-full bg-muted border inline-block ml-1.5 shrink-0" />
+                            ? <img src={picked.swatchUrl} alt={picked.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white ml-1.5 shrink-0" />
+                            : <span className="w-5 h-5 rounded-full bg-muted ring-2 ring-white inline-block ml-1.5 shrink-0" />
                         ) : null;
                       })()}
                     </button>

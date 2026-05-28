@@ -547,8 +547,8 @@ export default function ProductPage() {
                           return picked ? (
                             <div className="flex items-center gap-1 mt-1">
                               {picked.swatchUrl
-                                ? <img src={picked.swatchUrl} alt={picked.name} className="w-4 h-4 rounded-full object-cover border border-white/30 shrink-0" />
-                                : <span className="w-4 h-4 rounded-full bg-muted border inline-block shrink-0" />}
+                                ? <img src={picked.swatchUrl} alt={picked.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white shrink-0" />
+                                : <span className="w-5 h-5 rounded-full bg-muted ring-2 ring-white inline-block shrink-0" />}
                               <span className={`text-[10px] ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{picked.name}</span>
                             </div>
                           ) : null;
