@@ -516,11 +516,14 @@ export default function ShopPage() {
     const raw = shopSectionsConfig?.value;
     if (!Array.isArray(raw) || raw.length === 0) return [];
     return raw.map((s): ShopSection => {
-      const tags = s.tags ?? (s.tag ? [s.tag] : []);
+      // `tag` is the section identifier (used for URLs/keys only).
+      // `tags` is the product-tag filter — do NOT derive it from `tag`.
+      const productFilterTags = Array.isArray(s.tags) ? s.tags : [];
+      const sectionKey = s.tag ?? productFilterTags[0] ?? s.label;
       return {
         ...s,
-        tags,
-        tag: tags[0] ?? s.tag ?? "",
+        tags: productFilterTags,
+        tag: sectionKey,
         audience: s.audience,
       };
     });
