@@ -653,7 +653,8 @@ export default function ShopPage() {
   const tagProducts = useMemo(() => {
     if (!activeTag) return [];
     const tagLower = activeTag.toLowerCase();
-    const section = shopSections.find(s => (s.tags ?? []).some(t => t.toLowerCase() === tagLower));
+    // Look up section by its `tag` identifier (URL key), never by product-tag values
+    const section = shopSections.find(s => s.tag.toLowerCase() === tagLower);
     if (section) {
       let all = attributeFilteredProducts;
       if (section.categories?.length) {
@@ -664,10 +665,12 @@ export default function ShopPage() {
       if (section.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => section.genders!.includes(g)));
       if (section.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => section.themes!.includes(t)));
       if (section.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => section.styles!.includes(st)));
+      // Only apply product-tag filter when the section explicitly has product tags configured
       if (section.tags?.length)      all = all.filter(p => (p.tagNames  ?? []).some(t => section.tags!.some(st => st.toLowerCase() === t.toLowerCase())));
       return all;
     }
-    return attributeFilteredProducts.filter(p => p.tagNames?.some(t => t.toLowerCase() === tagLower));
+    // Unknown tag key — no matching section, return empty
+    return [];
   }, [attributeFilteredProducts, activeTag, shopSections, categories]);
 
   // Compute tag sections
