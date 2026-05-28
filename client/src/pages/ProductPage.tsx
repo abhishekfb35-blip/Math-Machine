@@ -26,8 +26,8 @@ import { useAuth } from "@/hooks/useAuth";
 import ShareButton from "@/components/ShareButton";
 import { useWishlist } from "@/hooks/useWishlist";
 
-type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string };
-type CoupleAudienceConfig = { type: "couples"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string };
+type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string; nameMin?: number; nameMax?: number };
+type CoupleAudienceConfig = { type: "couples"; heading: string; person1Label: string; person2Label: string; person1Prefix: string; person2Prefix: string; nameMin?: number; nameMax?: number };
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
