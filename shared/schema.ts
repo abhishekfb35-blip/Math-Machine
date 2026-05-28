@@ -232,6 +232,7 @@ export const categoryTagVariantConfigs = pgTable("category_tag_variant_configs",
   id: text("id").primaryKey(),
   categoryId: text("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
   tagId: text("tag_id"),
+  audienceId: text("audience_id"),
   sortOrder: integer("sort_order").default(0),
 });
 

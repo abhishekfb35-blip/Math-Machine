@@ -531,9 +531,10 @@ export function registerAdminCatalogRoutes(app: Express) {
       });
       const bodySchema = z.object({
         sizes: z.array(sizeSchema).default([]),
+        audienceId: z.string().nullable().optional(),
       });
-      const { sizes } = bodySchema.parse(req.body);
-      const configId = await storage.upsertVariantConfig(categoryId, null, sizes);
+      const { sizes, audienceId = null } = bodySchema.parse(req.body);
+      const configId = await storage.upsertVariantConfig(categoryId, null, audienceId ?? null, sizes);
       const config = await storage.getVariantConfig(configId);
       res.json(config);
     } catch (err) {

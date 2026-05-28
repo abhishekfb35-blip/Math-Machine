@@ -489,6 +489,7 @@ export interface CategoryTagVariantConfig {
   id: string;
   categoryId: string;
   tagId: string | null;
+  audienceId: string | null;
   sortOrder: number;
   sizes: VariantSize[];
 }

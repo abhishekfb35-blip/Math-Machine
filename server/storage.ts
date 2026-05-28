@@ -169,7 +169,7 @@ export interface IStorage {
 
   listCategoryTagVariantConfigs(categoryId: string): Promise<CategoryTagVariantConfig[]>;
   getVariantConfig(id: string): Promise<CategoryTagVariantConfig | null>;
-  upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+  upsertVariantConfig(categoryId: string, tagId: string | null, audienceId: string | null, sizes: Array<{
     name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string>;
@@ -1244,10 +1244,28 @@ export class DatabaseStorage implements IStorage {
     if (productRows.length === 0) return { productId, sizes: [] };
     const { category_id: categoryId } = productRows[0];
 
-    const [cfg] = await db.select().from(categoryTagVariantConfigs).where(
-      and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId))
-    );
-    if (!cfg) return { productId, sizes: [] };
+    // Get this product's audience IDs
+    const paRows = await db.select({ audienceId: productAudience.audienceId })
+      .from(productAudience)
+      .where(eq(productAudience.productId, productId));
+    const audienceIds = paRows.map(r => r.audienceId);
+
+    let cfg;
+    if (audienceIds.length > 0) {
+      // Strict match — if the product has an audience, only an audience-specific config applies
+      const [match] = await db.select().from(categoryTagVariantConfigs).where(
+        and(eq(categoryTagVariantConfigs.categoryId, categoryId), inArray(categoryTagVariantConfigs.audienceId, audienceIds))
+      ).limit(1);
+      if (!match) return { productId, sizes: [] };
+      cfg = match;
+    } else {
+      // No audience on this product → use the default config (both tagId and audienceId are null)
+      const [defaultCfg] = await db.select().from(categoryTagVariantConfigs).where(
+        and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId), isNull(categoryTagVariantConfigs.audienceId))
+      );
+      if (!defaultCfg) return { productId, sizes: [] };
+      cfg = defaultCfg;
+    }
     const configId = cfg.id;
 
     const dbSizes = await db.select().from(variantSizes).where(eq(variantSizes.configId, configId)).orderBy(variantSizes.sortOrder);
@@ -1324,7 +1342,7 @@ export class DatabaseStorage implements IStorage {
           })),
         };
       }));
-      return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
+      return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, audienceId: cfg.audienceId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
     }));
   }
 
@@ -1352,7 +1370,7 @@ export class DatabaseStorage implements IStorage {
         })),
       };
     }));
-    return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
+    return { id: cfg.id, categoryId: cfg.categoryId, tagId: cfg.tagId ?? null, audienceId: cfg.audienceId ?? null, sortOrder: cfg.sortOrder ?? 0, sizes };
   }
 
   private async cleanupSwatchFiles(urls: (string | null | undefined)[]): Promise<void> {
@@ -1406,13 +1424,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async upsertVariantConfig(categoryId: string, tagId: string | null, sizes: Array<{
+  async upsertVariantConfig(categoryId: string, tagId: string | null, audienceId: string | null, sizes: Array<{
     name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string> {
-    const whereClause = tagId
-      ? and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId))
-      : and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId));
+    let whereClause;
+    if (audienceId) {
+      whereClause = and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.audienceId, audienceId));
+    } else if (tagId) {
+      whereClause = and(eq(categoryTagVariantConfigs.categoryId, categoryId), eq(categoryTagVariantConfigs.tagId, tagId));
+    } else {
+      whereClause = and(eq(categoryTagVariantConfigs.categoryId, categoryId), isNull(categoryTagVariantConfigs.tagId), isNull(categoryTagVariantConfigs.audienceId));
+    }
     const [existing] = await db.select().from(categoryTagVariantConfigs).where(whereClause);
 
     let configId: string;
@@ -1430,7 +1453,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(variantSizes).where(eq(variantSizes.configId, configId));
     } else {
       configId = createId();
-      await db.insert(categoryTagVariantConfigs).values({ id: configId, categoryId, tagId, sortOrder: 0 });
+      await db.insert(categoryTagVariantConfigs).values({ id: configId, categoryId, tagId, audienceId, sortOrder: 0 });
     }
 
     for (const size of sizes) {

@@ -759,11 +759,14 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
 }) {
   const { toast } = useToast();
 
+  // which config is being edited: null = default, string = audience ID
+  const [activeAudienceId, setActiveAudienceId] = useState<string | null>(null);
+  const [addingAudienceId, setAddingAudienceId] = useState<string>("");
+
   const [selectedSizeIds, setSelectedSizeIds] = useState<string[]>([]);
   const [sizePriceAdds, setSizePriceAdds] = useState<Record<string, number>>({});
   const [sizeDefaultId, setSizeDefaultId] = useState<string | null>(null);
   const [sizeHide, setSizeHide] = useState<Record<string, boolean>>({});
-  // per-size colour state: sizeId → ordered list of selected swatch IDs
   const [sizeSwatchIds, setSizeSwatchIds] = useState<Record<string, string[]>>({});
   const [sizeColorHide, setSizeColorHide] = useState<Record<string, Record<string, boolean>>>({});
 
@@ -790,18 +793,31 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     enabled: open && !!categoryId,
   });
 
-  const currentConfig = configs?.find(c => c.tagId === null) ?? configs?.[0] ?? null;
+  const { data: attributes } = useQuery<{ audience: { id: string; name: string }[] }>({
+    queryKey: ["/api/attributes"],
+    enabled: open,
+  });
+  const allAudiences = attributes?.audience ?? [];
+
+  const defaultConfig = configs?.find(c => c.audienceId === null && c.tagId === null) ?? null;
+  const audienceConfigs = configs?.filter(c => c.audienceId !== null) ?? [];
+  const activeConfig = activeAudienceId === null
+    ? defaultConfig
+    : audienceConfigs.find(c => c.audienceId === activeAudienceId) ?? null;
+
+  const usedAudienceIds = new Set(audienceConfigs.map(c => c.audienceId).filter(Boolean));
+  const availableAudiences = allAudiences.filter(a => !usedAudienceIds.has(a.id));
 
   useEffect(() => {
     if (!open || !sizeDefinitions || !globalSwatches) return;
-    if (currentConfig) {
+    if (activeConfig) {
       const ids: string[] = [];
       const priceAdds: Record<string, number> = {};
       const hide: Record<string, boolean> = {};
       const swatchIds: Record<string, string[]> = {};
       const cHide: Record<string, Record<string, boolean>> = {};
       let defaultId: string | null = null;
-      for (const sz of currentConfig.sizes) {
+      for (const sz of activeConfig.sizes) {
         const def = sizeDefinitions.find(d => d.name === sz.name);
         if (def) {
           ids.push(def.id);
@@ -830,7 +846,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
       setSizeSwatchIds({});
       setSizeColorHide({});
     }
-  }, [open, currentConfig?.id, sizeDefinitions?.length, globalSwatches?.length]);
+  }, [open, activeConfig?.id, activeAudienceId, sizeDefinitions?.length, globalSwatches?.length]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -850,7 +866,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           }),
         };
       });
-      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes });
+      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes, audienceId: activeAudienceId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
@@ -865,6 +881,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
+      setActiveAudienceId(null);
       setSelectedSizeIds([]); setSizePriceAdds({}); setSizeHide({}); setSizeDefaultId(null);
       setSizeSwatchIds({}); setSizeColorHide({});
       toast({ title: "Config deleted" });
@@ -903,16 +920,61 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           <DialogDescription>Pick sizes and colours for <strong>{categoryName}</strong>.</DialogDescription>
         </DialogHeader>
 
-        {currentConfig && (
-          <div className="flex justify-end -mt-1">
-            <Button size="sm" variant="destructive" className="h-7 text-xs"
-              onClick={() => { if (confirm("Delete this variant config?")) deleteMutation.mutate(currentConfig.id); }}
+        {/* Config selector: Default + audience overrides */}
+        <div className="flex flex-wrap gap-1.5 items-center -mt-1">
+          <button
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${activeAudienceId === null ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"}`}
+            onClick={() => setActiveAudienceId(null)}
+            data-testid="chip-config-default"
+          >
+            Default
+          </button>
+          {audienceConfigs.map(cfg => {
+            const audience = allAudiences.find(a => a.id === cfg.audienceId);
+            return (
+              <button
+                key={cfg.audienceId}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${activeAudienceId === cfg.audienceId ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-muted"}`}
+                onClick={() => setActiveAudienceId(cfg.audienceId!)}
+                data-testid={`chip-config-audience-${cfg.audienceId}`}
+              >
+                {audience?.name ?? cfg.audienceId}
+              </button>
+            );
+          })}
+          {availableAudiences.length > 0 && (
+            <div className="flex items-center gap-1">
+              <select
+                className="h-6 text-xs rounded border border-dashed border-border bg-background px-1 cursor-pointer"
+                value={addingAudienceId}
+                onChange={e => {
+                  const id = e.target.value;
+                  if (id) { setAddingAudienceId(""); setActiveAudienceId(id); }
+                }}
+                data-testid="select-add-audience-override"
+              >
+                <option value="">+ Add audience override…</option>
+                {availableAudiences.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {activeConfig && (
+            <Button size="sm" variant="destructive" className="h-6 text-xs ml-auto"
+              onClick={() => { if (confirm("Delete this variant config?")) deleteMutation.mutate(activeConfig.id); }}
               disabled={deleteMutation.isPending}
               data-testid="button-delete-variant-config"
             >
-              <Trash2 className="w-3 h-3 mr-1" /> Delete Config
+              <Trash2 className="w-3 h-3 mr-1" /> Delete
             </Button>
-          </div>
+          )}
+        </div>
+
+        {activeAudienceId !== null && (
+          <p className="text-xs text-muted-foreground -mt-1">
+            Audience override: <strong>{allAudiences.find(a => a.id === activeAudienceId)?.name ?? activeAudienceId}</strong>. Products with this audience will use these sizes instead of the default.
+          </p>
         )}
 
         <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
