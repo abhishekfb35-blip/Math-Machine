@@ -485,7 +485,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     // ── 6. categoryTagVariantConfigs: upsert by id ────────────────────────────
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
-    const ctvcEntries = (sd.categoryTagVariantConfigs ?? []) as Array<{id: string; categorySlug: string; tagId?: string; sortOrder?: number}>;
+    const ctvcEntries = (sd.categoryTagVariantConfigs ?? []) as Array<{id: string; categorySlug: string; tagId?: string; audienceId?: string; sortOrder?: number}>;
     let ctvcSynced = 0;
     // Map seed configId → actual DB configId (always 1:1 since we key by id)
     const seedConfigIdToDbId: Record<string, string> = {};
@@ -493,15 +493,16 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       const catId = catSlugToIdV[ctvc.categorySlug];
       if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
       const tagId = ctvc.tagId ?? null;
+      const audienceId = ctvc.audienceId ?? null;
       const [existing] = await db.select().from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, ctvc.id));
       if (!existing) {
-        await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId, sortOrder: ctvc.sortOrder ?? 0 });
+        await db.insert(categoryTagVariantConfigs).values({ id: ctvc.id, categoryId: catId, tagId, audienceId, sortOrder: ctvc.sortOrder ?? 0 });
         seedConfigIdToDbId[ctvc.id] = ctvc.id;
         ctvcSynced++;
       } else {
         seedConfigIdToDbId[ctvc.id] = existing.id;
-        if (existing.sortOrder !== (ctvc.sortOrder ?? 0)) {
-          await db.update(categoryTagVariantConfigs).set({ sortOrder: ctvc.sortOrder ?? 0 }).where(eq(categoryTagVariantConfigs.id, existing.id));
+        if (existing.sortOrder !== (ctvc.sortOrder ?? 0) || existing.audienceId !== audienceId) {
+          await db.update(categoryTagVariantConfigs).set({ sortOrder: ctvc.sortOrder ?? 0, audienceId }).where(eq(categoryTagVariantConfigs.id, existing.id));
           ctvcSynced++;
         }
       }

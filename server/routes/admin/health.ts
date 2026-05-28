@@ -1661,7 +1661,7 @@ export function registerAdminHealthRoutes(app: Express) {
       // Export categoryTagVariantConfigs (with categorySlug via JOIN)
       const ctvcResult = await pool.query(
         `SELECT ctvc.id, c.slug AS "categorySlug", ctvc.tag_id AS "tagId",
-                ctvc.sort_order AS "sortOrder"
+                ctvc.audience_id AS "audienceId", ctvc.sort_order AS "sortOrder"
          FROM category_tag_variant_configs ctvc
          JOIN categories c ON c.id = ctvc.category_id
          ORDER BY c.slug, ctvc.sort_order`
