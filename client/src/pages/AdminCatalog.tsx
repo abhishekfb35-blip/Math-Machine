@@ -1120,7 +1120,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
         <div className="flex items-center gap-2 pt-2 border-t">
           <Button variant="outline" onClick={onClose} className="mr-auto">Cancel</Button>
           {/* Save As — copy current config to a different audience */}
-          {activeAudienceId && allAudiences.filter(a => a.id !== activeAudienceId).length > 0 && (
+          {activeAudienceId && availableAudiences.length > 0 && (
             <select
               className="h-9 text-xs rounded-md border border-border bg-background px-2 cursor-pointer disabled:opacity-50"
               value=""
@@ -1131,11 +1131,9 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
               <option value="">
                 {saveAsMutation.isPending ? "Copying…" : "Save As…"}
               </option>
-              {allAudiences
-                .filter(a => a.id !== activeAudienceId)
-                .map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
+              {availableAudiences.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
             </select>
           )}
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || saveAsMutation.isPending || !activeAudienceId} data-testid="button-save-variant-config">
