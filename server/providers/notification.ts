@@ -61,7 +61,7 @@ export interface INotificationService {
   sendOrderStatusUpdate(orderId: string, status: string, customerEmail: string, shippingInfo?: { courierPartner?: string; serviceType?: string; trackingNumber?: string }): Promise<NotificationResult>;
   sendOtpEmail(email: string, otp: string): Promise<NotificationResult>;
   sendWelcomeCoupon(email: string, firstName: string, discountCode: string, discountPercent: number): Promise<NotificationResult>;
-  sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult>;
+  sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string, recoveryCode?: string): Promise<NotificationResult>;
   sendSecurityAlert(payload: SecurityAlertPayload): Promise<NotificationResult>;
   sendExchangeRateAlert(payload: ExchangeRateAlertPayload): Promise<NotificationResult>;
 }
@@ -503,9 +503,10 @@ export class ConsoleNotificationService implements INotificationService {
     return { success: true, channel: "console" };
   }
 
-  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult> {
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string, recoveryCode?: string): Promise<NotificationResult> {
     const summary = items.map(i => `${i.productName} x${i.quantity}${i.personalizationName ? ` (${i.personalizationName})` : ""}`).join(", ");
-    console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}> — ${summary} — ${cartUrl}`);
+    const codeNote = recoveryCode ? ` | Recovery code: ${recoveryCode}` : "";
+    console.log(`[Abandoned Cart] Reminder sent to ${firstName} <${email}> — ${summary} — ${cartUrl}${codeNote}`);
     return { success: true, channel: "console" };
   }
 
@@ -520,7 +521,7 @@ export class ConsoleNotificationService implements INotificationService {
   }
 }
 
-function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], cartUrl: string): string {
+function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], cartUrl: string, recoveryCode?: string): string {
   const displayName = firstName && firstName !== "." ? firstName : "there";
   const itemsHtml = items.map(item => `
     <tr>
@@ -532,6 +533,15 @@ function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], c
       <td width="25%" style="font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; font-weight: bold; padding: 10px 0 10px 4px; border-bottom: 1px solid #f0f0f0; text-align: right; vertical-align: top; white-space: nowrap;">${formatCurrency(item.price)}</td>
     </tr>
   `).join("");
+
+  const recoveryCodeHtml = recoveryCode ? `
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
+          <tr><td style="background-color: #f9f6f0; border: 1px dashed #c8a96e; border-radius: 8px; padding: 16px; text-align: center;">
+            <p style="margin: 0 0 6px; font-family: Arial, sans-serif; font-size: 13px; color: #666;">Use this code at checkout for</p>
+            <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; color: #1a1a1a; letter-spacing: 2px;">${recoveryCode}</p>
+            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px; color: #999;">5% off your order — just for coming back</p>
+          </td></tr>
+        </table>` : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -563,6 +573,8 @@ function buildAbandonedCartHtml(firstName: string, items: AbandonedCartItem[], c
           </tr>
           ${itemsHtml}
         </table>
+
+        ${recoveryCodeHtml}
 
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
           <tr><td align="center">
@@ -883,7 +895,7 @@ export class ResendNotificationService implements INotificationService {
     }
   }
 
-  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string): Promise<NotificationResult> {
+  async sendAbandonedCart(email: string, firstName: string, items: AbandonedCartItem[], cartUrl: string, recoveryCode?: string): Promise<NotificationResult> {
     try {
       const bcc = await this.getBccForType("abandoned-cart");
       await this.resend.emails.send({
@@ -891,7 +903,7 @@ export class ResendNotificationService implements INotificationService {
         to: email,
         bcc: bcc.length ? bcc : undefined,
         subject: `Your TurtleLittle cart is waiting for you`,
-        html: buildAbandonedCartHtml(firstName, items, cartUrl),
+        html: buildAbandonedCartHtml(firstName, items, cartUrl, recoveryCode),
       });
       return { success: true, channel: "resend" };
     } catch (err) {

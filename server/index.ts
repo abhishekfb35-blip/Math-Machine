@@ -31,6 +31,7 @@ import { runColorSizeReposMigration } from "./migrations/color-size-repos";
 import { ensureAudienceVariantConfig } from "./migrations/audience-variant-config";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
+import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
 import { createServer } from "http";
 import { setupOgMiddleware } from "./ogMiddleware";
 import { loadRateLimitConfig, getPendingBlockSnapshot, clearPendingBlocks } from "./middleware/rateLimiter";
@@ -202,60 +203,6 @@ function startRateLimitStatsScheduler() {
   log("[rate-limit-stats] Stats flush scheduler started — runs every 5 minutes");
 }
 
-function startAbandonedCartScheduler() {
-  const INTERVAL_MS = 15 * 60 * 1000;
-
-  const run = async () => {
-    try {
-      const abandonedCarts = await storage.getAbandonedCarts();
-      for (const cart of abandonedCarts) {
-        try {
-          const cartItems = await storage.getCartItems(cart.cartId);
-          if (cartItems.length === 0) continue;
-
-          const itemDetails = await Promise.all(
-            cartItems.map(async ci => {
-              const product = await storage.getProductById(ci.productId);
-              let effectivePrice = product?.price ?? 0;
-              if (product && ci.selectedSize) {
-                try {
-                  const variantOptions = await storage.getProductVariantOptions(ci.productId);
-                  const sizeConfig = variantOptions.sizes.find(s => s.name === ci.selectedSize);
-                  if (sizeConfig && sizeConfig.priceAdd > 0) {
-                    effectivePrice = product.price + sizeConfig.priceAdd;
-                  }
-                } catch {}
-              }
-              return {
-                productName: product?.name ?? "Unknown Product",
-                personalizationName: ci.personalizationName ?? null,
-                quantity: ci.quantity,
-                price: effectivePrice,
-              };
-            })
-          );
-
-          const firstName = (cart.customerName || "").split(" ")[0] || "";
-          const cartUrl = "https://turtlelittle.com/cart";
-          const result = await notificationService.sendAbandonedCart(cart.customerEmail, firstName, itemDetails, cartUrl);
-          if (result.success) {
-            await storage.markCartAbandonedEmailSent(cart.cartId);
-            log(`[abandoned-cart] Sent email to ${cart.customerEmail} for cart ${cart.cartId}`);
-          } else {
-            console.error(`[abandoned-cart] Email delivery failed for cart ${cart.cartId}: ${result.error}`);
-          }
-        } catch (err: any) {
-          console.error(`[abandoned-cart] Failed for cart ${cart.cartId}:`, err.message);
-        }
-      }
-    } catch (err: any) {
-      console.error("[abandoned-cart] Scheduler error:", err.message);
-    }
-  };
-
-  setInterval(run, INTERVAL_MS);
-  log("[abandoned-cart] Scheduler started — checks every 15 minutes");
-}
 
 (async () => {
   await registerRoutes(httpServer, app);

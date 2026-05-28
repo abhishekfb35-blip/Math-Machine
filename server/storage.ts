@@ -73,7 +73,7 @@ export interface IStorage {
   removeCartItem(id: string): Promise<void>;
   clearCart(cartId: string): Promise<void>;
   updateCartActivity(sessionId: string, customerId: string | null): Promise<void>;
-  getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>>;
+  getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string | null; customerEmail: string; customerName: string | null; updatedAt: Date }>>;
   markCartAbandonedEmailSent(cartId: string): Promise<void>;
   markCheckoutStarted(cartId: string): Promise<void>;
   saveCheckoutEmail(cartId: string, email: string): Promise<void>;
@@ -546,29 +546,45 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>> {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  async getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string | null; customerEmail: string; customerName: string | null; updatedAt: Date }>> {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const rows = await db
       .select({
         cartId: carts.id,
         customerId: carts.customerId,
+        checkoutEmail: carts.checkoutEmail,
         updatedAt: carts.updatedAt,
         customerEmail: customers.email,
         customerName: customers.name,
       })
       .from(carts)
-      .innerJoin(customers, eq(customers.id, carts.customerId!))
+      .leftJoin(customers, eq(customers.id, sql`${carts.customerId}`))
       .where(
         and(
-          sql`${carts.customerId} IS NOT NULL`,
           sql`${carts.updatedAt} IS NOT NULL`,
-          sql`${carts.updatedAt} < ${twoHoursAgo}`,
+          sql`${carts.updatedAt} < ${oneHourAgo}`,
           sql`${carts.abandonedEmailSentAt} IS NULL`,
+          sql`COALESCE(${carts.checkoutEmail}, ${customers.email}) IS NOT NULL`,
           sql`EXISTS (SELECT 1 FROM cart_items ci WHERE ci.cart_id = ${carts.id})`,
-          sql`NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = ${carts.customerId} AND o.created_at > ${carts.updatedAt})`
+          sql`NOT EXISTS (
+            SELECT 1 FROM orders o
+            WHERE (
+              (${carts.customerId} IS NOT NULL AND o.customer_id = ${carts.customerId})
+              OR (${carts.checkoutEmail} IS NOT NULL AND o.customer_email = ${carts.checkoutEmail})
+            )
+            AND o.created_at > ${carts.updatedAt}
+          )`
         )
       );
-    return rows.filter(r => r.customerId && r.updatedAt) as Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>;
+    return rows
+      .filter(r => r.updatedAt && (r.checkoutEmail || r.customerEmail))
+      .map(r => ({
+        cartId: r.cartId,
+        customerId: r.customerId ?? null,
+        customerEmail: (r.checkoutEmail || r.customerEmail) as string,
+        customerName: r.customerName ?? null,
+        updatedAt: r.updatedAt as Date,
+      }));
   }
 
   async markCartAbandonedEmailSent(cartId: string): Promise<void> {
