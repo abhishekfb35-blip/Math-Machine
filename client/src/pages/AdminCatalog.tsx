@@ -979,11 +979,23 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                 {selectedSwatchIds.length > 0 && (
                   <div className="space-y-1 border-t pt-2">
                     <p className="text-xs text-muted-foreground font-medium">Selected:</p>
-                    {selectedSwatchIds.map(swId => {
+                    {selectedSwatchIds.map((swId, idx) => {
                       const sw = globalSwatches.find(s => s.id === swId);
                       if (!sw) return null;
                       return (
-                        <div key={swId} className="flex items-center gap-2">
+                        <div key={swId} className="flex items-center gap-1.5">
+                          <div className="flex flex-col shrink-0">
+                            <button
+                              onClick={() => setSelectedSwatchIds(prev => { const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a; })}
+                              disabled={idx === 0}
+                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
+                            ><ChevronUp className="w-3 h-3" /></button>
+                            <button
+                              onClick={() => setSelectedSwatchIds(prev => { const a = [...prev]; [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]]; return a; })}
+                              disabled={idx === selectedSwatchIds.length - 1}
+                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
+                            ><ChevronDown className="w-3 h-3" /></button>
+                          </div>
                           {sw.swatchUrl
                             ? <img src={sw.swatchUrl} alt={sw.name} className="w-5 h-5 rounded-full object-cover border shrink-0" />
                             : <div className="w-5 h-5 rounded-full bg-muted border shrink-0" />
