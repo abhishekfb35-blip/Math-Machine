@@ -360,7 +360,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 500 GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "kids",
+      "audience": "adults",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "initials,elegant",
@@ -603,7 +603,7 @@
       "bulletPoints": "[\"Premium 100% cotton couple bath towel set with 600 GSM.\",\"King & Queen Crown embroidered design with personalised names.\",\"Set of 2 towels in blue and pink.\",\"Ideal couple gift for weddings and anniversaries.\"]",
       "searchKeywords": null,
       "productType": "towel",
-      "audience": "adults,couples",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "elegant",
@@ -630,7 +630,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 500 GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "adults",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "elegant",
@@ -711,7 +711,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 500 GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "adults",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "elegant",
@@ -846,7 +846,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 360GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "kids",
+      "audience": "adults",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "classic",
@@ -1062,7 +1062,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 500 GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "kids",
+      "audience": "adults",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "elegant",
@@ -2493,7 +2493,7 @@
       "bulletPoints": "[\"Relaxed Free Size for Adults!\",\"Crafted with 100% High-Quality Cotton for Superior Softness and Instant Absorption\",\"Seamless Embroidery with No Patchwork – Crafted to Stay Elegant Over Time\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "adults",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "initials,elegant",
@@ -2655,7 +2655,7 @@
       "bulletPoints": "[\"WhatsApp on 9,9,9,0,0,7,9,7,2,2 to Share the \\\"Name\\\" to be Personalised on the Product!\",\"TurtleLittle Premium Personalised Pink Heart Swimsuit Bathrobe for Teens!\",\"Free Size for adults!\",\"100% High Grade Cotton Towel. Soft and Instantly absorbent.\",\"Purely embroidered. No patchwork. Built to look good for long.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "kids",
+      "audience": "adults",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "initials",
@@ -2844,7 +2844,7 @@
       "bulletPoints": "[\"WhatsApp on 9,9,9,0,0,7,9,7,2,2 to Share the \\\"Name\\\" to be Personalised on the Product!\",\"TurtleLittle Premium Personalised Couple Bathrobes, King and Queen of Hearts\",\"Free Size for adults!\",\"100% High Grade Cotton Towel. Soft and Instantly absorbent.\",\"Purely embroidered. No patchwork. Built to look good for long.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "adults",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "initials,elegant",
@@ -2898,7 +2898,7 @@
       "bulletPoints": "[\"WhatsApp on 9,9,9,0,0,7,9,7,2,2 to Share the \\\"Name\\\" to be Personalised on the Product!\",\"TurtleLittle Premium Personalised Mr Right, Mrs Always Right Bathrobes for Adults!\",\"Free Size for adults!\",\"100% High Grade Cotton Towel. Soft and Instantly absorbent.\",\"Purely embroidered. No patchwork. Built to look good for long.\"]",
       "searchKeywords": null,
       "productType": "bathrobe",
-      "audience": "adults",
+      "audience": "couples",
       "gender": "unisex",
       "themes": "abstract",
       "styles": "initials,elegant",
@@ -39900,27 +39900,27 @@
     {
       "id": "lkojlaycg2x7k4lv31kbn89j",
       "currency": "AUD",
-      "rateFromInr": "0.014660"
+      "rateFromInr": "0.014680"
     },
     {
       "id": "dly9xbqt8mx5iwew44n9gt1n",
       "currency": "CAD",
-      "rateFromInr": "0.014460"
+      "rateFromInr": "0.014480"
     },
     {
       "id": "fjchlp46qf0qmcy2qjoru08d",
       "currency": "EUR",
-      "rateFromInr": "0.008980"
+      "rateFromInr": "0.009000"
     },
     {
       "id": "lfhgv2bgfc6msxk19uex8e25",
       "currency": "GBP",
-      "rateFromInr": "0.007780"
+      "rateFromInr": "0.007800"
     },
     {
       "id": "lqbiu2aztljnowd9fosrlkkm",
       "currency": "SGD",
-      "rateFromInr": "0.013350"
+      "rateFromInr": "0.013370"
     },
     {
       "id": "vm31e274ch378a72nsi3uba9",
@@ -40843,14 +40843,14 @@
       "audienceName": "kids"
     },
     {
-      "id": "h3vlp2iitq25wz9kln0vqnz1",
+      "id": "t9qura7w96slqykqxih1m2qj",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
-      "audienceName": "adults"
+      "audienceName": "couples"
     },
     {
-      "id": "e7fh7a3sjthajajjl2a8fjmg",
+      "id": "qu2aw64704l8otzajs0yntro",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
-      "audienceName": "adults"
+      "audienceName": "couples"
     },
     {
       "id": "eh8kd0y1fzof8jft2tc6icds",
@@ -41338,9 +41338,9 @@
       "audienceName": "kids"
     },
     {
-      "id": "isd5rwqkd9fkn2yaeb0lbjev",
+      "id": "h0qx78i7igwf8whbds8jngdr",
       "productSlug": "golden-crown-bathrobe",
-      "audienceName": "kids"
+      "audienceName": "adults"
     },
     {
       "id": "eo458hp0o5b6mr2su3vhbxny",
@@ -41358,9 +41358,9 @@
       "audienceName": "couples"
     },
     {
-      "id": "qqj7wxz8ghskxk6letk8zx3w",
+      "id": "nepjxks1vj3i7h5y7mz5ij50",
       "productSlug": "golden-laurel-bathrobe",
-      "audienceName": "kids"
+      "audienceName": "adults"
     },
     {
       "id": "j322zup8tmdxov3lxfo5te7r",
@@ -41428,9 +41428,9 @@
       "audienceName": "adults"
     },
     {
-      "id": "u9c1jw3ss9295xqkd5yd7pn9",
+      "id": "vc8eyzb471alp0c26usp33mu",
       "productSlug": "heart-personalised-bathrobe",
-      "audienceName": "kids"
+      "audienceName": "adults"
     },
     {
       "id": "p370dmvtpn4vsglg9kclh7aw",
@@ -41663,12 +41663,7 @@
       "audienceName": "adults"
     },
     {
-      "id": "gokt96z9oxffcthvhjse3scg",
-      "productSlug": "king-queen-crown-couple",
-      "audienceName": "adults"
-    },
-    {
-      "id": "yj4b28a63mirs3u8eosxo93g",
+      "id": "gmqn5ostk8ommvyahk23u457",
       "productSlug": "king-queen-crown-couple",
       "audienceName": "couples"
     },
@@ -41923,19 +41918,19 @@
       "audienceName": "couples"
     },
     {
-      "id": "l5n0msdmdgt64ih79flo0o6l",
+      "id": "dziv0gncezm3lvy2vff8fx6e",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
-      "audienceName": "adults"
+      "audienceName": "couples"
     },
     {
-      "id": "njnm6vq6ymee5h1akr3741lv",
+      "id": "ku7yqtvsay0gp2fqwei0210b",
       "productSlug": "mr-right-mrs-always-right-bathrobe-gold",
-      "audienceName": "adults"
+      "audienceName": "couples"
     },
     {
-      "id": "vccd76pnqjch1gr9ty3i6nsj",
+      "id": "ile5ejnxrevx3ye6unxtd6vf",
       "productSlug": "mr-right-mrs-always-right-bathrobe-set",
-      "audienceName": "adults"
+      "audienceName": "couples"
     },
     {
       "id": "vqtn4l8rl9hluo2yyitekoug",
@@ -42148,9 +42143,9 @@
       "audienceName": "adults"
     },
     {
-      "id": "dvebnbstnuxjko2j3i288prc",
+      "id": "bxgkv3ya1pnwzq4128vwa3fd",
       "productSlug": "pink-heart-bathrobe-for-teenager-girls-with-name-and-initials",
-      "audienceName": "kids"
+      "audienceName": "adults"
     },
     {
       "id": "tfqbplevh3asqw7o0v5sdcqs",
@@ -43730,12 +43725,12 @@
       "genderName": "unisex"
     },
     {
-      "id": "i7ei7jgqnzjk4g3kzhq3ne6r",
+      "id": "sszi8opktygr5v8kvtgmqnkr",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "genderName": "unisex"
     },
     {
-      "id": "xosj3l1y30d1uejklesx31ak",
+      "id": "thjbr8xocz7vxs7z4ao1wokw",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
       "genderName": "unisex"
     },
@@ -44095,7 +44090,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "m1k63g4cr0sqcjeqkgxilprl",
+      "id": "pcictm64gg6x153xfrhi49ex",
       "productSlug": "golden-crown-bathrobe",
       "genderName": "unisex"
     },
@@ -44115,7 +44110,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "hq6imdeq2vmbs7499xqaoiyb",
+      "id": "qfwh4jattxo83zc74ksn965i",
       "productSlug": "golden-laurel-bathrobe",
       "genderName": "unisex"
     },
@@ -44170,7 +44165,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "jumooqf7guxd1yhjsc2ogbuz",
+      "id": "pg6t9n5lglhnrr4dirpzubdb",
       "productSlug": "heart-personalised-bathrobe",
       "genderName": "unisex"
     },
@@ -44335,7 +44330,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "lnq3y6d6ad4ts60uquhtrgej",
+      "id": "zn7pbyxm3wa5d3x6uytk8x2q",
       "productSlug": "king-queen-crown-couple",
       "genderName": "unisex"
     },
@@ -44525,17 +44520,17 @@
       "genderName": "unisex"
     },
     {
-      "id": "zm5gwdi6kjmu8elvyjwzo72o",
+      "id": "a9r8sstzentmc92o4p5sly5w",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "genderName": "unisex"
     },
     {
-      "id": "ihd0d1pl8dbp93p7u0utx3bk",
+      "id": "svyebg3d4q2s3i8yg50rngp9",
       "productSlug": "mr-right-mrs-always-right-bathrobe-gold",
       "genderName": "unisex"
     },
     {
-      "id": "duxtz6tljorycla8y1m3fado",
+      "id": "igx6flq3tne65jux1f1knqlw",
       "productSlug": "mr-right-mrs-always-right-bathrobe-set",
       "genderName": "unisex"
     },
@@ -44675,7 +44670,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "wypm54l1jw050sh6kppj9p06",
+      "id": "ryl2wp0j1jjl8sqfdacrqfw7",
       "productSlug": "pink-heart-bathrobe-for-teenager-girls-with-name-and-initials",
       "genderName": "unisex"
     },
@@ -46007,12 +46002,12 @@
       "themeName": "animals"
     },
     {
-      "id": "qvgp7ysrhnlpg3nn5iy4reji",
+      "id": "ev7lmns8zuks2jdj0pht6i4r",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "themeName": "abstract"
     },
     {
-      "id": "y9yrhidg2u8jqu6pg5lo9yog",
+      "id": "jytddc22qvzqix50g0y0umn2",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
       "themeName": "abstract"
     },
@@ -46427,7 +46422,7 @@
       "themeName": "abstract"
     },
     {
-      "id": "ie6or1pd7lb8edwuem36dfyy",
+      "id": "kv63zeqywkypxar55kahafa2",
       "productSlug": "golden-crown-bathrobe",
       "themeName": "abstract"
     },
@@ -46447,7 +46442,7 @@
       "themeName": "abstract"
     },
     {
-      "id": "phlgpykjw87jgnfk0v8vbfcc",
+      "id": "k8tba5s7xdrk78hy7yrhp08e",
       "productSlug": "golden-laurel-bathrobe",
       "themeName": "abstract"
     },
@@ -46502,7 +46497,7 @@
       "themeName": "abstract"
     },
     {
-      "id": "njs3slysx5u085leypwgjadj",
+      "id": "m9vdmvewfp0vk5p5d48nwf6t",
       "productSlug": "heart-personalised-bathrobe",
       "themeName": "abstract"
     },
@@ -46692,7 +46687,7 @@
       "themeName": "abstract"
     },
     {
-      "id": "y2wwvq2gdsc3qa6pz4h6vrfo",
+      "id": "n1o78wjpcj3xaxjbon41qdx4",
       "productSlug": "king-queen-crown-couple",
       "themeName": "abstract"
     },
@@ -46887,17 +46882,17 @@
       "themeName": "abstract"
     },
     {
-      "id": "t63ii54whnqp23iqehwana0f",
+      "id": "yluxo2qpvr1z8uladi0j841m",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "themeName": "abstract"
     },
     {
-      "id": "hymcjqn9gxpaqghbajzp4ja0",
+      "id": "p987dl04gri7gi9e2d8jl1l3",
       "productSlug": "mr-right-mrs-always-right-bathrobe-gold",
       "themeName": "abstract"
     },
     {
-      "id": "amiuap8gc758f0kwrpeigaql",
+      "id": "jir9mdkk86jway3tg2e7yy3l",
       "productSlug": "mr-right-mrs-always-right-bathrobe-set",
       "themeName": "abstract"
     },
@@ -47042,7 +47037,7 @@
       "themeName": "abstract"
     },
     {
-      "id": "boy5n73fk3870xntaa07aynh",
+      "id": "ndkkjwlu4sa3g042iuc77ewg",
       "productSlug": "pink-heart-bathrobe-for-teenager-girls-with-name-and-initials",
       "themeName": "abstract"
     },
@@ -48474,22 +48469,22 @@
       "styleName": "classic"
     },
     {
-      "id": "eewt147ddxdt8k3eddyv0o4i",
+      "id": "dw8nf0t4upzv4an8j2i9poy3",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "styleName": "elegant"
     },
     {
-      "id": "ga5c586pb9fmtbxkz8b5gxkg",
+      "id": "dvqv887qolb4i1uf5bdxqqn1",
       "productSlug": "couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "styleName": "initials"
     },
     {
-      "id": "rhg52tioft93fqgh25kwbdhj",
+      "id": "gjj434a50gsft7trve1zj41q",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
       "styleName": "elegant"
     },
     {
-      "id": "fb1ziwtbh9ajouz8c61zuc6f",
+      "id": "c46xrgvy2p2xsgmhxxba9wsl",
       "productSlug": "couple-bathrobes-king-and-queen-of-hearts-with-crown-with-name-and-initials",
       "styleName": "initials"
     },
@@ -48869,7 +48864,7 @@
       "styleName": "initials"
     },
     {
-      "id": "e3dluxuog7b3qzd06lkq7whq",
+      "id": "xbr4mng1fpdb3ygbbimcbfs6",
       "productSlug": "golden-crown-bathrobe",
       "styleName": "elegant"
     },
@@ -48899,12 +48894,12 @@
       "styleName": "initials"
     },
     {
-      "id": "ybsg5hg1rnsktquecli0au55",
+      "id": "ddjkbieeb58t630lef30nre1",
       "productSlug": "golden-laurel-bathrobe",
       "styleName": "elegant"
     },
     {
-      "id": "ld786aqgsxaa885ouvr4xcq9",
+      "id": "n75ppaqhtlt5wstyqhtyedcu",
       "productSlug": "golden-laurel-bathrobe",
       "styleName": "initials"
     },
@@ -48969,7 +48964,7 @@
       "styleName": "classic"
     },
     {
-      "id": "qs3c6jnkduzubw81egvcleif",
+      "id": "ni8ncyhifx9uidaqvk7gji1z",
       "productSlug": "heart-personalised-bathrobe",
       "styleName": "classic"
     },
@@ -49144,7 +49139,7 @@
       "styleName": "initials"
     },
     {
-      "id": "r0kvhz8ja9v9mkuv088btn69",
+      "id": "zl1rg4zgm7p317sxgm3hnev2",
       "productSlug": "king-queen-crown-couple",
       "styleName": "elegant"
     },
@@ -49374,22 +49369,22 @@
       "styleName": "elegant"
     },
     {
-      "id": "oshf2p16e0xt2xnzqqjm3mjd",
+      "id": "mve5o4yga9bga423sgxp50od",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "styleName": "elegant"
     },
     {
-      "id": "bdwmlii0piysn5tcuvt7p94d",
+      "id": "q8dcdvk46x60sxu3xn794plm",
       "productSlug": "mr-mrs-right-couple-bathrobes-for-adults-men-women-with-name-and-initials",
       "styleName": "initials"
     },
     {
-      "id": "i5sz5nej5thh3i6ytkmckznn",
+      "id": "znc1yj441p1g9216rfsjlf0k",
       "productSlug": "mr-right-mrs-always-right-bathrobe-gold",
       "styleName": "elegant"
     },
     {
-      "id": "q5405uzczpokro0ymkdpdk0o",
+      "id": "p7p1zpicocnstyfl0eeil29x",
       "productSlug": "mr-right-mrs-always-right-bathrobe-set",
       "styleName": "elegant"
     },
@@ -49534,7 +49529,7 @@
       "styleName": "initials"
     },
     {
-      "id": "rda103dcvxxm0jbp038uhe9y",
+      "id": "og70qwms9fjnt7b1nx404hxl",
       "productSlug": "pink-heart-bathrobe-for-teenager-girls-with-name-and-initials",
       "styleName": "initials"
     },
@@ -50753,7 +50748,7 @@
     },
     {
       "key": "shop-sections",
-      "value": "[{\"label\":\"Kids Towels\",\"tag\":\"kids towels\",\"maxShown\":15,\"enabled\":true,\"audience\":[\"kids\",\"infant\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Adult Towels\",\"tag\":\"adult towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Couple Towels\",\"tag\":\"couple towels\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"],\"genders\":[]},{\"label\":\"Kids Blankets\",\"tag\":\"kids blankets\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Kids Bathrobes\",\"tag\":\"kids bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"]},{\"label\":\"Adult Bathrobes\",\"tag\":\"adult bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"]},{\"label\":\"Couple Bathrobes\",\"tag\":\"couple bathrobes\",\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\",\"couples\"]}]"
+      "value": "[{\"label\":\"Kids Towels\",\"tag\":\"kids-towels\",\"tags\":[],\"maxShown\":15,\"enabled\":true,\"audience\":[\"kids\",\"infant\"],\"genders\":[\"male\",\"female\",\"unisex\"],\"categories\":[\"towels\"]},{\"label\":\"Adult Towels\",\"tag\":\"adult-towels\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"],\"genders\":[\"male\",\"female\",\"unisex\"],\"categories\":[\"towels\"]},{\"label\":\"Couple Towels\",\"tag\":\"couple-towels\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"couples\"],\"genders\":[],\"categories\":[\"towels\"]},{\"label\":\"Kids Blankets\",\"tag\":\"kids-blankets\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"],\"categories\":[\"blankets\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Kids Bathrobes\",\"tag\":\"kids-bathrobes\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"kids\"],\"categories\":[\"bathrobes\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Adult Bathrobes\",\"tag\":\"adult-bathrobes\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"adults\"],\"categories\":[\"bathrobes\"],\"genders\":[\"male\",\"female\",\"unisex\"]},{\"label\":\"Couple Bathrobes\",\"tag\":\"couple-bathrobes\",\"tags\":[],\"maxShown\":8,\"enabled\":true,\"audience\":[\"couples\"],\"categories\":[\"bathrobes\"]}]"
     },
     {
       "key": "wishlist-signup-prompt",
