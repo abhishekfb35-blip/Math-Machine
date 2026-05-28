@@ -23,6 +23,32 @@ export function registerCheckoutRoutes(app: Express) {
     res.json({ available: true, keyId });
   });
 
+  app.post("/api/cart/checkout-started", async (req, res) => {
+    try {
+      const sessionId = getSessionId(req, res);
+      const cart = await storage.getOrCreateCart(sessionId);
+      await storage.markCheckoutStarted(cart.id);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("checkout-started error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/cart/checkout-email", async (req, res) => {
+    try {
+      const sessionId = getSessionId(req, res);
+      const email = (req.body.email as string)?.trim();
+      if (!email) return res.status(400).json({ message: "email required" });
+      const cart = await storage.getOrCreateCart(sessionId);
+      await storage.saveCheckoutEmail(cart.id, email);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("checkout-email error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/razorpay/create-order", async (req, res) => {
     try {
       const razorpay = getRazorpayProvider();
@@ -62,6 +88,18 @@ export function registerCheckoutRoutes(app: Express) {
 
       if (!result.success) {
         return res.status(500).json({ message: result.error || "Failed to create payment order" });
+      }
+
+      // Log the payment attempt as 'initiated'
+      try {
+        await storage.logPaymentAttempt({
+          cartId: pricing.id,
+          razorpayOrderId: result.razorpayOrderId,
+          status: "initiated",
+          amount: converted.amount,
+        });
+      } catch (logErr) {
+        console.error("Failed to log payment attempt:", logErr);
       }
 
       res.json({
@@ -118,6 +156,12 @@ export function registerCheckoutRoutes(app: Express) {
 
         const verification = await razorpay.verifyPayment(razorpayPaymentId, razorpaySignature, razorpayOrderId);
         if (!verification.success) {
+          // Mark the payment attempt as failed
+          try {
+            await storage.updatePaymentAttemptByRazorpayOrderId(razorpayOrderId, "failed", verification.error);
+          } catch (logErr) {
+            console.error("Failed to update payment attempt:", logErr);
+          }
           return res.status(400).json({ message: verification.error || "Payment verification failed" });
         }
 
@@ -133,6 +177,14 @@ export function registerCheckoutRoutes(app: Express) {
           currency: paymentCurrency || "INR",
         });
         if (consentId) await storage.markConsentDiscountUsed(consentId);
+
+        // Link the payment attempt to the completed order
+        try {
+          await storage.linkPaymentAttemptToOrder(razorpayOrderId, result.orderId);
+        } catch (logErr) {
+          console.error("Failed to link payment attempt to order:", logErr);
+        }
+
         return res.status(201).json(result);
       }
 

@@ -96,6 +96,8 @@ export const carts = pgTable("carts", {
   customerId: text("customer_id"),
   updatedAt: timestamp("updated_at"),
   abandonedEmailSentAt: timestamp("abandoned_email_sent_at"),
+  checkoutStartedAt: timestamp("checkout_started_at"),
+  checkoutEmail: text("checkout_email"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -360,6 +362,20 @@ export const insertProductTagSchema = createInsertSchema(productTags).omit({ id:
 export const insertOccasionSchema = createInsertSchema(occasions).omit({ id: true });
 export const insertProductVariantSchema = createInsertSchema(productVariants).omit({ id: true });
 
+export const paymentAttempts = pgTable("payment_attempts", {
+  id: text("id").primaryKey(),
+  cartId: text("cart_id").notNull().references(() => carts.id),
+  orderId: text("order_id").references(() => orders.id),
+  razorpayOrderId: text("razorpay_order_id"),
+  attemptAt: timestamp("attempt_at").defaultNow(),
+  status: text("status").notNull(),
+  failureReason: text("failure_reason"),
+  failureCode: text("failure_code"),
+  amount: integer("amount"),
+});
+
+export const insertPaymentAttemptSchema = createInsertSchema(paymentAttempts).omit({ id: true, attemptAt: true });
+
 export const wishlists = pgTable("wishlists", {
   id: text("id").primaryKey(),
   customerId: text("customer_id").notNull(),
@@ -438,4 +454,5 @@ export type {
   CurrencyRate, InsertCurrencyRate,
   PricingRule, InsertPricingRule,
   RateLimitStats, InsertRateLimitStats,
+  PaymentAttempt, InsertPaymentAttempt,
 } from "./types";

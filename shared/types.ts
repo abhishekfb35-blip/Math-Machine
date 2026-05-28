@@ -130,11 +130,35 @@ export interface Cart {
   customerId: string | null;
   updatedAt: Date | null;
   abandonedEmailSentAt: Date | null;
+  checkoutStartedAt: Date | null;
+  checkoutEmail: string | null;
   createdAt: Date | null;
 }
 
 export interface InsertCart {
   sessionId: string;
+}
+
+export interface PaymentAttempt {
+  id: string;
+  cartId: string;
+  orderId: string | null;
+  razorpayOrderId: string | null;
+  attemptAt: Date | null;
+  status: string;
+  failureReason: string | null;
+  failureCode: string | null;
+  amount: number | null;
+}
+
+export interface InsertPaymentAttempt {
+  cartId: string;
+  orderId?: string | null;
+  razorpayOrderId?: string | null;
+  status: string;
+  failureReason?: string | null;
+  failureCode?: string | null;
+  amount?: number | null;
 }
 
 export interface CartItem {

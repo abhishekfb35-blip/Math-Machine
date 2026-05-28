@@ -169,7 +169,15 @@ export default function CheckoutPage() {
         })),
       cart.total,
     );
+    // Log checkout started to DB (fire-and-forget)
+    apiRequest("POST", "/api/cart/checkout-started").catch(() => {});
   }, [cart]);
+
+  const handleEmailBlur = useCallback((email: string) => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    apiRequest("PATCH", "/api/cart/checkout-email", { email: trimmed }).catch(() => {});
+  }, []);
 
   const form = useForm<CheckoutInput>({
     resolver: phoneResolver,
@@ -412,7 +420,16 @@ export default function CheckoutPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="your@email.com" {...field} data-testid="input-customer-email" />
+                          <Input
+                            type="email"
+                            placeholder="your@email.com"
+                            {...field}
+                            data-testid="input-customer-email"
+                            onBlur={(e) => {
+                              field.onBlur();
+                              handleEmailBlur(e.target.value);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

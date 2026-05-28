@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts } from "@shared/schema";
 
 import type {
   Category, InsertCategory,
@@ -36,6 +36,7 @@ import type {
   RateLimitStats,
   ColorSwatch, InsertColorSwatch,
   CategorySizeDefinition, InsertCategorySizeDefinition,
+  PaymentAttempt, InsertPaymentAttempt,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
@@ -74,6 +75,11 @@ export interface IStorage {
   updateCartActivity(sessionId: string, customerId: string | null): Promise<void>;
   getAbandonedCarts(): Promise<Array<{ cartId: string; customerId: string; customerEmail: string; customerName: string | null; updatedAt: Date }>>;
   markCartAbandonedEmailSent(cartId: string): Promise<void>;
+  markCheckoutStarted(cartId: string): Promise<void>;
+  saveCheckoutEmail(cartId: string, email: string): Promise<void>;
+  logPaymentAttempt(data: InsertPaymentAttempt): Promise<PaymentAttempt>;
+  updatePaymentAttemptByRazorpayOrderId(razorpayOrderId: string, status: string, failureReason?: string, failureCode?: string): Promise<void>;
+  linkPaymentAttemptToOrder(razorpayOrderId: string, orderId: string): Promise<void>;
 
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
@@ -566,6 +572,36 @@ export class DatabaseStorage implements IStorage {
 
   async markCartAbandonedEmailSent(cartId: string): Promise<void> {
     await db.update(carts).set({ abandonedEmailSentAt: new Date() }).where(eq(carts.id, cartId));
+  }
+
+  async markCheckoutStarted(cartId: string): Promise<void> {
+    const [existing] = await db.select({ checkoutStartedAt: carts.checkoutStartedAt }).from(carts).where(eq(carts.id, cartId));
+    if (existing && !existing.checkoutStartedAt) {
+      await db.update(carts).set({ checkoutStartedAt: new Date() }).where(eq(carts.id, cartId));
+    }
+  }
+
+  async saveCheckoutEmail(cartId: string, email: string): Promise<void> {
+    await db.update(carts).set({ checkoutEmail: email }).where(eq(carts.id, cartId));
+  }
+
+  async logPaymentAttempt(data: InsertPaymentAttempt): Promise<PaymentAttempt> {
+    const [created] = await db.insert(paymentAttempts).values({ id: createId(), ...data }).returning();
+    return created;
+  }
+
+  async updatePaymentAttemptByRazorpayOrderId(razorpayOrderId: string, status: string, failureReason?: string, failureCode?: string): Promise<void> {
+    await db.update(paymentAttempts).set({
+      status,
+      ...(failureReason !== undefined ? { failureReason } : {}),
+      ...(failureCode !== undefined ? { failureCode } : {}),
+    }).where(eq(paymentAttempts.razorpayOrderId, razorpayOrderId));
+  }
+
+  async linkPaymentAttemptToOrder(razorpayOrderId: string, orderId: string): Promise<void> {
+    await db.update(paymentAttempts)
+      .set({ orderId, status: "success" })
+      .where(and(eq(paymentAttempts.razorpayOrderId, razorpayOrderId), eq(paymentAttempts.status, "initiated")));
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
