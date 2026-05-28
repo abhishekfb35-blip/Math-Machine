@@ -139,15 +139,17 @@ export default function AdminProductPageConfig() {
 
               {cfg && (
                 <div className="grid gap-3 pt-3 border-t">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Section heading</Label>
-                    <Input
-                      value={cfg.heading}
-                      onChange={e => updateField(slug, "heading", e.target.value)}
-                      placeholder="e.g. Personalise with a Name"
-                      data-testid={`input-heading-${slug}`}
-                    />
-                  </div>
+                  {cfg.type === "single" && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Section heading</Label>
+                      <Input
+                        value={cfg.heading}
+                        onChange={e => updateField(slug, "heading", e.target.value)}
+                        placeholder="e.g. Personalise with a Name"
+                        data-testid={`input-heading-${slug}`}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex gap-4">
                     <div className="space-y-1">
@@ -211,20 +213,20 @@ export default function AdminProductPageConfig() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 1 cart prefix</Label>
+                        <Label className="text-xs text-muted-foreground">Person 1 field title</Label>
                         <Input
                           value={cfg.person1Prefix}
                           onChange={e => updateField(slug, "person1Prefix", e.target.value)}
-                          placeholder="e.g. His"
+                          placeholder="e.g. His Name"
                           data-testid={`input-p1prefix-${slug}`}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 2 cart prefix</Label>
+                        <Label className="text-xs text-muted-foreground">Person 2 field title</Label>
                         <Input
                           value={cfg.person2Prefix}
                           onChange={e => updateField(slug, "person2Prefix", e.target.value)}
-                          placeholder="e.g. Hers"
+                          placeholder="e.g. Her Name"
                           data-testid={`input-p2prefix-${slug}`}
                         />
                       </div>

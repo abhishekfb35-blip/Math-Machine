@@ -305,8 +305,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
           {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{audienceConfig.heading}</Label>
-              <div>
+              <div className="space-y-1">
+                <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
                 <Input
                   id="qa-gentleman-name"
                   placeholder={audienceConfig.person1Label}
@@ -317,7 +317,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 />
                 {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
               </div>
-              <div>
+              <div className="space-y-1">
+                <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
                 <Input
                   id="qa-lady-name"
                   placeholder={audienceConfig.person2Label}

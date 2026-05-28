@@ -666,37 +666,35 @@ export default function ProductPage() {
             )}
 
             {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">
-                  {audienceConfig.heading}
-                </Label>
-                <div className="space-y-2">
-                  <div>
-                    <Input
-                      id="gentleman-name"
-                      placeholder={audienceConfig.person1Label}
-                      value={gentlemanName}
-                      onChange={(e) => setGentlemanName(e.target.value)}
-                      maxLength={nameMax}
-                      data-testid="input-gentleman-name"
-                    />
-                    {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
-                  </div>
-                  <div>
-                    <Input
-                      id="lady-name"
-                      placeholder={audienceConfig.person2Label}
-                      value={ladyName}
-                      onChange={(e) => setLadyName(e.target.value)}
-                      maxLength={nameMax}
-                      data-testid="input-lady-name"
-                    />
-                    {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
-                  </div>
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="gentleman-name" className="text-sm font-medium">
+                    {audienceConfig.person1Prefix}
+                  </Label>
+                  <Input
+                    id="gentleman-name"
+                    placeholder={audienceConfig.person1Label}
+                    value={gentlemanName}
+                    onChange={(e) => setGentlemanName(e.target.value)}
+                    maxLength={nameMax}
+                    data-testid="input-gentleman-name"
+                  />
+                  {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Both names will be embroidered on the set
-                </p>
+                <div className="space-y-1">
+                  <Label htmlFor="lady-name" className="text-sm font-medium">
+                    {audienceConfig.person2Prefix}
+                  </Label>
+                  <Input
+                    id="lady-name"
+                    placeholder={audienceConfig.person2Label}
+                    value={ladyName}
+                    onChange={(e) => setLadyName(e.target.value)}
+                    maxLength={nameMax}
+                    data-testid="input-lady-name"
+                  />
+                  {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                </div>
               </div>
             ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
               <div className="space-y-1">
