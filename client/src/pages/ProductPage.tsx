@@ -36,11 +36,11 @@ const REVIEWS_PER_PAGE = 10;
 const NAME_MIN = 3;
 const NAME_MAX = 11;
 
-function nameCharHint(val: string, max: number): { text: string; className: string } {
+function nameCharHint(val: string, min: number, max: number): { text: string; className: string } {
   const len = val.length;
   const left = max - len;
-  if (len === 0) return { text: `${NAME_MIN} to ${max} characters`, className: "text-muted-foreground" };
-  if (len < NAME_MIN) return { text: `Minimum ${NAME_MIN} characters · ${left} character${left !== 1 ? "s" : ""} left`, className: "text-amber-500" };
+  if (len === 0) return { text: `${min} to ${max} characters`, className: "text-muted-foreground" };
+  if (len < min) return { text: `Minimum ${min} characters · ${left} character${left !== 1 ? "s" : ""} left`, className: "text-amber-500" };
   return { text: `${left} character${left !== 1 ? "s" : ""} left`, className: "text-muted-foreground" };
 }
 
@@ -100,6 +100,7 @@ export default function ProductPage() {
   }, [productPageConfigData, product?.audience]);
 
   const isCoupleProduct = audienceConfig?.type === "couples";
+  const nameMin = audienceConfig?.nameMin ?? NAME_MIN;
   const nameMax = audienceConfig?.nameMax ?? NAME_MAX;
 
   const { data: productImages } = useQuery<ProductImage[]>({
@@ -682,7 +683,7 @@ export default function ProductPage() {
                       maxLength={nameMax}
                       data-testid="input-gentleman-name"
                     />
-                    {(() => { const h = nameCharHint(gentlemanName, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                    {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                   <div>
                     <Input
@@ -693,7 +694,7 @@ export default function ProductPage() {
                       maxLength={nameMax}
                       data-testid="input-lady-name"
                     />
-                    {(() => { const h = nameCharHint(ladyName, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                    {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -713,7 +714,7 @@ export default function ProductPage() {
                   maxLength={nameMax}
                   data-testid="input-personalization-name"
                 />
-                {(() => { const h = nameCharHint(personalizationName, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
+                {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
               </div>
             ) : null}
 
@@ -723,8 +724,8 @@ export default function ProductPage() {
               size="lg"
               onClick={() => {
                 const nameInvalid = isCoupleProduct
-                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
-                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN;
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin;
                 if (nameInvalid) return;
                 const nameEmpty = isCoupleProduct
                   ? gentlemanName.trim() === "" && ladyName.trim() === ""
@@ -734,8 +735,8 @@ export default function ProductPage() {
               }}
               disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (
                 isCoupleProduct
-                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < NAME_MIN) || (ladyName.trim().length > 0 && ladyName.trim().length < NAME_MIN)
-                  : personalizationName.trim().length > 0 && personalizationName.trim().length < NAME_MIN
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin
               )}
               data-testid="button-add-to-cart"
             >

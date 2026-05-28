@@ -15,6 +15,7 @@ type SingleAudienceConfig = {
   type: "single";
   heading: string;
   nameLabel: string;
+  nameMin?: number;
   nameMax?: number;
 };
 
@@ -25,6 +26,7 @@ type CoupleAudienceConfig = {
   person2Label: string;
   person1Prefix: string;
   person2Prefix: string;
+  nameMin?: number;
   nameMax?: number;
 };
 
@@ -67,12 +69,12 @@ export default function AdminProductPageConfig() {
     if (type === "single") {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "single", heading: "", nameLabel: "", nameMax: 11 } as SingleAudienceConfig,
+        [slug]: { type: "single", heading: "", nameLabel: "", nameMin: 3, nameMax: 11 } as SingleAudienceConfig,
       }));
     } else {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "", nameMax: 11 } as CoupleAudienceConfig,
+        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "", nameMin: 3, nameMax: 11 } as CoupleAudienceConfig,
       }));
     }
   };
@@ -147,18 +149,33 @@ export default function AdminProductPageConfig() {
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Max characters per name</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={30}
-                      step={1}
-                      value={cfg.nameMax ?? 11}
-                      onChange={e => updateNumericField(slug, "nameMax", Math.max(1, Math.min(30, Number(e.target.value) || 11)))}
-                      className="w-24"
-                      data-testid={`input-namemax-${slug}`}
-                    />
+                  <div className="flex gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Min characters per name</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={cfg.nameMin ?? 3}
+                        onChange={e => updateNumericField(slug, "nameMin", Math.max(1, Math.min(10, Number(e.target.value) || 3)))}
+                        className="w-24"
+                        data-testid={`input-namemin-${slug}`}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Max characters per name</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        step={1}
+                        value={cfg.nameMax ?? 11}
+                        onChange={e => updateNumericField(slug, "nameMax", Math.max(1, Math.min(30, Number(e.target.value) || 11)))}
+                        className="w-24"
+                        data-testid={`input-namemax-${slug}`}
+                      />
+                    </div>
                   </div>
 
                   {cfg.type === "single" && (
