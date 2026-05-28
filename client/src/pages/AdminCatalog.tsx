@@ -908,6 +908,17 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   function toggleSize(id: string) {
     setSelectedSizeIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   }
+  function moveSize(id: string, dir: -1 | 1) {
+    setSelectedSizeIds(prev => {
+      const a = [...prev];
+      const idx = a.indexOf(id);
+      if (idx < 0) return prev;
+      const si = idx + dir;
+      if (si < 0 || si >= a.length) return prev;
+      [a[idx], a[si]] = [a[si], a[idx]];
+      return a;
+    });
+  }
   function toggleSwatchForSize(sizeId: string, swatchId: string) {
     setSizeSwatchIds(prev => {
       const cur = prev[sizeId] ?? [];
@@ -993,32 +1004,49 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {sizeDefinitions.map(def => {
-                const selected = selectedSizeIds.includes(def.id);
-                const thisSizeSwatchIds = sizeSwatchIds[def.id] ?? [];
+                  {[
+                    ...selectedSizeIds.map(id => sizeDefinitions.find(d => d.id === id)).filter(Boolean),
+                    ...sizeDefinitions.filter(d => !selectedSizeIds.includes(d.id)),
+                  ].map(def => {
+                const selected = selectedSizeIds.includes(def!.id);
+                const sizeIdx = selectedSizeIds.indexOf(def!.id);
+                const thisSizeSwatchIds = sizeSwatchIds[def!.id] ?? [];
                 return (
-                  <div key={def.id} className={`rounded-md border transition-colors ${selected ? "border-primary/40 bg-muted/30" : "bg-background"}`}>
+                  <div key={def!.id} className={`rounded-md border transition-colors ${selected ? "border-primary/40 bg-muted/30" : "bg-background"}`}>
                     {/* Size row */}
                     <div className="flex items-center gap-3 p-2.5">
-                      <Checkbox checked={selected} onCheckedChange={() => toggleSize(def.id)} data-testid={`checkbox-size-${def.id}`} />
+                      {/* Up/down reorder arrows — only shown for selected sizes */}
+                      {selected && (
+                        <div className="flex flex-col shrink-0 -my-0.5">
+                          <button onClick={() => moveSize(def!.id, -1)} disabled={sizeIdx === 0}
+                            className="text-muted-foreground hover:text-foreground disabled:opacity-20" data-testid={`button-size-up-${def!.id}`}>
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <button onClick={() => moveSize(def!.id, 1)} disabled={sizeIdx === selectedSizeIds.length - 1}
+                            className="text-muted-foreground hover:text-foreground disabled:opacity-20" data-testid={`button-size-down-${def!.id}`}>
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      <Checkbox checked={selected} onCheckedChange={() => toggleSize(def!.id)} data-testid={`checkbox-size-${def!.id}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-none">{def.name}</p>
-                        {def.description && <p className="text-xs text-muted-foreground mt-0.5">{def.description}</p>}
+                        <p className="text-sm font-medium leading-none">{def!.name}</p>
+                        {def!.description && <p className="text-xs text-muted-foreground mt-0.5">{def!.description}</p>}
                       </div>
                       {selected && (
                         <>
                           <div className="flex items-center gap-1 shrink-0">
                             <span className="text-xs text-muted-foreground">+₹</span>
-                            <Input type="number" value={sizePriceAdds[def.id] ?? 0}
-                              onChange={e => setSizePriceAdds(prev => ({ ...prev, [def.id]: parseInt(e.target.value) || 0 }))}
-                              className="h-7 w-20 text-xs" data-testid={`input-size-price-${def.id}`} />
+                            <Input type="number" value={sizePriceAdds[def!.id] ?? 0}
+                              onChange={e => setSizePriceAdds(prev => ({ ...prev, [def!.id]: parseInt(e.target.value) || 0 }))}
+                              className="h-7 w-20 text-xs" data-testid={`input-size-price-${def!.id}`} />
                           </div>
                           <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
-                            <Checkbox checked={sizeDefaultId === def.id} onCheckedChange={() => setSizeDefaultId(sizeDefaultId === def.id ? null : def.id)} />
+                            <Checkbox checked={sizeDefaultId === def!.id} onCheckedChange={() => setSizeDefaultId(sizeDefaultId === def!.id ? null : def!.id)} />
                             Default
                           </label>
                           <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
-                            <Checkbox checked={sizeHide[def.id] ?? false} onCheckedChange={v => setSizeHide(prev => ({ ...prev, [def.id]: !!v }))} />
+                            <Checkbox checked={sizeHide[def!.id] ?? false} onCheckedChange={v => setSizeHide(prev => ({ ...prev, [def!.id]: !!v }))} />
                             Hide
                           </label>
                         </>
