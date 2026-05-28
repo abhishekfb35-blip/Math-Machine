@@ -272,10 +272,10 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                         <img
                           src={color.swatchUrl}
                           alt={color.name}
-                          className="w-8 h-8 rounded object-cover"
+                          className="w-12 h-12 rounded object-cover"
                         />
                       ) : (
-                        <span className="w-8 h-8 rounded bg-muted border border-border inline-block" />
+                        <span className="w-12 h-12 rounded bg-muted border border-border inline-block" />
                       )}
                       <span className="pr-1">{color.name}</span>
                     </button>

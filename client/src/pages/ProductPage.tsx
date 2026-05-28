@@ -560,9 +560,9 @@ export default function ProductPage() {
                         title={color.name}
                       >
                         {color.swatchUrl ? (
-                          <img src={color.swatchUrl} alt={color.name} className="w-8 h-8 rounded object-cover" />
+                          <img src={color.swatchUrl} alt={color.name} className="w-12 h-12 rounded object-cover" />
                         ) : (
-                          <span className="w-8 h-8 rounded bg-muted border border-border inline-block" />
+                          <span className="w-12 h-12 rounded bg-muted border border-border inline-block" />
                         )}
                         <span className="text-xs pr-1">{color.name}</span>
                       </button>
