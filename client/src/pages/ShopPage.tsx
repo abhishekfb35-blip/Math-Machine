@@ -399,12 +399,8 @@ export default function ShopPage() {
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
 
-  const CATEGORY_ORDER = ["towels", "bathrobes", "blankets"];
   const categoryOptions = useMemo(() => {
-    if (!categories) return [];
-    return CATEGORY_ORDER
-      .map(name => categories.find(c => c.name.toLowerCase() === name))
-      .filter(Boolean) as Category[];
+    return categories ?? [];
   }, [categories]);
 
   const activeCategoryObj = useMemo(() => {
@@ -519,7 +515,7 @@ export default function ShopPage() {
       // `tag` is the section identifier (used for URLs/keys only).
       // `tags` is the product-tag filter — do NOT derive it from `tag`.
       const productFilterTags = Array.isArray(s.tags) ? s.tags : [];
-      const sectionKey = s.tag ?? productFilterTags[0] ?? s.label;
+      const sectionKey = s.tag ?? s.label;
       return {
         ...s,
         tags: productFilterTags,
