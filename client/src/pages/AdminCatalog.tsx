@@ -1047,7 +1047,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                           </label>
                           <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
                             <Checkbox checked={sizeHide[def!.id] ?? false} onCheckedChange={v => setSizeHide(prev => ({ ...prev, [def!.id]: !!v }))} />
-                            Hide
+                            Blur
                           </label>
                         </>
                       )}
@@ -1122,7 +1122,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                                             [def.id]: { ...(prev[def.id] ?? {}), [swId]: !!v }
                                           }))}
                                         />
-                                        Hide
+                                        Blur
                                       </label>
                                       <button onClick={() => toggleSwatchForSize(def.id, swId)} className="text-muted-foreground hover:text-destructive">
                                         <X className="w-3 h-3" />
