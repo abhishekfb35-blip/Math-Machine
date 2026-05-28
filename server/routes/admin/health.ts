@@ -1180,7 +1180,7 @@ export function registerAdminHealthRoutes(app: Express) {
   app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors] = await Promise.all([
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
         pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1203,25 +1203,31 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
         pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
         pool.query(`SELECT key, value FROM site_content ORDER BY key`),
+        pool.query(`SELECT id, category_id, tag_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
+        pool.query(`SELECT id, label, sort_order, category_tag_variant_config_id FROM variant_sizes ORDER BY sort_order, id`),
+        pool.query(`SELECT id, name, hex, sort_order, category_tag_variant_config_id FROM variant_colors ORDER BY sort_order, id`),
       ]);
       res.json({
-        categories:       cats.rows,
-        products:         prods.rows,
-        tagTypes:         ttypes.rows,
-        tags:             tgs.rows,
-        productTags:      ptags.rows,
-        productImages:    imgs.rows,
-        productReviews:   revs.rows,
-        audience:         ags.rows,
-        genders:          gens.rows,
-        themes:           ths.rows,
-        styles:           sts.rows,
-        occasions:        occs.rows,
-        productAudience:  pags.rows,
-        productGenders:   pgens.rows,
-        productThemes:    pths.rows,
-        productStyles:    psts.rows,
-        siteContent:      sc.rows,
+        categories:                 cats.rows,
+        products:                   prods.rows,
+        tagTypes:                   ttypes.rows,
+        tags:                       tgs.rows,
+        productTags:                ptags.rows,
+        productImages:              imgs.rows,
+        productReviews:             revs.rows,
+        audience:                   ags.rows,
+        genders:                    gens.rows,
+        themes:                     ths.rows,
+        styles:                     sts.rows,
+        occasions:                  occs.rows,
+        productAudience:            pags.rows,
+        productGenders:             pgens.rows,
+        productThemes:              pths.rows,
+        productStyles:              psts.rows,
+        siteContent:                sc.rows,
+        categoryTagVariantConfigs:  ctvcs.rows,
+        variantSizes:               vsizes.rows,
+        variantColors:              vcolors.rows,
       });
     } catch (err: any) {
       console.error("db-snapshot error:", err.message);
@@ -1239,7 +1245,7 @@ export function registerAdminHealthRoutes(app: Express) {
       const [localSnap, prodResp] = await Promise.all([
         (async () => {
           const { pool } = await import("../../db");
-          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc] = await Promise.all([
+          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors] = await Promise.all([
             pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
             pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
             pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1262,6 +1268,9 @@ export function registerAdminHealthRoutes(app: Express) {
             pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
             pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
             pool.query(`SELECT key, value FROM site_content ORDER BY key`),
+            pool.query(`SELECT id, category_id, tag_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
+            pool.query(`SELECT id, label, sort_order, category_tag_variant_config_id FROM variant_sizes ORDER BY sort_order, id`),
+            pool.query(`SELECT id, name, hex, sort_order, category_tag_variant_config_id FROM variant_colors ORDER BY sort_order, id`),
           ]);
           return {
             categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
@@ -1269,6 +1278,7 @@ export function registerAdminHealthRoutes(app: Express) {
             audience: ags.rows, genders: gens.rows, themes: ths.rows, styles: sts.rows,
             occasions: occs.rows, productAudience: pags.rows, productGenders: pgens.rows,
             productThemes: pths.rows, productStyles: psts.rows, siteContent: sc.rows,
+            categoryTagVariantConfigs: ctvcs.rows, variantSizes: vsizes.rows, variantColors: vcolors.rows,
           };
         })(),
         fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
@@ -1374,6 +1384,18 @@ export function registerAdminHealthRoutes(app: Express) {
                                 .map((r: any) => r.key),
                             };
                           })(),
+        categoryTagVariantConfigs: diffById(
+                            (localSnap as any).categoryTagVariantConfigs as any[] ?? [],
+                            (prodSnap as any).categoryTagVariantConfigs as any[] ?? [],
+                            ["category_id", "tag_id", "sort_order"]),
+        variantSizes:     diffById(
+                            (localSnap as any).variantSizes as any[] ?? [],
+                            (prodSnap as any).variantSizes as any[] ?? [],
+                            ["label", "sort_order", "category_tag_variant_config_id"]),
+        variantColors:    diffById(
+                            (localSnap as any).variantColors as any[] ?? [],
+                            (prodSnap as any).variantColors as any[] ?? [],
+                            ["name", "hex", "sort_order", "category_tag_variant_config_id"]),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
@@ -1479,6 +1501,7 @@ export function registerAdminHealthRoutes(app: Express) {
         "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
         "audience", "genders", "themes", "styles", "occasions",
         "productAudience", "productGenders", "productThemes", "productStyles",
+        "categoryTagVariantConfigs", "variantSizes", "variantColors",
       ];
       for (const table of catalogTables) {
         await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
@@ -1489,7 +1512,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Query final counts for the response summary
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, ctvcs, vsizes, vcolors] = await Promise.all([
         pool.query(`SELECT COUNT(*) FROM categories`),
         pool.query(`SELECT COUNT(*) FROM products`),
         pool.query(`SELECT COUNT(*) FROM tag_types`),
@@ -1506,28 +1529,34 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT COUNT(*) FROM product_genders`),
         pool.query(`SELECT COUNT(*) FROM product_themes`),
         pool.query(`SELECT COUNT(*) FROM product_styles`),
+        pool.query(`SELECT COUNT(*) FROM category_tag_variant_configs`),
+        pool.query(`SELECT COUNT(*) FROM variant_sizes`),
+        pool.query(`SELECT COUNT(*) FROM variant_colors`),
       ]);
 
       res.json({
         success: true,
         message: "Catalog re-seeded successfully",
         counts: {
-          categories:       Number(cats.rows[0].count),
-          products:         Number(prods.rows[0].count),
-          tagTypes:         Number(ttypes.rows[0].count),
-          tags:             Number(tgs.rows[0].count),
-          productTags:      Number(ptags.rows[0].count),
-          productImages:    Number(imgs.rows[0].count),
-          productReviews:   Number(revs.rows[0].count),
-          audience:         Number(ags.rows[0].count),
-          genders:          Number(gens.rows[0].count),
-          themes:           Number(ths.rows[0].count),
-          styles:           Number(sts.rows[0].count),
-          occasions:        Number(occs.rows[0].count),
-          productAudience:  Number(pags.rows[0].count),
-          productGenders:   Number(pgens.rows[0].count),
-          productThemes:    Number(pths.rows[0].count),
-          productStyles:    Number(psts.rows[0].count),
+          categories:                Number(cats.rows[0].count),
+          products:                  Number(prods.rows[0].count),
+          tagTypes:                  Number(ttypes.rows[0].count),
+          tags:                      Number(tgs.rows[0].count),
+          productTags:               Number(ptags.rows[0].count),
+          productImages:             Number(imgs.rows[0].count),
+          productReviews:            Number(revs.rows[0].count),
+          audience:                  Number(ags.rows[0].count),
+          genders:                   Number(gens.rows[0].count),
+          themes:                    Number(ths.rows[0].count),
+          styles:                    Number(sts.rows[0].count),
+          occasions:                 Number(occs.rows[0].count),
+          productAudience:           Number(pags.rows[0].count),
+          productGenders:            Number(pgens.rows[0].count),
+          productThemes:             Number(pths.rows[0].count),
+          productStyles:             Number(psts.rows[0].count),
+          categoryTagVariantConfigs: Number(ctvcs.rows[0].count),
+          variantSizes:              Number(vsizes.rows[0].count),
+          variantColors:             Number(vcolors.rows[0].count),
         },
       });
     } catch (err: any) {

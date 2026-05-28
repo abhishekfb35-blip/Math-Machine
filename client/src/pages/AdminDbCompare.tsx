@@ -48,6 +48,9 @@ interface CompareResult {
   productThemes: ContentTableDiff;
   productStyles: ContentTableDiff;
   siteContent: ContentTableDiff;
+  categoryTagVariantConfigs: IdTableDiff;
+  variantSizes: IdTableDiff;
+  variantColors: IdTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -269,7 +272,10 @@ export default function AdminDbCompare() {
       isContentTableClean(result.productGenders) &&
       isContentTableClean(result.productThemes) &&
       isContentTableClean(result.productStyles) &&
-      isContentTableClean(result.siteContent)
+      isContentTableClean(result.siteContent) &&
+      isIdTableClean(result.categoryTagVariantConfigs) &&
+      isIdTableClean(result.variantSizes) &&
+      isIdTableClean(result.variantColors)
     : null;
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
@@ -357,7 +363,9 @@ export default function AdminDbCompare() {
             {reseedResult.counts.themes} themes, {reseedResult.counts.styles} styles,{" "}
             {reseedResult.counts.occasions} occasions,{" "}
             {reseedResult.counts.productAudience}+{reseedResult.counts.productGenders}+{reseedResult.counts.productThemes}+{reseedResult.counts.productStyles} attribute links,{" "}
-            {reseedResult.counts.siteContent ?? 0} site content entries
+            {reseedResult.counts.siteContent ?? 0} site content entries,{" "}
+            {reseedResult.counts.categoryTagVariantConfigs ?? 0} variant configs,{" "}
+            {reseedResult.counts.variantSizes ?? 0} sizes, {reseedResult.counts.variantColors ?? 0} colors
           </span>
         </div>
       )}
@@ -479,6 +487,25 @@ export default function AdminDbCompare() {
             <CollapsibleList label="Keys only in dev"   items={result.siteContent.onlyInDev}            color={DEV_COLOR} />
             <CollapsibleList label="Keys only in prod"  items={result.siteContent.onlyInProd}           color={PROD_COLOR} />
             <CollapsibleList label="Value changed"      items={result.siteContent.valueChanged ?? []}   color="text-amber-600 dark:text-amber-400" />
+          </SectionShell>
+
+          {/* ── Variant system ── */}
+          <SectionShell title="Variant Configs" clean={isIdTableClean(result.categoryTagVariantConfigs)} devCount={result.categoryTagVariantConfigs.devCount} prodCount={result.categoryTagVariantConfigs.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.categoryTagVariantConfigs.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.categoryTagVariantConfigs.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.categoryTagVariantConfigs.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Variant Sizes" clean={isIdTableClean(result.variantSizes)} devCount={result.variantSizes.devCount} prodCount={result.variantSizes.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.variantSizes.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.variantSizes.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.variantSizes.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Variant Colors" clean={isIdTableClean(result.variantColors)} devCount={result.variantColors.devCount} prodCount={result.variantColors.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.variantColors.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.variantColors.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.variantColors.fieldMismatches} />
           </SectionShell>
         </div>
       )}
