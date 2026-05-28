@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { trackProductView } from "@/lib/analytics";
+import { trackProductView, trackAddToCart } from "@/lib/analytics";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -164,14 +164,18 @@ export default function ProductPage() {
   const viewTrackedRef = useRef(false);
   useEffect(() => {
     if (!product || viewTrackedRef.current) return;
-    viewTrackedRef.current = true;
-    trackProductView({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      category: category?.name,
-    });
-  }, [product, category]);
+    // Wait until category has resolved so the GA4 payload is complete.
+    // categories query is fast (cached), so this fires within the same tick in practice.
+    if (categories !== undefined && !viewTrackedRef.current) {
+      viewTrackedRef.current = true;
+      trackProductView({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: category?.name,
+      });
+    }
+  }, [product, category, categories]);
 
   const relatedProducts = allProducts
     ?.filter((p) => p.categoryId === product?.categoryId && p.id !== product?.id)
