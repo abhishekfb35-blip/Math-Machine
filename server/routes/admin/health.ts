@@ -1203,9 +1203,9 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
         pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
         pool.query(`SELECT key, value FROM site_content ORDER BY key`),
-        pool.query(`SELECT id, category_id, tag_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
-        pool.query(`SELECT id, label, sort_order, category_tag_variant_config_id FROM variant_sizes ORDER BY sort_order, id`),
-        pool.query(`SELECT id, name, hex, sort_order, category_tag_variant_config_id FROM variant_colors ORDER BY sort_order, id`),
+        pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
+        pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
+        pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
       ]);
       res.json({
         categories:                 cats.rows,
@@ -1268,9 +1268,9 @@ export function registerAdminHealthRoutes(app: Express) {
             pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
             pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
             pool.query(`SELECT key, value FROM site_content ORDER BY key`),
-            pool.query(`SELECT id, category_id, tag_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
-            pool.query(`SELECT id, label, sort_order, category_tag_variant_config_id FROM variant_sizes ORDER BY sort_order, id`),
-            pool.query(`SELECT id, name, hex, sort_order, category_tag_variant_config_id FROM variant_colors ORDER BY sort_order, id`),
+            pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
+            pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
+            pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
           ]);
           return {
             categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
@@ -1387,15 +1387,15 @@ export function registerAdminHealthRoutes(app: Express) {
         categoryTagVariantConfigs: diffById(
                             (localSnap as any).categoryTagVariantConfigs as any[] ?? [],
                             (prodSnap as any).categoryTagVariantConfigs as any[] ?? [],
-                            ["category_id", "tag_id", "sort_order"]),
+                            ["category_id", "tag_id", "audience_id", "sort_order"]),
         variantSizes:     diffById(
                             (localSnap as any).variantSizes as any[] ?? [],
                             (prodSnap as any).variantSizes as any[] ?? [],
-                            ["label", "sort_order", "category_tag_variant_config_id"]),
+                            ["name", "config_id", "sort_order"]),
         variantColors:    diffById(
                             (localSnap as any).variantColors as any[] ?? [],
                             (prodSnap as any).variantColors as any[] ?? [],
-                            ["name", "hex", "sort_order", "category_tag_variant_config_id"]),
+                            ["name", "size_id", "sort_order"]),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
