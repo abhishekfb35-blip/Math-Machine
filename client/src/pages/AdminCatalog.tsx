@@ -846,32 +846,49 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     }
   }, [open, activeConfig?.id, activeAudienceId, sizeDefinitions?.length, globalSwatches?.length]);
 
+  function buildSizesPayload() {
+    return selectedSizeIds.map((id, si) => {
+      const def = sizeDefinitions?.find(d => d.id === id);
+      const swIds = sizeSwatchIds[id] ?? [];
+      return {
+        name: def?.name ?? "",
+        description: def?.description ?? undefined,
+        priceAdd: sizePriceAdds[id] ?? 0,
+        isDefault: sizeDefaultId === id,
+        blurOnFront: sizeHide[id] ?? false,
+        sortOrder: si,
+        colors: swIds.map((swId, ci) => {
+          const sw = globalSwatches?.find(s => s.id === swId);
+          return { name: sw?.name ?? "", swatchUrl: sw?.swatchUrl ?? undefined, blurOnFront: sizeColorHide[id]?.[swId] ?? false, sortOrder: ci };
+        }),
+      };
+    });
+  }
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!activeAudienceId) throw new Error("Select an audience first");
-      const sizes = selectedSizeIds.map((id, si) => {
-        const def = sizeDefinitions?.find(d => d.id === id);
-        const swIds = sizeSwatchIds[id] ?? [];
-        return {
-          name: def?.name ?? "",
-          description: def?.description ?? undefined,
-          priceAdd: sizePriceAdds[id] ?? 0,
-          isDefault: sizeDefaultId === id,
-          blurOnFront: sizeHide[id] ?? false,
-          sortOrder: si,
-          colors: swIds.map((swId, ci) => {
-            const sw = globalSwatches?.find(s => s.id === swId);
-            return { name: sw?.name ?? "", swatchUrl: sw?.swatchUrl ?? undefined, blurOnFront: sizeColorHide[id]?.[swId] ?? false, sortOrder: ci };
-          }),
-        };
-      });
-      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes, audienceId: activeAudienceId });
+      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes: buildSizesPayload(), audienceId: activeAudienceId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
       toast({ title: "Variant saved" });
     },
     onError: (err: Error) => toast({ title: err.message ?? "Failed to save", variant: "destructive" }),
+  });
+
+  const saveAsMutation = useMutation({
+    mutationFn: async (targetAudienceId: string) => {
+      await apiRequest("PUT", `/api/admin/categories/${categoryId}/variant-configs`, { sizes: buildSizesPayload(), audienceId: targetAudienceId });
+      return targetAudienceId;
+    },
+    onSuccess: (targetAudienceId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
+      setActiveAudienceId(targetAudienceId);
+      const name = allAudiences.find(a => a.id === targetAudienceId)?.name ?? targetAudienceId;
+      toast({ title: `Saved as ${name}` });
+    },
+    onError: () => toast({ title: "Failed to copy variant", variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -1100,10 +1117,29 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !activeAudienceId} data-testid="button-save-variant-config">
-            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-1" /> Save as Variant</>}
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <Button variant="outline" onClick={onClose} className="mr-auto">Cancel</Button>
+          {/* Save As — copy current config to a different audience */}
+          {activeAudienceId && allAudiences.filter(a => a.id !== activeAudienceId).length > 0 && (
+            <select
+              className="h-9 text-xs rounded-md border border-border bg-background px-2 cursor-pointer disabled:opacity-50"
+              value=""
+              disabled={saveAsMutation.isPending || saveMutation.isPending}
+              onChange={e => { const id = e.target.value; if (id) saveAsMutation.mutate(id); }}
+              data-testid="select-save-as-audience"
+            >
+              <option value="">
+                {saveAsMutation.isPending ? "Copying…" : "Save As…"}
+              </option>
+              {allAudiences
+                .filter(a => a.id !== activeAudienceId)
+                .map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+            </select>
+          )}
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || saveAsMutation.isPending || !activeAudienceId} data-testid="button-save-variant-config">
+            {saveMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : <><Save className="w-4 h-4 mr-1" /> Save as Variant</>}
           </Button>
         </div>
       </DialogContent>
