@@ -286,6 +286,14 @@ export default function CheckoutPage() {
           variant: "destructive",
         });
         setIsProcessingPayment(false);
+        // Persist failure reason and code to DB (fire-and-forget)
+        if (orderData.razorpayOrderId) {
+          apiRequest("POST", "/api/cart/payment-failed", {
+            razorpayOrderId: orderData.razorpayOrderId,
+            reason: response.error?.description || response.error?.reason || null,
+            code: response.error?.code || null,
+          }).catch(() => {});
+        }
       });
       rzp.open();
     } catch {

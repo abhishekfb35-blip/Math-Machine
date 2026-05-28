@@ -640,3 +640,10 @@ export interface InsertRateLimitStats {
   bucketHour: Date;
   blockCount: number;
 }
+
+export interface FunnelStats {
+  checkoutStartedCount: number;
+  emailCapturedCount: number;
+  paymentAttemptsByStatus: Record<string, number>;
+  recentFailures: Array<{ reason: string | null; code: string | null; count: number }>;
+}

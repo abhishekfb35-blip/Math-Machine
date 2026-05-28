@@ -35,6 +35,23 @@ export function registerCheckoutRoutes(app: Express) {
     }
   });
 
+  app.post("/api/cart/payment-failed", async (req, res) => {
+    try {
+      const { razorpayOrderId, reason, code } = req.body as { razorpayOrderId?: string; reason?: string; code?: string };
+      if (!razorpayOrderId) return res.status(400).json({ message: "razorpayOrderId required" });
+      await storage.updatePaymentAttemptByRazorpayOrderId(
+        razorpayOrderId,
+        "failed",
+        reason || undefined,
+        code || undefined,
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("payment-failed log error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.patch("/api/cart/checkout-email", async (req, res) => {
     try {
       const sessionId = getSessionId(req, res);
@@ -90,13 +107,13 @@ export function registerCheckoutRoutes(app: Express) {
         return res.status(500).json({ message: result.error || "Failed to create payment order" });
       }
 
-      // Log the payment attempt as 'initiated'
+      // Log the payment attempt as 'initiated' — amount stored in smallest unit (paise for INR)
       try {
         await storage.logPaymentAttempt({
           cartId: pricing.id,
           razorpayOrderId: result.razorpayOrderId,
           status: "initiated",
-          amount: converted.amount,
+          amount: Math.round(converted.amount * 100),
         });
       } catch (logErr) {
         console.error("Failed to log payment attempt:", logErr);

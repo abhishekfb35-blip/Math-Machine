@@ -80,6 +80,7 @@ export interface IStorage {
   logPaymentAttempt(data: InsertPaymentAttempt): Promise<PaymentAttempt>;
   updatePaymentAttemptByRazorpayOrderId(razorpayOrderId: string, status: string, failureReason?: string, failureCode?: string): Promise<void>;
   linkPaymentAttemptToOrder(razorpayOrderId: string, orderId: string): Promise<void>;
+  getCartFunnelStats(): Promise<import("@shared/types").FunnelStats>;
 
   createOrder(order: InsertOrder): Promise<Order>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
@@ -602,6 +603,42 @@ export class DatabaseStorage implements IStorage {
     await db.update(paymentAttempts)
       .set({ orderId, status: "success" })
       .where(and(eq(paymentAttempts.razorpayOrderId, razorpayOrderId), eq(paymentAttempts.status, "initiated")));
+  }
+
+  async getCartFunnelStats(): Promise<import("@shared/types").FunnelStats> {
+    const [checkoutStartedRow, emailCapturedRow, statusRows, failureRows] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(sql`${carts.checkoutStartedAt} IS NOT NULL`),
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(carts)
+        .where(sql`${carts.checkoutEmail} IS NOT NULL`),
+      db.select({
+        status: paymentAttempts.status,
+        count: sql<number>`count(*)::int`,
+      }).from(paymentAttempts).groupBy(paymentAttempts.status),
+      db.select({
+        reason: paymentAttempts.failureReason,
+        code: paymentAttempts.failureCode,
+        count: sql<number>`count(*)::int`,
+      }).from(paymentAttempts)
+        .where(eq(paymentAttempts.status, "failed"))
+        .groupBy(paymentAttempts.failureReason, paymentAttempts.failureCode)
+        .orderBy(desc(sql`count(*)`))
+        .limit(10),
+    ]);
+
+    const paymentAttemptsByStatus: Record<string, number> = {};
+    for (const row of statusRows) {
+      paymentAttemptsByStatus[row.status] = Number(row.count);
+    }
+
+    return {
+      checkoutStartedCount: Number(checkoutStartedRow[0]?.count ?? 0),
+      emailCapturedCount: Number(emailCapturedRow[0]?.count ?? 0),
+      paymentAttemptsByStatus,
+      recentFailures: failureRows.map(r => ({ reason: r.reason, code: r.code, count: Number(r.count) })),
+    };
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
