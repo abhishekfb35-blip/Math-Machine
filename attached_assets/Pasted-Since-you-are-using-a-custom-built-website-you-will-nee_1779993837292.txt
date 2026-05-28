@@ -1,0 +1,41 @@
+Since you are using a custom-built website, you will need to set up custom event tracking using a tool like Google Analytics 4 (GA4) via Google Tag Manager (GTM), combined with your internal database logs.
+Here is exactly how to capture each piece of data from your custom site:
+## 1. Web Traffic & Funnel Progression (GA4 Event Tracking)
+You must write JavaScript triggers on your custom site to send data to GA4 when users take action. Track these standard e-commerce events:
+
+* view_item: Fires when a user loads a product page.
+* add_to_cart: Fires on the click of your "Add to Cart" button.
+* begin_checkout: Fires when they click "Proceed to Checkout".
+* purchase: Fires only on your successful "Thank You" redirect page.
+
+## 2. Cart Attempts & Details (Database Tracking)
+Because your site is custom, GA4 cannot easily read what is inside a abandoned cart without complex coding. Track this via your own server database:
+
+* Session Cart Table: Create a database table that links a user's session ID to their cart items in real-time.
+* Unpurchased Logs: Query this table daily for carts that have been inactive for over 1 hour to see exactly what they tried to buy.
+
+## 3. Error Logs & Friction (Javascript & Server Logs)
+To see why people failed to order, log errors instantly:
+
+* Payment Failures: API responses from your payment gateway (e.g., Stripe, Razorpay) must log the failure reason (e.g., "insufficient funds", "expired card") alongside the user's session.
+* Form Validation Errors: Use JavaScript to track how many times a user sees an error message like "Invalid Email" or "Missing Phone Number".
+
+## 4. Lead Capture & Account Creation (Database Hooks)
+
+* Pre-purchase Save: Design your custom checkout form to save the user's email address via an onBlur or onChange JavaScript function the moment they finish typing it, even if they do not click "Submit".
+* Registration Flag: Mark a is_registered boolean (True/False) in your user database during checkout.
+
+## 5. Recovery & Assistance (Webhook Automation)
+To track if you got back to them, connect your custom backend to an email/SMS API (like SendGrid, Twilio, or Mailchimp):
+
+* Abandonment Webhook: Set your server to trigger an API call to your email tool 30 minutes after a cart is abandoned.
+* Support Logs: If you use a chat widget (like Tidio or Intercom), use their API to sync chat history with your database using the customer's email address as the unique identifier.
+
+------------------------------
+To help you implement this on your custom site, let me know:
+
+* What backend language/framework is your site built on? (e.g., Node.js, Python/Django, PHP, React)
+* Do you already have Google Tag Manager (GTM) installed on the site?
+
+I can provide the specific JavaScript code snippets or database schema designs you need to start collecting this data.
+
