@@ -39057,46 +39057,49 @@
       "id": "hu7mycy4dy5xwmafi830si6z",
       "categorySlug": "bathrobes",
       "tagId": "g7xgkhf79va0ko6ycfsn5cns",
+      "audienceId": null,
       "sortOrder": 0
     },
     {
       "id": "axvgb6sqowc36gghl2ugj2wd",
       "categorySlug": "blankets",
       "tagId": "c8ap8v1a2p397zwneb1iwnx5",
+      "audienceId": null,
       "sortOrder": 0
     },
     {
       "id": "xknyzlm12zi0wxlez9kf9rzd",
       "categorySlug": "towels",
       "tagId": null,
-      "sortOrder": 0,
-      "audienceId": "lwqf506gvpntza837ulb5e37"
+      "audienceId": "lwqf506gvpntza837ulb5e37",
+      "sortOrder": 0
     },
     {
       "id": "l95zbytewwa6l4b121hntbh6",
       "categorySlug": "towels",
       "tagId": null,
-      "sortOrder": 0,
-      "audienceId": "wge9u4nvqmnj8dwuojb07fmq"
+      "audienceId": "wge9u4nvqmnj8dwuojb07fmq",
+      "sortOrder": 0
     },
     {
       "id": "tlx6raml5tp2zre2nob0pgsm",
       "categorySlug": "towels",
       "tagId": null,
-      "sortOrder": 0,
-      "audienceId": "yzl1u465fsvqnpbg4qysmxtl"
+      "audienceId": "yzl1u465fsvqnpbg4qysmxtl",
+      "sortOrder": 0
     },
     {
       "id": "o1ym8idgoz6525paz2fonir2",
       "categorySlug": "towels",
       "tagId": null,
-      "sortOrder": 0,
-      "audienceId": "e9ab890p261mnfcxxuw45qt1"
+      "audienceId": "e9ab890p261mnfcxxuw45qt1",
+      "sortOrder": 0
     },
     {
       "id": "guijaogqg2jpcenv1cb8rkyr",
       "categorySlug": "towels",
       "tagId": "aq8bd6fppxlidzna32bee0ve",
+      "audienceId": null,
       "sortOrder": 0
     }
   ],
