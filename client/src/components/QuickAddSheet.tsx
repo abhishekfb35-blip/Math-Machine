@@ -17,9 +17,6 @@ type CoupleAudienceConfig = { type: "couples"; heading: string; person1Label: st
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
-const NAME_MIN = 3;
-const NAME_MAX = 11;
-
 function nameCharHint(val: string, min: number, max: number): { text: string; className: string } {
   const len = val.length;
   const left = max - len;
@@ -65,8 +62,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   }, [productPageConfigData, product?.audience]);
 
   const isCoupleProduct = audienceConfig?.type === "couples";
-  const nameMin = audienceConfig?.nameMin ?? NAME_MIN;
-  const nameMax = audienceConfig?.nameMax ?? NAME_MAX;
+  const nameMin = audienceConfig?.nameMin;
+  const nameMax = audienceConfig?.nameMax;
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
@@ -306,7 +303,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           )}
 
-          {audienceConfig?.type === "couples" ? (
+          {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
             <div className="space-y-2">
               <Label className="text-sm font-medium">{audienceConfig.heading}</Label>
               <div>
@@ -332,7 +329,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
               </div>
             </div>
-          ) : audienceConfig?.type === "single" ? (
+          ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
             <div className="space-y-1">
               <Label htmlFor="qa-personalization" className="text-sm font-medium">
                 {audienceConfig.heading}
@@ -378,9 +375,10 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             className="w-full"
             size="lg"
             onClick={() => {
+              const min = nameMin ?? 0;
               const nameInvalid = isCoupleProduct
-                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
-                : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin;
+                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < min) || (ladyName.trim().length > 0 && ladyName.trim().length < min)
+                : personalizationName.trim().length > 0 && personalizationName.trim().length < min;
               if (nameInvalid) return;
               const nameEmpty = isCoupleProduct
                 ? gentlemanName.trim() === "" && ladyName.trim() === ""
@@ -388,11 +386,12 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               if (nameEmpty) { setShowNameConfirm(true); return; }
               addToCartMutation.mutate();
             }}
-            disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (
-              isCoupleProduct
-                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
-                : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin
-            )}
+            disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
+              const min = nameMin ?? 0;
+              return isCoupleProduct
+                ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < min) || (ladyName.trim().length > 0 && ladyName.trim().length < min)
+                : personalizationName.trim().length > 0 && personalizationName.trim().length < min;
+            })()}
             data-testid="button-quickadd-submit"
           >
             {addToCartMutation.isPending ? (

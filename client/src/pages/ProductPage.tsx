@@ -33,9 +33,6 @@ type ProductPageConfig = Record<string, AudiencePageConfig>;
 
 const REVIEWS_PER_PAGE = 10;
 
-const NAME_MIN = 3;
-const NAME_MAX = 11;
-
 function nameCharHint(val: string, min: number, max: number): { text: string; className: string } {
   const len = val.length;
   const left = max - len;
@@ -100,8 +97,8 @@ export default function ProductPage() {
   }, [productPageConfigData, product?.audience]);
 
   const isCoupleProduct = audienceConfig?.type === "couples";
-  const nameMin = audienceConfig?.nameMin ?? NAME_MIN;
-  const nameMax = audienceConfig?.nameMax ?? NAME_MAX;
+  const nameMin = audienceConfig?.nameMin;
+  const nameMax = audienceConfig?.nameMax;
 
   const { data: productImages } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", product?.id, "images"],
@@ -668,7 +665,7 @@ export default function ProductPage() {
               </div>
             )}
 
-            {audienceConfig?.type === "couples" ? (
+            {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
               <div className="space-y-3">
                 <Label className="text-sm font-medium">
                   {audienceConfig.heading}
@@ -701,7 +698,7 @@ export default function ProductPage() {
                   Both names will be embroidered on the set
                 </p>
               </div>
-            ) : audienceConfig?.type === "single" ? (
+            ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
               <div className="space-y-1">
                 <Label htmlFor="personalization" className="text-sm font-medium">
                   {audienceConfig.heading}
@@ -723,9 +720,10 @@ export default function ProductPage() {
               className="flex-1"
               size="lg"
               onClick={() => {
+                const min = nameMin ?? 0;
                 const nameInvalid = isCoupleProduct
-                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
-                  : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin;
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < min) || (ladyName.trim().length > 0 && ladyName.trim().length < min)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < min;
                 if (nameInvalid) return;
                 const nameEmpty = isCoupleProduct
                   ? gentlemanName.trim() === "" && ladyName.trim() === ""
@@ -733,11 +731,12 @@ export default function ProductPage() {
                 if (nameEmpty) { setShowNameConfirm(true); return; }
                 addToCartMutation.mutate();
               }}
-              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (
-                isCoupleProduct
-                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < nameMin) || (ladyName.trim().length > 0 && ladyName.trim().length < nameMin)
-                  : personalizationName.trim().length > 0 && personalizationName.trim().length < nameMin
-              )}
+              disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
+                const min = nameMin ?? 0;
+                return isCoupleProduct
+                  ? (gentlemanName.trim().length > 0 && gentlemanName.trim().length < min) || (ladyName.trim().length > 0 && ladyName.trim().length < min)
+                  : personalizationName.trim().length > 0 && personalizationName.trim().length < min;
+              })()}
               data-testid="button-add-to-cart"
             >
               {addToCartMutation.isPending ? (
