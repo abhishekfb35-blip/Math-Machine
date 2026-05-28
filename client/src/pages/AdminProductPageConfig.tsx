@@ -23,7 +23,9 @@ type CoupleAudienceConfig = {
   type: "couples";
   heading: string;
   person1Prefix: string;
+  person1Label: string;
   person2Prefix: string;
+  person2Label: string;
   nameMin?: number;
   nameMax?: number;
 };
@@ -72,7 +74,7 @@ export default function AdminProductPageConfig() {
     } else {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "couples", heading: "", person1Prefix: "", person2Prefix: "", nameMin: 3, nameMax: 11 } as CoupleAudienceConfig,
+        [slug]: { type: "couples", heading: "", person1Prefix: "", person1Label: "", person2Prefix: "", person2Label: "", nameMin: 3, nameMax: 11 } as CoupleAudienceConfig,
       }));
     }
   };
@@ -193,7 +195,7 @@ export default function AdminProductPageConfig() {
                   {cfg.type === "couples" && (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 1 name</Label>
+                        <Label className="text-xs text-muted-foreground">Person 1 field title</Label>
                         <Input
                           value={cfg.person1Prefix}
                           onChange={e => updateField(slug, "person1Prefix", e.target.value)}
@@ -202,12 +204,30 @@ export default function AdminProductPageConfig() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 2 name</Label>
+                        <Label className="text-xs text-muted-foreground">Person 2 field title</Label>
                         <Input
                           value={cfg.person2Prefix}
                           onChange={e => updateField(slug, "person2Prefix", e.target.value)}
                           placeholder="e.g. Her Name"
                           data-testid={`input-p2prefix-${slug}`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Person 1 placeholder text</Label>
+                        <Input
+                          value={cfg.person1Label}
+                          onChange={e => updateField(slug, "person1Label", e.target.value)}
+                          placeholder="e.g. Enter his name"
+                          data-testid={`input-p1label-${slug}`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Person 2 placeholder text</Label>
+                        <Input
+                          value={cfg.person2Label}
+                          onChange={e => updateField(slug, "person2Label", e.target.value)}
+                          placeholder="e.g. Enter her name"
+                          data-testid={`input-p2label-${slug}`}
                         />
                       </div>
                     </div>

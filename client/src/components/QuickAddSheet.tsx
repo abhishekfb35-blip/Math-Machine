@@ -13,7 +13,7 @@ import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, ProductVariantOptions, VariantSize } from "@shared/types";
 
 type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string; nameMin?: number; nameMax?: number };
-type CoupleAudienceConfig = { type: "couples"; heading: string; person1Prefix: string; person2Prefix: string; nameMin?: number; nameMax?: number };
+type CoupleAudienceConfig = { type: "couples"; heading: string; person1Prefix: string; person1Label: string; person2Prefix: string; person2Label: string; nameMin?: number; nameMax?: number };
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
@@ -309,7 +309,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
                 <Input
                   id="qa-gentleman-name"
-                  placeholder={audienceConfig.person1Prefix}
+                  placeholder={audienceConfig.person1Label}
                   value={gentlemanName}
                   onChange={(e) => setGentlemanName(e.target.value)}
                   maxLength={nameMax}
@@ -321,7 +321,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
                 <Input
                   id="qa-lady-name"
-                  placeholder={audienceConfig.person2Prefix}
+                  placeholder={audienceConfig.person2Label}
                   value={ladyName}
                   onChange={(e) => setLadyName(e.target.value)}
                   maxLength={nameMax}
