@@ -763,8 +763,9 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   const [sizePriceAdds, setSizePriceAdds] = useState<Record<string, number>>({});
   const [sizeDefaultId, setSizeDefaultId] = useState<string | null>(null);
   const [sizeHide, setSizeHide] = useState<Record<string, boolean>>({});
-  const [selectedSwatchIds, setSelectedSwatchIds] = useState<string[]>([]);
-  const [colorHide, setColorHide] = useState<Record<string, boolean>>({});
+  // per-size colour state: sizeId → ordered list of selected swatch IDs
+  const [sizeSwatchIds, setSizeSwatchIds] = useState<Record<string, string[]>>({});
+  const [sizeColorHide, setSizeColorHide] = useState<Record<string, Record<string, boolean>>>({});
 
   const { data: configs } = useQuery<CategoryTagVariantConfig[]>({
     queryKey: ["/api/admin/categories", categoryId, "variant-configs"],
@@ -797,6 +798,8 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
       const ids: string[] = [];
       const priceAdds: Record<string, number> = {};
       const hide: Record<string, boolean> = {};
+      const swatchIds: Record<string, string[]> = {};
+      const cHide: Record<string, Record<string, boolean>> = {};
       let defaultId: string | null = null;
       for (const sz of currentConfig.sizes) {
         const def = sizeDefinitions.find(d => d.name === sz.name);
@@ -805,28 +808,27 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           priceAdds[def.id] = sz.priceAdd;
           hide[def.id] = sz.blurOnFront;
           if (sz.isDefault) defaultId = def.id;
+          swatchIds[def.id] = [];
+          cHide[def.id] = {};
+          for (const c of sz.colors) {
+            const sw = globalSwatches.find(s => s.name === c.name);
+            if (sw) { swatchIds[def.id].push(sw.id); cHide[def.id][sw.id] = c.blurOnFront; }
+          }
         }
       }
       setSelectedSizeIds(ids);
       setSizePriceAdds(priceAdds);
       setSizeHide(hide);
       setSizeDefaultId(defaultId);
-      const firstColors = currentConfig.sizes[0]?.colors ?? [];
-      const swatchIds: string[] = [];
-      const cHide: Record<string, boolean> = {};
-      for (const c of firstColors) {
-        const sw = globalSwatches.find(s => s.name === c.name);
-        if (sw) { swatchIds.push(sw.id); cHide[sw.id] = c.blurOnFront; }
-      }
-      setSelectedSwatchIds(swatchIds);
-      setColorHide(cHide);
+      setSizeSwatchIds(swatchIds);
+      setSizeColorHide(cHide);
     } else {
       setSelectedSizeIds([]);
       setSizePriceAdds({});
       setSizeHide({});
       setSizeDefaultId(null);
-      setSelectedSwatchIds([]);
-      setColorHide({});
+      setSizeSwatchIds({});
+      setSizeColorHide({});
     }
   }, [open, currentConfig?.id, sizeDefinitions?.length, globalSwatches?.length]);
 
@@ -834,6 +836,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     mutationFn: async () => {
       const sizes = selectedSizeIds.map((id, si) => {
         const def = sizeDefinitions?.find(d => d.id === id);
+        const swIds = sizeSwatchIds[id] ?? [];
         return {
           name: def?.name ?? "",
           description: def?.description ?? undefined,
@@ -841,9 +844,9 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           isDefault: sizeDefaultId === id,
           blurOnFront: sizeHide[id] ?? false,
           sortOrder: si,
-          colors: selectedSwatchIds.map((swId, ci) => {
+          colors: swIds.map((swId, ci) => {
             const sw = globalSwatches?.find(s => s.id === swId);
-            return { name: sw?.name ?? "", swatchUrl: sw?.swatchUrl ?? undefined, blurOnFront: colorHide[swId] ?? false, sortOrder: ci };
+            return { name: sw?.name ?? "", swatchUrl: sw?.swatchUrl ?? undefined, blurOnFront: sizeColorHide[id]?.[swId] ?? false, sortOrder: ci };
           }),
         };
       });
@@ -863,7 +866,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/categories", categoryId, "variant-configs"] });
       setSelectedSizeIds([]); setSizePriceAdds({}); setSizeHide({}); setSizeDefaultId(null);
-      setSelectedSwatchIds([]); setColorHide({});
+      setSizeSwatchIds({}); setSizeColorHide({});
       toast({ title: "Config deleted" });
     },
     onError: () => toast({ title: "Failed to delete", variant: "destructive" }),
@@ -872,8 +875,20 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
   function toggleSize(id: string) {
     setSelectedSizeIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   }
-  function toggleSwatch(id: string) {
-    setSelectedSwatchIds(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  function toggleSwatchForSize(sizeId: string, swatchId: string) {
+    setSizeSwatchIds(prev => {
+      const cur = prev[sizeId] ?? [];
+      return { ...prev, [sizeId]: cur.includes(swatchId) ? cur.filter(s => s !== swatchId) : [...cur, swatchId] };
+    });
+  }
+  function moveSwatchForSize(sizeId: string, idx: number, dir: -1 | 1) {
+    setSizeSwatchIds(prev => {
+      const a = [...(prev[sizeId] ?? [])];
+      const si = idx + dir;
+      if (si < 0 || si >= a.length) return prev;
+      [a[idx], a[si]] = [a[si], a[idx]];
+      return { ...prev, [sizeId]: a };
+    });
   }
 
   return (
@@ -900,19 +915,23 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
           </div>
         )}
 
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Sizes</Label>
-            {!sizeDefinitions || sizeDefinitions.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">
-                No sizes defined — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add size presets.
-              </p>
-            ) : (
-              <div className="space-y-1.5">
-                {sizeDefinitions.map(def => {
-                  const selected = selectedSizeIds.includes(def.id);
-                  return (
-                    <div key={def.id} className={`flex items-center gap-3 rounded-md border p-2.5 transition-colors ${selected ? "bg-muted/50 border-primary/30" : "bg-background"}`}>
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
+          <Label className="text-sm font-semibold block">Sizes &amp; Colours</Label>
+          <p className="text-xs text-muted-foreground -mt-1">Select a size to expand its colour picker.</p>
+
+          {!sizeDefinitions || sizeDefinitions.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">
+              No sizes defined — use the <Ruler className="w-3 h-3 inline mx-0.5" /> button on the category card to add size presets.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sizeDefinitions.map(def => {
+                const selected = selectedSizeIds.includes(def.id);
+                const thisSizeSwatchIds = sizeSwatchIds[def.id] ?? [];
+                return (
+                  <div key={def.id} className={`rounded-md border transition-colors ${selected ? "border-primary/40 bg-muted/30" : "bg-background"}`}>
+                    {/* Size row */}
+                    <div className="flex items-center gap-3 p-2.5">
                       <Checkbox checked={selected} onCheckedChange={() => toggleSize(def.id)} data-testid={`checkbox-size-${def.id}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-none">{def.name}</p>
@@ -937,85 +956,95 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                         </>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Colours</Label>
-            {!globalSwatches || globalSwatches.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">
-                No colours in palette —{" "}
-                <a href="/admin/color-swatches" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-primary">
-                  add some in the Colour Swatches page
-                </a>.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {globalSwatches.map(sw => {
-                    const selected = selectedSwatchIds.includes(sw.id);
-                    return (
-                      <button key={sw.id} onClick={() => toggleSwatch(sw.id)} title={sw.name}
-                        className={`relative flex flex-col items-center gap-1 p-1 rounded-md border-2 transition-all ${selected ? "border-primary bg-primary/5" : "border-transparent hover:border-muted-foreground/30"}`}
-                        data-testid={`button-swatch-${sw.id}`}
-                      >
-                        {sw.swatchUrl
-                          ? <img src={sw.swatchUrl} alt={sw.name} className="w-9 h-9 rounded-full object-cover" />
-                          : <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"><span className="text-[10px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span></div>
-                        }
-                        <span className="text-[10px] text-muted-foreground max-w-[3rem] truncate">{sw.name}</span>
-                        {selected && (
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                            <span className="text-[8px] text-primary-foreground font-bold">✓</span>
-                          </div>
+                    {/* Per-size colour picker — only shown when size is selected */}
+                    {selected && (
+                      <div className="border-t mx-2.5 mb-2.5 pt-2.5 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">Colours for this size</p>
+                        {!globalSwatches || globalSwatches.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">
+                            No colours in palette —{" "}
+                            <a href="/admin/color-swatches" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-primary">
+                              add some in the Colour Swatches page
+                            </a>.
+                          </p>
+                        ) : (
+                          <>
+                            {/* Swatch grid */}
+                            <div className="flex flex-wrap gap-2">
+                              {globalSwatches.map(sw => {
+                                const swSelected = thisSizeSwatchIds.includes(sw.id);
+                                return (
+                                  <button key={sw.id} onClick={() => toggleSwatchForSize(def.id, sw.id)} title={sw.name}
+                                    className={`relative flex flex-col items-center gap-1 p-1 rounded-md border-2 transition-all ${swSelected ? "border-primary bg-primary/5" : "border-transparent hover:border-muted-foreground/30"}`}
+                                    data-testid={`button-swatch-${def.id}-${sw.id}`}
+                                  >
+                                    {sw.swatchUrl
+                                      ? <img src={sw.swatchUrl} alt={sw.name} className="w-8 h-8 rounded-full object-cover" />
+                                      : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><span className="text-[10px] font-bold text-muted-foreground">{sw.name.slice(0, 2)}</span></div>
+                                    }
+                                    <span className="text-[10px] text-muted-foreground max-w-[3rem] truncate">{sw.name}</span>
+                                    {swSelected && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                        <span className="text-[8px] text-primary-foreground font-bold">✓</span>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Selected colours list with ordering + hide */}
+                            {thisSizeSwatchIds.length > 0 && (
+                              <div className="space-y-1 border-t pt-2">
+                                <p className="text-xs text-muted-foreground font-medium">Selected (drag to reorder):</p>
+                                {thisSizeSwatchIds.map((swId, idx) => {
+                                  const sw = globalSwatches.find(s => s.id === swId);
+                                  if (!sw) return null;
+                                  return (
+                                    <div key={swId} className="flex items-center gap-1.5">
+                                      <div className="flex flex-col shrink-0">
+                                        <button onClick={() => moveSwatchForSize(def.id, idx, -1)} disabled={idx === 0}
+                                          className="text-muted-foreground hover:text-foreground disabled:opacity-20">
+                                          <ChevronUp className="w-3 h-3" />
+                                        </button>
+                                        <button onClick={() => moveSwatchForSize(def.id, idx, 1)} disabled={idx === thisSizeSwatchIds.length - 1}
+                                          className="text-muted-foreground hover:text-foreground disabled:opacity-20">
+                                          <ChevronDown className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                      {sw.swatchUrl
+                                        ? <img src={sw.swatchUrl} alt={sw.name} className="w-5 h-5 rounded-full object-cover border shrink-0" />
+                                        : <div className="w-5 h-5 rounded-full bg-muted border shrink-0" />
+                                      }
+                                      <span className="text-xs flex-1">{sw.name}</span>
+                                      <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
+                                        <Checkbox
+                                          checked={sizeColorHide[def.id]?.[swId] ?? false}
+                                          onCheckedChange={v => setSizeColorHide(prev => ({
+                                            ...prev,
+                                            [def.id]: { ...(prev[def.id] ?? {}), [swId]: !!v }
+                                          }))}
+                                        />
+                                        Hide
+                                      </label>
+                                      <button onClick={() => toggleSwatchForSize(def.id, swId)} className="text-muted-foreground hover:text-destructive">
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
                         )}
-                      </button>
-                    );
-                  })}
-                </div>
-                {selectedSwatchIds.length > 0 && (
-                  <div className="space-y-1 border-t pt-2">
-                    <p className="text-xs text-muted-foreground font-medium">Selected:</p>
-                    {selectedSwatchIds.map((swId, idx) => {
-                      const sw = globalSwatches.find(s => s.id === swId);
-                      if (!sw) return null;
-                      return (
-                        <div key={swId} className="flex items-center gap-1.5">
-                          <div className="flex flex-col shrink-0">
-                            <button
-                              onClick={() => setSelectedSwatchIds(prev => { const a = [...prev]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a; })}
-                              disabled={idx === 0}
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
-                            ><ChevronUp className="w-3 h-3" /></button>
-                            <button
-                              onClick={() => setSelectedSwatchIds(prev => { const a = [...prev]; [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]]; return a; })}
-                              disabled={idx === selectedSwatchIds.length - 1}
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
-                            ><ChevronDown className="w-3 h-3" /></button>
-                          </div>
-                          {sw.swatchUrl
-                            ? <img src={sw.swatchUrl} alt={sw.name} className="w-5 h-5 rounded-full object-cover border shrink-0" />
-                            : <div className="w-5 h-5 rounded-full bg-muted border shrink-0" />
-                          }
-                          <span className="text-xs flex-1">{sw.name}</span>
-                          <label className="flex items-center gap-1 text-xs cursor-pointer">
-                            <Checkbox checked={colorHide[swId] ?? false} onCheckedChange={v => setColorHide(prev => ({ ...prev, [swId]: !!v }))} />
-                            Hide
-                          </label>
-                          <button onClick={() => toggleSwatch(swId)} className="text-muted-foreground hover:text-destructive">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      );
-                    })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t">
