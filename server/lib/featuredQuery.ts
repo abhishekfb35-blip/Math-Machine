@@ -20,6 +20,13 @@ export interface SectionFilters {
   tagFilters: string[];
 }
 
+export interface SectionEntry {
+  key: string;
+  title: string;
+  subtitle: string;
+  filters: SectionFilters;
+}
+
 export const EMPTY_FILTERS: SectionFilters = {
   categoryFilters: [],
   audienceFilters: [],
@@ -28,9 +35,6 @@ export const EMPTY_FILTERS: SectionFilters = {
   styleFilters: [],
   tagFilters: [],
 };
-
-export const SECTION_KEYS = ["kids", "couples", "blankets", "bathrobes"] as const;
-export type SectionKey = typeof SECTION_KEYS[number];
 
 function normaliseSectionFilters(raw: any): SectionFilters {
   return {
@@ -43,20 +47,36 @@ function normaliseSectionFilters(raw: any): SectionFilters {
   };
 }
 
-export async function loadAllSectionFilters(): Promise<Record<SectionKey, SectionFilters>> {
-  const result = {} as Record<SectionKey, SectionFilters>;
-  for (const k of SECTION_KEYS) result[k] = { ...EMPTY_FILTERS };
-
+export async function loadAllSectionFilters(): Promise<SectionEntry[]> {
   try {
     const config = await storage.getSiteContent("featuredSections");
-    if (!config) return result;
-    const parsed = JSON.parse(config.value) ?? {};
-    for (const k of SECTION_KEYS) {
-      result[k] = normaliseSectionFilters(parsed[k]);
+    if (!config) return [];
+    const parsed = JSON.parse(config.value);
+
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((item: any) => item && typeof item === "object")
+        .map((item: any) => ({
+          key:      String(item.key      ?? `section-${Math.random().toString(36).slice(2, 7)}`),
+          title:    String(item.title    ?? ""),
+          subtitle: String(item.subtitle ?? ""),
+          filters:  normaliseSectionFilters(item),
+        }));
     }
+
+    if (parsed && typeof parsed === "object") {
+      return Object.entries(parsed).map(([key, val]) => ({
+        key,
+        title:    String((val as any)?.title    ?? ""),
+        subtitle: String((val as any)?.subtitle ?? ""),
+        filters:  normaliseSectionFilters(val),
+      }));
+    }
+
+    return [];
   } catch {
+    return [];
   }
-  return result;
 }
 
 export async function getProductIdsByFilters(filters: SectionFilters): Promise<string[]> {

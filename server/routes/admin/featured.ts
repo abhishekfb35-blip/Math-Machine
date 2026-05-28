@@ -4,33 +4,33 @@ import { requirePermission } from "../../adminAuth";
 import type { Product } from "@shared/types";
 import {
   loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
-  SECTION_KEYS, EMPTY_FILTERS, type SectionFilters,
+  EMPTY_FILTERS, type SectionFilters,
 } from "../../lib/featuredQuery";
+
 const BUCKET_MS = 12 * 60 * 60 * 1000;
 const PER_SECTION = 6;
 
 export function registerAdminFeaturedRoutes(app: Express) {
-  // GET — returns products for all 4 sections based on saved config
   app.get("/api/admin/featured-products", requirePermission("catalog"), async (_req, res) => {
     try {
       const bucket = Math.floor(Date.now() / BUCKET_MS);
-      const allFilters = await loadAllSectionFilters();
+      const sections = await loadAllSectionFilters();
 
       const idSets = await Promise.all(
-        SECTION_KEYS.map(k => getProductIdsByFilters(allFilters[k]))
+        sections.map((s, i) =>
+          getProductIdsByFilters(s.filters).then(ids =>
+            seededShuffle(ids, bucket * Math.max(sections.length, 1) + i).slice(0, PER_SECTION)
+          )
+        )
       );
 
-      const selectedIdSets = idSets.map((ids, i) =>
-        seededShuffle(ids, bucket * SECTION_KEYS.length + i).slice(0, PER_SECTION)
-      );
-
-      const allIds = selectedIdSets.flat();
+      const allIds = [...new Set(idSets.flat())];
       const allProducts = await storage.getProductsByIds(allIds);
       const productMap = new Map<string, Product>(allProducts.map(p => [p.id, p]));
 
       const result: Record<string, Product[]> = {};
-      SECTION_KEYS.forEach((k, i) => {
-        result[k] = selectedIdSets[i].map(id => productMap.get(id)).filter(Boolean) as Product[];
+      sections.forEach((s, i) => {
+        result[s.key] = idSets[i].map(id => productMap.get(id)).filter(Boolean) as Product[];
       });
 
       res.json(result);
@@ -40,7 +40,6 @@ export function registerAdminFeaturedRoutes(app: Express) {
     }
   });
 
-  // POST preview — returns products matching caller-supplied filters (no cache)
   app.post("/api/admin/featured-products/preview", requirePermission("catalog"), async (req, res) => {
     try {
       const filters: SectionFilters = {

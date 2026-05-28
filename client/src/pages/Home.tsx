@@ -21,13 +21,21 @@ import type { Product } from "@shared/types";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
-  defaultPromo, defaultTestimonials, defaultStats, defaultFeaturedSections,
+  defaultPromo, defaultTestimonials, defaultStats,
   defaultHomepageCollections,
   type HeroConfig, type PromiseConfig, type CollectionsConfig,
   type ProductTypesConfig, type PromoConfig, type TestimonialsConfig,
-  type StatsConfig, type FeaturedSectionsConfig, type FeaturedSectionConfig,
+  type StatsConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
 } from "@/lib/siteConfigDefaults";
+
+interface HomeSection {
+  key: string;
+  title: string;
+  subtitle: string;
+  seeAllHref: string;
+  products: Product[];
+}
 
 const defaultCollectionImages = [kidsBanner, adultsBanner, couplesBanner];
 const defaultProductTypeImages = [towelsBanner, bathrobesBanner, blanketsBanner];
@@ -50,18 +58,6 @@ function ProductGridSkeleton({ count = 4 }: { count?: number }) {
 }
 
 const HOME_VISIBLE = 4;
-
-function buildSeeAllHref(cfg: FeaturedSectionConfig): string {
-  const p = new URLSearchParams();
-  if (cfg.categoryFilters.length === 1) p.set("category", cfg.categoryFilters[0]);
-  if (cfg.audienceFilters.length === 1) p.set("filter",   cfg.audienceFilters[0]);
-  if (cfg.genderFilters.length)         p.set("gender",   cfg.genderFilters.join(","));
-  if (cfg.themeFilters.length)          p.set("theme",    cfg.themeFilters.join(","));
-  if (cfg.styleFilters.length)          p.set("style",    cfg.styleFilters.join(","));
-  if (cfg.tagFilters.length === 1)      p.set("tag",      cfg.tagFilters[0]);
-  const qs = p.toString();
-  return qs ? `/shop?${qs}` : "/shop";
-}
 
 function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuickAdd }: {
   products: Product[];
@@ -141,8 +137,6 @@ export default function Home() {
   const promo = useSiteConfig<PromoConfig>("promo", defaultPromo);
   const testimonials = useSiteConfig<TestimonialsConfig>("testimonials", defaultTestimonials);
   const stats = useSiteConfig<StatsConfig>("stats", defaultStats);
-  const featured = useSiteConfig<FeaturedSectionsConfig>("featuredSections", defaultFeaturedSections);
-
   const { data: allSiteConfig } = useQuery<Record<string, any>>({
     queryKey: ["/api/site-config"],
   });
@@ -167,22 +161,10 @@ export default function Home() {
     return sections;
   })();
 
-  const { data: homeCollections, isLoading: collectionsLoading } = useQuery<{
-    kids: Product[];
-    couples: Product[];
-    blankets: Product[];
-    bathrobes: Product[];
-  }>({
+  const { data: homeSections = [], isLoading } = useQuery<HomeSection[]>({
     queryKey: ["/api/home/collections"],
     staleTime: 12 * 60 * 60 * 1000,
   });
-
-  const isLoading = collectionsLoading;
-
-  const featuredKids = homeCollections?.kids ?? [];
-  const featuredAdults = homeCollections?.couples ?? [];
-  const featuredBlankets = homeCollections?.blankets ?? [];
-  const featuredBathrobes = homeCollections?.bathrobes ?? [];
 
   return (
     <div className="pb-20 md:pb-0">
@@ -293,65 +275,37 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {featuredKids.length > 0 && (
-            <FeaturedSection
-              products={featuredKids}
-              title={featured.kids.title}
-              subtitle={featured.kids.subtitle}
-              link={buildSeeAllHref(featured.kids)}
-              testIdPrefix="kids"
-              onQuickAdd={setQuickAddProduct}
-            />
-          )}
+          {homeSections.map((section, i) => (
+            section.products.length > 0 && (
+              <FeaturedSection
+                key={section.key}
+                products={section.products}
+                title={section.title}
+                subtitle={section.subtitle}
+                link={section.seeAllHref}
+                testIdPrefix={section.key}
+                onQuickAdd={setQuickAddProduct}
+              />
+            )
+          ))}
 
-          <section className="bg-primary/5 py-8 my-4">
-            <div className="max-w-7xl mx-auto px-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Gift className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-bold">{promo.title}</h3>
+          {homeSections.length > 0 && (
+            <section className="bg-primary/5 py-8 my-4">
+              <div className="max-w-7xl mx-auto px-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Gift className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold">{promo.title}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  {promo.description}
+                </p>
+                <Link href={promo.buttonLink}>
+                  <Button className="mt-4" data-testid="button-promo-shop">
+                    {promo.buttonText} <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                {promo.description}
-              </p>
-              <Link href={promo.buttonLink}>
-                <Button className="mt-4" data-testid="button-promo-shop">
-                  {promo.buttonText} <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </section>
-
-          {featuredAdults.length > 0 && (
-            <FeaturedSection
-              products={featuredAdults}
-              title={featured.couples.title}
-              subtitle={featured.couples.subtitle}
-              link={buildSeeAllHref(featured.couples)}
-              testIdPrefix="couples"
-              onQuickAdd={setQuickAddProduct}
-            />
-          )}
-
-          {featuredBlankets.length > 0 && (
-            <FeaturedSection
-              products={featuredBlankets}
-              title={featured.blankets.title}
-              subtitle={featured.blankets.subtitle}
-              link={buildSeeAllHref(featured.blankets)}
-              testIdPrefix="blankets"
-              onQuickAdd={setQuickAddProduct}
-            />
-          )}
-
-          {featuredBathrobes.length > 0 && (
-            <FeaturedSection
-              products={featuredBathrobes}
-              title={featured.bathrobes?.title || "Luxury Bathrobes"}
-              subtitle={featured.bathrobes?.subtitle || "Premium personalised cotton bathrobes"}
-              link={buildSeeAllHref(featured.bathrobes ?? defaultFeaturedSections.bathrobes)}
-              testIdPrefix="bathrobes"
-              onQuickAdd={setQuickAddProduct}
-            />
+            </section>
           )}
         </>
       )}

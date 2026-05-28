@@ -144,6 +144,7 @@ export interface FooterConfig {
 }
 
 export interface FeaturedSectionConfig {
+  key: string;
   title: string;
   subtitle: string;
   categoryFilters: string[];
@@ -154,12 +155,7 @@ export interface FeaturedSectionConfig {
   tagFilters: string[];
 }
 
-export interface FeaturedSectionsConfig {
-  kids: FeaturedSectionConfig;
-  couples: FeaturedSectionConfig;
-  blankets: FeaturedSectionConfig;
-  bathrobes: FeaturedSectionConfig;
-}
+export type FeaturedSectionsConfig = FeaturedSectionConfig[];
 
 export const defaultAnnouncement: AnnouncementConfig = {
   items: [
@@ -453,9 +449,4 @@ const EMPTY_SECTION_FILTERS = {
   tagFilters: [],
 };
 
-export const defaultFeaturedSections: FeaturedSectionsConfig = {
-  kids:      { title: "Popular for Kids Towels",           subtitle: "Disney princesses, superheroes & more",   ...EMPTY_SECTION_FILTERS },
-  couples:   { title: "Couple Sets",                       subtitle: "Elegant matching towel sets for two",       ...EMPTY_SECTION_FILTERS },
-  blankets:  { title: "Cozy Blankets",                     subtitle: "Soft personalised AC blankets for kids",    ...EMPTY_SECTION_FILTERS },
-  bathrobes: { title: "Luxury Bathrobes",                  subtitle: "Premium personalised cotton bathrobes",     ...EMPTY_SECTION_FILTERS },
-};
+export const defaultFeaturedSections: FeaturedSectionsConfig = [];

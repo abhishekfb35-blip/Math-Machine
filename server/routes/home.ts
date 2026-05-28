@@ -3,53 +3,71 @@ import { storage } from "../storage";
 import type { Product } from "@shared/types";
 import {
   loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
-  SECTION_KEYS, type SectionKey,
+  type SectionFilters,
 } from "../lib/featuredQuery";
 
-export interface HomeCollections {
-  kids: Product[];
-  couples: Product[];
-  blankets: Product[];
-  bathrobes: Product[];
+export interface HomeSection {
+  key: string;
+  title: string;
+  subtitle: string;
+  seeAllHref: string;
+  products: Product[];
 }
 
 const BUCKET_MS = 12 * 60 * 60 * 1000;
 const PER_COLLECTION = 6;
 
-let cache: { bucket: number; data: HomeCollections } | null = null;
+let cache: { bucket: number; data: HomeSection[] } | null = null;
 
 export function bustHomeCache() {
   cache = null;
 }
 
-async function buildCollections(): Promise<HomeCollections> {
+function buildSeeAllHref(filters: SectionFilters): string {
+  const p = new URLSearchParams();
+  if (filters.categoryFilters.length === 1) p.set("category", filters.categoryFilters[0]);
+  if (filters.audienceFilters.length === 1) p.set("filter",   filters.audienceFilters[0]);
+  if (filters.genderFilters.length)         p.set("gender",   filters.genderFilters.join(","));
+  if (filters.themeFilters.length)          p.set("theme",    filters.themeFilters.join(","));
+  if (filters.styleFilters.length)          p.set("style",    filters.styleFilters.join(","));
+  if (filters.tagFilters.length === 1)      p.set("tag",      filters.tagFilters[0]);
+  const qs = p.toString();
+  return qs ? `/shop?${qs}` : "/shop";
+}
+
+async function buildCollections(): Promise<HomeSection[]> {
   const bucket = Math.floor(Date.now() / BUCKET_MS);
 
   if (cache && cache.bucket === bucket) {
     return cache.data;
   }
 
-  const allFilters = await loadAllSectionFilters();
+  const sections = await loadAllSectionFilters();
 
-  const [kidsIds, couplesIds, blanketsIds, bathrobesIds] = await Promise.all(
-    SECTION_KEYS.map(k => getProductIdsByFilters(allFilters[k]))
+  if (sections.length === 0) {
+    cache = { bucket, data: [] };
+    return [];
+  }
+
+  const selectedIdSets = await Promise.all(
+    sections.map((s, i) =>
+      getProductIdsByFilters(s.filters).then(ids =>
+        seededShuffle(ids, bucket * sections.length + i).slice(0, PER_COLLECTION)
+      )
+    )
   );
 
-  const selectedKids      = seededShuffle(kidsIds,      bucket * 4 + 0).slice(0, PER_COLLECTION);
-  const selectedCouples   = seededShuffle(couplesIds,   bucket * 4 + 1).slice(0, PER_COLLECTION);
-  const selectedBlankets  = seededShuffle(blanketsIds,  bucket * 4 + 2).slice(0, PER_COLLECTION);
-  const selectedBathrobes = seededShuffle(bathrobesIds, bucket * 4 + 3).slice(0, PER_COLLECTION);
-
-  const allIds = [...selectedKids, ...selectedCouples, ...selectedBlankets, ...selectedBathrobes];
-  const allProducts = await storage.getProductsByIds(allIds);
+  const flatIds = [...new Set(selectedIdSets.flat())];
+  const allProducts = await storage.getProductsByIds(flatIds);
   const productMap = new Map(allProducts.map(p => [p.id, p]));
 
-  const data: HomeCollections = {
-    kids:      selectedKids.map(id      => productMap.get(id)).filter(Boolean) as Product[],
-    couples:   selectedCouples.map(id   => productMap.get(id)).filter(Boolean) as Product[],
-    blankets:  selectedBlankets.map(id  => productMap.get(id)).filter(Boolean) as Product[],
-    bathrobes: selectedBathrobes.map(id => productMap.get(id)).filter(Boolean) as Product[],
-  };
+  const data: HomeSection[] = sections.map((s, i) => ({
+    key:        s.key,
+    title:      s.title,
+    subtitle:   s.subtitle,
+    seeAllHref: buildSeeAllHref(s.filters),
+    products:   selectedIdSets[i].map(id => productMap.get(id)).filter(Boolean) as Product[],
+  }));
 
   cache = { bucket, data };
   return data;

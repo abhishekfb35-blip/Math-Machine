@@ -909,10 +909,9 @@ function FeaturedProductCarousel({ products, isLoading, sectionKey }: {
   );
 }
 
-type SectionKey = "kids" | "couples" | "blankets" | "bathrobes";
-
-function normaliseSectionConfig(raw: any): FeaturedSectionConfig {
+function normaliseSectionConfig(raw: any, fallbackKey?: string): FeaturedSectionConfig {
   return {
+    key:             String(raw?.key ?? fallbackKey ?? `section-${Date.now()}`),
     title:           raw?.title           ?? "",
     subtitle:        raw?.subtitle        ?? "",
     categoryFilters: Array.isArray(raw?.categoryFilters) ? raw.categoryFilters : [],
@@ -924,32 +923,27 @@ function normaliseSectionConfig(raw: any): FeaturedSectionConfig {
   };
 }
 
-const EMPTY_TAG_TYPES: Record<SectionKey, string[]> = { kids: [], couples: [], blankets: [], bathrobes: [] };
+function normalizeEditorData(raw: any): FeaturedSectionConfig[] {
+  if (Array.isArray(raw)) return raw.map(item => normaliseSectionConfig(item));
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw).map(([key, val]) => normaliseSectionConfig(val, key));
+  }
+  return [];
+}
 
 function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
-  const [config, setConfig] = useState<FeaturedSectionsConfig>(() => ({
-    kids:      normaliseSectionConfig(data.kids),
-    couples:   normaliseSectionConfig(data.couples),
-    blankets:  normaliseSectionConfig(data.blankets),
-    bathrobes: normaliseSectionConfig(data.bathrobes),
-  }));
-  const [previewResults, setPreviewResults] = useState<Record<string, { products: Product[]; total: number }>>({});
-  const [selectedTagTypes, setSelectedTagTypes] = useState<Record<SectionKey, string[]>>(EMPTY_TAG_TYPES);
+  const [sections, setSections] = useState<FeaturedSectionConfig[]>(() => normalizeEditorData(data));
+  const [selectedTagTypes, setSelectedTagTypes] = useState<string[][]>(() => sections.map(() => []));
+  const [previewResults, setPreviewResults] = useState<Record<number, { products: Product[]; total: number }>>({});
   const save = useSaveConfig("featuredSections");
+
   useEffect(() => {
-    setConfig({
-      kids:      normaliseSectionConfig(data.kids),
-      couples:   normaliseSectionConfig(data.couples),
-      blankets:  normaliseSectionConfig(data.blankets),
-      bathrobes: normaliseSectionConfig(data.bathrobes),
-    });
-    setSelectedTagTypes(EMPTY_TAG_TYPES);
+    const normalized = normalizeEditorData(data);
+    setSections(normalized);
+    setSelectedTagTypes(normalized.map(() => []));
     setPreviewResults({});
   }, [data]);
 
-  const { data: savedProducts, isLoading: loadingProducts } = useQuery<Record<string, Product[]>>({
-    queryKey: ["/api/admin/featured-products"],
-  });
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
   const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
@@ -971,7 +965,7 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   }, [allProducts, categories]);
 
   const previewMutation = useMutation({
-    mutationFn: async ({ section, filters }: { section: string; filters: FeaturedSectionConfig }) => {
+    mutationFn: async ({ index, filters }: { index: number; filters: FeaturedSectionConfig }) => {
       const res = await apiRequest("POST", "/api/admin/featured-products/preview", {
         categoryFilters: filters.categoryFilters,
         audienceFilters: filters.audienceFilters,
@@ -980,51 +974,95 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
         styleFilters:    filters.styleFilters,
         tagFilters:      filters.tagFilters,
       });
-      const data = await res.json() as { products: Product[]; total: number };
-      return { section, products: data.products ?? [], total: data.total ?? 0 };
+      const json = await res.json() as { products: Product[]; total: number };
+      return { index, products: json.products ?? [], total: json.total ?? 0 };
     },
-    onSuccess: ({ section, products, total }) => {
-      setPreviewResults(prev => ({ ...prev, [section]: { products, total } }));
+    onSuccess: ({ index, products, total }) => {
+      setPreviewResults(prev => ({ ...prev, [index]: { products, total } }));
     },
   });
 
-  const updateField = (section: SectionKey, field: keyof FeaturedSectionConfig, value: any) => {
-    setConfig(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
-    if (field !== "title" && field !== "subtitle") {
-      setPreviewResults(prev => { const n = { ...prev }; delete n[section]; return n; });
+  const update = (index: number, field: keyof FeaturedSectionConfig, value: any) => {
+    setSections(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+    if (!["title", "subtitle", "key"].includes(field as string)) {
+      setPreviewResults(prev => { const n = { ...prev }; delete n[index]; return n; });
     }
   };
 
-  const toggleFilter = (section: SectionKey, field: keyof FeaturedSectionConfig, value: string) => {
-    const current = (config[section][field] as string[]) ?? [];
+  const toggleFilter = (index: number, field: keyof FeaturedSectionConfig, value: string) => {
+    const current = (sections[index][field] as string[]) ?? [];
     const updated = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
-    updateField(section, field, updated);
+    update(index, field, updated);
   };
 
-  const toggleAll = (section: SectionKey, field: keyof FeaturedSectionConfig, allValues: string[]) => {
-    const current = (config[section][field] as string[]) ?? [];
+  const toggleAll = (index: number, field: keyof FeaturedSectionConfig, allValues: string[]) => {
+    const current = (sections[index][field] as string[]) ?? [];
     const allSelected = allValues.length > 0 && allValues.every(v => current.includes(v));
-    updateField(section, field, allSelected ? [] : allValues);
+    update(index, field, allSelected ? [] : allValues);
   };
 
-  const toggleTagType = (section: SectionKey, typeId: string) => {
+  const toggleTagType = (sectionIndex: number, typeId: string) => {
     setSelectedTagTypes(prev => {
-      const cur = prev[section];
-      const next = cur.includes(typeId) ? cur.filter(t => t !== typeId) : [...cur, typeId];
-      return { ...prev, [section]: next };
+      const next = [...prev];
+      const cur = next[sectionIndex] ?? [];
+      next[sectionIndex] = cur.includes(typeId) ? cur.filter(t => t !== typeId) : [...cur, typeId];
+      return next;
     });
   };
 
-  const toggleAllTagTypes = (section: SectionKey) => {
+  const toggleAllTagTypes = (sectionIndex: number) => {
     const allTypeIds = (allTagTypes ?? []).map(t => t.id);
     setSelectedTagTypes(prev => {
-      const cur = prev[section];
+      const next = [...prev];
+      const cur = next[sectionIndex] ?? [];
       const allSelected = allTypeIds.length > 0 && allTypeIds.every(id => cur.includes(id));
-      return { ...prev, [section]: allSelected ? [] : allTypeIds };
+      next[sectionIndex] = allSelected ? [] : allTypeIds;
+      return next;
     });
   };
 
-  const categoryOptions  = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
+  const addSection = () => {
+    setSections(prev => [...prev, normaliseSectionConfig({}, `section-${Date.now()}`)]);
+    setSelectedTagTypes(prev => [...prev, []]);
+  };
+
+  const removeSection = (index: number) => {
+    setSections(prev => prev.filter((_, i) => i !== index));
+    setSelectedTagTypes(prev => prev.filter((_, i) => i !== index));
+    setPreviewResults(prev => {
+      const n: Record<number, any> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const ki = parseInt(k);
+        if (ki < index) n[ki] = v;
+        else if (ki > index) n[ki - 1] = v;
+      });
+      return n;
+    });
+  };
+
+  const moveSection = (index: number, dir: "up" | "down") => {
+    const swap = dir === "up" ? index - 1 : index + 1;
+    if (swap < 0 || swap >= sections.length) return;
+    const next = [...sections];
+    [next[index], next[swap]] = [next[swap], next[index]];
+    setSections(next);
+    const nextTT = [...selectedTagTypes];
+    [nextTT[index], nextTT[swap]] = [nextTT[swap], nextTT[index]];
+    setSelectedTagTypes(nextTT);
+    setPreviewResults(prev => {
+      const n = { ...prev };
+      const a = n[index]; const b = n[swap];
+      if (a !== undefined) n[swap] = a; else delete n[swap];
+      if (b !== undefined) n[index] = b; else delete n[index];
+      return n;
+    });
+  };
+
+  const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
   const audienceOptions  = (attributes?.audience ?? []).map(a => ({ value: a.name, label: a.name }));
   const genderOptions    = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
   const themeOptions     = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
@@ -1032,20 +1070,19 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   const tagTypeOptions   = (allTagTypes ?? []).map(tt => ({ value: tt.id, label: tt.name }));
   const allTagsFlat      = allTags ?? [];
 
-  const SECTION_LABELS: Record<SectionKey, string> = {
-    kids: "Kids", couples: "Couples", blankets: "Blankets", bathrobes: "Bathrobes",
-  };
-
   return (
     <div className="space-y-4">
-      {(["kids", "couples", "blankets", "bathrobes"] as SectionKey[]).map((section) => {
-        const s = config[section];
-        const preview = previewResults[section];
-        const displayProducts: Product[] = preview?.products ?? savedProducts?.[section] ?? [];
-        const isPreviewing = !!preview;
-        const previewingThis = previewMutation.isPending && (previewMutation.variables as any)?.section === section;
+      {sections.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-4 border rounded-md">
+          No sections configured. Add one below to show featured products on the home page.
+        </p>
+      )}
 
-        const activeSectionTagTypes = selectedTagTypes[section];
+      {sections.map((s, index) => {
+        const preview = previewResults[index];
+        const isPreviewing = !!preview;
+        const previewingThis = previewMutation.isPending && (previewMutation.variables as any)?.index === index;
+        const activeSectionTagTypes = selectedTagTypes[index] ?? [];
         const tagOptions = activeSectionTagTypes.length === 0
           ? allTagsFlat.map(t => ({ value: t.name, label: t.name }))
           : allTagsFlat
@@ -1053,43 +1090,61 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
               .map(t => ({ value: t.name, label: t.name }));
 
         return (
-          <Card key={section} className="p-4 space-y-4">
-            <p className="text-sm font-semibold capitalize">{SECTION_LABELS[section]} Section</p>
+          <Card key={index} className="p-4 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold">{s.title || `Section ${index + 1}`}</p>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === 0}
+                  onClick={() => moveSection(index, "up")} data-testid={`button-move-up-${index}`}>
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" disabled={index === sections.length - 1}
+                  onClick={() => moveSection(index, "down")} data-testid={`button-move-down-${index}`}>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={() => removeSection(index)} data-testid={`button-remove-section-${index}`}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Title</Label>
-                <Input value={s.title} onChange={(e) => updateField(section, "title", e.target.value)} data-testid={`input-featured-${section}-title`} />
+                <Input value={s.title} onChange={e => update(index, "title", e.target.value)}
+                  data-testid={`input-featured-${index}-title`} />
               </div>
               <div className="space-y-1.5">
                 <Label>Subtitle</Label>
-                <Input value={s.subtitle} onChange={(e) => updateField(section, "subtitle", e.target.value)} data-testid={`input-featured-${section}-subtitle`} />
+                <Input value={s.subtitle} onChange={e => update(index, "subtitle", e.target.value)}
+                  data-testid={`input-featured-${index}-subtitle`} />
               </div>
             </div>
 
             <div className="space-y-3 rounded-md border p-3 bg-muted/30">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
               <FilterChips label="Categories" options={categoryOptions} selected={s.categoryFilters} counts={productCounts}
-                onToggle={v => toggleFilter(section, "categoryFilters", v)}
-                onToggleAll={() => toggleAll(section, "categoryFilters", categoryOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "categoryFilters", v)}
+                onToggleAll={() => toggleAll(index, "categoryFilters", categoryOptions.map(o => o.value))} />
               <FilterChips label="Audience" options={audienceOptions} selected={s.audienceFilters} counts={productCounts}
-                onToggle={v => toggleFilter(section, "audienceFilters", v)}
-                onToggleAll={() => toggleAll(section, "audienceFilters", audienceOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "audienceFilters", v)}
+                onToggleAll={() => toggleAll(index, "audienceFilters", audienceOptions.map(o => o.value))} />
               <FilterChips label="Genders" options={genderOptions} selected={s.genderFilters} counts={productCounts}
-                onToggle={v => toggleFilter(section, "genderFilters", v)}
-                onToggleAll={() => toggleAll(section, "genderFilters", genderOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "genderFilters", v)}
+                onToggleAll={() => toggleAll(index, "genderFilters", genderOptions.map(o => o.value))} />
               <FilterChips label="Themes" options={themeOptions} selected={s.themeFilters} counts={productCounts}
-                onToggle={v => toggleFilter(section, "themeFilters", v)}
-                onToggleAll={() => toggleAll(section, "themeFilters", themeOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "themeFilters", v)}
+                onToggleAll={() => toggleAll(index, "themeFilters", themeOptions.map(o => o.value))} />
               <FilterChips label="Styles" options={styleOptions} selected={s.styleFilters} counts={productCounts}
-                onToggle={v => toggleFilter(section, "styleFilters", v)}
-                onToggleAll={() => toggleAll(section, "styleFilters", styleOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "styleFilters", v)}
+                onToggleAll={() => toggleAll(index, "styleFilters", styleOptions.map(o => o.value))} />
               <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={activeSectionTagTypes}
-                onToggle={v => toggleTagType(section, v)}
-                onToggleAll={() => toggleAllTagTypes(section)} />
+                onToggle={v => toggleTagType(index, v)}
+                onToggleAll={() => toggleAllTagTypes(index)} />
               <FilterChips label="Tags" options={tagOptions} selected={s.tagFilters}
-                onToggle={v => toggleFilter(section, "tagFilters", v)}
-                onToggleAll={() => toggleAll(section, "tagFilters", tagOptions.map(o => o.value))} />
+                onToggle={v => toggleFilter(index, "tagFilters", v)}
+                onToggleAll={() => toggleAll(index, "tagFilters", tagOptions.map(o => o.value))} />
             </div>
 
             <div className="space-y-1.5">
@@ -1097,32 +1152,30 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
                 <p className="text-xs text-muted-foreground">
                   {isPreviewing
                     ? `Preview — ${preview.total ?? 0} matched, showing ${preview.products?.length ?? 0}`
-                    : `Saved — ${displayProducts.length} products (rotates every 12 hrs)`}
+                    : "Click Preview to see which products match these filters"}
                 </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  disabled={previewingThis}
-                  onClick={() => previewMutation.mutate({ section, filters: s })}
-                  data-testid={`button-preview-${section}`}
-                >
+                <Button size="sm" variant="outline" className="h-7 text-xs" disabled={previewingThis}
+                  onClick={() => previewMutation.mutate({ index, filters: s })}
+                  data-testid={`button-preview-${index}`}>
                   {previewingThis ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Previewing…</> : "Preview"}
                 </Button>
               </div>
-              <FeaturedProductCarousel
-                products={displayProducts}
-                isLoading={loadingProducts && !isPreviewing}
-                sectionKey={section}
-              />
+              {isPreviewing && (
+                <FeaturedProductCarousel products={preview.products} isLoading={previewingThis} sectionKey={`section-${index}`} />
+              )}
             </div>
           </Card>
         );
       })}
 
-      <Button onClick={() => save.mutate(config)} disabled={save.isPending} data-testid="button-save-featured">
-        <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Featured Sections"}
-      </Button>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={addSection} data-testid="button-add-featured-section">
+          <Plus className="w-4 h-4 mr-2" /> Add Section
+        </Button>
+        <Button onClick={() => save.mutate(sections)} disabled={save.isPending} data-testid="button-save-featured">
+          <Save className="w-4 h-4 mr-2" /> {save.isPending ? "Saving..." : "Save Featured Sections"}
+        </Button>
+      </div>
     </div>
   );
 }
