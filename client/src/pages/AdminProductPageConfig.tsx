@@ -22,8 +22,6 @@ type SingleAudienceConfig = {
 type CoupleAudienceConfig = {
   type: "couples";
   heading: string;
-  person1Label: string;
-  person2Label: string;
   person1Prefix: string;
   person2Prefix: string;
   nameMin?: number;
@@ -74,7 +72,7 @@ export default function AdminProductPageConfig() {
     } else {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "", nameMin: 3, nameMax: 11 } as CoupleAudienceConfig,
+        [slug]: { type: "couples", heading: "", person1Prefix: "", person2Prefix: "", nameMin: 3, nameMax: 11 } as CoupleAudienceConfig,
       }));
     }
   };
@@ -195,25 +193,7 @@ export default function AdminProductPageConfig() {
                   {cfg.type === "couples" && (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 1 field label</Label>
-                        <Input
-                          value={cfg.person1Label}
-                          onChange={e => updateField(slug, "person1Label", e.target.value)}
-                          placeholder="e.g. Gentleman"
-                          data-testid={`input-p1label-${slug}`}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 2 field label</Label>
-                        <Input
-                          value={cfg.person2Label}
-                          onChange={e => updateField(slug, "person2Label", e.target.value)}
-                          placeholder="e.g. Lady"
-                          data-testid={`input-p2label-${slug}`}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 1 field title</Label>
+                        <Label className="text-xs text-muted-foreground">Person 1 name</Label>
                         <Input
                           value={cfg.person1Prefix}
                           onChange={e => updateField(slug, "person1Prefix", e.target.value)}
@@ -222,7 +202,7 @@ export default function AdminProductPageConfig() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Person 2 field title</Label>
+                        <Label className="text-xs text-muted-foreground">Person 2 name</Label>
                         <Input
                           value={cfg.person2Prefix}
                           onChange={e => updateField(slug, "person2Prefix", e.target.value)}
