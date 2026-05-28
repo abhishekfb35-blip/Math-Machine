@@ -1356,45 +1356,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async cleanupSwatchFiles(urls: (string | null | undefined)[]): Promise<void> {
-    const swatchPrefix = "/images/swatches/";
-    const uniqueUrls = [...new Set(urls.filter((u): u is string => typeof u === "string" && u.startsWith(swatchPrefix)))];
-    if (uniqueUrls.length === 0) return;
-    const isProduction = process.env.NODE_ENV === "production";
-    const swatchesDir = isProduction
-      ? path.resolve(process.cwd(), "dist", "public", "images", "swatches")
-      : path.resolve(process.cwd(), "client", "public", "images", "swatches");
-    for (const url of uniqueUrls) {
-      const rawFilename = url.slice(swatchPrefix.length);
-      const safeFilename = path.basename(rawFilename);
-      if (!safeFilename || safeFilename !== rawFilename) continue;
-      const filePath = path.resolve(swatchesDir, safeFilename);
-      if (!filePath.startsWith(swatchesDir + path.sep) && filePath !== swatchesDir) continue;
-      const still = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.swatchUrl, url)).limit(1);
-      if (still.length === 0) {
-        let deleted = false;
+    try {
+      const swatchPrefix = "/images/swatches/";
+      const uniqueUrls = [...new Set(urls.filter((u): u is string => typeof u === "string" && u.startsWith(swatchPrefix)))];
+      if (uniqueUrls.length === 0) return;
+      const isProduction = process.env.NODE_ENV === "production";
+      const swatchesDir = isProduction
+        ? path.resolve(process.cwd(), "dist", "public", "images", "swatches")
+        : path.resolve(process.cwd(), "client", "public", "images", "swatches");
+      for (const url of uniqueUrls) {
         try {
-          await fs.promises.unlink(filePath);
-          deleted = true;
+          const rawFilename = url.slice(swatchPrefix.length);
+          const safeFilename = path.basename(rawFilename);
+          if (!safeFilename || safeFilename !== rawFilename) continue;
+          const filePath = path.resolve(swatchesDir, safeFilename);
+          if (!filePath.startsWith(swatchesDir + path.sep) && filePath !== swatchesDir) continue;
+          const still = await db.select({ id: variantColors.id }).from(variantColors).where(eq(variantColors.swatchUrl, url)).limit(1);
+          if (still.length === 0) {
+            let deleted = false;
+            try {
+              await fs.promises.unlink(filePath);
+              deleted = true;
+            } catch (err: any) {
+              if (err?.code !== "ENOENT") {
+                console.warn(`[swatch-cleanup] Failed to delete ${safeFilename}: ${err?.message}`);
+              }
+            }
+            if (deleted) {
+              try {
+                await this.createAuditLog({
+                  entityType: "swatch-file",
+                  entityId: safeFilename,
+                  entityName: safeFilename,
+                  action: "deleted",
+                  changes: JSON.stringify({ filename: safeFilename, url }),
+                  username: "system",
+                });
+              } catch (err: any) {
+                console.warn(`[swatch-cleanup] Failed to log deletion of ${safeFilename}: ${err?.message}`);
+              }
+            }
+          }
         } catch (err: any) {
-          if (err?.code !== "ENOENT") {
-            console.warn(`[swatch-cleanup] Failed to delete ${safeFilename}: ${err?.message}`);
-          }
-        }
-        if (deleted) {
-          try {
-            await this.createAuditLog({
-              entityType: "swatch-file",
-              entityId: safeFilename,
-              entityName: safeFilename,
-              action: "deleted",
-              changes: JSON.stringify({ filename: safeFilename, url }),
-              username: "system",
-            });
-          } catch (err: any) {
-            console.warn(`[swatch-cleanup] Failed to log deletion of ${safeFilename}: ${err?.message}`);
-          }
+          console.warn(`[swatch-cleanup] Skipping url ${url}: ${err?.message}`);
         }
       }
+    } catch (err: any) {
+      console.warn(`[swatch-cleanup] Cleanup aborted, ignoring: ${err?.message}`);
     }
   }
 
