@@ -1359,9 +1359,9 @@ export class DatabaseStorage implements IStorage {
     const swatchPrefix = "/images/swatches/";
     const uniqueUrls = [...new Set(urls.filter((u): u is string => typeof u === "string" && u.startsWith(swatchPrefix)))];
     if (uniqueUrls.length === 0) return;
-    const isProduction = __dirname.endsWith("/dist") || __dirname.endsWith("\\dist");
+    const isProduction = process.env.NODE_ENV === "production";
     const swatchesDir = isProduction
-      ? path.resolve(__dirname, "public", "images", "swatches")
+      ? path.resolve(process.cwd(), "dist", "public", "images", "swatches")
       : path.resolve(process.cwd(), "client", "public", "images", "swatches");
     for (const url of uniqueUrls) {
       const rawFilename = url.slice(swatchPrefix.length);
@@ -1690,9 +1690,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }> {
-    const isProduction = __dirname.endsWith("/dist") || __dirname.endsWith("\\dist");
+    const isProduction = process.env.NODE_ENV === "production";
     const swatchesDir = isProduction
-      ? path.resolve(__dirname, "public", "images", "swatches")
+      ? path.resolve(process.cwd(), "dist", "public", "images", "swatches")
       : path.resolve(process.cwd(), "client", "public", "images", "swatches");
 
     let files: string[];
