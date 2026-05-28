@@ -435,13 +435,13 @@ export interface ShopSection {
 }
 
 export const defaultShopSections: ShopSection[] = [
-  { label: "Kids Towels",      tag: "kids-towels",      tags: [], categories: ["towels"],    maxShown: 15, enabled: true, audience: ["kids", "infant"] },
-  { label: "Adult Towels",     tag: "adult-towels",     tags: [], categories: ["towels"],    maxShown: 8,  enabled: true, audience: ["adults"] },
-  { label: "Couple Towels",    tag: "couple-towels",    tags: [], categories: ["towels"],    maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
-  { label: "Kids Blankets",    tag: "kids-blankets",    tags: [], categories: ["blankets"],  maxShown: 8,  enabled: true, audience: ["kids"] },
-  { label: "Kids Bathrobes",   tag: "kids-bathrobes",   tags: [], categories: ["bathrobes"], maxShown: 8,  enabled: true, audience: ["kids"] },
-  { label: "Adult Bathrobes",  tag: "adult-bathrobes",  tags: [], categories: ["bathrobes"], maxShown: 8,  enabled: true, audience: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple-bathrobes", tags: [], categories: ["bathrobes"], maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
+  { label: "Kids Towels",      tag: "kids-towels",      tags: [], maxShown: 15, enabled: true, audience: ["kids", "infant"], genders: ["male", "female", "unisex"] },
+  { label: "Adult Towels",     tag: "adult-towels",     tags: [], maxShown: 8,  enabled: true, audience: ["adults"],          genders: ["male", "female", "unisex"] },
+  { label: "Couple Towels",    tag: "couple-towels",    tags: [], maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
+  { label: "Kids Blankets",    tag: "kids-blankets",    tags: [], maxShown: 8,  enabled: true, audience: ["kids"] },
+  { label: "Kids Bathrobes",   tag: "kids-bathrobes",   tags: [], maxShown: 8,  enabled: true, audience: ["kids"] },
+  { label: "Adult Bathrobes",  tag: "adult-bathrobes",  tags: [], maxShown: 8,  enabled: true, audience: ["adults"] },
+  { label: "Couple Bathrobes", tag: "couple-bathrobes", tags: [], maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
 ];
 
 const EMPTY_SECTION_FILTERS = {
