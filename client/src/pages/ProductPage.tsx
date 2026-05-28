@@ -36,10 +36,10 @@ const REVIEWS_PER_PAGE = 10;
 const NAME_MIN = 3;
 const NAME_MAX = 11;
 
-function nameCharHint(val: string): { text: string; className: string } {
+function nameCharHint(val: string, max: number): { text: string; className: string } {
   const len = val.length;
-  const left = NAME_MAX - len;
-  if (len === 0) return { text: `${NAME_MIN} to ${NAME_MAX} characters`, className: "text-muted-foreground" };
+  const left = max - len;
+  if (len === 0) return { text: `${NAME_MIN} to ${max} characters`, className: "text-muted-foreground" };
   if (len < NAME_MIN) return { text: `Minimum ${NAME_MIN} characters · ${left} character${left !== 1 ? "s" : ""} left`, className: "text-amber-500" };
   return { text: `${left} character${left !== 1 ? "s" : ""} left`, className: "text-muted-foreground" };
 }
@@ -100,6 +100,7 @@ export default function ProductPage() {
   }, [productPageConfigData, product?.audience]);
 
   const isCoupleProduct = audienceConfig?.type === "couples";
+  const nameMax = audienceConfig?.nameMax ?? NAME_MAX;
 
   const { data: productImages } = useQuery<ProductImage[]>({
     queryKey: ["/api/products", product?.id, "images"],
@@ -678,10 +679,10 @@ export default function ProductPage() {
                       placeholder={audienceConfig.person1Label}
                       value={gentlemanName}
                       onChange={(e) => setGentlemanName(e.target.value)}
-                      maxLength={NAME_MAX}
+                      maxLength={nameMax}
                       data-testid="input-gentleman-name"
                     />
-                    {(() => { const h = nameCharHint(gentlemanName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                    {(() => { const h = nameCharHint(gentlemanName, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                   <div>
                     <Input
@@ -689,10 +690,10 @@ export default function ProductPage() {
                       placeholder={audienceConfig.person2Label}
                       value={ladyName}
                       onChange={(e) => setLadyName(e.target.value)}
-                      maxLength={NAME_MAX}
+                      maxLength={nameMax}
                       data-testid="input-lady-name"
                     />
-                    {(() => { const h = nameCharHint(ladyName); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                    {(() => { const h = nameCharHint(ladyName, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -709,10 +710,10 @@ export default function ProductPage() {
                   placeholder={audienceConfig.nameLabel}
                   value={personalizationName}
                   onChange={(e) => setPersonalizationName(e.target.value)}
-                  maxLength={NAME_MAX}
+                  maxLength={nameMax}
                   data-testid="input-personalization-name"
                 />
-                {(() => { const h = nameCharHint(personalizationName); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
+                {(() => { const h = nameCharHint(personalizationName, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
               </div>
             ) : null}
 

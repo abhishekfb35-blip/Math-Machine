@@ -160,6 +160,7 @@ export function registerCheckoutRoutes(app: Express) {
     "consent-popup", "pwa-install", "wishlist-signup-prompt",
     "terms", "privacy", "refund", "shipping", "about",
     "page-terms", "page-privacy", "page-refund", "page-shipping", "page-about",
+    "product-page-config",
   ]);
 
   app.get("/api/site-config", async (_req, res) => {

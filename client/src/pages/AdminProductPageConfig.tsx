@@ -15,6 +15,7 @@ type SingleAudienceConfig = {
   type: "single";
   heading: string;
   nameLabel: string;
+  nameMax?: number;
 };
 
 type CoupleAudienceConfig = {
@@ -24,6 +25,7 @@ type CoupleAudienceConfig = {
   person2Label: string;
   person1Prefix: string;
   person2Prefix: string;
+  nameMax?: number;
 };
 
 export type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
@@ -65,17 +67,24 @@ export default function AdminProductPageConfig() {
     if (type === "single") {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "single", heading: "", nameLabel: "" } as SingleAudienceConfig,
+        [slug]: { type: "single", heading: "", nameLabel: "", nameMax: 11 } as SingleAudienceConfig,
       }));
     } else {
       setConfig(prev => ({
         ...prev,
-        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "" } as CoupleAudienceConfig,
+        [slug]: { type: "couples", heading: "", person1Label: "", person2Label: "", person1Prefix: "", person2Prefix: "", nameMax: 11 } as CoupleAudienceConfig,
       }));
     }
   };
 
   const updateField = (slug: string, field: string, value: string) => {
+    setConfig(prev => ({
+      ...prev,
+      [slug]: { ...prev[slug], [field]: value } as AudiencePageConfig,
+    }));
+  };
+
+  const updateNumericField = (slug: string, field: string, value: number) => {
     setConfig(prev => ({
       ...prev,
       [slug]: { ...prev[slug], [field]: value } as AudiencePageConfig,
@@ -135,6 +144,20 @@ export default function AdminProductPageConfig() {
                       onChange={e => updateField(slug, "heading", e.target.value)}
                       placeholder="e.g. Personalise with a Name"
                       data-testid={`input-heading-${slug}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Max characters per name</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={30}
+                      step={1}
+                      value={cfg.nameMax ?? 11}
+                      onChange={e => updateNumericField(slug, "nameMax", Math.max(1, Math.min(30, Number(e.target.value) || 11)))}
+                      className="w-24"
+                      data-testid={`input-namemax-${slug}`}
                     />
                   </div>
 
