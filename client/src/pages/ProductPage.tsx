@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { trackProductView } from "@/lib/analytics";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -160,6 +161,18 @@ export default function ProductPage() {
 
   const category = categories?.find((c) => c.id === product?.categoryId);
 
+  const viewTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!product || viewTrackedRef.current) return;
+    viewTrackedRef.current = true;
+    trackProductView({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: category?.name,
+    });
+  }, [product, category]);
+
   const relatedProducts = allProducts
     ?.filter((p) => p.categoryId === product?.categoryId && p.id !== product?.id)
     .slice(0, 4) || [];
@@ -262,6 +275,12 @@ export default function ProductPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      trackAddToCart({
+        id: product!.id,
+        name: product!.name,
+        price: effectiveSellingPrice,
+        category: category?.name,
+      });
       toast({
         title: "Added to cart",
         description: `${product!.name} has been added to your cart.`,

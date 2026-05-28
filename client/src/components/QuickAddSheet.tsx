@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { trackAddToCart } from "@/lib/analytics";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -155,6 +156,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      trackAddToCart(
+        {
+          id: product!.id,
+          name: product!.name,
+          price: effectivePrice,
+        },
+        quantity,
+      );
       toast({
         title: "Added to cart",
         description: `${product!.name} has been added to your cart.`,

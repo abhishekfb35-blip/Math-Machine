@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
+import { useRef, useEffect } from "react";
+import { trackPurchase } from "@/lib/analytics";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,6 +21,22 @@ export default function OrderConfirmation() {
   const { data: order, isLoading } = useQuery<OrderWithItems>({
     queryKey: ["/api/orders", id],
   });
+
+  const purchaseTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!order || purchaseTrackedRef.current) return;
+    purchaseTrackedRef.current = true;
+    trackPurchase(
+      order.id,
+      order.total,
+      order.items.map((item) => ({
+        id: item.productId,
+        name: item.productName,
+        price: item.productPrice,
+        quantity: item.quantity,
+      })),
+    );
+  }, [order]);
 
   if (isLoading) {
     return (

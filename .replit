@@ -48,6 +48,7 @@ CCAVENUE_MODE = "live"
 RAZORPAY_KEY_ID = "rzp_live_SM5vjEHAo4QGaW"
 RAZORPAY_KEY_SECRET = "d7UhRagURy8GaWwibWwyeemk"
 DB_COMPARE_TOKEN = "dbshare"
+VITE_GA4_MEASUREMENT_ID = "G-FSSZLQ3904"
 
 [postMerge]
 path = "scripts/post-merge.sh"

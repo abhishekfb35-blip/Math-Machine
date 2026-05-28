@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { showSignInModal } from "@/components/SignInModal";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 interface CartData {
   id: string;
@@ -152,6 +153,23 @@ export default function CheckoutPage() {
       setPaymentMethod("cod");
     }
   }, [razorpayConfig]);
+
+  const checkoutTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!cart || cart.items.length === 0 || checkoutTrackedRef.current) return;
+    checkoutTrackedRef.current = true;
+    trackBeginCheckout(
+      cart.items
+        .filter((i) => i.product)
+        .map((i) => ({
+          id: i.product!.id,
+          name: i.product!.name,
+          price: i.product!.price,
+          quantity: i.quantity,
+        })),
+      cart.total,
+    );
+  }, [cart]);
 
   const form = useForm<CheckoutInput>({
     resolver: phoneResolver,
