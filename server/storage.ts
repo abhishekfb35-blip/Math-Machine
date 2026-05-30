@@ -750,6 +750,7 @@ export class DatabaseStorage implements IStorage {
         cartId: carts.id,
         createdAt: carts.createdAt,
         checkoutEmail: carts.checkoutEmail,
+        checkoutStartedAt: carts.checkoutStartedAt,
         itemCount: sql<number>`count(${cartItems.id})::int`,
         estimatedValue: sql<number>`coalesce(sum(${products.price} * ${cartItems.quantity}), 0)::int`,
         recoveryEmailSent: sql<boolean>`${carts.abandonedEmailSentAt} IS NOT NULL`,
@@ -762,7 +763,7 @@ export class DatabaseStorage implements IStorage {
           sql`${carts.updatedAt} < NOW() - INTERVAL '1 hour'`,
           sql`NOT EXISTS (SELECT 1 FROM payment_attempts pa WHERE pa.cart_id = ${carts.id} AND pa.order_id IS NOT NULL)`
         ))
-        .groupBy(carts.id, carts.createdAt, carts.checkoutEmail, carts.abandonedEmailSentAt)
+        .groupBy(carts.id, carts.createdAt, carts.checkoutEmail, carts.checkoutStartedAt, carts.abandonedEmailSentAt)
         .orderBy(desc(carts.createdAt))
         .limit(50),
 
@@ -826,14 +827,36 @@ export class DatabaseStorage implements IStorage {
         amount: r.amount,
         razorpayOrderId: r.razorpayOrderId,
       })),
-      abandonedCarts: abandonedCartsRows.map(c => ({
-        cartId: c.cartId,
-        createdAt: c.createdAt ? c.createdAt.toISOString() : null,
-        checkoutEmail: c.checkoutEmail,
-        itemCount: Number(c.itemCount),
-        estimatedValue: Number(c.estimatedValue),
-        recoveryEmailSent: Boolean(c.recoveryEmailSent),
-      })),
+      abandonedCarts: abandonedCartsRows.map(c => {
+        const emailSent = Boolean(c.recoveryEmailSent);
+        const hasEmail = !!c.checkoutEmail;
+        const checkoutStarted = !!c.checkoutStartedAt;
+
+        const abandonmentStage = hasEmail
+          ? "Entered email"
+          : checkoutStarted
+            ? "Started checkout"
+            : "Added to cart only";
+
+        const emailNotSentReason = emailSent
+          ? null
+          : hasEmail
+            ? "Pending — will send on next job run"
+            : checkoutStarted
+              ? "No email captured (left before entering email)"
+              : "No email captured (never reached checkout)";
+
+        return {
+          cartId: c.cartId,
+          createdAt: c.createdAt ? c.createdAt.toISOString() : null,
+          checkoutEmail: c.checkoutEmail,
+          itemCount: Number(c.itemCount),
+          estimatedValue: Number(c.estimatedValue),
+          recoveryEmailSent: emailSent,
+          abandonmentStage,
+          emailNotSentReason,
+        };
+      }),
       leadsTotal: Number(leadsTotalRow[0]?.count ?? 0),
       registeredCustomers: Number(registeredCustomersRow[0]?.count ?? 0),
       checkoutEmailsCaptured: Number(checkoutEmailsCapturedRow[0]?.count ?? 0),

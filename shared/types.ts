@@ -673,6 +673,8 @@ export interface FunnelReport {
     itemCount: number;
     estimatedValue: number;
     recoveryEmailSent: boolean;
+    abandonmentStage: string;
+    emailNotSentReason: string | null;
   }>;
   leadsTotal: number;
   registeredCustomers: number;

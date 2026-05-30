@@ -351,27 +351,53 @@ export default function AdminFunnelReport() {
                     <tr className="border-b text-muted-foreground text-xs uppercase tracking-wide">
                       <th className="text-left py-2 pr-4 font-medium">Date</th>
                       <th className="text-left py-2 pr-4 font-medium">Email</th>
+                      <th className="text-left py-2 pr-4 font-medium">Drop-off stage</th>
                       <th className="text-right py-2 pr-4 font-medium">Items</th>
                       <th className="text-right py-2 pr-4 font-medium">Value</th>
-                      <th className="text-center py-2 font-medium">Recovery sent</th>
+                      <th className="text-left py-2 font-medium">Recovery email</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.abandonedCarts.map(c => (
-                      <tr key={c.cartId} className="border-b last:border-0 hover:bg-muted/40">
-                        <td className="py-2 pr-4 whitespace-nowrap text-muted-foreground">
+                      <tr key={c.cartId} className="border-b last:border-0 hover:bg-muted/40 align-top">
+                        <td className="py-2.5 pr-4 whitespace-nowrap text-muted-foreground">
                           {formatDate(c.createdAt)}
                         </td>
-                        <td className="py-2 pr-4 max-w-[200px] truncate">
-                          {c.checkoutEmail || <span className="text-muted-foreground italic">not captured</span>}
+                        <td className="py-2.5 pr-4 max-w-[180px]">
+                          {c.checkoutEmail
+                            ? <span className="font-mono text-xs break-all">{c.checkoutEmail}</span>
+                            : <span className="text-destructive text-xs font-medium">Not captured</span>
+                          }
                         </td>
-                        <td className="py-2 pr-4 text-right">{c.itemCount}</td>
-                        <td className="py-2 pr-4 text-right font-medium">{formatCurrency(c.estimatedValue)}</td>
-                        <td className="py-2 text-center">
+                        <td className="py-2.5 pr-4 whitespace-nowrap">
+                          <Badge
+                            variant="outline"
+                            className={
+                              c.abandonmentStage === "Entered email"
+                                ? "text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400"
+                                : c.abandonmentStage === "Started checkout"
+                                  ? "text-orange-700 border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400"
+                                  : "text-muted-foreground"
+                            }
+                            data-testid={`badge-stage-${c.cartId}`}
+                          >
+                            {c.abandonmentStage}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 pr-4 text-right">{c.itemCount}</td>
+                        <td className="py-2.5 pr-4 text-right font-medium">{formatCurrency(c.estimatedValue)}</td>
+                        <td className="py-2.5">
                           {c.recoveryEmailSent ? (
                             <Badge variant="secondary" className="text-green-700 bg-green-100 dark:bg-green-950/40 dark:text-green-400">Sent</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground">Not sent</Badge>
+                            <div className="space-y-0.5">
+                              <Badge variant="outline" className="text-muted-foreground">Not sent</Badge>
+                              {c.emailNotSentReason && (
+                                <p className="text-xs text-muted-foreground max-w-[220px] leading-tight" data-testid={`text-email-reason-${c.cartId}`}>
+                                  {c.emailNotSentReason}
+                                </p>
+                              )}
+                            </div>
                           )}
                         </td>
                       </tr>
