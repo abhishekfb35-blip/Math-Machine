@@ -32,7 +32,7 @@
     <script>
       (function() {
         var id = '%VITE_GA4_MEASUREMENT_ID%';
-        if (!id || id === '%VITE_GA4_MEASUREMENT_ID%' || id.indexOf('G-') !== 0) return;
+        if (!id || id.indexOf('G-') !== 0) return;
         window.dataLayer = window.dataLayer || [];
         window.gtag = function() { window.dataLayer.push(arguments); };
         window.gtag('js', new Date());
