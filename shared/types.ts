@@ -648,6 +648,30 @@ export interface FunnelStats {
   recentFailures: Array<{ reason: string | null; code: string | null; count: number }>;
 }
 
+export interface TrafficIpRow {
+  ip: string;
+  country: string | null;
+  city: string | null;
+  requestCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  topPaths: string[];
+  userAgentSummary: string | null;
+  activityLevel: 'normal' | 'elevated' | 'high';
+  isAnomaly: boolean;
+}
+
+export interface TrafficReport {
+  from: string;
+  to: string;
+  totalRequests: number;
+  uniqueIps: number;
+  uniqueSessions: number;
+  topPaths: Array<{ path: string; count: number }>;
+  ipRows: TrafficIpRow[];
+  abandonedCartCount: number;
+}
+
 export interface FunnelReport {
   cartsCreated: number;
   cartsWithItems: number;

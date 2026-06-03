@@ -29,6 +29,7 @@ import { ensureAttributeTables } from "./migrations/attribute-tables";
 import { ensureSiteContentTable } from "./migrations/site-content-table";
 import { runColorSizeReposMigration } from "./migrations/color-size-repos";
 import { ensureAudienceVariantConfig } from "./migrations/audience-variant-config";
+import { ensureRequestLogsTables } from "./migrations/request-logs-table";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
@@ -100,6 +101,26 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const p = req.path;
+    if (!p.startsWith("/api") || p === "/api/health") return;
+    const ip = (req.ip ?? req.socket?.remoteAddress ?? "unknown").replace("::ffff:", "");
+    storage.logRequest({
+      ip,
+      path: p,
+      method: req.method,
+      statusCode: res.statusCode,
+      userAgent: (req.headers["user-agent"] as string) ?? null,
+      sessionId: (req.cookies?.["cart_session"] as string) ?? null,
+      customerId: null,
+      durationMs: Date.now() - start,
+    }).catch(() => {});
+  });
+  next();
+});
+
 // Serve product images directly from the git-tracked source directory.
 // This bypasses the Vite build copy (which can be incomplete for large folders)
 // and works identically in both dev and prod since client/public/ is in git.
@@ -123,6 +144,7 @@ function startGuestCartCleanupScheduler() {
       } catch {}
 
       try { await storage.pruneRateLimitStats(30); } catch {}
+      try { await storage.pruneRequestLogs(30); } catch {}
 
       if (!enabled) return;
 
@@ -265,6 +287,7 @@ function startRateLimitStatsScheduler() {
             { id: "ensure-site-content-table",        run: ensureSiteContentTable },
             { id: "color-size-repos",                  run: runColorSizeReposMigration },
             { id: "audience-variant-config",            run: ensureAudienceVariantConfig },
+            { id: "request-logs-tables",                run: ensureRequestLogsTables },
           ]);
           currentStep = "seed-database";
           if (process.env.NODE_ENV === "production") {

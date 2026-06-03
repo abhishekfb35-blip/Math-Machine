@@ -27,4 +27,38 @@ export function registerAdminReportRoutes(app: Express) {
       res.status(500).json({ message: "Failed to generate funnel report" });
     }
   });
+
+  app.get("/api/admin/reports/traffic", requirePermission("orders"), async (req: Request, res: Response) => {
+    try {
+      const now = new Date();
+      const periodParam = req.query.period as string | undefined;
+      const fromParam = req.query.from as string | undefined;
+      const toParam = req.query.to as string | undefined;
+
+      let from: Date;
+      let to: Date = now;
+
+      if (fromParam && toParam) {
+        from = new Date(fromParam + "T00:00:00.000Z");
+        to = new Date(toParam + "T23:59:59.999Z");
+      } else if (periodParam === "weekly") {
+        from = new Date(now);
+        from.setDate(from.getDate() - 7);
+      } else {
+        from = new Date(now);
+        from.setDate(from.getDate() - 1);
+      }
+
+      if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+        res.status(400).json({ message: "Invalid date range" });
+        return;
+      }
+
+      const report = await storage.getTrafficReport(from, to);
+      res.json(report);
+    } catch (err) {
+      console.error("Traffic report error:", err);
+      res.status(500).json({ message: "Failed to generate traffic report" });
+    }
+  });
 }

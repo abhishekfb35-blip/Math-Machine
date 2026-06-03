@@ -1,7 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts, requestLogs, ipGeoCache } from "@shared/schema";
+import { resolveGeo } from "./lib/geoLookup";
 
 import type {
   Category, InsertCategory,
@@ -220,6 +221,10 @@ export interface IStorage {
   getActiveCustomerSessionCount(): Promise<number>;
   getRecentCustomerSignupCount(dayWindow: number): Promise<number>;
   cleanupOrphanedSwatches(): Promise<{ deleted: number; filenames: string[] }>;
+
+  logRequest(data: { ip: string; path: string; method: string; statusCode?: number | null; userAgent?: string | null; sessionId?: string | null; customerId?: string | null; durationMs?: number | null }): Promise<void>;
+  pruneRequestLogs(retentionDays: number): Promise<void>;
+  getTrafficReport(from: Date, to: Date): Promise<import("@shared/types").TrafficReport>;
 
   getAttributes(): Promise<Attributes>;
   getAudiences(): Promise<Audience[]>;
@@ -2196,6 +2201,171 @@ export class DatabaseStorage implements IStorage {
       genderIds: genRows.map(r => r.genderId),
       themeIds: themeRows.map(r => r.themeId),
       styleIds: styleRows.map(r => r.styleId),
+    };
+  }
+
+  // ── Request logging ──────────────────────────────────────────────────────────
+
+  async logRequest(data: { ip: string; path: string; method: string; statusCode?: number | null; userAgent?: string | null; sessionId?: string | null; customerId?: string | null; durationMs?: number | null }): Promise<void> {
+    try {
+      await db.insert(requestLogs).values({
+        id: createId(),
+        ip: data.ip,
+        path: data.path,
+        method: data.method,
+        statusCode: data.statusCode ?? null,
+        userAgent: data.userAgent ?? null,
+        sessionId: data.sessionId ?? null,
+        customerId: data.customerId ?? null,
+        durationMs: data.durationMs ?? null,
+      });
+    } catch {}
+  }
+
+  async pruneRequestLogs(retentionDays: number): Promise<void> {
+    try {
+      const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+      await db.delete(requestLogs).where(sql`${requestLogs.createdAt} < ${cutoff}`);
+    } catch {}
+  }
+
+  async getTrafficReport(from: Date, to: Date): Promise<import("@shared/types").TrafficReport> {
+    const [
+      [totalRow],
+      [uniqueIpsRow],
+      [uniqueSessionsRow],
+      topPaths,
+      ipAgg,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(requestLogs)
+        .where(and(sql`${requestLogs.createdAt} >= ${from}`, sql`${requestLogs.createdAt} <= ${to}`)),
+      db.select({ count: sql<number>`count(distinct ${requestLogs.ip})::int` })
+        .from(requestLogs)
+        .where(and(sql`${requestLogs.createdAt} >= ${from}`, sql`${requestLogs.createdAt} <= ${to}`)),
+      db.select({ count: sql<number>`count(distinct ${requestLogs.sessionId})::int` })
+        .from(requestLogs)
+        .where(and(
+          sql`${requestLogs.createdAt} >= ${from}`,
+          sql`${requestLogs.createdAt} <= ${to}`,
+          sql`${requestLogs.sessionId} IS NOT NULL`,
+        )),
+      db.select({
+        path: requestLogs.path,
+        count: sql<number>`count(*)::int`,
+      }).from(requestLogs)
+        .where(and(sql`${requestLogs.createdAt} >= ${from}`, sql`${requestLogs.createdAt} <= ${to}`))
+        .groupBy(requestLogs.path)
+        .orderBy(desc(sql`count(*)`))
+        .limit(10),
+      db.select({
+        ip: requestLogs.ip,
+        requestCount: sql<number>`count(*)::int`,
+        firstSeen: sql<Date>`min(${requestLogs.createdAt})`,
+        lastSeen: sql<Date>`max(${requestLogs.createdAt})`,
+      }).from(requestLogs)
+        .where(and(sql`${requestLogs.createdAt} >= ${from}`, sql`${requestLogs.createdAt} <= ${to}`))
+        .groupBy(requestLogs.ip)
+        .orderBy(desc(sql`count(*)`))
+        .limit(200),
+    ]);
+
+    const ips = ipAgg.map(r => r.ip);
+
+    const pathDataMap = new Map<string, string[]>();
+    const uaMap = new Map<string, string>();
+
+    if (ips.length > 0) {
+      const batchIps = ips.slice(0, 200);
+      const [pathData, uaData] = await Promise.all([
+        db.select({
+          ip: requestLogs.ip,
+          path: requestLogs.path,
+          count: sql<number>`count(*)::int`,
+        }).from(requestLogs)
+          .where(and(
+            sql`${requestLogs.createdAt} >= ${from}`,
+            sql`${requestLogs.createdAt} <= ${to}`,
+            inArray(requestLogs.ip, batchIps),
+          ))
+          .groupBy(requestLogs.ip, requestLogs.path)
+          .orderBy(requestLogs.ip, desc(sql`count(*)`)),
+        db.select({
+          ip: requestLogs.ip,
+          userAgent: requestLogs.userAgent,
+          count: sql<number>`count(*)::int`,
+        }).from(requestLogs)
+          .where(and(
+            sql`${requestLogs.createdAt} >= ${from}`,
+            sql`${requestLogs.createdAt} <= ${to}`,
+            inArray(requestLogs.ip, batchIps),
+            sql`${requestLogs.userAgent} IS NOT NULL`,
+          ))
+          .groupBy(requestLogs.ip, requestLogs.userAgent)
+          .orderBy(requestLogs.ip, desc(sql`count(*)`)),
+      ]);
+
+      for (const row of pathData) {
+        if (!pathDataMap.has(row.ip)) pathDataMap.set(row.ip, []);
+        const paths = pathDataMap.get(row.ip)!;
+        if (paths.length < 3) paths.push(row.path);
+      }
+
+      const uaSeen = new Set<string>();
+      for (const row of uaData) {
+        if (!uaSeen.has(row.ip)) {
+          uaSeen.add(row.ip);
+          if (row.userAgent) uaMap.set(row.ip, row.userAgent);
+        }
+      }
+    }
+
+    const geoMap = await resolveGeo(ips);
+
+    const counts = ipAgg.map(r => Number(r.requestCount)).sort((a, b) => a - b);
+    const median = counts.length > 0 ? counts[Math.floor(counts.length / 2)] : 1;
+    const elevatedThreshold = Math.max(median * 2, 2);
+    const highThreshold = Math.max(median * 3, 3);
+
+    const [abandonedRow] = await db.select({ count: sql<number>`count(distinct ${carts.id})::int` })
+      .from(carts)
+      .innerJoin(cartItems, eq(cartItems.cartId, carts.id))
+      .where(and(
+        sql`${carts.createdAt} >= ${from}`,
+        sql`${carts.createdAt} <= ${to}`,
+        sql`${carts.updatedAt} < NOW() - INTERVAL '1 hour'`,
+        sql`NOT EXISTS (SELECT 1 FROM payment_attempts pa WHERE pa.cart_id = ${carts.id} AND pa.order_id IS NOT NULL)`,
+      ));
+
+    const ipRows = ipAgg.map(r => {
+      const reqCount = Number(r.requestCount);
+      const geo = geoMap.get(r.ip);
+      const isAnomaly = reqCount >= highThreshold;
+      const activityLevel: 'normal' | 'elevated' | 'high' =
+        reqCount >= highThreshold ? 'high' : reqCount >= elevatedThreshold ? 'elevated' : 'normal';
+      return {
+        ip: r.ip,
+        country: geo?.country ?? null,
+        city: geo?.city ?? null,
+        requestCount: reqCount,
+        firstSeen: r.firstSeen instanceof Date ? r.firstSeen.toISOString() : String(r.firstSeen),
+        lastSeen: r.lastSeen instanceof Date ? r.lastSeen.toISOString() : String(r.lastSeen),
+        topPaths: pathDataMap.get(r.ip) ?? [],
+        userAgentSummary: uaMap.get(r.ip) ?? null,
+        activityLevel,
+        isAnomaly,
+      };
+    });
+
+    return {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      totalRequests: Number(totalRow?.count ?? 0),
+      uniqueIps: Number(uniqueIpsRow?.count ?? 0),
+      uniqueSessions: Number(uniqueSessionsRow?.count ?? 0),
+      topPaths: topPaths.map(r => ({ path: r.path, count: Number(r.count) })),
+      ipRows,
+      abandonedCartCount: Number(abandonedRow?.count ?? 0),
     };
   }
 }

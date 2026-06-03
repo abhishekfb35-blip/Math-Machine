@@ -422,9 +422,30 @@ export const rateLimitStats = pgTable("rate_limit_stats", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const requestLogs = pgTable("request_logs", {
+  id: text("id").primaryKey(),
+  ip: text("ip").notNull(),
+  path: text("path").notNull(),
+  method: text("method").notNull(),
+  statusCode: integer("status_code"),
+  userAgent: text("user_agent"),
+  sessionId: text("session_id"),
+  customerId: text("customer_id"),
+  durationMs: integer("duration_ms"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const ipGeoCache = pgTable("ip_geo_cache", {
+  ip: text("ip").primaryKey(),
+  country: text("country"),
+  city: text("city"),
+  cachedAt: timestamp("cached_at").defaultNow(),
+});
+
 export const insertCurrencyRateSchema = createInsertSchema(currencyRates).omit({ id: true });
 export const insertPricingRuleSchema = createInsertSchema(pricingRules).omit({ id: true });
 export const insertRateLimitStatsSchema = createInsertSchema(rateLimitStats).omit({ id: true, createdAt: true });
+export const insertRequestLogSchema = createInsertSchema(requestLogs).omit({ id: true, createdAt: true });
 
 export type {
   Category, InsertCategory,

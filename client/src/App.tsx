@@ -51,6 +51,7 @@ import AdminTags from "@/pages/AdminTags";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminSecurity from "@/pages/AdminSecurity";
 import AdminFunnelReport from "@/pages/admin/AdminFunnelReport";
+import AdminTrafficReport from "@/pages/admin/AdminTrafficReport";
 import AdminProductPageConfig from "@/pages/AdminProductPageConfig";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminGuard from "@/components/AdminGuard";
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/admin/users" component={() => <SuperAdminGuard><AdminUsers /></SuperAdminGuard>} />
       <Route path="/admin/security" component={() => <SuperAdminGuard><AdminSecurity /></SuperAdminGuard>} />
       <Route path="/admin/reports/funnel" component={() => <PermissionGuard permission="orders"><AdminFunnelReport /></PermissionGuard>} />
+      <Route path="/admin/reports/traffic" component={() => <PermissionGuard permission="orders"><AdminTrafficReport /></PermissionGuard>} />
       <Route path="/admin/product-page" component={() => <PermissionGuard permission="builder"><AdminProductPageConfig /></PermissionGuard>} />
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />
