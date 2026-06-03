@@ -14,17 +14,21 @@ export async function resolveGeo(ips: string[]): Promise<Map<string, GeoResult>>
 
   const uniqueIps = [...new Set(ips)];
 
-  try {
-    const cached = await db.select()
-      .from(ipGeoCache)
-      .where(
-        inArray(ipGeoCache.ip, uniqueIps.slice(0, 500))
-      );
+  const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+  const DB_BATCH = 500;
 
-    for (const row of cached) {
-      const age = row.cachedAt ? Date.now() - new Date(row.cachedAt).getTime() : Infinity;
-      if (age < 7 * 24 * 60 * 60 * 1000) {
-        result.set(row.ip, { ip: row.ip, country: row.country ?? null, city: row.city ?? null });
+  try {
+    for (let i = 0; i < uniqueIps.length; i += DB_BATCH) {
+      const batch = uniqueIps.slice(i, i + DB_BATCH);
+      const cached = await db.select()
+        .from(ipGeoCache)
+        .where(inArray(ipGeoCache.ip, batch));
+
+      for (const row of cached) {
+        const age = row.cachedAt ? Date.now() - new Date(row.cachedAt).getTime() : Infinity;
+        if (age < CACHE_TTL) {
+          result.set(row.ip, { ip: row.ip, country: row.country ?? null, city: row.city ?? null });
+        }
       }
     }
   } catch {}

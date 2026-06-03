@@ -37,7 +37,7 @@ function ActivityBadge({ level, isAnomaly }: { level: TrafficIpRow["activityLeve
   if (isAnomaly || level === "high") {
     return (
       <Badge variant="destructive" className="gap-1 text-xs" data-testid="badge-anomaly">
-        <AlertTriangle className="h-3 w-3" /> High
+        <AlertTriangle className="h-3 w-3" /> High ping
       </Badge>
     );
   }
@@ -320,6 +320,7 @@ export default function AdminTrafficReport() {
                       <th className="text-center py-2 pr-3 font-medium">Activity</th>
                       <th className="text-left py-2 pr-3 font-medium">Top Paths</th>
                       <th className="text-left py-2 pr-3 font-medium">Client</th>
+                      <th className="text-left py-2 pr-3 font-medium">First Seen</th>
                       <th className="text-left py-2 font-medium">Last Seen</th>
                     </tr>
                   </thead>
@@ -363,6 +364,12 @@ export default function AdminTrafficReport() {
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <MonitorSmartphone className="h-3 w-3 shrink-0" />
                             <span className="truncate">{truncateUA(row.userAgentSummary)}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-3 whitespace-nowrap">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            {fmtDate(row.firstSeen)}
                           </div>
                         </td>
                         <td className="py-2.5 whitespace-nowrap">
