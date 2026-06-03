@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Activity, Globe, Users, ShoppingCart, AlertTriangle, RefreshCw, MonitorSmartphone, MapPin, Clock, TrendingUp } from "lucide-react";
+import { ArrowLeft, Activity, Globe, Users, ShoppingCart, AlertTriangle, RefreshCw, MonitorSmartphone, MapPin, Clock, TrendingUp, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,38 @@ function SummaryCard({ label, value, icon: Icon, color, warn }: SummaryCardProps
       </div>
     </Card>
   );
+}
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function downloadTrafficCsv(rows: TrafficIpRow[], from: string, to: string) {
+  const headers = ["IP", "Country", "City", "Requests", "Activity Level", "Is Anomaly", "First Seen", "Last Seen", "Top Paths", "User Agent"];
+  const lines = rows.map(row => [
+    row.ip,
+    row.country ?? "",
+    row.city ?? "",
+    String(row.requestCount),
+    row.activityLevel,
+    row.isAnomaly ? "Yes" : "No",
+    row.firstSeen,
+    row.lastSeen,
+    row.topPaths.join(" | "),
+    row.userAgentSummary ?? "",
+  ].map(escapeCsvField).join(","));
+
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `traffic-report-${from}-to-${to}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function AdminTrafficReport() {
@@ -292,22 +324,34 @@ export default function AdminTrafficReport() {
                   <Globe className="h-4 w-4 text-primary" /> IP Activity Table
                   <Badge variant="secondary">{data.ipRows.length}</Badge>
                 </h2>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Sort:</span>
-                  <button
-                    onClick={() => setSortBy("count")}
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${sortBy === "count" ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}
-                    data-testid="button-sort-count"
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Sort:</span>
+                    <button
+                      onClick={() => setSortBy("count")}
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${sortBy === "count" ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}
+                      data-testid="button-sort-count"
+                    >
+                      Requests
+                    </button>
+                    <button
+                      onClick={() => setSortBy("lastSeen")}
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${sortBy === "lastSeen" ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}
+                      data-testid="button-sort-lastseen"
+                    >
+                      Last Seen
+                    </button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => downloadTrafficCsv(sortedIpRows, data.from.slice(0, 10), data.to.slice(0, 10))}
+                    data-testid="button-download-csv"
                   >
-                    Requests
-                  </button>
-                  <button
-                    onClick={() => setSortBy("lastSeen")}
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${sortBy === "lastSeen" ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"}`}
-                    data-testid="button-sort-lastseen"
-                  >
-                    Last Seen
-                  </button>
+                    <Download className="h-3.5 w-3.5" />
+                    Download CSV
+                  </Button>
                 </div>
               </div>
               <div className="overflow-x-auto">
