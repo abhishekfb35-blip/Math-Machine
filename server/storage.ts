@@ -2266,17 +2266,18 @@ export class DatabaseStorage implements IStorage {
       }).from(requestLogs)
         .where(and(sql`${requestLogs.createdAt} >= ${from}`, sql`${requestLogs.createdAt} <= ${to}`))
         .groupBy(requestLogs.ip)
-        .orderBy(desc(sql`count(*)`))
-        .limit(200),
+        .orderBy(desc(sql`count(*)`)),
     ]);
 
     const ips = ipAgg.map(r => r.ip);
 
+    // Anomaly thresholds are computed from the full IP population — no cap.
+    // Path/UA enrichment is limited to the top 500 IPs by volume (practical for a table).
     const pathDataMap = new Map<string, string[]>();
     const uaMap = new Map<string, string>();
 
     if (ips.length > 0) {
-      const batchIps = ips.slice(0, 200);
+      const batchIps = ips.slice(0, 500);
       const [pathData, uaData] = await Promise.all([
         db.select({
           ip: requestLogs.ip,
