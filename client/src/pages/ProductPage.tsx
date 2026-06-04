@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
+import NudgeCard from "@/components/NudgeCard";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -130,9 +131,23 @@ export default function ProductPage() {
     enabled: !!product?.id,
   });
 
-  const { data: cart } = useQuery<{ activeBannerText: string; itemCount: number }>({
+  const { data: cart } = useQuery<{
+    activeBannerText: string;
+    itemCount: number;
+    engineThresholds: {
+      retailFreeItemTrigger: number;
+      retailBonusDiscountPct: number;
+      wholesaleThreshold: number;
+    } | null;
+  }>({
     queryKey: ["/api/cart"],
   });
+
+  const { data: siteConfig } = useQuery<Record<string, any>>({
+    queryKey: ["/api/site-config"],
+  });
+  const animationConfig = siteConfig?.["nudge-animation-config"] as
+    { staggerMs?: number; loopEveryMs?: number } | undefined;
 
   const { data: myReview } = useQuery<ProductReview | null>({
     queryKey: ["/api/products", product?.id, "my-review"],
@@ -740,16 +755,15 @@ export default function ProductPage() {
               </div>
             ) : null}
 
-            {cart?.activeBannerText && (
-              <div
-                className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 p-4 shadow-sm space-y-1.5"
-                data-testid="offer-nudge-strip"
-              >
-                <span className="inline-block bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded">
-                  Deal Active
-                </span>
-                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
-              </div>
+            {cart && cart.engineThresholds && (
+              <NudgeCard
+                itemCount={cart.itemCount}
+                engineThresholds={cart.engineThresholds}
+                supplementaryText={cart.activeBannerText || undefined}
+                staggerMs={animationConfig?.staggerMs}
+                loopEveryMs={animationConfig?.loopEveryMs}
+                compact
+              />
             )}
 
             <div className="flex gap-2" data-testid="section-add-to-cart">

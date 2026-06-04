@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart } from "@/lib/analytics";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
+import NudgeCard from "@/components/NudgeCard";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,22 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const isCoupleProduct = audienceConfig?.type === "couples";
   const nameMin = audienceConfig?.nameMin;
   const nameMax = audienceConfig?.nameMax;
+
+  const { data: cart } = useQuery<{
+    itemCount: number;
+    activeBannerText: string;
+    engineThresholds: {
+      retailFreeItemTrigger: number;
+      retailBonusDiscountPct: number;
+      wholesaleThreshold: number;
+    } | null;
+  }>({ queryKey: ["/api/cart"] });
+
+  const { data: siteConfig } = useQuery<Record<string, any>>({
+    queryKey: ["/api/site-config"],
+  });
+  const animationConfig = siteConfig?.["nudge-animation-config"] as
+    { staggerMs?: number; loopEveryMs?: number } | undefined;
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
@@ -213,10 +230,21 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
-            <Gift className="w-4 h-4 shrink-0" />
-            <span>Buy 2 Get 1 Free - discount applied at checkout</span>
-          </div>
+          {cart?.engineThresholds ? (
+            <NudgeCard
+              itemCount={cart.itemCount}
+              engineThresholds={cart.engineThresholds}
+              supplementaryText={cart.activeBannerText || undefined}
+              staggerMs={animationConfig?.staggerMs}
+              loopEveryMs={animationConfig?.loopEveryMs}
+              compact
+            />
+          ) : (
+            <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
+              <Gift className="w-4 h-4 shrink-0" />
+              <span>Buy 2 Get 1 Free - discount applied at checkout</span>
+            </div>
+          )}
 
           {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
             <div className="space-y-1.5" data-testid="section-quickadd-sizes">
