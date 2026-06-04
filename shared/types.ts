@@ -74,6 +74,7 @@ export interface Product {
   description: string | null;
   price: number;
   mrp: number | null;
+  wholesalePrice: number | null;
   imageUrl: string;
   categoryId: string;
   amazonAsin: string | null;
@@ -107,6 +108,7 @@ export interface InsertProduct {
   description?: string | null;
   price: number;
   mrp?: number | null;
+  wholesalePrice?: number | null;
   imageUrl?: string | null;
   categoryId: string;
   amazonAsin?: string | null;

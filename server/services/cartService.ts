@@ -1,6 +1,14 @@
 import type { IStorage } from "../storage";
 import type { CartItem, Product } from "@shared/types";
-import { calculateDiscount, defaultOfferTiers, defaultDeliveryTiers, type PricingResult, type OfferTier, type DeliveryTier } from "./discountService";
+import {
+  calculateCartPricing,
+  calculateShippingFee,
+  resolveActiveBanner,
+  type PricingResult,
+  type CartEngineConfig,
+  type CartBanners,
+  type DeliveryTier,
+} from "./discountService";
 
 export interface EnrichedCartItem extends CartItem {
   product: Product | undefined;
@@ -16,6 +24,7 @@ export interface CartDetails {
   shippingFee: number;
   total: number;
   freeIndices: number[];
+  activeBannerText: string;
 }
 
 export class CartService {
@@ -26,15 +35,30 @@ export class CartService {
     const items = await this.storage.getCartItems(cart.id);
     const enrichedItems = await this.enrichItemsWithProducts(items);
 
-    const offerTiers = await this.loadOfferTiers();
+    const engineConfig = await this.loadEngineConfig();
     const deliveryTiers = await this.loadDeliveryTiers();
-    const pricing = this.calculateCartPricing(enrichedItems, offerTiers, deliveryTiers, isDomestic);
+    const banners = await this.loadCartBanners();
+
+    const priceItems = enrichedItems
+      .filter(i => i.product)
+      .map(i => ({
+        price: i.effectivePrice,
+        wholesalePrice: i.product?.wholesalePrice ?? null,
+        quantity: i.quantity,
+      }));
+
+    const pricing = calculateCartPricing(priceItems, engineConfig, deliveryTiers, isDomestic);
+
+    const itemCount = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
+    const wholesaleThreshold = engineConfig?.wholesaleThreshold ?? 5;
+    const activeBannerText = resolveActiveBanner(itemCount, banners, wholesaleThreshold);
 
     return {
       id: cart.id,
       items: enrichedItems,
-      itemCount: enrichedItems.reduce((sum, i) => sum + i.quantity, 0),
+      itemCount,
       ...pricing,
+      activeBannerText,
     };
   }
 
@@ -94,15 +118,22 @@ export class CartService {
     await this.storage.removeCartItem(itemId);
   }
 
-  private async loadOfferTiers(): Promise<OfferTier[]> {
+  private async loadEngineConfig(): Promise<CartEngineConfig | null> {
     try {
-      const config = await this.storage.getSiteContent("offer-tiers");
+      const config = await this.storage.getSiteContent("cart-engine-config");
       if (config) {
         const parsed = JSON.parse(config.value);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (
+          parsed &&
+          typeof parsed.wholesaleThreshold === "number" &&
+          typeof parsed.retailFreeItemTrigger === "number" &&
+          typeof parsed.retailBonusDiscountPct === "number"
+        ) {
+          return parsed as CartEngineConfig;
+        }
       }
     } catch {}
-    return defaultOfferTiers;
+    return null;
   }
 
   private async loadDeliveryTiers(): Promise<DeliveryTier[]> {
@@ -113,7 +144,18 @@ export class CartService {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {}
-    return defaultDeliveryTiers;
+    return [];
+  }
+
+  private async loadCartBanners(): Promise<CartBanners | null> {
+    try {
+      const config = await this.storage.getSiteContent("cart-banners");
+      if (config) {
+        const parsed = JSON.parse(config.value);
+        if (parsed && typeof parsed === "object") return parsed as CartBanners;
+      }
+    } catch {}
+    return null;
   }
 
   private async enrichItemsWithProducts(items: CartItem[]): Promise<EnrichedCartItem[]> {
@@ -133,13 +175,6 @@ export class CartService {
         return { ...item, product, effectivePrice };
       })
     );
-  }
-
-  private calculateCartPricing(items: EnrichedCartItem[], offerTiers: OfferTier[], deliveryTiers: DeliveryTier[], isDomestic: boolean): PricingResult {
-    const priceItems = items
-      .filter(i => i.product)
-      .map(i => ({ price: i.effectivePrice, quantity: i.quantity }));
-    return calculateDiscount(priceItems, offerTiers, deliveryTiers, isDomestic);
   }
 }
 

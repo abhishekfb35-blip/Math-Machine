@@ -322,6 +322,21 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="prod-wholesale">Wholesale Price (₹)</Label>
+            <Input
+              id="prod-wholesale"
+              type="number"
+              value={product.wholesalePrice ?? ""}
+              placeholder="Not set"
+              onChange={(e) => setProduct(prev => ({ ...prev!, wholesalePrice: e.target.value === "" ? null : parseInt(e.target.value) || null }))}
+              data-testid="input-product-wholesale-price"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Applied when cart is in wholesale mode (5+ items). Leave blank to charge retail price.</p>
+          </div>
+        </div>
+
         <div>
           <Label className="flex items-center gap-1 mb-2">
             <ImageIcon className="w-4 h-4" /> Product Images

@@ -2450,6 +2450,7 @@ export default function AdminCatalog() {
               const isDirty = prod.id in pendingChanges;
               const effectivePrice = pc.price ?? prod.price;
               const effectiveMrp = pc.mrp !== undefined ? pc.mrp : prod.mrp;
+              const effectiveWholesalePrice = pc.wholesalePrice !== undefined ? pc.wholesalePrice : prod.wholesalePrice;
               const effectiveActive = pc.active !== undefined ? pc.active : prod.active;
               const effectiveSortOrder = pc.sortOrder !== undefined ? pc.sortOrder : (prod.sortOrder ?? 0);
               const setChange = (field: keyof Product, value: any) =>
@@ -2529,6 +2530,18 @@ export default function AdminCatalog() {
                           onClick={(e) => e.stopPropagation()}
                           className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs opacity-70 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           data-testid={`input-mrp-${prod.id}`}
+                        />
+                      </span>
+                      <span className="inline-flex items-center gap-0.5" title="Wholesale Price (₹) – for 5+ item orders">
+                        <span className="opacity-50">W₹</span>
+                        <input
+                          type="number"
+                          value={effectiveWholesalePrice ?? ""}
+                          placeholder="—"
+                          onChange={(e) => { const v = e.target.value === "" ? null : Number(e.target.value); setChange("wholesalePrice", v); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-16 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs opacity-70 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          data-testid={`input-wholesale-${prod.id}`}
                         />
                       </span>
                       <span className="inline-flex items-center gap-0.5" title="Sort order">

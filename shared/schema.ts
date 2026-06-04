@@ -34,6 +34,7 @@ export const products = pgTable("products", {
   sortOrder: integer("sort_order").default(0),
   variantColors: text("variant_colors").default("[]").notNull(),
   variantSizes: text("variant_sizes").default("[]").notNull(),
+  wholesalePrice: integer("wholesale_price"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
