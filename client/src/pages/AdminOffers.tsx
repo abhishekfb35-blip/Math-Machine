@@ -398,19 +398,20 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
+        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
       </div>
     </div>
   );
 }
 
 interface NudgeCardPreviewProps {
+  engineDraft: CartEngineConfig;
   engineConfig: CartEngineConfig | null;
   banners: CartBanners;
   configLoading: boolean;
 }
 
-function NudgeCardPreview({ engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
+function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -418,26 +419,18 @@ function NudgeCardPreview({ engineConfig, banners, configLoading }: NudgeCardPre
           <Eye className="w-5 h-5 text-primary" />
           <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
         </div>
-        <p className="text-sm text-muted-foreground italic">Loading production config…</p>
+        <p className="text-sm text-muted-foreground italic">Loading config…</p>
       </Card>
     );
   }
 
-  if (!engineConfig) {
-    return (
-      <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
-        <div className="flex items-center gap-2">
-          <Eye className="w-5 h-5 text-primary" />
-          <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
-        </div>
-        <p className="text-sm text-muted-foreground italic">
-          Save the Cart Engine Config above first — the preview shows how the nudge card looks with your live production settings.
-        </p>
-      </Card>
-    );
-  }
+  const isUnsaved =
+    !engineConfig ||
+    engineDraft.wholesaleThreshold !== engineConfig.wholesaleThreshold ||
+    engineDraft.retailFreeItemTrigger !== engineConfig.retailFreeItemTrigger ||
+    engineDraft.retailBonusDiscountPct !== engineConfig.retailBonusDiscountPct;
 
-  const { retailFreeItemTrigger: trigger, wholesaleThreshold: wholesale, retailBonusDiscountPct: bonusPct } = engineConfig;
+  const { retailFreeItemTrigger: trigger, wholesaleThreshold: wholesale, retailBonusDiscountPct: bonusPct } = engineDraft;
 
   const thresholds = {
     retailFreeItemTrigger: trigger,
@@ -480,12 +473,22 @@ function NudgeCardPreview({ engineConfig, banners, configLoading }: NudgeCardPre
 
   return (
     <Card className="p-6 space-y-6" data-testid="nudge-card-preview-section">
-      <div className="flex items-center gap-2">
-        <Eye className="w-5 h-5 text-primary" />
-        <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Eye className="w-5 h-5 text-primary" />
+          <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
+        </div>
+        {isUnsaved && (
+          <span
+            className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-300 dark:border-amber-700"
+            data-testid="nudge-preview-unsaved-badge"
+          >
+            Draft · unsaved
+          </span>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">
-        How the shopper-facing nudge card looks at each reward step, based on your <span className="font-medium text-foreground">saved production config</span>. Save the Cart Engine Config above to update this preview.
+        How the shopper-facing nudge card looks at each reward step. Updates <span className="font-medium text-foreground">live</span> as you edit the fields above — save to confirm.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
