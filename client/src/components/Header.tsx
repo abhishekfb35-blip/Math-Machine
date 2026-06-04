@@ -75,6 +75,11 @@ export default function Header() {
     queryKey: ["/api/cart"],
   });
 
+  const { data: siteConfig } = useQuery<Record<string, any>>({
+    queryKey: ["/api/site-config"],
+  });
+  const animationConfig = siteConfig?.["nudge-animation-config"] as { staggerMs?: number; loopEveryMs?: number } | undefined;
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -311,6 +316,8 @@ export default function Header() {
                     itemCount={cart.itemCount}
                     engineThresholds={cart.engineThresholds}
                     supplementaryText={cart.activeBannerText || undefined}
+                    staggerMs={animationConfig?.staggerMs}
+                    loopEveryMs={animationConfig?.loopEveryMs}
                     compact
                   />
                 </div>

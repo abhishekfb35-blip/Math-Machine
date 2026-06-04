@@ -11,7 +11,8 @@ interface NudgeCardProps {
   engineThresholds: EngineThresholds | null;
   supplementaryText?: string;
   compact?: boolean;
-  loopEvery?: number;
+  loopEveryMs?: number;
+  staggerMs?: number;
 }
 
 export default function NudgeCard({
@@ -19,20 +20,22 @@ export default function NudgeCard({
   engineThresholds,
   supplementaryText,
   compact = false,
-  loopEvery = 5,
+  loopEveryMs = 5000,
+  staggerMs = 300,
 }: NudgeCardProps) {
   const [tick, setTick] = useState(0);
 
-  useEffect(() => {
-    const delay = loopEvery * 1000;
+  const safeLoopMs = Math.max(1000, loopEveryMs);
+  const safeStaggerMs = Math.max(0, staggerMs);
 
+  useEffect(() => {
     function replay() {
       if (document.visibilityState === "visible") {
         setTick((t) => t + 1);
       }
     }
 
-    const id = setInterval(replay, delay);
+    const id = setInterval(replay, safeLoopMs);
 
     function onVisibility() {
       if (document.visibilityState === "visible") {
@@ -45,7 +48,7 @@ export default function NudgeCard({
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [itemCount, loopEvery]);
+  }, [itemCount, safeLoopMs]);
 
   if (!engineThresholds || itemCount === 0) return null;
 
@@ -123,6 +126,9 @@ export default function NudgeCard({
 
   const connectorCls = "animate-nudge-pop text-slate-400 dark:text-slate-600 text-xs select-none font-mono";
 
+  // Compute staggered delays: element 0..4 → 100ms + n * staggerMs
+  const d = (n: number) => `${100 + n * safeStaggerMs}ms`;
+
   return (
     <div
       className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${compact ? "px-3 py-2.5 space-y-2" : "px-4 py-3 space-y-2.5"}`}
@@ -136,7 +142,7 @@ export default function NudgeCard({
         >
           <span
             className={`animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap ${pad} bg-amber-500 text-white`}
-            style={{ animationDelay: "0.1s" }}
+            style={{ animationDelay: d(0) }}
             data-testid="nudge-chain-wholesale"
           >
             ★ Wholesale unlocked — best value!
@@ -151,7 +157,7 @@ export default function NudgeCard({
         >
           <span
             className={leftCls}
-            style={{ animationDelay: "0.1s" }}
+            style={{ animationDelay: d(0) }}
             data-testid="nudge-chain-left"
           >
             {leftLabel}
@@ -159,7 +165,7 @@ export default function NudgeCard({
 
           <span
             className={connectorCls}
-            style={{ animationDelay: "0.4s" }}
+            style={{ animationDelay: d(1) }}
             aria-hidden="true"
           >
             ──
@@ -167,7 +173,7 @@ export default function NudgeCard({
 
           <span
             className={pillCls}
-            style={{ animationDelay: "0.7s" }}
+            style={{ animationDelay: d(2) }}
             data-testid="nudge-chain-pill"
           >
             {middlePill}
@@ -175,7 +181,7 @@ export default function NudgeCard({
 
           <span
             className={connectorCls}
-            style={{ animationDelay: "1.0s" }}
+            style={{ animationDelay: d(3) }}
             aria-hidden="true"
           >
             ──►
@@ -183,7 +189,7 @@ export default function NudgeCard({
 
           <span
             className={rightCls}
-            style={{ animationDelay: "1.3s" }}
+            style={{ animationDelay: d(4) }}
             data-testid="nudge-chain-right"
           >
             {rightLabel}

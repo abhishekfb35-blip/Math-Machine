@@ -5,6 +5,7 @@ export interface CartEngineConfig {
 }
 
 export interface CartBanners {
+  state1?: string;
   state1to2: string;
   state3: string;
   state4: string;
@@ -122,5 +123,6 @@ export function resolveActiveBanner(itemCount: number, banners: CartBanners | nu
   if (itemCount >= config.wholesaleThreshold) return banners.state5plus || "";
   if (itemCount >= config.retailFreeItemTrigger + 1) return banners.state4 || "";
   if (itemCount >= config.retailFreeItemTrigger) return banners.state3 || "";
+  if (itemCount === 1 && banners.state1) return banners.state1;
   return banners.state1to2 || "";
 }

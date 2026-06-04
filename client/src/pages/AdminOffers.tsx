@@ -20,6 +20,7 @@ interface CartEngineConfig {
 }
 
 interface CartBanners {
+  state1: string;
   state1to2: string;
   state3: string;
   state4: string;
@@ -27,10 +28,21 @@ interface CartBanners {
 }
 
 const emptyBanners: CartBanners = {
+  state1: "",
   state1to2: "",
   state3: "",
   state4: "",
   state5plus: "",
+};
+
+interface CartAnimationConfig {
+  staggerMs: number;
+  loopEveryMs: number;
+}
+
+const defaultAnimationConfig: CartAnimationConfig = {
+  staggerMs: 300,
+  loopEveryMs: 5000,
 };
 
 function useSaveConfig(key: string) {
@@ -60,6 +72,7 @@ function resolveBanner(count: number, banners: CartBanners, config: CartEngineCo
   if (count >= config.wholesaleThreshold) return banners.state5plus;
   if (count >= config.retailFreeItemTrigger + 1) return banners.state4;
   if (count >= config.retailFreeItemTrigger) return banners.state3;
+  if (count === 1 && banners.state1) return banners.state1;
   return banners.state1to2;
 }
 
@@ -83,6 +96,8 @@ export default function AdminOffers() {
   });
   const [banners, setBanners] = useState<CartBanners>(emptyBanners);
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
+  const [animationConfig, setAnimationConfig] = useState<CartAnimationConfig>(defaultAnimationConfig);
+  const [animationDraft, setAnimationDraft] = useState<CartAnimationConfig>(defaultAnimationConfig);
   const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
@@ -105,6 +120,11 @@ export default function AdminOffers() {
       if (Array.isArray(rawDelivery)) {
         setDeliveryTiers(rawDelivery);
       }
+      const rawAnim = allConfig["nudge-animation-config"];
+      if (rawAnim && typeof rawAnim.staggerMs === "number" && typeof rawAnim.loopEveryMs === "number") {
+        setAnimationConfig(rawAnim);
+        setAnimationDraft(rawAnim);
+      }
       setConfigLoaded(true);
     }
   }, [allConfig, configLoaded]);
@@ -112,6 +132,7 @@ export default function AdminOffers() {
   const saveEngine = useSaveConfig("cart-engine-config");
   const saveBanners = useSaveConfig("cart-banners");
   const saveDelivery = useSaveConfig("delivery-tiers");
+  const saveAnimation = useSaveConfig("nudge-animation-config");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
@@ -234,6 +255,67 @@ export default function AdminOffers() {
 
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-2">
+            <Tag className="w-5 h-5 text-primary" />
+            <h2 className="text-base font-semibold">Animation Settings</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Controls how the reward chain animates in the cart. Changes apply live in the preview below.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-1.5">
+              <Label>Stagger between elements (ms)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={1000}
+                step={50}
+                value={animationDraft.staggerMs}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v)) setAnimationDraft(prev => ({ ...prev, staggerMs: v }));
+                }}
+                data-testid="input-animation-stagger-ms"
+              />
+              <p className="text-xs text-muted-foreground">
+                Delay between each badge/arrow popping in. Default: 300 ms.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Animation loop interval (ms)</Label>
+              <Input
+                type="number"
+                min={1000}
+                max={60000}
+                step={500}
+                value={animationDraft.loopEveryMs}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v)) setAnimationDraft(prev => ({ ...prev, loopEveryMs: v }));
+                }}
+                data-testid="input-animation-loop-ms"
+              />
+              <p className="text-xs text-muted-foreground">
+                How often the chain replays. Default: 5000 ms (5 s).
+              </p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => {
+              saveAnimation.mutate(animationDraft);
+              setAnimationConfig(animationDraft);
+            }}
+            disabled={saveAnimation.isPending}
+            data-testid="button-save-animation-settings"
+          >
+            <Save className="w-4 h-4 mr-2" /> {saveAnimation.isPending ? "Saving..." : "Save Animation Settings"}
+          </Button>
+        </Card>
+
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
             <h2 className="text-base font-semibold">Cart Banners</h2>
           </div>
@@ -244,7 +326,8 @@ export default function AdminOffers() {
 
           <div className="space-y-4">
             {[
-              { field: "state1to2" as const, label: "Pre-trigger supplementary text", placeholder: "e.g. 🛍️ Free personalised gift wrapping on all orders!" },
+              { field: "state1" as const, label: "1 item in cart — first impression (supplementary)", placeholder: "e.g. 🎉 Great choice! Add 2 more items to unlock a FREE gift." },
+              { field: "state1to2" as const, label: "Pre-trigger supplementary text (2+ items)", placeholder: "e.g. 🛍️ Free personalised gift wrapping on all orders!" },
               { field: "state3" as const, label: `${engineDraft.retailFreeItemTrigger} items — free item active (supplementary)`, placeholder: "e.g. 🎁 Your cheapest item has been gifted — enjoy!" },
               { field: "state4" as const, label: `${engineDraft.retailFreeItemTrigger + 1} items — free + bonus active (supplementary)`, placeholder: `e.g. ✦ Double deal! Free item + ${engineDraft.retailBonusDiscountPct}% off your next pick.` },
               { field: "state5plus" as const, label: `${engineDraft.wholesaleThreshold}+ items — wholesale active (supplementary)`, placeholder: "e.g. ★ Wholesale prices locked in — best value on your whole order!" },
@@ -398,7 +481,7 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
+        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} animationDraft={animationDraft} />
       </div>
     </div>
   );
@@ -409,9 +492,10 @@ interface NudgeCardPreviewProps {
   engineConfig: CartEngineConfig | null;
   banners: CartBanners;
   configLoading: boolean;
+  animationDraft: CartAnimationConfig;
 }
 
-function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
+function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, animationDraft }: NudgeCardPreviewProps) {
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -438,9 +522,16 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }:
     wholesaleThreshold: wholesale,
   };
 
-  const preTriggerCount = Math.max(1, trigger - 1);
+  const preTriggerCount = Math.max(2, trigger - 1);
 
   const states: { label: string; sublabel: string; itemCount: number; supplementaryText: string; testId: string }[] = [
+    {
+      label: "1 item added",
+      sublabel: "First impression",
+      itemCount: 1,
+      supplementaryText: banners.state1,
+      testId: "nudge-preview-state1",
+    },
     {
       label: "Pre-trigger",
       sublabel: `${preTriggerCount} item${preTriggerCount === 1 ? "" : "s"} in cart`,
@@ -502,6 +593,8 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }:
               itemCount={itemCount}
               engineThresholds={thresholds}
               supplementaryText={supplementaryText || undefined}
+              staggerMs={animationDraft.staggerMs}
+              loopEveryMs={animationDraft.loopEveryMs}
               compact
             />
           </div>
