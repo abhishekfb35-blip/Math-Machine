@@ -13,6 +13,9 @@ import {
 export interface EnrichedCartItem extends CartItem {
   product: Product | undefined;
   effectivePrice: number;
+  originalEffectivePrice: number;
+  isFreeItem: boolean;
+  bonusDiscountPct: number;
 }
 
 export interface CartDetails {
@@ -49,6 +52,48 @@ export class CartService {
 
     const pricing = calculateCartPricing(priceItems, engineConfig, deliveryTiers, isDomestic);
 
+    // Build an expanded-list index → pricedItems index mapping.
+    // This mirrors the expansion order inside calculateCartPricing so the indices line up.
+    const pricedItems = enrichedItems.filter(i => i.product);
+    const expandedRefs: number[] = [];
+    for (let pi = 0; pi < pricedItems.length; pi++) {
+      for (let qi = 0; qi < pricedItems[pi].quantity; qi++) {
+        expandedRefs.push(pi);
+      }
+    }
+
+    // Apply per-item discount adjustments back onto enrichedItems rows.
+    // For qty > 1 same-product rows we apply the discount to the whole row; acceptable
+    // for a luxury personalised-goods store where duplicate-SKU qty is uncommon.
+    const { bonusDiscountIndex, bonusDiscountPct, freeIndices, ...pricingFields } = pricing;
+
+    for (const freeIdx of freeIndices) {
+      const pricedIdx = expandedRefs[freeIdx];
+      if (pricedIdx !== undefined) {
+        const target = pricedItems[pricedIdx];
+        const ei = enrichedItems.indexOf(target);
+        if (ei >= 0) {
+          enrichedItems[ei] = { ...enrichedItems[ei], effectivePrice: 0, isFreeItem: true };
+        }
+      }
+    }
+
+    if (bonusDiscountIndex !== null) {
+      const pricedIdx = expandedRefs[bonusDiscountIndex];
+      if (pricedIdx !== undefined) {
+        const target = pricedItems[pricedIdx];
+        const ei = enrichedItems.indexOf(target);
+        if (ei >= 0 && !enrichedItems[ei].isFreeItem) {
+          const originalPrice = enrichedItems[ei].effectivePrice;
+          enrichedItems[ei] = {
+            ...enrichedItems[ei],
+            effectivePrice: Math.round(originalPrice * (1 - bonusDiscountPct / 100)),
+            bonusDiscountPct,
+          };
+        }
+      }
+    }
+
     const itemCount = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
     const activeBannerText = engineConfig
       ? resolveActiveBanner(itemCount, banners, engineConfig)
@@ -58,7 +103,8 @@ export class CartService {
       id: cart.id,
       items: enrichedItems,
       itemCount,
-      ...pricing,
+      ...pricingFields,
+      freeIndices,
       activeBannerText,
     };
   }
@@ -173,7 +219,14 @@ export class CartService {
             }
           } catch {}
         }
-        return { ...item, product, effectivePrice };
+        return {
+          ...item,
+          product,
+          effectivePrice,
+          originalEffectivePrice: effectivePrice,
+          isFreeItem: false,
+          bonusDiscountPct: 0,
+        };
       })
     );
   }

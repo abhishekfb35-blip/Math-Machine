@@ -14,6 +14,9 @@ import type { Product, CartItem } from "@shared/types";
 interface CartItemWithProduct extends CartItem {
   product: Product | null;
   effectivePrice?: number;
+  originalEffectivePrice?: number;
+  isFreeItem?: boolean;
+  bonusDiscountPct?: number;
 }
 
 interface CartData {
@@ -34,6 +37,9 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
   formatPrice: (n: number) => string;
 }) {
   if (!item.product) return null;
+
+  const originalPrice = item.originalEffectivePrice ?? item.product.price;
+  const effective = item.effectivePrice ?? item.product.price;
 
   return (
     <div className="flex gap-3 py-3" data-testid={`cart-item-${item.id}`}>
@@ -79,9 +85,25 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
             </p>
           )
         )}
-        <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
-          {formatPrice(item.effectivePrice ?? item.product.price)}
-        </p>
+
+        {item.isFreeItem ? (
+          <div className="flex items-center gap-1.5 flex-wrap" data-testid={`text-cart-item-price-${item.id}`}>
+            <span className="text-sm line-through text-red-400">{formatPrice(originalPrice)}</span>
+            <span className="text-sm font-bold text-green-600">FREE</span>
+            <span className="text-[10px] font-extrabold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Free Gift</span>
+          </div>
+        ) : item.bonusDiscountPct && item.bonusDiscountPct > 0 ? (
+          <div className="flex items-center gap-1.5 flex-wrap" data-testid={`text-cart-item-price-${item.id}`}>
+            <span className="text-sm line-through text-muted-foreground">{formatPrice(originalPrice)}</span>
+            <span className="text-sm font-bold text-green-600">{formatPrice(effective)}</span>
+            <span className="text-[10px] font-extrabold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide">{item.bonusDiscountPct}% off</span>
+          </div>
+        ) : (
+          <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
+            {formatPrice(effective)}
+          </p>
+        )}
+
         <div className="flex items-center gap-2 pt-1">
           <Button
             size="icon"

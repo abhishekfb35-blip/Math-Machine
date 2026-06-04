@@ -23,6 +23,8 @@ export interface PricingResult {
   shippingFee: number;
   total: number;
   freeIndices: number[];
+  bonusDiscountIndex: number | null;
+  bonusDiscountPct: number;
 }
 
 export function calculateShippingFee(
@@ -63,7 +65,7 @@ export function calculateCartPricing(
 
   if (!engineConfig || count === 0) {
     const shippingFee = calculateShippingFee(count, deliveryTiers, isDomestic);
-    return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [] };
+    return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [], bonusDiscountIndex: null, bonusDiscountPct: 0 };
   }
 
   const { wholesaleThreshold, retailFreeItemTrigger, retailBonusDiscountPct } = engineConfig;
@@ -78,7 +80,7 @@ export function calculateCartPricing(
         : e.price;
     }
     const discount = subtotal - wholesaleTotal;
-    return { subtotal, discount, shippingFee, total: wholesaleTotal + shippingFee, freeIndices: [] };
+    return { subtotal, discount, shippingFee, total: wholesaleTotal + shippingFee, freeIndices: [], bonusDiscountIndex: null, bonusDiscountPct: 0 };
   }
 
   const sorted = [...expanded].map((e, idx) => ({ ...e, idx })).sort((a, b) => a.price - b.price);
@@ -91,6 +93,8 @@ export function calculateCartPricing(
       shippingFee,
       total: subtotal - cheapest.price + shippingFee,
       freeIndices: [cheapest.idx],
+      bonusDiscountIndex: null,
+      bonusDiscountPct: 0,
     };
   }
 
@@ -105,10 +109,12 @@ export function calculateCartPricing(
       shippingFee,
       total: subtotal - discount + shippingFee,
       freeIndices: [cheapest.idx],
+      bonusDiscountIndex: secondCheapest.idx,
+      bonusDiscountPct: retailBonusDiscountPct,
     };
   }
 
-  return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [] };
+  return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [], bonusDiscountIndex: null, bonusDiscountPct: 0 };
 }
 
 export function resolveActiveBanner(itemCount: number, banners: CartBanners | null, config: CartEngineConfig): string {

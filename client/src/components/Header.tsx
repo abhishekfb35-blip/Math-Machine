@@ -34,6 +34,9 @@ interface MiniCartItem {
   id: string;
   quantity: number;
   effectivePrice?: number;
+  originalEffectivePrice?: number;
+  isFreeItem?: boolean;
+  bonusDiscountPct?: number;
   product: { name: string; slug: string; imageUrl: string; price: number } | null;
 }
 
@@ -41,6 +44,9 @@ interface MiniCartData {
   itemCount: number;
   items: MiniCartItem[];
   subtotal: number;
+  discount: number;
+  shippingFee: number;
+  total: number;
   activeBannerText: string;
 }
 
@@ -271,9 +277,23 @@ export default function Header() {
                         </Link>
                       </SheetClose>
                       <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                      <p className="text-sm font-semibold text-primary">
-                        {formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}
-                      </p>
+                      {item.isFreeItem ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs line-through text-red-400">{formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}</span>
+                          <span className="text-sm font-bold text-green-600">FREE</span>
+                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1 py-0.5 rounded-full uppercase tracking-wide">Free Gift</span>
+                        </div>
+                      ) : item.bonusDiscountPct && item.bonusDiscountPct > 0 ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs line-through text-muted-foreground">{formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}</span>
+                          <span className="text-sm font-semibold text-green-600">{formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}</span>
+                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1 py-0.5 rounded-full uppercase tracking-wide">{item.bonusDiscountPct}% off</span>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-semibold text-primary">
+                          {formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -290,9 +310,19 @@ export default function Header() {
 
               <div className="px-5 pb-5 space-y-3 shrink-0">
                 <Separator />
-                <div className="flex justify-between text-sm font-semibold">
-                  <span>Subtotal</span>
-                  <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span>Subtotal</span>
+                    <span data-testid="mini-cart-subtotal">
+                      {formatPrice(cart.discount > 0 ? cart.total - cart.shippingFee : cart.subtotal)}
+                    </span>
+                  </div>
+                  {cart.discount > 0 && (
+                    <div className="flex justify-between text-xs text-green-600 font-medium">
+                      <span>You saved</span>
+                      <span data-testid="mini-cart-saving">{formatPrice(cart.discount)}</span>
+                    </div>
+                  )}
                 </div>
                 <SheetClose asChild>
                   <Link href="/cart">
