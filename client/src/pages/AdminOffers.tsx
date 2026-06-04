@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2 } from "lucide-react";
+import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
 
@@ -25,13 +25,7 @@ interface CartBanners {
   state5plus: string;
 }
 
-const defaultEngineConfig: CartEngineConfig = {
-  wholesaleThreshold: 5,
-  retailFreeItemTrigger: 3,
-  retailBonusDiscountPct: 30,
-};
-
-const defaultBanners: CartBanners = {
+const emptyBanners: CartBanners = {
   state1to2: "",
   state3: "",
   state4: "",
@@ -61,46 +55,67 @@ function computeDeliveryFee(itemCount: number, tiers: DeliveryTier[]): number {
   return 0;
 }
 
-function resolveBanner(count: number, banners: CartBanners, threshold: number): string {
-  if (count >= threshold) return banners.state5plus;
-  if (count >= 4) return banners.state4;
-  if (count >= 3) return banners.state3;
+function resolveBanner(count: number, banners: CartBanners, config: CartEngineConfig): string {
+  if (count >= config.wholesaleThreshold) return banners.state5plus;
+  if (count >= config.retailFreeItemTrigger + 1) return banners.state4;
+  if (count >= config.retailFreeItemTrigger) return banners.state3;
   return banners.state1to2;
 }
 
+function pricingModeLabel(count: number, config: CartEngineConfig): string {
+  if (count >= config.wholesaleThreshold) return "Wholesale mode";
+  if (count === config.retailFreeItemTrigger + 1) return `Retail — cheapest free + ${config.retailBonusDiscountPct}% off next`;
+  if (count === config.retailFreeItemTrigger) return "Retail — cheapest item free";
+  return "Retail — no discount";
+}
+
 export default function AdminOffers() {
-  const { data: allConfig } = useQuery<Record<string, any>>({
+  const { data: allConfig, isLoading: configLoading } = useQuery<Record<string, any>>({
     queryKey: ["/api/site-config"],
   });
 
-  const [engineConfig, setEngineConfig] = useState<CartEngineConfig>(defaultEngineConfig);
-  const [banners, setBanners] = useState<CartBanners>(defaultBanners);
+  const [engineConfig, setEngineConfig] = useState<CartEngineConfig | null>(null);
+  const [engineDraft, setEngineDraft] = useState<CartEngineConfig>({
+    wholesaleThreshold: 5,
+    retailFreeItemTrigger: 3,
+    retailBonusDiscountPct: 30,
+  });
+  const [banners, setBanners] = useState<CartBanners>(emptyBanners);
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
-  const [previewCount, setPreviewCount] = useState(3);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
-    if (allConfig) {
+    if (allConfig && !configLoaded) {
       const rawEngine = allConfig["cart-engine-config"];
-      if (rawEngine && typeof rawEngine.wholesaleThreshold === "number") {
+      if (
+        rawEngine &&
+        typeof rawEngine.wholesaleThreshold === "number" &&
+        typeof rawEngine.retailFreeItemTrigger === "number" &&
+        typeof rawEngine.retailBonusDiscountPct === "number"
+      ) {
         setEngineConfig(rawEngine);
+        setEngineDraft(rawEngine);
       }
       const rawBanners = allConfig["cart-banners"];
       if (rawBanners && typeof rawBanners === "object") {
-        setBanners({ ...defaultBanners, ...rawBanners });
+        setBanners({ ...emptyBanners, ...rawBanners });
       }
       const rawDelivery = allConfig["delivery-tiers"];
       if (Array.isArray(rawDelivery)) {
         setDeliveryTiers(rawDelivery);
       }
+      setConfigLoaded(true);
     }
-  }, [allConfig]);
+  }, [allConfig, configLoaded]);
 
   const saveEngine = useSaveConfig("cart-engine-config");
   const saveBanners = useSaveConfig("cart-banners");
   const saveDelivery = useSaveConfig("delivery-tiers");
 
-  const updateEngine = (field: keyof CartEngineConfig, value: number) => {
-    setEngineConfig(prev => ({ ...prev, [field]: value }));
+  const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
+    const v = parseInt(raw, 10);
+    if (isNaN(v)) return;
+    setEngineDraft(prev => ({ ...prev, [field]: v }));
   };
 
   const updateBanner = (field: keyof CartBanners, value: string) => {
@@ -121,12 +136,8 @@ export default function AdminOffers() {
     setDeliveryTiers(deliveryTiers.filter((_, i) => i !== index));
   };
 
-  const previewDelivery = computeDeliveryFee(previewCount, deliveryTiers);
-  const previewBanner = resolveBanner(previewCount, banners, engineConfig.wholesaleThreshold);
-
-  const isWholesale = previewCount >= engineConfig.wholesaleThreshold;
-  const isRetailFree = previewCount === engineConfig.retailFreeItemTrigger;
-  const isRetailBonus = previewCount === engineConfig.retailFreeItemTrigger + 1;
+  const BANNER_MAX = 200;
+  const previewCounts = [1, 2, 3, 4, 5];
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,8 +162,16 @@ export default function AdminOffers() {
             <Tag className="w-5 h-5 text-primary" />
             <h2 className="text-base font-semibold">Cart Engine Config</h2>
           </div>
+
+          {!engineConfig && !configLoading && (
+            <div className="flex items-start gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>No cart engine config saved yet. No discounts or banners will apply until you save this section.</p>
+            </div>
+          )}
+
           <p className="text-sm text-muted-foreground">
-            Controls how discounts are applied. If these values have not been saved yet, no discount runs at all.
+            Controls how discounts are applied. Until saved, no discounts or banners run at all.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -161,12 +180,12 @@ export default function AdminOffers() {
               <Input
                 type="number"
                 min={2}
-                value={engineConfig.wholesaleThreshold}
-                onChange={(e) => updateEngine("wholesaleThreshold", parseInt(e.target.value) || 5)}
+                value={engineDraft.wholesaleThreshold}
+                onChange={(e) => updateEngineDraft("wholesaleThreshold", e.target.value)}
                 data-testid="input-wholesale-threshold"
               />
               <p className="text-xs text-muted-foreground">
-                Carts at or above this count switch to wholesale mode. Products are charged at their wholesale price (set per-product in the catalog).
+                Carts at or above this count switch to wholesale mode. Products charged at their wholesale price (set per-product in catalog).
               </p>
             </div>
 
@@ -175,12 +194,12 @@ export default function AdminOffers() {
               <Input
                 type="number"
                 min={2}
-                value={engineConfig.retailFreeItemTrigger}
-                onChange={(e) => updateEngine("retailFreeItemTrigger", parseInt(e.target.value) || 3)}
+                value={engineDraft.retailFreeItemTrigger}
+                onChange={(e) => updateEngineDraft("retailFreeItemTrigger", e.target.value)}
                 data-testid="input-retail-free-trigger"
               />
               <p className="text-xs text-muted-foreground">
-                At exactly this count, the cheapest item in the cart becomes free.
+                At exactly this count, the cheapest item becomes free.
               </p>
             </div>
 
@@ -190,25 +209,21 @@ export default function AdminOffers() {
                 type="number"
                 min={0}
                 max={100}
-                value={engineConfig.retailBonusDiscountPct}
-                onChange={(e) => updateEngine("retailBonusDiscountPct", parseInt(e.target.value) || 0)}
+                value={engineDraft.retailBonusDiscountPct}
+                onChange={(e) => updateEngineDraft("retailBonusDiscountPct", e.target.value)}
                 data-testid="input-retail-bonus-pct"
               />
               <p className="text-xs text-muted-foreground">
-                At trigger+1 items: cheapest is free AND the next cheapest gets this % off.
+                At trigger+1 items: cheapest is free AND next cheapest gets this % off.
               </p>
             </div>
           </div>
 
-          <div className="bg-muted/50 rounded-md px-4 py-3 text-sm space-y-1">
-            <p><span className="font-medium">1–{engineConfig.retailFreeItemTrigger - 1} items:</span> No discount.</p>
-            <p><span className="font-medium">{engineConfig.retailFreeItemTrigger} items:</span> Cheapest item free.</p>
-            <p><span className="font-medium">{engineConfig.retailFreeItemTrigger + 1} items:</span> Cheapest item free + {engineConfig.retailBonusDiscountPct}% off next cheapest.</p>
-            <p><span className="font-medium">{engineConfig.wholesaleThreshold}+ items:</span> Wholesale mode — each product charged at its wholesale price (if set).</p>
-          </div>
-
           <Button
-            onClick={() => saveEngine.mutate(engineConfig)}
+            onClick={() => {
+              saveEngine.mutate(engineDraft);
+              setEngineConfig(engineDraft);
+            }}
             disabled={saveEngine.isPending}
             data-testid="button-save-engine-config"
           >
@@ -222,50 +237,33 @@ export default function AdminOffers() {
             <h2 className="text-base font-semibold">Cart Banners</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Set the message shown above the checkout button for each cart state. Leave blank to show no banner for that state.
+            Message shown above the checkout button for each cart state. Leave blank for no banner. Requires engine config to be saved first.
           </p>
 
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>1–{engineConfig.retailFreeItemTrigger - 1} items banner</Label>
-              <Textarea
-                value={banners.state1to2}
-                onChange={(e) => updateBanner("state1to2", e.target.value)}
-                placeholder="e.g. Add one more to unlock Buy 2 Get 1 Free!"
-                rows={2}
-                data-testid="input-banner-1to2"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{engineConfig.retailFreeItemTrigger} items banner (free item applied)</Label>
-              <Textarea
-                value={banners.state3}
-                onChange={(e) => updateBanner("state3", e.target.value)}
-                placeholder="e.g. Your cheapest item is free!"
-                rows={2}
-                data-testid="input-banner-3"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{engineConfig.retailFreeItemTrigger + 1} items banner (free item + bonus discount)</Label>
-              <Textarea
-                value={banners.state4}
-                onChange={(e) => updateBanner("state4", e.target.value)}
-                placeholder={`e.g. 1 free item + ${engineConfig.retailBonusDiscountPct}% off the next cheapest!`}
-                rows={2}
-                data-testid="input-banner-4"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{engineConfig.wholesaleThreshold}+ items banner (wholesale mode)</Label>
-              <Textarea
-                value={banners.state5plus}
-                onChange={(e) => updateBanner("state5plus", e.target.value)}
-                placeholder="e.g. Wholesale prices applied to your order!"
-                rows={2}
-                data-testid="input-banner-5plus"
-              />
-            </div>
+            {[
+              { field: "state1to2" as const, label: "1–2 items banner", placeholder: "e.g. Add one more item to unlock a free one!" },
+              { field: "state3" as const, label: `${engineDraft.retailFreeItemTrigger} items banner (free item applied)`, placeholder: "e.g. Your cheapest item is free!" },
+              { field: "state4" as const, label: `${engineDraft.retailFreeItemTrigger + 1} items banner (free item + bonus)`, placeholder: `e.g. 1 free item + ${engineDraft.retailBonusDiscountPct}% off the next cheapest!` },
+              { field: "state5plus" as const, label: `${engineDraft.wholesaleThreshold}+ items banner (wholesale mode)`, placeholder: "e.g. Wholesale prices applied to your order!" },
+            ].map(({ field, label, placeholder }) => (
+              <div key={field} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>{label}</Label>
+                  <span className={`text-xs ${banners[field].length > BANNER_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                    {banners[field].length}/{BANNER_MAX}
+                  </span>
+                </div>
+                <Textarea
+                  value={banners[field]}
+                  onChange={(e) => updateBanner(field, e.target.value)}
+                  placeholder={placeholder}
+                  rows={2}
+                  maxLength={BANNER_MAX}
+                  data-testid={`input-banner-${field}`}
+                />
+              </div>
+            ))}
           </div>
 
           <Button
@@ -358,42 +356,42 @@ export default function AdminOffers() {
             <h2 className="text-base font-semibold">Live Preview</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            See what pricing mode and banner apply at a given cart size.
+            How the current settings apply at each cart size. Based on the values above (save to confirm).
           </p>
-          <div className="flex items-center gap-4">
-            <Label className="shrink-0">Cart size (items)</Label>
-            <Input
-              type="number"
-              min={1}
-              max={50}
-              className="w-28"
-              value={previewCount}
-              onChange={(e) => setPreviewCount(Math.max(1, parseInt(e.target.value) || 1))}
-              data-testid="input-preview-count"
-            />
-          </div>
-          <Separator />
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Pricing mode</span>
-              <span className="font-medium">
-                {isWholesale ? "Wholesale" : isRetailFree || isRetailBonus ? "Retail (discount active)" : "Retail (no discount)"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Delivery fee</span>
-              <span className="font-medium">{previewDelivery === 0 ? "Free" : `₹${previewDelivery}`}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground shrink-0">Banner text</span>
-              <span className="font-medium text-right max-w-xs">
-                {previewBanner || <span className="text-muted-foreground italic">No banner</span>}
-              </span>
-            </div>
-          </div>
-          {previewBanner && (
-            <div className="bg-primary/10 border border-primary/20 rounded-md px-4 py-2 text-sm text-primary font-medium" data-testid="preview-banner">
-              {previewBanner}
+
+          {!engineConfig ? (
+            <p className="text-sm text-muted-foreground italic">Save engine config first to see a preview.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground uppercase tracking-wider border-b">
+                    <th className="text-left py-2 pr-4">Items</th>
+                    <th className="text-left py-2 pr-4">Pricing Mode</th>
+                    <th className="text-left py-2 pr-4">Delivery</th>
+                    <th className="text-left py-2">Banner</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {previewCounts.map((count) => {
+                    const mode = pricingModeLabel(count, engineDraft);
+                    const delivery = computeDeliveryFee(count, deliveryTiers);
+                    const banner = resolveBanner(count, banners, engineDraft);
+                    return (
+                      <tr key={count} data-testid={`preview-row-${count}`}>
+                        <td className="py-2 pr-4 font-medium">{count === 5 ? "5+" : count}</td>
+                        <td className="py-2 pr-4 text-muted-foreground">{mode}</td>
+                        <td className="py-2 pr-4">{delivery === 0 ? <span className="text-primary">Free</span> : `₹${delivery}`}</td>
+                        <td className="py-2 max-w-xs">
+                          {banner
+                            ? <span className="text-primary text-xs">{banner}</span>
+                            : <span className="text-muted-foreground/40 text-xs italic">No banner</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </Card>

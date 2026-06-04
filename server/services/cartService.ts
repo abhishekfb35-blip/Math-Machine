@@ -50,8 +50,9 @@ export class CartService {
     const pricing = calculateCartPricing(priceItems, engineConfig, deliveryTiers, isDomestic);
 
     const itemCount = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
-    const wholesaleThreshold = engineConfig?.wholesaleThreshold ?? 5;
-    const activeBannerText = resolveActiveBanner(itemCount, banners, wholesaleThreshold);
+    const activeBannerText = engineConfig
+      ? resolveActiveBanner(itemCount, banners, engineConfig.wholesaleThreshold)
+      : "";
 
     return {
       id: cart.id,
