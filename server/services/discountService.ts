@@ -71,13 +71,14 @@ export function calculateCartPricing(
   const shippingFee = calculateShippingFee(count, deliveryTiers, isDomestic);
 
   if (count >= wholesaleThreshold) {
-    let discount = 0;
+    let wholesaleTotal = 0;
     for (const e of expanded) {
-      if (e.wholesalePrice !== null && e.wholesalePrice !== undefined && e.wholesalePrice < e.price) {
-        discount += e.price - e.wholesalePrice;
-      }
+      wholesaleTotal += (e.wholesalePrice !== null && e.wholesalePrice !== undefined)
+        ? e.wholesalePrice
+        : e.price;
     }
-    return { subtotal, discount, shippingFee, total: subtotal - discount + shippingFee, freeIndices: [] };
+    const discount = subtotal - wholesaleTotal;
+    return { subtotal, discount, shippingFee, total: wholesaleTotal + shippingFee, freeIndices: [] };
   }
 
   const sorted = [...expanded].map((e, idx) => ({ ...e, idx })).sort((a, b) => a.price - b.price);
