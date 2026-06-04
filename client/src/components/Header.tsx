@@ -1,17 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, ArrowRight } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/components/ThemeProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, defaultPwaInstall, defaultSeo, type HeaderConfig, type PwaInstallConfig, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrency } from "@/context/CurrencyContext";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShareButton from "@/components/ShareButton";
+import { getProductImageUrl } from "@/lib/imageUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +30,20 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 
+interface MiniCartItem {
+  id: string;
+  quantity: number;
+  effectivePrice?: number;
+  product: { name: string; slug: string; imageUrl: string; price: number } | null;
+}
+
+interface MiniCartData {
+  itemCount: number;
+  items: MiniCartItem[];
+  subtotal: number;
+  activeBannerText: string;
+}
+
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -37,10 +54,12 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [miniCartOpen, setMiniCartOpen] = useState(false);
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
+  const { formatPrice } = useCurrency();
 
-  const { data: cart } = useQuery<{ itemCount: number }>({
+  const { data: cart } = useQuery<MiniCartData>({
     queryKey: ["/api/cart"],
   });
 
@@ -185,22 +204,113 @@ export default function Header() {
               </Link>
             )}
 
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
-                <ShoppingBag className="w-4 h-4" />
-                {cart && cart.itemCount > 0 && (
-                  <Badge
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    data-testid="badge-cart-count"
-                  >
-                    {cart.itemCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setMiniCartOpen(true)}
+              data-testid="button-cart"
+              aria-label="Open cart"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              {cart && cart.itemCount > 0 && (
+                <Badge
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  data-testid="badge-cart-count"
+                >
+                  {cart.itemCount}
+                </Badge>
+              )}
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* Mini-cart sidebar */}
+      <Sheet open={miniCartOpen} onOpenChange={setMiniCartOpen}>
+        <SheetContent side="right" className="w-80 sm:w-96 flex flex-col p-0">
+          <SheetHeader className="px-5 py-4 border-b shrink-0">
+            <SheetTitle className="text-left text-base font-semibold flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              Your Cart {cart && cart.itemCount > 0 && `(${cart.itemCount})`}
+            </SheetTitle>
+          </SheetHeader>
+
+          {!cart || cart.itemCount === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
+              <ShoppingBag className="w-12 h-12 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">Your cart is empty</p>
+              <SheetClose asChild>
+                <Link href="/shop">
+                  <Button size="sm" data-testid="button-mini-cart-shop">Start Shopping</Button>
+                </Link>
+              </SheetClose>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-0 divide-y">
+                {cart.items.filter(i => i.product).map((item) => (
+                  <div key={item.id} className="py-3 flex gap-3" data-testid={`mini-cart-item-${item.id}`}>
+                    <SheetClose asChild>
+                      <Link href={`/product/${item.product!.slug}`}>
+                        <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0 cursor-pointer">
+                          <img
+                            src={getProductImageUrl(item.product!.imageUrl, "small")}
+                            alt={item.product!.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </Link>
+                    </SheetClose>
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <SheetClose asChild>
+                        <Link href={`/product/${item.product!.slug}`}>
+                          <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+                            {item.product!.name}
+                          </p>
+                        </Link>
+                      </SheetClose>
+                      <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      <p className="text-sm font-semibold text-primary">
+                        {formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {cart.activeBannerText && (
+                <div className="mx-5 mb-3 flex items-start gap-2 rounded-md bg-primary/10 border border-primary/20 px-3 py-2.5" data-testid="mini-cart-banner">
+                  <Tag className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs font-medium text-primary">{cart.activeBannerText}</p>
+                </div>
+              )}
+
+              <div className="px-5 pb-5 space-y-3 shrink-0">
+                <Separator />
+                <div className="flex justify-between text-sm font-semibold">
+                  <span>Subtotal</span>
+                  <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
+                </div>
+                <SheetClose asChild>
+                  <Link href="/cart">
+                    <Button className="w-full" data-testid="button-mini-cart-view-cart">
+                      View Cart <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link href="/checkout">
+                    <Button variant="outline" className="w-full" data-testid="button-mini-cart-checkout">
+                      Checkout
+                    </Button>
+                  </Link>
+                </SheetClose>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Mobile navigation drawer */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

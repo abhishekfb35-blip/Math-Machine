@@ -130,6 +130,10 @@ export default function ProductPage() {
     enabled: !!product?.id,
   });
 
+  const { data: cart } = useQuery<{ activeBannerText: string; itemCount: number }>({
+    queryKey: ["/api/cart"],
+  });
+
   const { data: myReview } = useQuery<ProductReview | null>({
     queryKey: ["/api/products", product?.id, "my-review"],
     queryFn: async () => {
@@ -736,7 +740,7 @@ export default function ProductPage() {
               </div>
             ) : null}
 
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-testid="section-add-to-cart">
             <Button
               className="flex-1"
               size="lg"
@@ -783,6 +787,16 @@ export default function ProductPage() {
             </Button>
             </div>
 
+            {cart?.activeBannerText && (
+              <div
+                className="flex items-start gap-2 rounded-md bg-primary/10 border border-primary/20 px-3 py-2.5"
+                data-testid="offer-nudge-strip"
+              >
+                <Gift className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-primary">{cart.activeBannerText}</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
                 <Check className="w-4 h-4 text-primary" />
@@ -792,10 +806,12 @@ export default function ProductPage() {
                 <Check className="w-4 h-4 text-primary" />
                 <span className="text-[10px] text-muted-foreground">Hand Embroidered</span>
               </div>
-              <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
-                <Check className="w-4 h-4 text-primary" />
-                <span className="text-[10px] text-muted-foreground">Buy 2 Get 1 Free</span>
-              </div>
+              {!cart?.activeBannerText && (
+                <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] text-muted-foreground">Buy 2 Get 1 Free</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
