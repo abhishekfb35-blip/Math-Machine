@@ -29,7 +29,7 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
-import NudgeCard from "@/components/NudgeCard";
+import NudgeCard, { type NudgeMessageTemplates } from "@/components/NudgeCard";
 
 interface MiniCartItem {
   id: string;
@@ -79,6 +79,7 @@ export default function Header() {
     queryKey: ["/api/site-config"],
   });
   const animationConfig = siteConfig?.["nudge-animation-config"] as { staggerMs?: number; loopEveryMs?: number } | undefined;
+  const messageTemplates = siteConfig?.["nudge-message-config"] as NudgeMessageTemplates | undefined;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,6 +319,7 @@ export default function Header() {
                     supplementaryText={cart.activeBannerText || undefined}
                     staggerMs={animationConfig?.staggerMs}
                     loopEveryMs={animationConfig?.loopEveryMs}
+                    messageTemplates={messageTemplates}
                     compact
                   />
                 </div>

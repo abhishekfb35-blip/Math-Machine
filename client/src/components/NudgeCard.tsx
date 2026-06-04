@@ -6,6 +6,19 @@ export interface EngineThresholds {
   wholesaleThreshold: number;
 }
 
+export interface NudgeMessageTemplates {
+  preTrigger?: string;
+  atFree?: string;
+  atBonus?: string;
+  atWholesale?: string;
+}
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) =>
+    key in vars ? String(vars[key]) : `{${key}}`
+  );
+}
+
 interface NudgeCardProps {
   itemCount: number;
   engineThresholds: EngineThresholds | null;
@@ -13,6 +26,7 @@ interface NudgeCardProps {
   compact?: boolean;
   loopEveryMs?: number;
   staggerMs?: number;
+  messageTemplates?: NudgeMessageTemplates;
 }
 
 export default function NudgeCard({
@@ -22,6 +36,7 @@ export default function NudgeCard({
   compact = false,
   loopEveryMs = 5000,
   staggerMs = 300,
+  messageTemplates,
 }: NudgeCardProps) {
   const [tick, setTick] = useState(0);
 
@@ -62,21 +77,29 @@ export default function NudgeCard({
   const atBonus = !atWholesale && itemCount >= trigger + 1;
   const atFree = !atWholesale && !atBonus && itemCount >= trigger;
 
-  // Short guiding message below the chain
-  let message: string;
-  if (atWholesale) {
-    message = "★ Wholesale pricing active — best value on every item!";
-  } else if (atBonus) {
+  let message: string | null = null;
+  if (atWholesale && messageTemplates?.atWholesale) {
+    message = interpolate(messageTemplates.atWholesale, {
+      itemCount, itemCountS: itemCount === 1 ? "" : "s", bonusPct,
+    });
+  } else if (atBonus && messageTemplates?.atBonus) {
     const need = wholesale - itemCount;
-    message = `🎁 FREE + ✦ ${bonusPct}% off unlocked! Add ${need} more item${need === 1 ? "" : "s"} → ★ Wholesale`;
-  } else if (atFree) {
-    message = `🎁 Cheapest item is FREE! Add 1 more → ✦ ${bonusPct}% off`;
-  } else {
+    message = interpolate(messageTemplates.atBonus, {
+      need, needS: need === 1 ? "" : "s", bonusPct,
+      itemCount, itemCountS: itemCount === 1 ? "" : "s",
+    });
+  } else if (atFree && messageTemplates?.atFree) {
+    message = interpolate(messageTemplates.atFree, {
+      bonusPct, itemCount, itemCountS: itemCount === 1 ? "" : "s",
+    });
+  } else if (!atWholesale && !atBonus && !atFree && messageTemplates?.preTrigger) {
     const need = trigger - itemCount;
-    message = `Add ${need} more item${need === 1 ? "" : "s"} → unlock 🎁 1 FREE item`;
+    message = interpolate(messageTemplates.preTrigger, {
+      need, needS: need === 1 ? "" : "s", bonusPct,
+      itemCount, itemCountS: itemCount === 1 ? "" : "s",
+    });
   }
 
-  // Chain labels per state
   let leftLabel: string;
   let leftActive: boolean;
   let middlePill: string;
@@ -126,7 +149,6 @@ export default function NudgeCard({
 
   const connectorCls = "animate-nudge-pop text-slate-400 dark:text-slate-600 text-xs select-none font-mono";
 
-  // Compute staggered delays: element 0..4 → 100ms + n * staggerMs
   const d = (n: number) => `${100 + n * safeStaggerMs}ms`;
 
   return (
@@ -135,11 +157,7 @@ export default function NudgeCard({
       data-testid="nudge-card"
     >
       {atWholesale ? (
-        /* Wholesale: single centred badge, no chain */
-        <div
-          key={`chain-${itemCount}-${tick}`}
-          className="flex justify-center"
-        >
+        <div key={`chain-${itemCount}-${tick}`} className="flex justify-center">
           <span
             className={`animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap ${pad} bg-amber-500 text-white`}
             style={{ animationDelay: d(0) }}
@@ -149,63 +167,34 @@ export default function NudgeCard({
           </span>
         </div>
       ) : (
-        /* Pre-trigger / free / bonus: left ── pill ──► right */
         <div
           key={`chain-${itemCount}-${tick}`}
           className="flex items-center flex-wrap gap-1.5"
           data-testid="nudge-chain"
         >
-          <span
-            className={leftCls}
-            style={{ animationDelay: d(0) }}
-            data-testid="nudge-chain-left"
-          >
+          <span className={leftCls} style={{ animationDelay: d(0) }} data-testid="nudge-chain-left">
             {leftLabel}
           </span>
-
-          <span
-            className={connectorCls}
-            style={{ animationDelay: d(1) }}
-            aria-hidden="true"
-          >
-            ──
-          </span>
-
-          <span
-            className={pillCls}
-            style={{ animationDelay: d(2) }}
-            data-testid="nudge-chain-pill"
-          >
+          <span className={connectorCls} style={{ animationDelay: d(1) }} aria-hidden="true">──</span>
+          <span className={pillCls} style={{ animationDelay: d(2) }} data-testid="nudge-chain-pill">
             {middlePill}
           </span>
-
-          <span
-            className={connectorCls}
-            style={{ animationDelay: d(3) }}
-            aria-hidden="true"
-          >
-            ──►
-          </span>
-
-          <span
-            className={rightCls}
-            style={{ animationDelay: d(4) }}
-            data-testid="nudge-chain-right"
-          >
+          <span className={connectorCls} style={{ animationDelay: d(3) }} aria-hidden="true">──►</span>
+          <span className={rightCls} style={{ animationDelay: d(4) }} data-testid="nudge-chain-right">
             {rightLabel}
           </span>
         </div>
       )}
 
-      {/* Guiding text — one short sentence */}
-      <p
-        className="text-sm font-medium text-emerald-900 dark:text-emerald-100 leading-snug"
-        data-testid="nudge-message"
-      >
-        {message}
-      </p>
+      {message && (
+        <p
+          className="text-sm font-medium text-emerald-900 dark:text-emerald-100 leading-snug"
+          data-testid="nudge-message"
+        >
+          {message}
+        </p>
+      )}
 
-      {/* Optional admin note */}
       {supplementaryText && (
         <p
           className="text-xs text-emerald-700 dark:text-emerald-300 leading-snug"

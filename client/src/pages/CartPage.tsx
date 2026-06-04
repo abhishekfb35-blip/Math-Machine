@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Gift, Tag } from "lucide-react";
 import SEO from "@/components/SEO";
-import NudgeCard from "@/components/NudgeCard";
+import NudgeCard, { type NudgeMessageTemplates } from "@/components/NudgeCard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -153,6 +153,7 @@ export default function CartPage() {
     queryKey: ["/api/site-config"],
   });
   const animationConfig = siteConfig?.["nudge-animation-config"] as { staggerMs?: number; loopEveryMs?: number } | undefined;
+  const messageTemplates = siteConfig?.["nudge-message-config"] as NudgeMessageTemplates | undefined;
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
@@ -246,6 +247,7 @@ export default function CartPage() {
             supplementaryText={cart.activeBannerText || undefined}
             staggerMs={animationConfig?.staggerMs}
             loopEveryMs={animationConfig?.loopEveryMs}
+            messageTemplates={messageTemplates}
           />
         )}
 

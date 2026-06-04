@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2, AlertCircle, Eye } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
-import NudgeCard from "@/components/NudgeCard";
+import NudgeCard, { type NudgeMessageTemplates } from "@/components/NudgeCard";
 
 interface CartEngineConfig {
   wholesaleThreshold: number;
@@ -98,6 +98,7 @@ export default function AdminOffers() {
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
   const [animationConfig, setAnimationConfig] = useState<CartAnimationConfig>(defaultAnimationConfig);
   const [animationDraft, setAnimationDraft] = useState<CartAnimationConfig>(defaultAnimationConfig);
+  const [messageDraft, setMessageDraft] = useState<NudgeMessageTemplates>({});
   const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
@@ -125,6 +126,10 @@ export default function AdminOffers() {
         setAnimationConfig(rawAnim);
         setAnimationDraft(rawAnim);
       }
+      const rawMessages = allConfig["nudge-message-config"];
+      if (rawMessages && typeof rawMessages === "object") {
+        setMessageDraft(rawMessages as NudgeMessageTemplates);
+      }
       setConfigLoaded(true);
     }
   }, [allConfig, configLoaded]);
@@ -133,6 +138,7 @@ export default function AdminOffers() {
   const saveBanners = useSaveConfig("cart-banners");
   const saveDelivery = useSaveConfig("delivery-tiers");
   const saveAnimation = useSaveConfig("nudge-animation-config");
+  const saveMessages = useSaveConfig("nudge-message-config");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
@@ -317,6 +323,64 @@ export default function AdminOffers() {
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
+            <h2 className="text-base font-semibold">NudgeCard Message Templates</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            The guiding message shown below the reward chain at each reward state. Use <span className="font-mono bg-muted px-1 rounded text-xs">{"{need}"}</span>, <span className="font-mono bg-muted px-1 rounded text-xs">{"{needS}"}</span>, <span className="font-mono bg-muted px-1 rounded text-xs">{"{bonusPct}"}</span>, <span className="font-mono bg-muted px-1 rounded text-xs">{"{itemCount}"}</span>, <span className="font-mono bg-muted px-1 rounded text-xs">{"{itemCountS}"}</span> as placeholders. Leave a field blank to hide the message for that state.
+          </p>
+
+          <div className="space-y-4">
+            {[
+              {
+                field: "preTrigger" as keyof NudgeMessageTemplates,
+                label: `Pre-trigger (< ${engineDraft.retailFreeItemTrigger} items)`,
+                placeholder: `e.g. Add {need} more item{needS} → unlock 🎁 1 FREE item`,
+                hint: "Placeholders: {need}, {needS}, {bonusPct}, {itemCount}, {itemCountS}",
+              },
+              {
+                field: "atFree" as keyof NudgeMessageTemplates,
+                label: `FREE earned (${engineDraft.retailFreeItemTrigger} items)`,
+                placeholder: `e.g. 🎁 Cheapest item is FREE! Add 1 more → ✦ {bonusPct}% off`,
+                hint: "Placeholders: {bonusPct}, {itemCount}, {itemCountS}",
+              },
+              {
+                field: "atBonus" as keyof NudgeMessageTemplates,
+                label: `FREE + Bonus (${engineDraft.retailFreeItemTrigger + 1} items)`,
+                placeholder: `e.g. 🎁 FREE + ✦ {bonusPct}% off! Add {need} more item{needS} → ★ Wholesale`,
+                hint: "Placeholders: {need}, {needS}, {bonusPct}, {itemCount}, {itemCountS}",
+              },
+              {
+                field: "atWholesale" as keyof NudgeMessageTemplates,
+                label: `Wholesale (${engineDraft.wholesaleThreshold}+ items)`,
+                placeholder: `e.g. ★ Wholesale pricing active — best value on every item!`,
+                hint: "Placeholders: {itemCount}, {itemCountS}, {bonusPct}",
+              },
+            ].map(({ field, label, placeholder, hint }) => (
+              <div key={field} className="space-y-1.5">
+                <Label>{label}</Label>
+                <Input
+                  value={messageDraft[field] ?? ""}
+                  onChange={(e) => setMessageDraft(prev => ({ ...prev, [field]: e.target.value }))}
+                  placeholder={placeholder}
+                  data-testid={`input-message-${field}`}
+                />
+                <p className="text-xs text-muted-foreground">{hint}</p>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            onClick={() => saveMessages.mutate(messageDraft)}
+            disabled={saveMessages.isPending}
+            data-testid="button-save-message-templates"
+          >
+            <Save className="w-4 h-4 mr-2" /> {saveMessages.isPending ? "Saving..." : "Save Message Templates"}
+          </Button>
+        </Card>
+
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-primary" />
             <h2 className="text-base font-semibold">Cart Banners</h2>
           </div>
           <div className="rounded-md bg-muted/60 border border-border px-4 py-3 text-sm text-muted-foreground space-y-1">
@@ -481,7 +545,7 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} animationDraft={animationDraft} />
+        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} animationDraft={animationDraft} messageDraft={messageDraft} />
       </div>
     </div>
   );
@@ -493,9 +557,10 @@ interface NudgeCardPreviewProps {
   banners: CartBanners;
   configLoading: boolean;
   animationDraft: CartAnimationConfig;
+  messageDraft: NudgeMessageTemplates;
 }
 
-function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, animationDraft }: NudgeCardPreviewProps) {
+function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, animationDraft, messageDraft }: NudgeCardPreviewProps) {
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -595,6 +660,7 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, a
               supplementaryText={supplementaryText || undefined}
               staggerMs={animationDraft.staggerMs}
               loopEveryMs={animationDraft.loopEveryMs}
+              messageTemplates={messageDraft}
               compact
             />
           </div>
