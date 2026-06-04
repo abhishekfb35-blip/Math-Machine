@@ -14,9 +14,12 @@ interface NudgeCardProps {
 }
 
 function milestoneIcon(pos: number, trigger: number, wholesale: number): string | null {
+  // Precedence: free-item trigger (🎁) > wholesale (★) > bonus-discount (✦).
+  // wholesale must be checked before trigger+1 so that when they coincide
+  // (e.g. trigger=3, wholesale=4) the dot shows ★ instead of ✦.
   if (pos === trigger) return "🎁";
-  if (pos === trigger + 1) return "✦";
   if (pos === wholesale) return "★";
+  if (pos === trigger + 1) return "✦";
   return null;
 }
 
