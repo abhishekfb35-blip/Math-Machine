@@ -238,8 +238,8 @@ export default function AdminOffers() {
             <h2 className="text-base font-semibold">Cart Banners</h2>
           </div>
           <div className="rounded-md bg-muted/60 border border-border px-4 py-3 text-sm text-muted-foreground space-y-1">
-            <p className="font-semibold text-foreground">ℹ️ Auto-generated countdown &amp; progress dots</p>
-            <p>The cart now shows a live progress track (🎁 → ✦ → ★) and a countdown message that updates at every item count automatically — no admin input needed for those. These text fields are <span className="font-medium">supplementary</span>: whatever you type here appears as an extra line below the auto-generated message. Leave blank to show only the auto-generated line.</p>
+            <p className="font-semibold text-foreground">ℹ️ Auto-generated reward chain &amp; message</p>
+            <p>The cart shows a live reward chain (current state ── action pill ──► next reward) and a short guiding message that updates automatically at every item count — no admin input needed for those. These text fields are <span className="font-medium">supplementary</span>: whatever you type here appears as an extra line below the auto-generated message. Leave blank to show only the auto-generated line.</p>
           </div>
 
           <div className="space-y-4">
