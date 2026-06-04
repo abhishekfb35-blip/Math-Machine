@@ -280,9 +280,11 @@ export default function Header() {
               </div>
 
               {cart.activeBannerText && (
-                <div className="mx-5 mb-3 flex items-start gap-2.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border-l-4 border-l-emerald-600 dark:border-l-emerald-500 px-3 py-2.5 shadow-sm" data-testid="mini-cart-banner">
-                  <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-200">{cart.activeBannerText}</p>
+                <div className="mx-5 mb-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 px-4 py-3 shadow-sm space-y-1" data-testid="mini-cart-banner">
+                  <span className="inline-block bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded">
+                    Deal Active
+                  </span>
+                  <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
                 </div>
               )}
 

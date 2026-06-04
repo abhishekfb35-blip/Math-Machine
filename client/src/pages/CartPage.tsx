@@ -208,11 +208,13 @@ export default function CartPage() {
 
         {cart?.activeBannerText && (
           <div
-            className="flex items-start gap-2.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border-l-4 border-l-emerald-600 dark:border-l-emerald-500 px-3.5 py-3 shadow-sm"
+            className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 p-4 shadow-sm space-y-1.5"
             data-testid="card-offer-banner"
           >
-            <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{cart.activeBannerText}</p>
+            <span className="inline-block bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded">
+              Deal Active
+            </span>
+            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
           </div>
         )}
 

@@ -740,6 +740,18 @@ export default function ProductPage() {
               </div>
             ) : null}
 
+            {cart?.activeBannerText && (
+              <div
+                className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 p-4 shadow-sm space-y-1.5"
+                data-testid="offer-nudge-strip"
+              >
+                <span className="inline-block bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded">
+                  Deal Active
+                </span>
+                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
+              </div>
+            )}
+
             <div className="flex gap-2" data-testid="section-add-to-cart">
             <Button
               className="flex-1"
@@ -787,16 +799,6 @@ export default function ProductPage() {
             </Button>
             </div>
 
-            {cart?.activeBannerText && (
-              <div
-                className="flex items-start gap-2.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border-l-4 border-l-emerald-600 dark:border-l-emerald-500 px-3.5 py-3 shadow-sm"
-                data-testid="offer-nudge-strip"
-              >
-                <Gift className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{cart.activeBannerText}</p>
-              </div>
-            )}
-
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
                 <Check className="w-4 h-4 text-primary" />
@@ -806,12 +808,10 @@ export default function ProductPage() {
                 <Check className="w-4 h-4 text-primary" />
                 <span className="text-[10px] text-muted-foreground">Hand Embroidered</span>
               </div>
-              {!cart?.activeBannerText && (
-                <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] text-muted-foreground">Buy 2 Get 1 Free</span>
-                </div>
-              )}
+              <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-muted/50">
+                <Check className="w-4 h-4 text-primary" />
+                <span className="text-[10px] text-muted-foreground">Buy 2 Get 1 Free</span>
+              </div>
             </div>
           </div>
         </div>
