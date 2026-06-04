@@ -102,7 +102,9 @@ export class CartService {
     const itemCount = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
     const activeBannerText = engineConfig
       ? resolveActiveBanner(itemCount, banners, engineConfig)
-      : "";
+      : (itemCount === 1 && banners?.state1)
+        ? banners.state1
+        : "";
 
     const engineThresholds = engineConfig
       ? {
