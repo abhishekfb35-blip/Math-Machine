@@ -1,0 +1,74 @@
+You feel absolutely zero nudge because the current design violates the fundamental law of sales UI: it frames a massive reward like a boring legal terms-and-conditions warning.
+Looking at this new screenshot, the text logic changed to the wholesale state correctly ("Wholesale Event Pricing Activated!"), but the visual execution is actively killing your conversion rate. It looks like a cookie-policy banner or a system alert telling the user their file uploaded successfully. There is zero celebration, zero excitement, and zero visual dopamine.
+If you don't feel a nudge as the business owner, your customers will completely ignore it. Here is the direct breakdown of why this UI fails psychologically, and the exact code fixes your Replit developer needs to deploy right now.
+------------------------------
+## Why the Current Element Fails the Psychology Test
+
+* It Looks Like a Footnote: It is placed at the absolute bottom of the action block in a tiny, thin font. Psychologically, users treat elements beneath the primary "Add to Cart" button as secondary metadata (like return policies or shipping weights) and completely skim over them.
+* The "Success Green" is Wrong: Using a thin green outline box makes it look passive. A real wholesale tier activation should feel like a major milestone achievement in a game.
+* No Visual Contrast: The background is stark white. There is no depth, no pop, and nothing to break the user's scanning pattern.
+
+------------------------------
+## The Fix: Turn it Into a "Reward Card"
+To create a genuine psychological pull, your developer needs to stop using basic text alerts and replace them with a styled Reward Milestone Card.
+## 1. Move the Placement (The "Eyes-First" Rule)
+Move the banner above the "Add to Cart" button, right next to the pricing or personalization fields.
+
+* Why: The customer must see the deal before they make the decision to click add. Right now, it's an afterthought hidden at the bottom.
+
+## 2. Apply High-Contrast Backgrounds & Badges
+Instead of a thin border line, the card needs to fill space confidently with a soft, warm background color, bold text weights, and a stylized reward badge.
+Have your developer apply this exact design structure to completely alter the look:
+
+/* Tell your developer to use this styling structure for the active reward alert */
+.wholesale-active-card {
+    background-color: #f0fdf4; /* A rich, soft minty success background */
+    border: 1.5px dashed #059669; /* Dashed coupon-style border line */
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px; /* Forces clear separation */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.wholesale-active-card .badge {
+    background-color: #059669;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    width: fit-content;
+    letter-spacing: 0.5px;
+}
+
+.wholesale-active-card .message-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #065f46;
+    line-height: 1.4;
+}
+
+------------------------------
+## What it Should Look Like Instead
+Instead of a thin box with small text at the bottom, it should look like a prominent, stylized notification block right above the main action button:
+
+┌────────────────────────────────────────────────────────┐
+│  WHOLESALE LOCKED IN 🏆                                │
+│  Your bulk volume discount is active! This item        │
+│  drops from ₹999 to just ₹649 across your entire cart. │
+└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│             🛒   ADD TO CART - ₹3,245 Total            │
+└────────────────────────────────────────────────────────┘
+
+## The Exact Instruction to Send Your Developer
+Copy and paste this direct instruction into your Replit chat:
+
+"The logic works, but the frontend presentation lacks visual urgency and feels like a footnote. We need to move the banner block above the 'Add to Cart' button. Change the style from a thin outline box to a styled background card (#f0fdf4) with a dashed coupon border, a bold headline tag like 'WHOLESALE LOCKED IN 🏆', and increase the text weight so the discount feels like a celebrated reward rather than a system alert."
+
+Let me know if your developer is using standard CSS or a framework like Tailwind, and I can give you the exact class definitions to copy-paste.
+
