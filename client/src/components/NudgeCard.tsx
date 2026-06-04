@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
   retailBonusDiscountPct: number;
@@ -9,6 +11,7 @@ interface NudgeCardProps {
   engineThresholds: EngineThresholds | null;
   supplementaryText?: string;
   compact?: boolean;
+  loopEvery?: number;
 }
 
 export default function NudgeCard({
@@ -16,7 +19,34 @@ export default function NudgeCard({
   engineThresholds,
   supplementaryText,
   compact = false,
+  loopEvery = 5,
 }: NudgeCardProps) {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const delay = loopEvery * 1000;
+
+    function replay() {
+      if (document.visibilityState === "visible") {
+        setTick((t) => t + 1);
+      }
+    }
+
+    const id = setInterval(replay, delay);
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        setTick((t) => t + 1);
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [itemCount, loopEvery]);
+
   if (!engineThresholds || itemCount === 0) return null;
 
   const {
@@ -101,7 +131,7 @@ export default function NudgeCard({
       {atWholesale ? (
         /* Wholesale: single centred badge, no chain */
         <div
-          key={`chain-${itemCount}`}
+          key={`chain-${itemCount}-${tick}`}
           className="flex justify-center"
         >
           <span
@@ -115,7 +145,7 @@ export default function NudgeCard({
       ) : (
         /* Pre-trigger / free / bonus: left ── pill ──► right */
         <div
-          key={`chain-${itemCount}`}
+          key={`chain-${itemCount}-${tick}`}
           className="flex items-center flex-wrap gap-1.5"
           data-testid="nudge-chain"
         >
