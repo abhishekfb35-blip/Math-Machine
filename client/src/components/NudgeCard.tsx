@@ -7,6 +7,7 @@ export interface EngineThresholds {
 }
 
 export interface NudgeMessageTemplates {
+  zeroState?: string;
   preTrigger?: string;
   atFree?: string;
   atBonus?: string;
@@ -65,13 +66,89 @@ export default function NudgeCard({
     };
   }, [itemCount, safeLoopMs]);
 
-  if (!engineThresholds || itemCount === 0) return null;
+  if (!engineThresholds) return null;
 
   const {
     retailFreeItemTrigger: trigger,
     retailBonusDiscountPct: bonusPct,
     wholesaleThreshold: wholesale,
   } = engineThresholds;
+
+  const pad = compact ? "px-2.5 py-1" : "px-3 py-1.5";
+
+  const pillCls = [
+    "animate-nudge-pop rounded-full font-bold text-xs whitespace-nowrap",
+    pad,
+    "bg-amber-400 dark:bg-amber-500 text-white",
+  ].join(" ");
+
+  const rightCls = [
+    "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
+    pad,
+    "border border-dashed border-emerald-400 dark:border-emerald-600",
+    "text-emerald-700 dark:text-emerald-300 bg-white/70 dark:bg-transparent",
+  ].join(" ");
+
+  const connectorCls = "animate-nudge-pop text-slate-400 dark:text-slate-600 text-xs select-none font-mono";
+
+  const d = (n: number) => `${100 + n * safeStaggerMs}ms`;
+
+  if (itemCount === 0) {
+    const zeroMessage = messageTemplates?.zeroState
+      ? interpolate(messageTemplates.zeroState, {
+          trigger, triggerS: trigger === 1 ? "" : "s", bonusPct,
+        })
+      : null;
+
+    const emptyLeftCls = [
+      "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
+      pad,
+      "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
+    ].join(" ");
+
+    return (
+      <div
+        className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${compact ? "px-3 py-2.5 space-y-2" : "px-4 py-3 space-y-2.5"}`}
+        data-testid="nudge-card"
+      >
+        <div
+          key={`chain-zero-${tick}`}
+          className="flex items-center flex-wrap gap-1.5"
+          data-testid="nudge-chain"
+        >
+          <span className={emptyLeftCls} style={{ animationDelay: d(0) }} data-testid="nudge-chain-left">
+            🛒 Empty cart
+          </span>
+          <span className={connectorCls} style={{ animationDelay: d(1) }} aria-hidden="true">──</span>
+          <span className={pillCls} style={{ animationDelay: d(2) }} data-testid="nudge-chain-pill">
+            Add {trigger} item{trigger === 1 ? "" : "s"}
+          </span>
+          <span className={connectorCls} style={{ animationDelay: d(3) }} aria-hidden="true">──►</span>
+          <span className={rightCls} style={{ animationDelay: d(4) }} data-testid="nudge-chain-right">
+            🎁 1 FREE item
+          </span>
+        </div>
+
+        {zeroMessage && (
+          <p
+            className="text-sm font-medium text-emerald-900 dark:text-emerald-100 leading-snug"
+            data-testid="nudge-message"
+          >
+            {zeroMessage}
+          </p>
+        )}
+
+        {supplementaryText && (
+          <p
+            className="text-xs text-emerald-700 dark:text-emerald-300 leading-snug"
+            data-testid="nudge-supplementary"
+          >
+            {supplementaryText}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   const atWholesale = itemCount >= wholesale;
   const atBonus = !atWholesale && itemCount >= trigger + 1;
@@ -124,8 +201,6 @@ export default function NudgeCard({
     rightLabel = "🎁 1 FREE item";
   }
 
-  const pad = compact ? "px-2.5 py-1" : "px-3 py-1.5";
-
   const leftCls = [
     "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
     pad,
@@ -133,23 +208,6 @@ export default function NudgeCard({
       ? "bg-emerald-500 text-white"
       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
   ].join(" ");
-
-  const pillCls = [
-    "animate-nudge-pop rounded-full font-bold text-xs whitespace-nowrap",
-    pad,
-    "bg-amber-400 dark:bg-amber-500 text-white",
-  ].join(" ");
-
-  const rightCls = [
-    "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
-    pad,
-    "border border-dashed border-emerald-400 dark:border-emerald-600",
-    "text-emerald-700 dark:text-emerald-300 bg-white/70 dark:bg-transparent",
-  ].join(" ");
-
-  const connectorCls = "animate-nudge-pop text-slate-400 dark:text-slate-600 text-xs select-none font-mono";
-
-  const d = (n: number) => `${100 + n * safeStaggerMs}ms`;
 
   return (
     <div

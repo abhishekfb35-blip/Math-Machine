@@ -332,6 +332,12 @@ export default function AdminOffers() {
           <div className="space-y-4">
             {[
               {
+                field: "zeroState" as keyof NudgeMessageTemplates,
+                label: `Zero-state (empty cart — product page & quick-add)`,
+                placeholder: `e.g. Add {trigger} item{triggerS} to your cart → unlock 🎁 1 FREE item`,
+                hint: "Placeholders: {trigger}, {triggerS}, {bonusPct}",
+              },
+              {
                 field: "preTrigger" as keyof NudgeMessageTemplates,
                 label: `Pre-trigger (< ${engineDraft.retailFreeItemTrigger} items)`,
                 placeholder: `e.g. Add {need} more item{needS} → unlock 🎁 1 FREE item`,
@@ -590,6 +596,13 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, a
   const preTriggerCount = Math.max(2, trigger - 1);
 
   const states: { label: string; sublabel: string; itemCount: number; supplementaryText: string; testId: string }[] = [
+    {
+      label: "Zero-state",
+      sublabel: "Empty cart — product page & quick-add",
+      itemCount: 0,
+      supplementaryText: "",
+      testId: "nudge-preview-zero-state",
+    },
     {
       label: "1 item added",
       sublabel: "First impression",
