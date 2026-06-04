@@ -110,10 +110,10 @@ export function calculateCartPricing(
   return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [] };
 }
 
-export function resolveActiveBanner(itemCount: number, banners: CartBanners | null, wholesaleThreshold: number): string {
+export function resolveActiveBanner(itemCount: number, banners: CartBanners | null, config: CartEngineConfig): string {
   if (!banners) return "";
-  if (itemCount >= wholesaleThreshold) return banners.state5plus || "";
-  if (itemCount >= 4) return banners.state4 || "";
-  if (itemCount >= 3) return banners.state3 || "";
+  if (itemCount >= config.wholesaleThreshold) return banners.state5plus || "";
+  if (itemCount >= config.retailFreeItemTrigger + 1) return banners.state4 || "";
+  if (itemCount >= config.retailFreeItemTrigger) return banners.state3 || "";
   return banners.state1to2 || "";
 }
