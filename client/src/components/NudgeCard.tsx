@@ -11,56 +11,51 @@ interface NudgeCardProps {
   compact?: boolean;
 }
 
-function nodeClasses(reached: boolean, isNext: boolean, compact: boolean): string {
-  const size = compact ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
-  const base = `${size} rounded-full flex items-center justify-center font-bold border-2 transition-colors select-none shrink-0`;
-  if (reached) return `${base} bg-emerald-500 border-emerald-500 text-white shadow-sm`;
-  if (isNext) return `${base} bg-white dark:bg-emerald-950 border-emerald-500 text-emerald-700 dark:text-emerald-300`;
-  return `${base} bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-700 text-emerald-300 dark:text-emerald-700`;
+function milestoneIcon(pos: number, trigger: number, wholesale: number): string | null {
+  if (pos === trigger) return "🎁";
+  if (pos === trigger + 1) return "✦";
+  if (pos === wholesale) return "★";
+  return null;
 }
 
-function lineClasses(filled: boolean): string {
-  return `flex-1 h-px self-center ${filled ? "bg-emerald-500" : "bg-emerald-200 dark:bg-emerald-700/50"}`;
+function milestoneLabel(pos: number, trigger: number, bonusPct: number, wholesale: number): string {
+  if (pos === trigger) return "FREE";
+  if (pos === trigger + 1) return `${bonusPct}% off`;
+  if (pos === wholesale) return "Wholesale";
+  return "";
 }
 
-function labelClasses(reached: boolean, isNext: boolean): string {
-  if (reached) return "text-emerald-700 dark:text-emerald-300";
-  if (isNext) return "text-emerald-600 dark:text-emerald-400";
-  return "text-emerald-300 dark:text-emerald-600";
-}
-
-function sublabelClasses(reached: boolean, isNext: boolean): string {
-  if (reached || isNext) return "text-emerald-500 dark:text-emerald-400";
-  return "text-emerald-200 dark:text-emerald-700";
-}
-
-export default function NudgeCard({ itemCount, engineThresholds, supplementaryText, compact = false }: NudgeCardProps) {
+export default function NudgeCard({
+  itemCount,
+  engineThresholds,
+  supplementaryText,
+  compact = false,
+}: NudgeCardProps) {
   if (!engineThresholds || itemCount === 0) return null;
 
-  const { retailFreeItemTrigger: trigger, retailBonusDiscountPct: bonusPct, wholesaleThreshold: wholesale } = engineThresholds;
+  const {
+    retailFreeItemTrigger: trigger,
+    retailBonusDiscountPct: bonusPct,
+    wholesaleThreshold: wholesale,
+  } = engineThresholds;
 
-  const r0 = itemCount >= trigger;
-  const r1 = itemCount >= trigger + 1;
-  const r2 = itemCount >= wholesale;
-  const n0 = !r0;
-  const n1 = r0 && !r1;
-  const n2 = r1 && !r2;
-
-  const isDealActive = r0;
+  const filledCount = Math.min(itemCount, wholesale);
+  const isDealActive = itemCount >= trigger;
 
   let message: string;
-  if (r2) {
+  if (itemCount >= wholesale) {
     message = "★ Wholesale pricing active — best value on every item!";
-  } else if (r1) {
+  } else if (itemCount >= trigger + 1) {
     const need = wholesale - itemCount;
     message = `🎁 FREE + ✦ ${bonusPct}% off unlocked! Add ${need} more item${need === 1 ? "" : "s"} → ★ Wholesale`;
-  } else if (r0) {
+  } else if (itemCount >= trigger) {
     message = `🎁 Cheapest item is FREE! Add 1 more → ✦ ${bonusPct}% off next item`;
   } else {
     const need = trigger - itemCount;
     message = `Add ${need} more item${need === 1 ? "" : "s"} → unlock 🎁 1 FREE item`;
   }
 
+  const positions = Array.from({ length: wholesale }, (_, i) => i + 1);
   const pillBg = isDealActive ? "bg-emerald-600" : "bg-amber-500";
   const pillText = isDealActive ? "Deal Active" : "Unlock Reward";
 
@@ -69,52 +64,81 @@ export default function NudgeCard({ itemCount, engineThresholds, supplementaryTe
       className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${compact ? "px-3 py-2.5 space-y-2" : "px-4 py-3.5 space-y-2.5"}`}
       data-testid="nudge-card"
     >
-      <span className={`inline-block text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${pillBg}`}>
+      <span
+        className={`inline-block text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${pillBg}`}
+      >
         {pillText}
       </span>
 
-      {compact ? (
-        <div className="flex items-center">
-          <div className={nodeClasses(r0, n0, true)}>🎁</div>
-          <div className={lineClasses(r0)} />
-          <div className={nodeClasses(r1, n1, true)}>✦</div>
-          <div className={lineClasses(r1)} />
-          <div className={nodeClasses(r2, n2, true)}>★</div>
+      {/* Step-dot track — one dot per item slot up to wholesaleThreshold */}
+      <div>
+        <div className={`flex items-center ${compact ? "gap-1" : "gap-1.5"} flex-wrap`}>
+          {positions.map((pos) => {
+            const isFilled = pos <= filledCount;
+            const icon = milestoneIcon(pos, trigger, wholesale);
+            const isMilestone = icon !== null;
+            return (
+              <div
+                key={pos}
+                className={[
+                  "rounded-full flex items-center justify-center shrink-0 transition-colors font-bold select-none",
+                  compact ? "w-3 h-3 text-[7px]" : "w-4 h-4 text-[9px]",
+                  isFilled
+                    ? "bg-emerald-500"
+                    : isMilestone
+                    ? "bg-white dark:bg-emerald-950 border-2 border-emerald-400 dark:border-emerald-600"
+                    : "bg-emerald-200 dark:bg-emerald-700/40",
+                ].join(" ")}
+                data-testid={`nudge-dot-${pos}`}
+              >
+                {isMilestone && (
+                  <span className={isFilled ? "text-white" : "text-emerald-500 dark:text-emerald-400"}>
+                    {icon}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ) : (
-        <div>
-          <div className="flex items-center">
-            <div className={nodeClasses(r0, n0, false)}>🎁</div>
-            <div className={lineClasses(r0)} />
-            <div className={nodeClasses(r1, n1, false)}>✦</div>
-            <div className={lineClasses(r1)} />
-            <div className={nodeClasses(r2, n2, false)}>★</div>
-          </div>
-          <div className="flex items-start mt-1.5">
-            <div className="w-10 shrink-0 flex flex-col items-center text-center">
-              <span className={`text-[9px] font-bold uppercase tracking-wide leading-tight ${labelClasses(r0, n0)}`}>FREE item</span>
-              <span className={`text-[8px] mt-0.5 ${sublabelClasses(r0, n0)}`}>{trigger} items</span>
-            </div>
-            <div className="flex-1" />
-            <div className="w-10 shrink-0 flex flex-col items-center text-center">
-              <span className={`text-[9px] font-bold uppercase tracking-wide leading-tight ${labelClasses(r1, n1)}`}>{bonusPct}% off</span>
-              <span className={`text-[8px] mt-0.5 ${sublabelClasses(r1, n1)}`}>{trigger + 1} items</span>
-            </div>
-            <div className="flex-1" />
-            <div className="w-10 shrink-0 flex flex-col items-center text-center">
-              <span className={`text-[9px] font-bold uppercase tracking-wide leading-tight ${labelClasses(r2, n2)}`}>Wholesale</span>
-              <span className={`text-[8px] mt-0.5 ${sublabelClasses(r2, n2)}`}>{wholesale}+ items</span>
-            </div>
-          </div>
-        </div>
-      )}
 
-      <p className={`font-semibold text-emerald-900 dark:text-emerald-100 leading-snug ${compact ? "text-xs" : "text-sm"}`}>
+        {/* Milestone labels — full mode only */}
+        {!compact && (
+          <div className="flex items-start gap-1.5 mt-1">
+            {positions.map((pos) => {
+              const icon = milestoneIcon(pos, trigger, wholesale);
+              const isFilled = pos <= filledCount;
+              return (
+                <div key={pos} className="w-4 shrink-0 text-center overflow-visible">
+                  {icon && (
+                    <span
+                      className={`text-[7px] font-semibold leading-tight whitespace-nowrap ${
+                        isFilled
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-emerald-400 dark:text-emerald-600"
+                      }`}
+                    >
+                      {milestoneLabel(pos, trigger, bonusPct, wholesale)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Dynamic countdown message — changes at every item count */}
+      <p
+        className={`font-semibold text-emerald-900 dark:text-emerald-100 leading-snug ${compact ? "text-xs" : "text-sm"}`}
+      >
         {message}
       </p>
 
+      {/* Admin-configured supplementary text (optional) */}
       {supplementaryText && (
-        <p className={`text-emerald-700 dark:text-emerald-300 leading-snug ${compact ? "text-[10px]" : "text-xs"}`}>
+        <p
+          className={`text-emerald-700 dark:text-emerald-300 leading-snug ${compact ? "text-[10px]" : "text-xs"}`}
+        >
           {supplementaryText}
         </p>
       )}
