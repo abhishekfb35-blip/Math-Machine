@@ -1,0 +1,100 @@
+This structured specification contains the complete logic, pricing schemas, and frontend copy required to build the automated cart engine.
+------------------------------
+## Architecture Specification: Multi-Tier E-Commerce Cart Engine## 1. System Overview
+The engine operates in two core operational modes (Retail Mode and Wholesale Bulk Mode) toggled automatically based on the total physical count of items in the cart.
+
+* Retail Mode (1–4 Items): Applies a custom event-based bundle calculation.
+* Wholesale Bulk Mode (5+ Items): Automatically overrides bundle calculations and forces a flat price per category based on database records.
+
+------------------------------
+## 2. Master Product Database Schema
+The database contains two distinct price fields for every product. Items under ₹2,500 remain strictly within the 5% GST bracket.
+
+| Product ID / Name | Normal Retail Price (1–4 Pcs) | Bottom Wholesale Price (5+ Pcs) |
+|---|---|---|
+| KIDS_TOWEL | ₹999 | ₹649 |
+| ADULT_TOWEL | ₹1,299 | ₹749 |
+| KIDS_BATHROBE | ₹1,599 | ₹849 |
+| 0_5_YRS_BLANKET | ₹1,999 | ₹1,299 |
+| TEENAGE_BATHROBE | ₹2,199 | ₹1,399 |
+| 6_13_YRS_BLANKET | ₹2,499 | ₹1,599 |
+| ADULT_BATHROBE | ₹2,499 | ₹1,649 |
+
+------------------------------
+## 3. Core Pricing Pipeline Logic## Step 1: Calculate Total Quantity
+Sum up the physical quantities of all line items in the cart payload:
+$$\text{TotalQuantity} = \sum (\text{item.quantity})$$ 
+## Step 2: Determine State & Calculate Invoice Total## State A: Wholesale Bulk Mode ($\text{TotalQuantity} \ge 5$)
+
+* Rule: Completely ignore all free-item bundle logic. Loop through each item in the cart and change its unit price directly to its corresponding Bottom Wholesale Price.
+* Formula: $\text{TotalCartPrice} = \sum (\text{item.quantity} \times \text{item.bottom\_price})$
+
+## State B: Retail Bundle Mode ($\text{TotalQuantity} < 5$)
+Sort all physical items in the cart by their Normal Retail Price from highest to lowest. Apply rules based on exact count:
+
+* If Total Quantity = 1 or 2: No discounts. Sum the normal prices.
+* If Total Quantity = 3:
+* The lowest-priced item (index 3) is discounted to ₹0 (Buy 2, Get 1 Free).
+   * Pay full normal price for items 1 and 2.
+* If Total Quantity = 4:
+* The 3rd highest item (index 3) is discounted to ₹0 (Buy 2, Get 1 Free).
+   * The lowest-priced item (index 4) receives a 30% discount ($\text{price} \times 0.70$).
+   * Pay full normal price for items 1 and 2.
+
+------------------------------
+## 4. Frontend Dynamic Psychological Engagement Banners
+Render a persistent alert banner directly above the checkout module. Update the text dynamically based on the current TotalQuantity:
+
+* At 1 or 2 Items:
+
+"💡 Pro-Tip: Add just 1 more item to unlock a FREE item completely! 🎁"
+
+* At Exactly 3 Items:
+
+"🔥 Special Deal Active: 'Buy 2, Get 1 FREE' unlocked! Add a 4th item to get an extra 30% off that piece! 🚀"
+
+* At Exactly 4 Items (The High-Value Wholesale Push):
+
+"🏆 Incredible! You are only 1 item away from unlocking our Wholesale Board Rates. Add a 5th item to instantly slash the price of EVERY item in your cart! 👑"
+
+* At 5 or More Items:
+
+"🎉 Wholesale Event Pricing Activated! Because you are buying in bulk, we have bypassed retail bundles and applied flat wholesale board rates to your entire cart."
+
+
+------------------------------
+## 5. JavaScript Engine Reference Snippet
+This code handles state determination and pairs it with the correct customer-facing alert prompt:
+
+function processCartOfferEngine(cartLines) {
+    // Calculate global cart volume
+    const totalQty = cartLines.reduce((sum, item) => sum + item.quantity, 0);
+    
+    let activeTier = "RETAIL_BASE";
+    let dynamicPrompt = "";
+
+    // State Evaluation Pipeline
+    if (totalQty >= 5) {
+        activeTier = "WHOLESALE_BULK";
+        dynamicPrompt = "🎉 Wholesale Event Pricing Activated! Flat board rates applied across your entire cart.";
+    } else if (totalQty === 4) {
+        activeTier = "RETAIL_B2G1_BONUS";
+        dynamicPrompt = "🏆 Incredible! Add just 1 more item to unlock our locked Wholesale Board Rates across your entire order!";
+    } else if (totalQty === 3) {
+        activeTier = "RETAIL_B2G1";
+        dynamicPrompt = "🔥 'Buy 2, Get 1 FREE' unlocked! Add a 4th item to get an extra 30% off that piece!";
+    } else {
+        activeTier = "RETAIL_BASE";
+        const itemsToNextMilestone = 3 - totalQty;
+        dynamicPrompt = `💡 Pro-Tip: Add just ${itemsToNextMilestone} more item${itemsToNextMilestone > 1 ? 's' : ''} to unlock a FREE item completely! 🎁`;
+    }
+
+    return {
+        totalQuantity: totalQty,
+        executionTier: activeTier,
+        bannerText: dynamicPrompt
+    };
+}
+
+If your developer needs assistance, let me know if they require a structured JSON payload template for the checkout API endpoints or an asynchronous template to update line items without refreshing the screen.
+
