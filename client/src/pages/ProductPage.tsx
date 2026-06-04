@@ -789,11 +789,11 @@ export default function ProductPage() {
 
             {cart?.activeBannerText && (
               <div
-                className="flex items-start gap-2 rounded-md bg-primary/10 border border-primary/20 px-3 py-2.5"
+                className="flex items-start gap-2.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border-l-4 border-l-emerald-600 dark:border-l-emerald-500 px-3.5 py-3 shadow-sm"
                 data-testid="offer-nudge-strip"
               >
-                <Gift className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs font-medium text-primary">{cart.activeBannerText}</p>
+                <Gift className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{cart.activeBannerText}</p>
               </div>
             )}
 

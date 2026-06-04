@@ -207,12 +207,13 @@ export default function CartPage() {
         )}
 
         {cart?.activeBannerText && (
-          <Card className="p-3 bg-primary/10 border-primary/20" data-testid="card-offer-banner">
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary shrink-0" />
-              <p className="text-sm font-medium text-primary">{cart.activeBannerText}</p>
-            </div>
-          </Card>
+          <div
+            className="flex items-start gap-2.5 rounded-sm bg-emerald-50 dark:bg-emerald-950/30 border-l-4 border-l-emerald-600 dark:border-l-emerald-500 px-3.5 py-3 shadow-sm"
+            data-testid="card-offer-banner"
+          >
+            <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">{cart.activeBannerText}</p>
+          </div>
         )}
 
         <Card className="p-4 space-y-3">
