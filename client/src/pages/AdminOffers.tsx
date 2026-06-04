@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2, AlertCircle } from "lucide-react";
+import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2, AlertCircle, Eye } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
+import NudgeCard from "@/components/NudgeCard";
 
 interface CartEngineConfig {
   wholesaleThreshold: number;
@@ -396,7 +397,113 @@ export default function AdminOffers() {
             </div>
           )}
         </Card>
+
+        <NudgeCardPreview engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
       </div>
     </div>
+  );
+}
+
+interface NudgeCardPreviewProps {
+  engineConfig: CartEngineConfig | null;
+  banners: CartBanners;
+  configLoading: boolean;
+}
+
+function NudgeCardPreview({ engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
+  if (configLoading) {
+    return (
+      <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
+        <div className="flex items-center gap-2">
+          <Eye className="w-5 h-5 text-primary" />
+          <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
+        </div>
+        <p className="text-sm text-muted-foreground italic">Loading production config…</p>
+      </Card>
+    );
+  }
+
+  if (!engineConfig) {
+    return (
+      <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
+        <div className="flex items-center gap-2">
+          <Eye className="w-5 h-5 text-primary" />
+          <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
+        </div>
+        <p className="text-sm text-muted-foreground italic">
+          Save the Cart Engine Config above first — the preview shows how the nudge card looks with your live production settings.
+        </p>
+      </Card>
+    );
+  }
+
+  const { retailFreeItemTrigger: trigger, wholesaleThreshold: wholesale, retailBonusDiscountPct: bonusPct } = engineConfig;
+
+  const thresholds = {
+    retailFreeItemTrigger: trigger,
+    retailBonusDiscountPct: bonusPct,
+    wholesaleThreshold: wholesale,
+  };
+
+  const preTriggerCount = Math.max(1, trigger - 1);
+
+  const states: { label: string; sublabel: string; itemCount: number; supplementaryText: string; testId: string }[] = [
+    {
+      label: "Pre-trigger",
+      sublabel: `${preTriggerCount} item${preTriggerCount === 1 ? "" : "s"} in cart`,
+      itemCount: preTriggerCount,
+      supplementaryText: banners.state1to2,
+      testId: "nudge-preview-pre-trigger",
+    },
+    {
+      label: "FREE earned",
+      sublabel: `${trigger} items — cheapest item free`,
+      itemCount: trigger,
+      supplementaryText: banners.state3,
+      testId: "nudge-preview-free-earned",
+    },
+    {
+      label: "FREE + Bonus",
+      sublabel: `${trigger + 1} items — free + ${bonusPct}% off`,
+      itemCount: trigger + 1,
+      supplementaryText: banners.state4,
+      testId: "nudge-preview-free-bonus",
+    },
+    {
+      label: "Wholesale",
+      sublabel: `${wholesale}+ items — wholesale pricing`,
+      itemCount: wholesale,
+      supplementaryText: banners.state5plus,
+      testId: "nudge-preview-wholesale",
+    },
+  ];
+
+  return (
+    <Card className="p-6 space-y-6" data-testid="nudge-card-preview-section">
+      <div className="flex items-center gap-2">
+        <Eye className="w-5 h-5 text-primary" />
+        <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        How the shopper-facing nudge card looks at each reward step, based on your <span className="font-medium text-foreground">saved production config</span>. Save the Cart Engine Config above to update this preview.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {states.map(({ label, sublabel, itemCount, supplementaryText, testId }) => (
+          <div key={testId} className="space-y-2" data-testid={testId}>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">{label}</span>
+              <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">{sublabel}</span>
+            </div>
+            <NudgeCard
+              itemCount={itemCount}
+              engineThresholds={thresholds}
+              supplementaryText={supplementaryText || undefined}
+              compact
+            />
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
