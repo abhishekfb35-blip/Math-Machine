@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Gift, Tag } from "lucide-react";
 import SEO from "@/components/SEO";
+import NudgeCard from "@/components/NudgeCard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,11 @@ interface CartData {
   shippingFee: number;
   total: number;
   activeBannerText: string;
+  engineThresholds: {
+    retailFreeItemTrigger: number;
+    retailBonusDiscountPct: number;
+    wholesaleThreshold: number;
+  } | null;
 }
 
 function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
@@ -228,16 +234,12 @@ export default function CartPage() {
           </Card>
         )}
 
-        {cart?.activeBannerText && (
-          <div
-            className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 p-4 shadow-sm space-y-1.5"
-            data-testid="card-offer-banner"
-          >
-            <span className="inline-block bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded">
-              Deal Active
-            </span>
-            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
-          </div>
+        {cart && cart.engineThresholds && (
+          <NudgeCard
+            itemCount={cart.itemCount}
+            engineThresholds={cart.engineThresholds}
+            supplementaryText={cart.activeBannerText || undefined}
+          />
         )}
 
         <Card className="p-4 space-y-3">

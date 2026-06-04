@@ -28,6 +28,11 @@ export interface CartDetails {
   total: number;
   freeIndices: number[];
   activeBannerText: string;
+  engineThresholds: {
+    retailFreeItemTrigger: number;
+    retailBonusDiscountPct: number;
+    wholesaleThreshold: number;
+  } | null;
 }
 
 export class CartService {
@@ -99,6 +104,14 @@ export class CartService {
       ? resolveActiveBanner(itemCount, banners, engineConfig)
       : "";
 
+    const engineThresholds = engineConfig
+      ? {
+          retailFreeItemTrigger: engineConfig.retailFreeItemTrigger,
+          retailBonusDiscountPct: engineConfig.retailBonusDiscountPct,
+          wholesaleThreshold: engineConfig.wholesaleThreshold,
+        }
+      : null;
+
     return {
       id: cart.id,
       items: enrichedItems,
@@ -106,6 +119,7 @@ export class CartService {
       ...pricingFields,
       freeIndices,
       activeBannerText,
+      engineThresholds,
     };
   }
 

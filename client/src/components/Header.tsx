@@ -29,6 +29,7 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
+import NudgeCard from "@/components/NudgeCard";
 
 interface MiniCartItem {
   id: string;
@@ -48,6 +49,11 @@ interface MiniCartData {
   shippingFee: number;
   total: number;
   activeBannerText: string;
+  engineThresholds: {
+    retailFreeItemTrigger: number;
+    retailBonusDiscountPct: number;
+    wholesaleThreshold: number;
+  } | null;
 }
 
 
@@ -299,12 +305,14 @@ export default function Header() {
                 ))}
               </div>
 
-              {cart.activeBannerText && (
-                <div className="mx-5 mb-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 px-4 py-3 shadow-sm space-y-1" data-testid="mini-cart-banner">
-                  <span className="inline-block bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded">
-                    Deal Active
-                  </span>
-                  <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 leading-snug">{cart.activeBannerText}</p>
+              {cart.engineThresholds && (
+                <div className="mx-5 mb-3" data-testid="mini-cart-banner">
+                  <NudgeCard
+                    itemCount={cart.itemCount}
+                    engineThresholds={cart.engineThresholds}
+                    supplementaryText={cart.activeBannerText || undefined}
+                    compact
+                  />
                 </div>
               )}
 

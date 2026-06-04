@@ -236,16 +236,17 @@ export default function AdminOffers() {
             <MessageSquare className="w-5 h-5 text-primary" />
             <h2 className="text-base font-semibold">Cart Banners</h2>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Message shown above the checkout button for each cart state. Leave blank for no banner. Requires engine config to be saved first.
-          </p>
+          <div className="rounded-md bg-muted/60 border border-border px-4 py-3 text-sm text-muted-foreground space-y-1">
+            <p className="font-semibold text-foreground">ℹ️ Auto-generated countdown &amp; progress dots</p>
+            <p>The cart now shows a live progress track (🎁 → ✦ → ★) and a countdown message that updates at every item count automatically — no admin input needed for those. These text fields are <span className="font-medium">supplementary</span>: whatever you type here appears as an extra line below the auto-generated message. Leave blank to show only the auto-generated line.</p>
+          </div>
 
           <div className="space-y-4">
             {[
-              { field: "state1to2" as const, label: "1–2 items banner", placeholder: "e.g. Add one more item to unlock a free one!" },
-              { field: "state3" as const, label: `${engineDraft.retailFreeItemTrigger} items banner (free item applied)`, placeholder: "e.g. Your cheapest item is free!" },
-              { field: "state4" as const, label: `${engineDraft.retailFreeItemTrigger + 1} items banner (free item + bonus)`, placeholder: `e.g. 1 free item + ${engineDraft.retailBonusDiscountPct}% off the next cheapest!` },
-              { field: "state5plus" as const, label: `${engineDraft.wholesaleThreshold}+ items banner (wholesale mode)`, placeholder: "e.g. Wholesale prices applied to your order!" },
+              { field: "state1to2" as const, label: "Pre-trigger supplementary text", placeholder: "e.g. 🛍️ Free personalised gift wrapping on all orders!" },
+              { field: "state3" as const, label: `${engineDraft.retailFreeItemTrigger} items — free item active (supplementary)`, placeholder: "e.g. 🎁 Your cheapest item has been gifted — enjoy!" },
+              { field: "state4" as const, label: `${engineDraft.retailFreeItemTrigger + 1} items — free + bonus active (supplementary)`, placeholder: `e.g. ✦ Double deal! Free item + ${engineDraft.retailBonusDiscountPct}% off your next pick.` },
+              { field: "state5plus" as const, label: `${engineDraft.wholesaleThreshold}+ items — wholesale active (supplementary)`, placeholder: "e.g. ★ Wholesale prices locked in — best value on your whole order!" },
             ].map(({ field, label, placeholder }) => (
               <div key={field} className="space-y-1.5">
                 <div className="flex items-center justify-between">
