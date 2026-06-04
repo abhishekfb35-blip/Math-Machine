@@ -225,7 +225,7 @@ export function registerCheckoutRoutes(app: Express) {
   const SITE_CONTENT_KEYS = new Set([
     "featuredSections", "shop-sections", "homepage-collections", "homepageCollections",
     "seo", "announcement", "hero", "header", "footer",
-    "offer-tiers", "delivery-tiers", "promise", "testimonials",
+    "offer-tiers", "delivery-tiers", "cart-engine-config", "cart-banners", "promise", "testimonials",
     "consent-popup", "pwa-install", "wishlist-signup-prompt",
     "terms", "privacy", "refund", "shipping", "about",
     "page-terms", "page-privacy", "page-refund", "page-shipping", "page-about",
@@ -271,6 +271,8 @@ export function registerCheckoutRoutes(app: Express) {
     seo: "seo",
     "offer-tiers": "offers",
     "delivery-tiers": "offers",
+    "cart-engine-config": "offers",
+    "cart-banners": "offers",
     "product-page-config": "builder",
   };
 
