@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
-import NudgeCard, { type NudgeMessageTemplates } from "@/components/NudgeCard";
+import NudgeCard from "@/components/NudgeCard";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import type { Product, Category, ProductImage, ProductReview, ProductVariantOptions } from "@shared/types";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -148,7 +148,6 @@ export default function ProductPage() {
   });
   const animationConfig = siteConfig?.["nudge-animation-config"] as
     { staggerMs?: number; loopEveryMs?: number } | undefined;
-  const messageTemplates = siteConfig?.["nudge-message-config"] as NudgeMessageTemplates | undefined;
 
   const { data: myReview } = useQuery<ProductReview | null>({
     queryKey: ["/api/products", product?.id, "my-review"],
@@ -763,7 +762,6 @@ export default function ProductPage() {
                 supplementaryText={cart.activeBannerText || undefined}
                 staggerMs={animationConfig?.staggerMs}
                 loopEveryMs={animationConfig?.loopEveryMs}
-                messageTemplates={messageTemplates}
                 compact
               />
             )}

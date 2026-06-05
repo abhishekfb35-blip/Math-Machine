@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart } from "@/lib/analytics";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
-import NudgeCard, { type NudgeMessageTemplates } from "@/components/NudgeCard";
+import NudgeCard from "@/components/NudgeCard";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   });
   const animationConfig = siteConfig?.["nudge-animation-config"] as
     { staggerMs?: number; loopEveryMs?: number } | undefined;
-  const messageTemplates = siteConfig?.["nudge-message-config"] as NudgeMessageTemplates | undefined;
 
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
@@ -238,7 +237,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               supplementaryText={cart.activeBannerText || undefined}
               staggerMs={animationConfig?.staggerMs}
               loopEveryMs={animationConfig?.loopEveryMs}
-              messageTemplates={messageTemplates}
               compact
             />
           ) : (
