@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
   retailBonusDiscountPct: number;
@@ -11,8 +9,12 @@ interface NudgeCardProps {
   engineThresholds: EngineThresholds | null;
   supplementaryText?: string;
   compact?: boolean;
-  loopEveryMs?: number;
-  staggerMs?: number;
+}
+
+function ord(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 export default function NudgeCard({
@@ -20,36 +22,7 @@ export default function NudgeCard({
   engineThresholds,
   supplementaryText,
   compact = false,
-  loopEveryMs = 5000,
-  staggerMs = 300,
 }: NudgeCardProps) {
-  const [tick, setTick] = useState(0);
-
-  const safeLoopMs = Math.max(1000, loopEveryMs);
-  const safeStaggerMs = Math.max(0, staggerMs);
-
-  useEffect(() => {
-    function replay() {
-      if (document.visibilityState === "visible") {
-        setTick((t) => t + 1);
-      }
-    }
-
-    const id = setInterval(replay, safeLoopMs);
-
-    function onVisibility() {
-      if (document.visibilityState === "visible") {
-        setTick((t) => t + 1);
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibility);
-
-    return () => {
-      clearInterval(id);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [itemCount, safeLoopMs]);
-
   if (!engineThresholds || itemCount === 0) return null;
 
   const {
@@ -58,160 +31,123 @@ export default function NudgeCard({
     wholesaleThreshold: wholesale,
   } = engineThresholds;
 
+  const nodes: number[] = [];
+  for (let i = 1; i <= wholesale; i++) nodes.push(i);
+
+  function nodeLabel(pos: number): string {
+    if (pos === wholesale) return "Best Rates!";
+    if (pos === trigger + 1) return `${bonusPct}% Off*`;
+    if (pos === trigger) return "Free!*";
+    return "Item";
+  }
+
+  const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
+
   const atWholesale = itemCount >= wholesale;
   const atBonus = !atWholesale && itemCount >= trigger + 1;
   const atFree = !atWholesale && !atBonus && itemCount >= trigger;
 
-  // Short guiding message below the chain
-  let message: string;
+  let line1: string;
+  let line2: string | null = null;
+
   if (atWholesale) {
-    message = "★ Wholesale pricing active — best value on every item!";
+    line1 = "🏆 You've unlocked Our Absolute Best Rates on everything!";
   } else if (atBonus) {
     const need = wholesale - itemCount;
-    message = `🎁 FREE + ✦ ${bonusPct}% off unlocked! Add ${need} more item${need === 1 ? "" : "s"} → ★ Wholesale`;
+    line1 = `🎉 Awesome! You have 1 FREE item + ${bonusPct}% OFF an item.`;
+    line2 = `Add ${need} more item${need === 1 ? "" : "s"} to unlock Best Rates!`;
   } else if (atFree) {
-    message = `🎁 Cheapest item is FREE! Add 1 more → ✦ ${bonusPct}% off`;
+    line1 = "🎉 Awesome! You have 1 FREE item.";
+    line2 = `Add a ${ord(trigger + 1)} item to get ${bonusPct}% OFF!`;
+  } else if (itemCount === 1) {
+    line1 = "🛍️ Welcome! Add a 2nd item.";
+    line2 = `Add a ${ord(trigger)} item to unlock 1 FREE item!`;
   } else {
-    const need = trigger - itemCount;
-    message = `Add ${need} more item${need === 1 ? "" : "s"} → unlock 🎁 1 FREE item`;
+    line1 = `🎉 Awesome! You have ${itemCount} items.`;
+    line2 = `Add a ${ord(trigger)} item to unlock 1 FREE item!`;
   }
 
-  // Chain labels per state
-  let leftLabel: string;
-  let leftActive: boolean;
-  let middlePill: string;
-  let rightLabel: string;
-
-  if (atBonus) {
-    leftLabel = `🎁 FREE + ✦ ${bonusPct}% off`;
-    leftActive = true;
-    const need = wholesale - itemCount;
-    middlePill = `Add ${need} more`;
-    rightLabel = "★ Wholesale";
-  } else if (atFree) {
-    leftLabel = "🎁 FREE earned!";
-    leftActive = true;
-    middlePill = "Add 1 more";
-    rightLabel = `✦ ${bonusPct}% off next`;
-  } else {
-    const need = trigger - itemCount;
-    leftLabel = `🛒 ${itemCount} item${itemCount === 1 ? "" : "s"}`;
-    leftActive = false;
-    middlePill = `Add ${need} more`;
-    rightLabel = "🎁 1 FREE item";
-  }
-
-  const pad = compact ? "px-2.5 py-1" : "px-3 py-1.5";
-
-  const leftCls = [
-    "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
-    pad,
-    leftActive
-      ? "bg-emerald-500 text-white"
-      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
-  ].join(" ");
-
-  const pillCls = [
-    "animate-nudge-pop rounded-full font-bold text-xs whitespace-nowrap",
-    pad,
-    "bg-amber-400 dark:bg-amber-500 text-white",
-  ].join(" ");
-
-  const rightCls = [
-    "animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap",
-    pad,
-    "border border-dashed border-emerald-400 dark:border-emerald-600",
-    "text-emerald-700 dark:text-emerald-300 bg-white/70 dark:bg-transparent",
-  ].join(" ");
-
-  const connectorCls = "animate-nudge-pop text-slate-400 dark:text-slate-600 text-xs select-none font-mono";
-
-  // Compute staggered delays: element 0..4 → 100ms + n * staggerMs
-  const d = (n: number) => `${100 + n * safeStaggerMs}ms`;
+  const nodeSize = compact ? "w-4 h-4" : "w-6 h-6";
+  const numSize = compact ? "text-[8px]" : "text-[10px]";
+  const labelSize = compact ? "text-[8px]" : "text-[9px]";
+  const padding = compact ? "px-3 py-2" : "px-4 py-3";
+  const hookSize = compact ? "text-xs" : "text-sm";
 
   return (
     <div
-      className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${compact ? "px-3 py-2.5 space-y-2" : "px-4 py-3 space-y-2.5"}`}
+      className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${padding} space-y-2.5`}
       data-testid="nudge-card"
     >
-      {atWholesale ? (
-        /* Wholesale: single centred badge, no chain */
-        <div
-          key={`chain-${itemCount}-${tick}`}
-          className="flex justify-center"
-        >
-          <span
-            className={`animate-nudge-pop rounded-lg font-bold text-xs whitespace-nowrap ${pad} bg-amber-500 text-white`}
-            style={{ animationDelay: d(0) }}
-            data-testid="nudge-chain-wholesale"
-          >
-            ★ Wholesale unlocked — best value!
-          </span>
-        </div>
-      ) : (
-        /* Pre-trigger / free / bonus: left ── pill ──► right */
-        <div
-          key={`chain-${itemCount}-${tick}`}
-          className="flex items-center flex-wrap gap-1.5"
-          data-testid="nudge-chain"
-        >
-          <span
-            className={leftCls}
-            style={{ animationDelay: d(0) }}
-            data-testid="nudge-chain-left"
-          >
-            {leftLabel}
-          </span>
+      <div className="flex items-start" data-testid="nudge-track">
+        {nodes.map((pos, idx) => {
+          const filled = pos <= itemCount;
+          const isLast = idx === nodes.length - 1;
+          const lineAfterFilled = pos < itemCount;
+          return (
+            <div key={pos} className="flex flex-col items-center flex-1 min-w-0">
+              <div className="flex items-center w-full">
+                <div
+                  className={`${nodeSize} rounded-full shrink-0 flex items-center justify-center font-bold ${numSize} transition-colors ${
+                    filled
+                      ? "bg-emerald-500 text-white"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                  }`}
+                  data-testid={`nudge-node-${pos}`}
+                >
+                  {pos}
+                </div>
+                {!isLast && (
+                  <div
+                    className={`flex-1 h-0.5 transition-colors ${
+                      lineAfterFilled
+                        ? "bg-emerald-500"
+                        : "bg-slate-200 dark:bg-slate-700"
+                    }`}
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+              <span
+                className={`mt-1 ${labelSize} font-medium text-center leading-tight px-0.5 ${
+                  filled
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-slate-400 dark:text-slate-500"
+                }`}
+              >
+                {nodeLabel(pos)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
 
-          <span
-            className={connectorCls}
-            style={{ animationDelay: d(1) }}
-            aria-hidden="true"
-          >
-            ──
-          </span>
-
-          <span
-            className={pillCls}
-            style={{ animationDelay: d(2) }}
-            data-testid="nudge-chain-pill"
-          >
-            {middlePill}
-          </span>
-
-          <span
-            className={connectorCls}
-            style={{ animationDelay: d(3) }}
-            aria-hidden="true"
-          >
-            ──►
-          </span>
-
-          <span
-            className={rightCls}
-            style={{ animationDelay: d(4) }}
-            data-testid="nudge-chain-right"
-          >
-            {rightLabel}
-          </span>
-        </div>
-      )}
-
-      {/* Guiding text — one short sentence */}
-      <p
-        className="text-sm font-medium text-emerald-900 dark:text-emerald-100 leading-snug"
-        data-testid="nudge-message"
+      <div
+        className={`${hookSize} font-semibold text-emerald-900 dark:text-emerald-100 leading-snug`}
+        data-testid="nudge-hook"
       >
-        {message}
-      </p>
+        <span>{line1}</span>
+        {line2 && (
+          <span className="block font-normal text-emerald-700 dark:text-emerald-300 mt-0.5">
+            {line2}
+          </span>
+        )}
+      </div>
 
-      {/* Optional admin note */}
       {supplementaryText && (
         <p
           className="text-xs text-emerald-700 dark:text-emerald-300 leading-snug"
           data-testid="nudge-supplementary"
         >
           {supplementaryText}
+        </p>
+      )}
+
+      {hasAsterisk && (
+        <p
+          className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight"
+          data-testid="nudge-footnote"
+        >
+          *Discounts apply to the lowest-priced items in your order.
         </p>
       )}
     </div>

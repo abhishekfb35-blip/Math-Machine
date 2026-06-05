@@ -35,16 +35,6 @@ const emptyBanners: CartBanners = {
   state5plus: "",
 };
 
-interface CartAnimationConfig {
-  staggerMs: number;
-  loopEveryMs: number;
-}
-
-const defaultAnimationConfig: CartAnimationConfig = {
-  staggerMs: 300,
-  loopEveryMs: 5000,
-};
-
 function useSaveConfig(key: string) {
   const { toast } = useToast();
   return useMutation({
@@ -96,8 +86,6 @@ export default function AdminOffers() {
   });
   const [banners, setBanners] = useState<CartBanners>(emptyBanners);
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
-  const [animationConfig, setAnimationConfig] = useState<CartAnimationConfig>(defaultAnimationConfig);
-  const [animationDraft, setAnimationDraft] = useState<CartAnimationConfig>(defaultAnimationConfig);
   const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
@@ -120,11 +108,6 @@ export default function AdminOffers() {
       if (Array.isArray(rawDelivery)) {
         setDeliveryTiers(rawDelivery);
       }
-      const rawAnim = allConfig["nudge-animation-config"];
-      if (rawAnim && typeof rawAnim.staggerMs === "number" && typeof rawAnim.loopEveryMs === "number") {
-        setAnimationConfig(rawAnim);
-        setAnimationDraft(rawAnim);
-      }
       setConfigLoaded(true);
     }
   }, [allConfig, configLoaded]);
@@ -132,7 +115,6 @@ export default function AdminOffers() {
   const saveEngine = useSaveConfig("cart-engine-config");
   const saveBanners = useSaveConfig("cart-banners");
   const saveDelivery = useSaveConfig("delivery-tiers");
-  const saveAnimation = useSaveConfig("nudge-animation-config");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
@@ -250,67 +232,6 @@ export default function AdminOffers() {
             data-testid="button-save-engine-config"
           >
             <Save className="w-4 h-4 mr-2" /> {saveEngine.isPending ? "Saving..." : "Save Cart Engine Config"}
-          </Button>
-        </Card>
-
-        <Card className="p-6 space-y-6">
-          <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-primary" />
-            <h2 className="text-base font-semibold">Animation Settings</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Controls how the reward chain animates in the cart. Changes apply live in the preview below.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <Label>Stagger between elements (ms)</Label>
-              <Input
-                type="number"
-                min={0}
-                max={1000}
-                step={50}
-                value={animationDraft.staggerMs}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  if (!isNaN(v)) setAnimationDraft(prev => ({ ...prev, staggerMs: v }));
-                }}
-                data-testid="input-animation-stagger-ms"
-              />
-              <p className="text-xs text-muted-foreground">
-                Delay between each badge/arrow popping in. Default: 300 ms.
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Animation loop interval (ms)</Label>
-              <Input
-                type="number"
-                min={1000}
-                max={60000}
-                step={500}
-                value={animationDraft.loopEveryMs}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  if (!isNaN(v)) setAnimationDraft(prev => ({ ...prev, loopEveryMs: v }));
-                }}
-                data-testid="input-animation-loop-ms"
-              />
-              <p className="text-xs text-muted-foreground">
-                How often the chain replays. Default: 5000 ms (5 s).
-              </p>
-            </div>
-          </div>
-
-          <Button
-            onClick={() => {
-              saveAnimation.mutate(animationDraft);
-              setAnimationConfig(animationDraft);
-            }}
-            disabled={saveAnimation.isPending}
-            data-testid="button-save-animation-settings"
-          >
-            <Save className="w-4 h-4 mr-2" /> {saveAnimation.isPending ? "Saving..." : "Save Animation Settings"}
           </Button>
         </Card>
 
@@ -481,7 +402,7 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} animationDraft={animationDraft} />
+        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
       </div>
     </div>
   );
@@ -492,10 +413,9 @@ interface NudgeCardPreviewProps {
   engineConfig: CartEngineConfig | null;
   banners: CartBanners;
   configLoading: boolean;
-  animationDraft: CartAnimationConfig;
 }
 
-function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, animationDraft }: NudgeCardPreviewProps) {
+function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -593,8 +513,6 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading, a
               itemCount={itemCount}
               engineThresholds={thresholds}
               supplementaryText={supplementaryText || undefined}
-              staggerMs={animationDraft.staggerMs}
-              loopEveryMs={animationDraft.loopEveryMs}
               compact
             />
           </div>

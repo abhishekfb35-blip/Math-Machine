@@ -77,12 +77,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     } | null;
   }>({ queryKey: ["/api/cart"] });
 
-  const { data: siteConfig } = useQuery<Record<string, any>>({
-    queryKey: ["/api/site-config"],
-  });
-  const animationConfig = siteConfig?.["nudge-animation-config"] as
-    { staggerMs?: number; loopEveryMs?: number } | undefined;
-
   const { data: variantOptions } = useQuery<ProductVariantOptions>({
     queryKey: ["/api/products", product?.id, "variant-options"],
     queryFn: async () => {
@@ -235,8 +229,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               itemCount={cart.itemCount}
               engineThresholds={cart.engineThresholds}
               supplementaryText={cart.activeBannerText || undefined}
-              staggerMs={animationConfig?.staggerMs}
-              loopEveryMs={animationConfig?.loopEveryMs}
               compact
             />
           ) : (

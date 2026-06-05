@@ -143,12 +143,6 @@ export default function ProductPage() {
     queryKey: ["/api/cart"],
   });
 
-  const { data: siteConfig } = useQuery<Record<string, any>>({
-    queryKey: ["/api/site-config"],
-  });
-  const animationConfig = siteConfig?.["nudge-animation-config"] as
-    { staggerMs?: number; loopEveryMs?: number } | undefined;
-
   const { data: myReview } = useQuery<ProductReview | null>({
     queryKey: ["/api/products", product?.id, "my-review"],
     queryFn: async () => {
@@ -760,8 +754,6 @@ export default function ProductPage() {
                 itemCount={cart.itemCount}
                 engineThresholds={cart.engineThresholds}
                 supplementaryText={cart.activeBannerText || undefined}
-                staggerMs={animationConfig?.staggerMs}
-                loopEveryMs={animationConfig?.loopEveryMs}
                 compact
               />
             )}
