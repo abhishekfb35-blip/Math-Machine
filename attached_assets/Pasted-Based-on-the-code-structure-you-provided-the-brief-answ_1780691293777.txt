@@ -1,0 +1,23 @@
+Based on the code structure you provided, the brief answer is no, window.scrollTo(0, 0) itself will not cause a page refresh.
+However, looking at the code you pasted, there are two distinct reasons why you might be experiencing an unexpected reload or page flicker that feels like a refresh:
+## 1. Vite HMR (Hot Module Replacement) & React Refresh
+Your header reveals this code is running inside a developer environment powered by Vite and React Refresh:
+
+import { createHotContext } from "/@vite/client";
+import { injectIntoGlobalHook } from "/@react-refresh";
+
+
+* What happens: If window.scrollTo(0, 0) is firing as part of a component mounting or a file change, Vite's build listener might be triggering a hot-reload or full browser sync right at that moment.
+* The Illusion: If a page crashes or triggers a hard state shift during a Vite dynamic hot-reload, the frame resets and jumps to the top, making it look like a scroll caused a refresh, when in reality a file save or state crash caused it.
+
+## 2. Embedded Replit Beacon / Screenshots
+Further down, your scripts load a custom browser inspector tool (modern-screenshot, featuring variables like THEME_PREVIEW_STYLE_ID and references to .replit.dev).
+
+* What happens: These scripts are actively observing modifications to the DOM, checking node types (S(e), L(e) for <img>), and calculating styles.
+* If you execute window.scrollTo(0, 0) inside a heavy event handler or wrapper that forces these screenshot/preview scripts to recalculate properties rapidly, it can choke the main UI thread. In severe cases, this triggers an automatic crash-and-reload loop inside an iframe container.
+
+------------------------------
+## How to trace the actual trigger
+To find out exactly what script is forcing the actual browser refresh, wrap your scroll logic in a standard JavaScript log point or open your browser DevTools (F12) and check the Network tab. If you check "Preserve Log", you will see exactly what network request is reloading the document immediately after the scroll function executes.
+If you can share the specific file or block of JavaScript where you are writing the scroll function, we can pinpoint exactly what side effect is causing your page to reload!
+
