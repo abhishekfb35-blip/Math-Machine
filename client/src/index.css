@@ -148,3 +148,13 @@
 .animate-nudge-pop {
   animation: nudgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
+
+@keyframes nudgeActivePulse {
+  0%   { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(251, 146, 60, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
+}
+
+.nudge-active-pulse {
+  animation: nudgeActivePulse 2s infinite;
+}

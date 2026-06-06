@@ -32,16 +32,32 @@ export default function NudgeCard({
   const nodes: number[] = [];
   for (let i = 1; i <= wholesale; i++) nodes.push(i);
 
+  const atWholesale = itemCount >= wholesale;
+
+  const fillPct =
+    wholesale <= 1
+      ? 100
+      : Math.min(100, Math.max(0, ((Math.min(itemCount, wholesale) - 1) / (wholesale - 1)) * 100));
+
+  function nodeState(pos: number): "complete" | "active" | "locked" {
+    if (pos <= itemCount) return "complete";
+    if (pos === itemCount + 1 && !atWholesale) return "active";
+    return "locked";
+  }
+
   function nodeLabel(pos: number): string {
     if (pos === wholesale) return "Best Rates!";
     if (pos === trigger + 1) return `${bonusPct}% Off*`;
-    if (pos === trigger) return "Free!*";
-    return "Item";
+    if (pos === trigger) return "1 Free*";
+    return `Item ${pos}`;
   }
 
-  const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
+  function circleContent(pos: number, state: "complete" | "active" | "locked"): string {
+    if (state === "complete") return "✓";
+    if (pos === wholesale) return "★";
+    return String(pos);
+  }
 
-  const atWholesale = itemCount >= wholesale;
   const atBonus = !atWholesale && itemCount >= trigger + 1;
   const atFree = !atWholesale && !atBonus && itemCount >= trigger;
 
@@ -53,7 +69,7 @@ export default function NudgeCard({
   } else if (atBonus) {
     const need = wholesale - itemCount;
     line1 = `🎉 Awesome! You have 1 FREE item + ${bonusPct}% OFF an item.`;
-    line2 = `Add ${need} more item${need === 1 ? "" : "s"} to unlock Best Rates!`;
+    line2 = `Add ${need} more item${need === 1 ? "" : "s"} to get Our Absolute Best Rates!`;
   } else if (atFree) {
     line1 = "🎉 Awesome! You have 1 FREE item.";
     line2 = `Add a ${ord(trigger + 1)} item to get ${bonusPct}% OFF!`;
@@ -65,51 +81,54 @@ export default function NudgeCard({
     line2 = `Add a ${ord(trigger)} item to unlock 1 FREE item!`;
   }
 
-  const nodeSize = compact ? "w-4 h-4" : "w-6 h-6";
-  const numSize = compact ? "text-[8px]" : "text-[10px]";
-  const labelSize = compact ? "text-[8px]" : "text-[9px]";
-  const padding = compact ? "px-3 py-2" : "px-4 py-3";
-  const hookSize = compact ? "text-xs" : "text-sm";
+  const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
+
+  const circleSize = compact ? "w-5 h-5" : "w-7 h-7";
+  const circleFont = compact ? "text-[9px]" : "text-[11px]";
+  const labelFont = compact ? "text-[8px] tracking-tight" : "text-[10px]";
+  const msgFont = compact ? "text-xs" : "text-sm";
+  const pad = compact ? "p-3.5" : "p-5";
+  const trackTop = compact ? "top-[10px]" : "top-[14px]";
 
   return (
     <div
-      className={`rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-dashed border-emerald-500 dark:border-emerald-600 shadow-sm ${padding} space-y-2.5`}
+      className={`bg-white dark:bg-card border border-border rounded-xl ${pad} space-y-4 shadow-sm`}
       data-testid="nudge-card"
     >
-      <div className="flex items-start" data-testid="nudge-track">
-        {nodes.map((pos, idx) => {
-          const filled = pos <= itemCount;
-          const isLast = idx === nodes.length - 1;
-          const lineAfterFilled = pos < itemCount;
+      <div className="flex justify-between relative" data-testid="nudge-track">
+        <div className={`absolute ${trackTop} left-0 right-0 h-1 bg-slate-100 dark:bg-slate-800 rounded-full z-0`}>
+          <div
+            className="h-full bg-emerald-600 dark:bg-emerald-500 rounded-full transition-[width] duration-500 ease-in-out"
+            style={{ width: `${fillPct}%` }}
+          />
+        </div>
+
+        {nodes.map((pos) => {
+          const state = nodeState(pos);
           return (
-            <div key={pos} className="flex flex-col items-center flex-1 min-w-0">
-              <div className="flex items-center w-full">
-                <div
-                  className={`${nodeSize} rounded-full shrink-0 flex items-center justify-center font-bold ${numSize} transition-colors ${
-                    filled
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                  }`}
-                  data-testid={`nudge-node-${pos}`}
-                >
-                  {pos}
-                </div>
-                {!isLast && (
-                  <div
-                    className={`flex-1 h-0.5 transition-colors ${
-                      lineAfterFilled
-                        ? "bg-emerald-500"
-                        : "bg-slate-200 dark:bg-slate-700"
-                    }`}
-                    aria-hidden="true"
-                  />
-                )}
+            <div
+              key={pos}
+              className="relative z-10 flex flex-col items-center flex-1"
+              data-testid={`nudge-node-${pos}`}
+            >
+              <div
+                className={`${circleSize} rounded-full flex items-center justify-center font-bold ${circleFont} border-2 transition-all ${
+                  state === "complete"
+                    ? "bg-emerald-600 dark:bg-emerald-500 border-emerald-600 dark:border-emerald-500 text-white"
+                    : state === "active"
+                    ? "bg-white dark:bg-card border-orange-400 text-orange-400 nudge-active-pulse"
+                    : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600"
+                }`}
+              >
+                {circleContent(pos, state)}
               </div>
               <span
-                className={`mt-1 ${labelSize} font-medium text-center leading-tight px-0.5 ${
-                  filled
-                    ? "text-emerald-700 dark:text-emerald-300"
-                    : "text-slate-400 dark:text-slate-500"
+                className={`mt-1.5 ${labelFont} font-semibold text-center leading-tight ${
+                  state === "complete"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : state === "active"
+                    ? "text-slate-800 dark:text-slate-200 font-bold"
+                    : "text-slate-400 dark:text-slate-600"
                 }`}
               >
                 {nodeLabel(pos)}
@@ -119,21 +138,20 @@ export default function NudgeCard({
         })}
       </div>
 
-      <div
-        className={`${hookSize} font-semibold text-emerald-900 dark:text-emerald-100 leading-snug`}
-        data-testid="nudge-hook"
-      >
-        <span>{line1}</span>
+      <div className="text-center space-y-0.5" data-testid="nudge-hook">
+        <p className={`${msgFont} font-semibold text-emerald-700 dark:text-emerald-400 leading-snug`}>
+          {line1}
+        </p>
         {line2 && (
-          <span className="block font-normal text-emerald-700 dark:text-emerald-300 mt-0.5">
+          <p className={`${msgFont} text-slate-700 dark:text-slate-300 leading-snug`}>
             {line2}
-          </span>
+          </p>
         )}
       </div>
 
       {hasAsterisk && (
         <p
-          className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight"
+          className="text-[10px] text-slate-400 dark:text-slate-500 text-center border-t border-dashed border-slate-200 dark:border-slate-700 pt-2.5 leading-tight"
           data-testid="nudge-footnote"
         >
           *Discounts apply to the lowest-priced items in your order.
