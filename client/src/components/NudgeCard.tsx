@@ -87,6 +87,7 @@ export default function NudgeCard({
   const circleFont = compact ? "text-[9px]" : "text-[11px]";
   const labelFont = compact ? "text-[11px] tracking-tight" : "text-[15px]";
   const msgFont = compact ? "text-xs" : "text-sm";
+  const line2Font = compact ? "text-[13px]" : "text-[15px]";
   const pad = compact ? "p-3.5" : "p-5";
   const trackTop = compact ? "top-[10px]" : "top-[14px]";
 
@@ -143,7 +144,7 @@ export default function NudgeCard({
           {line1}
         </p>
         {line2 && (
-          <p className={`${msgFont} text-slate-700 dark:text-slate-300 leading-snug`}>
+          <p className={`${line2Font} text-slate-700 dark:text-slate-300 leading-snug`}>
             {line2}
           </p>
         )}
@@ -151,7 +152,7 @@ export default function NudgeCard({
 
       {hasAsterisk && (
         <p
-          className="text-[10px] text-slate-400 dark:text-slate-500 text-left border-t border-dashed border-slate-200 dark:border-slate-700 pt-2.5 leading-tight px-0.5"
+          className="text-[11px] text-slate-600 dark:text-slate-400 text-left border-t border-dashed border-slate-200 dark:border-slate-700 pt-2.5 leading-tight px-0.5"
           data-testid="nudge-footnote"
         >
           *Discounts apply to the lowest-priced items in your order.
