@@ -287,7 +287,7 @@ export default function WishlistSignupPrompt() {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="overflow-y-auto flex-1 p-5 pt-4">
+        <div className="overflow-y-auto flex-1 p-5 pt-4 pb-2">
           <div className="text-center space-y-3">
             <div className="mx-auto w-11 h-11 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
               <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
@@ -404,24 +404,27 @@ export default function WishlistSignupPrompt() {
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
               {config.bodyText}
             </p>
-
-            <Button
-              className="w-full"
-              onClick={handleSignIn}
-              data-testid="wishlist-prompt-signin"
-            >
-              {config.ctaText}
-            </Button>
-
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-1 transition-colors"
-              data-testid="wishlist-prompt-maybe-later"
-            >
-              Maybe later
-            </button>
           </div>
+        </div>
+
+        {/* Pinned CTAs — always fully visible, never inside scroll area */}
+        <div className="shrink-0 px-5 pb-5 pt-3 space-y-2">
+          <Button
+            className="w-full"
+            onClick={handleSignIn}
+            data-testid="wishlist-prompt-signin"
+          >
+            {config.ctaText}
+          </Button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-1 transition-colors"
+            data-testid="wishlist-prompt-maybe-later"
+          >
+            Maybe later
+          </button>
         </div>
       </div>
     </div>

@@ -194,11 +194,11 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[90svh] flex flex-col">
         <SheetHeader>
           <SheetTitle className="text-left">Add to Cart</SheetTitle>
         </SheetHeader>
-        <div className="space-y-4 pt-4">
+        <div className="overflow-y-auto flex-1 space-y-4 pt-4">
           <div className="flex gap-3">
             <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
               <img
@@ -399,6 +399,10 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
           </div>
 
+        </div>
+
+        {/* Pinned Add to Cart — always visible, never inside scroll area */}
+        <div className="shrink-0 pt-3 pb-1">
           <Button
             className="w-full"
             size="lg"
