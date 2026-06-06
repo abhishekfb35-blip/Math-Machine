@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye } from "lucide-react";
+import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye, Banknote } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
 import NudgeCard from "@/components/NudgeCard";
@@ -59,6 +60,7 @@ export default function AdminOffers() {
     retailBonusDiscountPct: 30,
   });
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
+  const [codEnabled, setCodEnabled] = useState(true);
   const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
@@ -77,12 +79,17 @@ export default function AdminOffers() {
       if (Array.isArray(rawDelivery)) {
         setDeliveryTiers(rawDelivery);
       }
+      const rawPayment = allConfig["payment-methods"];
+      if (rawPayment && typeof rawPayment.codEnabled === "boolean") {
+        setCodEnabled(rawPayment.codEnabled);
+      }
       setConfigLoaded(true);
     }
   }, [allConfig, configLoaded]);
 
   const saveEngine = useSaveConfig("cart-engine-config");
   const saveDelivery = useSaveConfig("delivery-tiers");
+  const savePaymentMethods = useSaveConfig("payment-methods");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
@@ -270,6 +277,33 @@ export default function AdminOffers() {
             >
               <Save className="w-4 h-4 mr-2" /> {saveDelivery.isPending ? "Saving..." : "Save Delivery Fees"}
             </Button>
+          </div>
+        </Card>
+
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Banknote className="w-5 h-5 text-primary" />
+            <h2 className="text-base font-semibold">Payment Methods</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Control which payment options shoppers can use at checkout. Razorpay is always available when configured.
+          </p>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Cash on Delivery</p>
+              <p className="text-xs text-muted-foreground">
+                {codEnabled ? "Enabled — shoppers can pay on delivery (INR only)" : "Disabled — COD is hidden from checkout"}
+              </p>
+            </div>
+            <Switch
+              checked={codEnabled}
+              onCheckedChange={(checked) => {
+                setCodEnabled(checked);
+                savePaymentMethods.mutate({ codEnabled: checked });
+              }}
+              disabled={savePaymentMethods.isPending}
+              data-testid="switch-cod-enabled"
+            />
           </div>
         </Card>
 

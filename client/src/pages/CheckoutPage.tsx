@@ -145,14 +145,29 @@ export default function CheckoutPage() {
     queryKey: ["/api/razorpay/key"],
   });
 
+  const { data: paymentMethodsConfig } = useQuery<{ value: { codEnabled?: boolean } } | null>({
+    queryKey: ["/api/site-config/payment-methods"],
+    queryFn: () => fetch("/api/site-config/payment-methods").then(r => r.ok ? r.json() : null),
+    staleTime: 5 * 60 * 1000,
+  });
+  const codEnabled = paymentMethodsConfig?.value?.codEnabled !== false;
+
   useEffect(() => {
     if (razorpayConfig?.available) {
       loadRazorpayScript();
       setPaymentMethod("razorpay");
-    } else {
+    } else if (codEnabled) {
       setPaymentMethod("cod");
+    } else {
+      setPaymentMethod("razorpay");
     }
-  }, [razorpayConfig]);
+  }, [razorpayConfig, codEnabled]);
+
+  useEffect(() => {
+    if (!codEnabled && paymentMethod === "cod") {
+      setPaymentMethod("razorpay");
+    }
+  }, [codEnabled, paymentMethod]);
 
   const checkoutTrackedRef = useRef(false);
   useEffect(() => {
@@ -547,7 +562,7 @@ export default function CheckoutPage() {
                       </div>
                     </button>
                   )}
-                  {currency === "INR" && (
+                  {currency === "INR" && codEnabled && (
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("cod")}

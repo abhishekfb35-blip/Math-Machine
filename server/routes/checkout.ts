@@ -148,6 +148,21 @@ export function registerCheckoutRoutes(app: Express) {
         return res.status(400).json({ message: "Cart is empty" });
       }
 
+      // Guard: reject COD if admin has disabled it
+      if (paymentMethod === "cod") {
+        try {
+          const pmConfig = await storage.getSiteConfig("payment-methods");
+          if (pmConfig) {
+            const parsed = JSON.parse(pmConfig.value);
+            if (parsed.codEnabled === false) {
+              return res.status(400).json({ message: "Cash on Delivery is currently unavailable." });
+            }
+          }
+        } catch {
+          // If config can't be read, allow COD (fail open — default is enabled)
+        }
+      }
+
       let couponDiscount = 0;
       let validatedDiscountCode: string | null = null;
       let consentId: string | null = null;
@@ -273,6 +288,7 @@ export function registerCheckoutRoutes(app: Express) {
     "delivery-tiers": "offers",
     "cart-engine-config": "offers",
     "cart-banners": "offers",
+    "payment-methods": "offers",
     "product-page-config": "builder",
   };
 
