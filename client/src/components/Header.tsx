@@ -48,7 +48,6 @@ interface MiniCartData {
   discount: number;
   shippingFee: number;
   total: number;
-  activeBannerText: string;
   engineThresholds: {
     retailFreeItemTrigger: number;
     retailBonusDiscountPct: number;
@@ -310,7 +309,6 @@ export default function Header() {
                   <NudgeCard
                     itemCount={cart.itemCount}
                     engineThresholds={cart.engineThresholds}
-                    supplementaryText={cart.activeBannerText || undefined}
                     compact
                   />
                 </div>

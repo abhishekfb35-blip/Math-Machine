@@ -4,14 +4,6 @@ export interface CartEngineConfig {
   retailBonusDiscountPct: number;
 }
 
-export interface CartBanners {
-  state1?: string;
-  state1to2: string;
-  state3: string;
-  state4: string;
-  state5plus: string;
-}
-
 export interface DeliveryTier {
   minItems: number;
   maxItems: number;
@@ -116,13 +108,4 @@ export function calculateCartPricing(
   }
 
   return { subtotal, discount: 0, shippingFee, total: subtotal + shippingFee, freeIndices: [], bonusDiscountIndex: null, bonusDiscountPct: 0 };
-}
-
-export function resolveActiveBanner(itemCount: number, banners: CartBanners | null, config: CartEngineConfig): string {
-  if (!banners) return "";
-  if (itemCount >= config.wholesaleThreshold) return banners.state5plus || "";
-  if (itemCount >= config.retailFreeItemTrigger + 1) return banners.state4 || "";
-  if (itemCount >= config.retailFreeItemTrigger) return banners.state3 || "";
-  if (itemCount === 1 && banners.state1) return banners.state1;
-  return banners.state1to2 || "";
 }

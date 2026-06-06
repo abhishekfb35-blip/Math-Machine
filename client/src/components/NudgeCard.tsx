@@ -7,7 +7,6 @@ export interface EngineThresholds {
 interface NudgeCardProps {
   itemCount: number;
   engineThresholds: EngineThresholds | null;
-  supplementaryText?: string;
   compact?: boolean;
 }
 
@@ -20,7 +19,6 @@ function ord(n: number): string {
 export default function NudgeCard({
   itemCount,
   engineThresholds,
-  supplementaryText,
   compact = false,
 }: NudgeCardProps) {
   if (!engineThresholds || itemCount === 0) return null;
@@ -132,15 +130,6 @@ export default function NudgeCard({
           </span>
         )}
       </div>
-
-      {supplementaryText && (
-        <p
-          className="text-xs text-emerald-700 dark:text-emerald-300 leading-snug"
-          data-testid="nudge-supplementary"
-        >
-          {supplementaryText}
-        </p>
-      )}
 
       {hasAsterisk && (
         <p

@@ -3,10 +3,8 @@ import type { CartItem, Product } from "@shared/types";
 import {
   calculateCartPricing,
   calculateShippingFee,
-  resolveActiveBanner,
   type PricingResult,
   type CartEngineConfig,
-  type CartBanners,
   type DeliveryTier,
 } from "./discountService";
 
@@ -27,7 +25,6 @@ export interface CartDetails {
   shippingFee: number;
   total: number;
   freeIndices: number[];
-  activeBannerText: string;
   engineThresholds: {
     retailFreeItemTrigger: number;
     retailBonusDiscountPct: number;
@@ -45,7 +42,6 @@ export class CartService {
 
     const engineConfig = await this.loadEngineConfig();
     const deliveryTiers = await this.loadDeliveryTiers();
-    const banners = await this.loadCartBanners();
 
     const priceItems = enrichedItems
       .filter(i => i.product)
@@ -100,11 +96,6 @@ export class CartService {
     }
 
     const itemCount = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
-    const activeBannerText = engineConfig
-      ? resolveActiveBanner(itemCount, banners, engineConfig)
-      : (itemCount === 1 && banners?.state1)
-        ? banners.state1
-        : "";
 
     const engineThresholds = engineConfig
       ? {
@@ -120,7 +111,6 @@ export class CartService {
       itemCount,
       ...pricingFields,
       freeIndices,
-      activeBannerText,
       engineThresholds,
     };
   }
@@ -208,17 +198,6 @@ export class CartService {
       }
     } catch {}
     return [];
-  }
-
-  private async loadCartBanners(): Promise<CartBanners | null> {
-    try {
-      const config = await this.storage.getSiteContent("cart-banners");
-      if (config) {
-        const parsed = JSON.parse(config.value);
-        if (parsed && typeof parsed === "object") return parsed as CartBanners;
-      }
-    } catch {}
-    return null;
   }
 
   private async enrichItemsWithProducts(items: CartItem[]): Promise<EnrichedCartItem[]> {

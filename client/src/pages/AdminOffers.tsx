@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Tag, Truck, MessageSquare, Info, Plus, Trash2, AlertCircle, Eye } from "lucide-react";
+import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
 import NudgeCard from "@/components/NudgeCard";
@@ -18,22 +16,6 @@ interface CartEngineConfig {
   retailFreeItemTrigger: number;
   retailBonusDiscountPct: number;
 }
-
-interface CartBanners {
-  state1: string;
-  state1to2: string;
-  state3: string;
-  state4: string;
-  state5plus: string;
-}
-
-const emptyBanners: CartBanners = {
-  state1: "",
-  state1to2: "",
-  state3: "",
-  state4: "",
-  state5plus: "",
-};
 
 function useSaveConfig(key: string) {
   const { toast } = useToast();
@@ -58,14 +40,6 @@ function computeDeliveryFee(itemCount: number, tiers: DeliveryTier[]): number {
   return 0;
 }
 
-function resolveBanner(count: number, banners: CartBanners, config: CartEngineConfig): string {
-  if (count >= config.wholesaleThreshold) return banners.state5plus;
-  if (count >= config.retailFreeItemTrigger + 1) return banners.state4;
-  if (count >= config.retailFreeItemTrigger) return banners.state3;
-  if (count === 1 && banners.state1) return banners.state1;
-  return banners.state1to2;
-}
-
 function pricingModeLabel(count: number, config: CartEngineConfig): string {
   if (count >= config.wholesaleThreshold) return "Wholesale mode";
   if (count === config.retailFreeItemTrigger + 1) return `Retail — cheapest free + ${config.retailBonusDiscountPct}% off next`;
@@ -84,7 +58,6 @@ export default function AdminOffers() {
     retailFreeItemTrigger: 3,
     retailBonusDiscountPct: 30,
   });
-  const [banners, setBanners] = useState<CartBanners>(emptyBanners);
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -100,10 +73,6 @@ export default function AdminOffers() {
         setEngineConfig(rawEngine);
         setEngineDraft(rawEngine);
       }
-      const rawBanners = allConfig["cart-banners"];
-      if (rawBanners && typeof rawBanners === "object") {
-        setBanners({ ...emptyBanners, ...rawBanners });
-      }
       const rawDelivery = allConfig["delivery-tiers"];
       if (Array.isArray(rawDelivery)) {
         setDeliveryTiers(rawDelivery);
@@ -113,17 +82,12 @@ export default function AdminOffers() {
   }, [allConfig, configLoaded]);
 
   const saveEngine = useSaveConfig("cart-engine-config");
-  const saveBanners = useSaveConfig("cart-banners");
   const saveDelivery = useSaveConfig("delivery-tiers");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
     if (isNaN(v)) return;
     setEngineDraft(prev => ({ ...prev, [field]: v }));
-  };
-
-  const updateBanner = (field: keyof CartBanners, value: string) => {
-    setBanners(prev => ({ ...prev, [field]: value }));
   };
 
   const updateDeliveryTier = (index: number, field: keyof DeliveryTier, value: number) => {
@@ -140,7 +104,6 @@ export default function AdminOffers() {
     setDeliveryTiers(deliveryTiers.filter((_, i) => i !== index));
   };
 
-  const BANNER_MAX = 200;
   const previewCounts = [1, 2, 3, 4, 5];
 
   return (
@@ -237,52 +200,6 @@ export default function AdminOffers() {
 
         <Card className="p-6 space-y-6">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <h2 className="text-base font-semibold">Cart Banners</h2>
-          </div>
-          <div className="rounded-md bg-muted/60 border border-border px-4 py-3 text-sm text-muted-foreground space-y-1">
-            <p className="font-semibold text-foreground">ℹ️ Auto-generated reward chain &amp; message</p>
-            <p>The cart shows a live reward chain (current state ── action pill ──► next reward) and a short guiding message that updates automatically at every item count — no admin input needed for those. These text fields are <span className="font-medium">supplementary</span>: whatever you type here appears as an extra line below the auto-generated message. Leave blank to show only the auto-generated line.</p>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              { field: "state1" as const, label: "1 item in cart — first impression (supplementary)", placeholder: "e.g. 🎉 Great choice! Add 2 more items to unlock a FREE gift." },
-              { field: "state1to2" as const, label: "Pre-trigger supplementary text (2+ items)", placeholder: "e.g. 🛍️ Free personalised gift wrapping on all orders!" },
-              { field: "state3" as const, label: `${engineDraft.retailFreeItemTrigger} items — free item active (supplementary)`, placeholder: "e.g. 🎁 Your cheapest item has been gifted — enjoy!" },
-              { field: "state4" as const, label: `${engineDraft.retailFreeItemTrigger + 1} items — free + bonus active (supplementary)`, placeholder: `e.g. ✦ Double deal! Free item + ${engineDraft.retailBonusDiscountPct}% off your next pick.` },
-              { field: "state5plus" as const, label: `${engineDraft.wholesaleThreshold}+ items — wholesale active (supplementary)`, placeholder: "e.g. ★ Wholesale prices locked in — best value on your whole order!" },
-            ].map(({ field, label, placeholder }) => (
-              <div key={field} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label>{label}</Label>
-                  <span className={`text-xs ${banners[field].length > BANNER_MAX ? "text-destructive" : "text-muted-foreground"}`}>
-                    {banners[field].length}/{BANNER_MAX}
-                  </span>
-                </div>
-                <Textarea
-                  value={banners[field]}
-                  onChange={(e) => updateBanner(field, e.target.value)}
-                  placeholder={placeholder}
-                  rows={2}
-                  maxLength={BANNER_MAX}
-                  data-testid={`input-banner-${field}`}
-                />
-              </div>
-            ))}
-          </div>
-
-          <Button
-            onClick={() => saveBanners.mutate(banners)}
-            disabled={saveBanners.isPending}
-            data-testid="button-save-banners"
-          >
-            <Save className="w-4 h-4 mr-2" /> {saveBanners.isPending ? "Saving..." : "Save Cart Banners"}
-          </Button>
-        </Card>
-
-        <Card className="p-6 space-y-6">
-          <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-primary" />
             <h2 className="text-base font-semibold">Domestic Delivery Fees</h2>
           </div>
@@ -374,25 +291,18 @@ export default function AdminOffers() {
                   <tr className="text-xs text-muted-foreground uppercase tracking-wider border-b">
                     <th className="text-left py-2 pr-4">Items</th>
                     <th className="text-left py-2 pr-4">Pricing Mode</th>
-                    <th className="text-left py-2 pr-4">Delivery</th>
-                    <th className="text-left py-2">Banner</th>
+                    <th className="text-left py-2">Delivery</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {previewCounts.map((count) => {
                     const mode = pricingModeLabel(count, engineDraft);
                     const delivery = computeDeliveryFee(count, deliveryTiers);
-                    const banner = resolveBanner(count, banners, engineDraft);
                     return (
                       <tr key={count} data-testid={`preview-row-${count}`}>
                         <td className="py-2 pr-4 font-medium">{count === 5 ? "5+" : count}</td>
                         <td className="py-2 pr-4 text-muted-foreground">{mode}</td>
-                        <td className="py-2 pr-4">{delivery === 0 ? <span className="text-primary">Free</span> : `₹${delivery}`}</td>
-                        <td className="py-2 max-w-xs">
-                          {banner
-                            ? <span className="text-primary text-xs">{banner}</span>
-                            : <span className="text-muted-foreground/40 text-xs italic">No banner</span>}
-                        </td>
+                        <td className="py-2">{delivery === 0 ? <span className="text-primary">Free</span> : `₹${delivery}`}</td>
                       </tr>
                     );
                   })}
@@ -402,7 +312,7 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} banners={banners} configLoading={configLoading} />
+        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} configLoading={configLoading} />
       </div>
     </div>
   );
@@ -411,11 +321,10 @@ export default function AdminOffers() {
 interface NudgeCardPreviewProps {
   engineDraft: CartEngineConfig;
   engineConfig: CartEngineConfig | null;
-  banners: CartBanners;
   configLoading: boolean;
 }
 
-function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }: NudgeCardPreviewProps) {
+function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCardPreviewProps) {
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -444,40 +353,35 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }:
 
   const preTriggerCount = Math.max(2, trigger - 1);
 
-  const states: { label: string; sublabel: string; itemCount: number; supplementaryText: string; testId: string }[] = [
+  const states: { label: string; sublabel: string; itemCount: number; testId: string }[] = [
     {
       label: "1 item added",
       sublabel: "First impression",
       itemCount: 1,
-      supplementaryText: banners.state1,
       testId: "nudge-preview-state1",
     },
     {
       label: "Pre-trigger",
       sublabel: `${preTriggerCount} item${preTriggerCount === 1 ? "" : "s"} in cart`,
       itemCount: preTriggerCount,
-      supplementaryText: banners.state1to2,
       testId: "nudge-preview-pre-trigger",
     },
     {
       label: "FREE earned",
       sublabel: `${trigger} items — cheapest item free`,
       itemCount: trigger,
-      supplementaryText: banners.state3,
       testId: "nudge-preview-free-earned",
     },
     {
       label: "FREE + Bonus",
       sublabel: `${trigger + 1} items — free + ${bonusPct}% off`,
       itemCount: trigger + 1,
-      supplementaryText: banners.state4,
       testId: "nudge-preview-free-bonus",
     },
     {
       label: "Wholesale",
       sublabel: `${wholesale}+ items — wholesale pricing`,
       itemCount: wholesale,
-      supplementaryText: banners.state5plus,
       testId: "nudge-preview-wholesale",
     },
   ];
@@ -503,7 +407,7 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }:
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {states.map(({ label, sublabel, itemCount, supplementaryText, testId }) => (
+        {states.map(({ label, sublabel, itemCount, testId }) => (
           <div key={testId} className="space-y-2" data-testid={testId}>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">{label}</span>
@@ -512,7 +416,6 @@ function NudgeCardPreview({ engineDraft, engineConfig, banners, configLoading }:
             <NudgeCard
               itemCount={itemCount}
               engineThresholds={thresholds}
-              supplementaryText={supplementaryText || undefined}
               compact
             />
           </div>

@@ -69,7 +69,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   const { data: cart } = useQuery<{
     itemCount: number;
-    activeBannerText: string;
     engineThresholds: {
       retailFreeItemTrigger: number;
       retailBonusDiscountPct: number;
@@ -228,7 +227,6 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <NudgeCard
               itemCount={cart.itemCount}
               engineThresholds={cart.engineThresholds}
-              supplementaryText={cart.activeBannerText || undefined}
               compact
             />
           ) : (

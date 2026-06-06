@@ -132,7 +132,6 @@ export default function ProductPage() {
   });
 
   const { data: cart } = useQuery<{
-    activeBannerText: string;
     itemCount: number;
     engineThresholds: {
       retailFreeItemTrigger: number;
@@ -753,7 +752,6 @@ export default function ProductPage() {
               <NudgeCard
                 itemCount={cart.itemCount}
                 engineThresholds={cart.engineThresholds}
-                supplementaryText={cart.activeBannerText || undefined}
                 compact
               />
             )}

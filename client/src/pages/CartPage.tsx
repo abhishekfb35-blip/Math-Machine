@@ -28,7 +28,6 @@ interface CartData {
   discount: number;
   shippingFee: number;
   total: number;
-  activeBannerText: string;
   engineThresholds: {
     retailFreeItemTrigger: number;
     retailBonusDiscountPct: number;
@@ -238,7 +237,6 @@ export default function CartPage() {
           <NudgeCard
             itemCount={cart.itemCount}
             engineThresholds={cart.engineThresholds}
-            supplementaryText={cart.activeBannerText || undefined}
           />
         )}
 
