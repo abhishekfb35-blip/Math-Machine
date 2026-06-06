@@ -48,7 +48,7 @@ export default function NudgeCard({
   function nodeLabel(pos: number): string {
     if (pos === wholesale) return "Best Rates!";
     if (pos === trigger + 1) return `${bonusPct}% Off*`;
-    if (pos === trigger) return "1 Free*";
+    if (pos === trigger) return "Free*";
     return `Item ${pos}`;
   }
 
@@ -85,7 +85,7 @@ export default function NudgeCard({
 
   const circleSize = compact ? "w-5 h-5" : "w-7 h-7";
   const circleFont = compact ? "text-[9px]" : "text-[11px]";
-  const labelFont = compact ? "text-[8px] tracking-tight" : "text-[10px]";
+  const labelFont = compact ? "text-[7.5px] tracking-tight" : "text-[10px]";
   const msgFont = compact ? "text-xs" : "text-sm";
   const pad = compact ? "p-3.5" : "p-5";
   const trackTop = compact ? "top-[10px]" : "top-[14px]";
@@ -123,7 +123,7 @@ export default function NudgeCard({
                 {circleContent(pos, state)}
               </div>
               <span
-                className={`mt-1.5 ${labelFont} font-semibold text-center leading-tight ${
+                className={`mt-1.5 ${labelFont} font-semibold text-center whitespace-nowrap leading-tight ${
                   state === "complete"
                     ? "text-emerald-600 dark:text-emerald-400"
                     : state === "active"
@@ -138,7 +138,7 @@ export default function NudgeCard({
         })}
       </div>
 
-      <div className="text-center space-y-0.5" data-testid="nudge-hook">
+      <div className="text-left space-y-0.5 px-0.5" data-testid="nudge-hook">
         <p className={`${msgFont} font-semibold text-emerald-700 dark:text-emerald-400 leading-snug`}>
           {line1}
         </p>
@@ -151,7 +151,7 @@ export default function NudgeCard({
 
       {hasAsterisk && (
         <p
-          className="text-[10px] text-slate-400 dark:text-slate-500 text-center border-t border-dashed border-slate-200 dark:border-slate-700 pt-2.5 leading-tight"
+          className="text-[10px] text-slate-400 dark:text-slate-500 text-left border-t border-dashed border-slate-200 dark:border-slate-700 pt-2.5 leading-tight px-0.5"
           data-testid="nudge-footnote"
         >
           *Discounts apply to the lowest-priced items in your order.
