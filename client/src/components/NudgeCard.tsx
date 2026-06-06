@@ -85,7 +85,7 @@ export default function NudgeCard({
 
   const circleSize = compact ? "w-5 h-5" : "w-7 h-7";
   const circleFont = compact ? "text-[9px]" : "text-[11px]";
-  const labelFont = compact ? "text-[7.5px] tracking-tight" : "text-[10px]";
+  const labelFont = compact ? "text-[11px] tracking-tight" : "text-[15px]";
   const msgFont = compact ? "text-xs" : "text-sm";
   const pad = compact ? "p-3.5" : "p-5";
   const trackTop = compact ? "top-[10px]" : "top-[14px]";
