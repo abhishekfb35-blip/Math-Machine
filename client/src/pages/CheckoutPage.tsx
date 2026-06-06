@@ -343,7 +343,7 @@ export default function CheckoutPage() {
   }, [paymentMethod, handleRazorpayCheckout, codCheckoutMutation]);
 
   const onSubmit = (data: CheckoutInput) => {
-    if (!customer) {
+    if (!customer && paymentMethod !== "cod") {
       pendingSubmitRef.current = data;
       checkoutSigninStartedRef.current = true;
       showSignInModal();
