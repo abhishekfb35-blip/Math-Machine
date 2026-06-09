@@ -8,6 +8,7 @@ interface NudgeCardProps {
   itemCount: number;
   engineThresholds: EngineThresholds | null;
   compact?: boolean;
+  showTeaser?: boolean;
 }
 
 function ord(n: number): string {
@@ -24,8 +25,10 @@ export default function NudgeCard({
   itemCount,
   engineThresholds,
   compact = false,
+  showTeaser = false,
 }: NudgeCardProps) {
-  if (!engineThresholds || itemCount === 0) return null;
+  if (!engineThresholds) return null;
+  if (itemCount === 0 && !showTeaser) return null;
 
   const {
     retailFreeItemTrigger: trigger,
@@ -44,6 +47,7 @@ export default function NudgeCard({
       : Math.min(100, Math.max(0, ((Math.min(itemCount, wholesale) - 1) / (wholesale - 1)) * 100));
 
   function nodeState(pos: number): "complete" | "active" | "locked" {
+    if (itemCount === 0) return "locked";
     if (pos <= itemCount) return "complete";
     if (pos === itemCount + 1 && !atWholesale) return "active";
     return "locked";
@@ -68,7 +72,9 @@ export default function NudgeCard({
   let line1: React.ReactNode;
   let line2: React.ReactNode = null;
 
-  if (atWholesale) {
+  if (itemCount === 0) {
+    line1 = <>🎁 Add <Hi>{trigger} items</Hi> and get <Hi>1 FREE</Hi> — automatically!</>;
+  } else if (atWholesale) {
     line1 = <>🏆 You've unlocked <Hi>Our Absolute Best Rates</Hi> on everything!</>;
   } else if (atBonus) {
     const need = wholesale - itemCount;

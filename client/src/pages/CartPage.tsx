@@ -191,13 +191,22 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4 pb-24 md:pb-16">
-        <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h1 className="text-2xl font-bold" data-testid="text-empty-cart">Your cart is empty</h1>
-        <p className="text-muted-foreground">Add some personalised towels and blankets!</p>
-        <Link href="/shop">
-          <Button data-testid="button-continue-shopping">Start Shopping</Button>
-        </Link>
+      <div className="max-w-3xl mx-auto px-4 py-16 space-y-6 pb-24 md:pb-16">
+        <div className="text-center space-y-4">
+          <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground" />
+          <h1 className="text-2xl font-bold" data-testid="text-empty-cart">Your cart is empty</h1>
+          <p className="text-muted-foreground">Add some personalised towels and blankets!</p>
+          <Link href="/shop">
+            <Button data-testid="button-continue-shopping">Start Shopping</Button>
+          </Link>
+        </div>
+        {cart?.engineThresholds && (
+          <NudgeCard
+            itemCount={0}
+            engineThresholds={cart.engineThresholds}
+            showTeaser
+          />
+        )}
       </div>
     );
   }

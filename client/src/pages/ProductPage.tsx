@@ -753,6 +753,7 @@ export default function ProductPage() {
                 itemCount={cart.itemCount}
                 engineThresholds={cart.engineThresholds}
                 compact
+                showTeaser
               />
             )}
 
