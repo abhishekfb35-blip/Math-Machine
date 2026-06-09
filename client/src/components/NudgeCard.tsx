@@ -107,7 +107,8 @@ export default function NudgeCard({
     if (state === "complete") {
       return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white";
     }
-    return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400";
+    const base = "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400";
+    return state === "active" ? `${base} nudge-active-pulse` : base;
   }
 
   return (
