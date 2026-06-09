@@ -299,18 +299,13 @@ export default function Header() {
                       </Link>
                     </SheetClose>
                     <div className="flex-1 min-w-0 space-y-0.5">
-                      <div className="flex items-start gap-1.5 flex-wrap">
-                        <SheetClose asChild>
-                          <Link href={`/product/${item.product!.slug}`}>
-                            <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
-                              {item.product!.name}
-                            </p>
-                          </Link>
-                        </SheetClose>
-                        {item.isFreeItem && (
-                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">Free Gift</span>
-                        )}
-                      </div>
+                      <SheetClose asChild>
+                        <Link href={`/product/${item.product!.slug}`}>
+                          <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+                            {item.product!.name}
+                          </p>
+                        </Link>
+                      </SheetClose>
                       {(item.selectedSize || item.selectedColor) && (
                         <p className="text-xs text-muted-foreground">
                           {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
@@ -352,27 +347,14 @@ export default function Header() {
                           <Trash2 className="w-2.5 h-2.5" />
                         </Button>
                       </div>
-                      {item.isFreeItem ? (
-                        <p className="text-sm font-bold text-green-600" data-testid={`text-mini-price-${item.id}`}>FREE</p>
-                      ) : (
-                        <p className="text-sm font-semibold text-primary" data-testid={`text-mini-price-${item.id}`}>
-                          {formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}
-                        </p>
-                      )}
+                      <p className="text-sm font-semibold text-primary" data-testid={`text-mini-price-${item.id}`}>
+                        {formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {cart.engineThresholds && (
-                <div className="mx-5 mb-3" data-testid="mini-cart-banner">
-                  <NudgeCard
-                    itemCount={cart.itemCount}
-                    engineThresholds={cart.engineThresholds}
-                    compact
-                  />
-                </div>
-              )}
 
               <div className="px-5 pb-5 space-y-3 shrink-0">
                 <Separator />
@@ -381,21 +363,18 @@ export default function Header() {
                     <span>Subtotal</span>
                     <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
                   </div>
-                  {cart.discount > 0 && (() => {
-                    const hasFree = cart.items.some(i => i.isFreeItem);
-                    const bonusPct = cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)?.bonusDiscountPct;
-                    const label = hasFree
-                      ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
-                      : bonusPct
-                        ? `${bonusPct}% Discount`
-                        : "Discount";
-                    return (
-                      <div className="flex justify-between text-sm text-green-600 font-medium">
-                        <span>{label}</span>
-                        <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
-                      </div>
-                    );
-                  })()}
+                  {cart.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                      <span>
+                        {cart.items.some(i => i.isFreeItem)
+                          ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
+                          : cart.items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
+                            ? `${cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
+                            : "Best Rates"}
+                      </span>
+                      <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
+                    </div>
+                  )}
                   {cart.shippingFee > 0 && (
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Delivery</span>

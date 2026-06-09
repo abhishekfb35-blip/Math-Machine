@@ -59,16 +59,11 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
         </div>
       </Link>
       <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-start gap-1.5 flex-wrap">
-          <Link href={`/product/${item.product.slug}`}>
-            <h3 className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer" data-testid={`text-cart-item-name-${item.id}`}>
-              {item.product.name}
-            </h3>
-          </Link>
-          {item.isFreeItem && (
-            <span className="text-[10px] font-extrabold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">Free Gift</span>
-          )}
-        </div>
+        <Link href={`/product/${item.product.slug}`}>
+          <h3 className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer" data-testid={`text-cart-item-name-${item.id}`}>
+            {item.product.name}
+          </h3>
+        </Link>
         {(item.selectedSize || item.selectedColor) && (
           item.selectedColor?.includes(" · ") ? (
             <div className="space-y-0.5" data-testid={`text-variant-${item.id}`}>
@@ -96,13 +91,9 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
           )
         )}
 
-        {item.isFreeItem ? (
-          <p className="text-sm font-bold text-green-600" data-testid={`text-cart-item-price-${item.id}`}>FREE</p>
-        ) : (
-          <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
-            {formatPrice(effective * item.quantity)}
-          </p>
-        )}
+        <p className="text-sm font-bold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
+          {formatPrice(originalPrice * item.quantity)}
+        </p>
 
         <div className="flex items-center gap-2 pt-1">
           <Button
@@ -250,21 +241,18 @@ export default function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span data-testid="text-subtotal">{cart ? formatPrice(cart.subtotal) : "—"}</span>
             </div>
-            {cart && cart.discount > 0 && (() => {
-              const hasFree = items.some(i => i.isFreeItem);
-              const bonusPct = items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)?.bonusDiscountPct;
-              const discountLabel = hasFree
-                ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
-                : bonusPct
-                  ? `${bonusPct}% Discount`
-                  : "Discount";
-              return (
-                <div className="flex justify-between gap-4 text-green-600">
-                  <span>{discountLabel}</span>
-                  <span data-testid="text-discount">−{formatPrice(cart.discount)}</span>
-                </div>
-              );
-            })()}
+            {cart && cart.discount > 0 && (
+              <div className="flex justify-between gap-4 text-green-600">
+                <span>
+                  {items.some(i => i.isFreeItem)
+                    ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
+                    : items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
+                      ? `${items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
+                      : "Best Rates"}
+                </span>
+                <span data-testid="text-discount">−{formatPrice(cart.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-4 text-muted-foreground">
               <span>Delivery</span>
               {cart && cart.shippingFee > 0 ? (
