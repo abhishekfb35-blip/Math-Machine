@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, ArrowRight } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/components/ThemeProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, defaultPwaInstall, defaultSeo, type HeaderConfig, type PwaInstallConfig, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,6 +73,17 @@ export default function Header() {
 
   const { data: cart } = useQuery<MiniCartData>({
     queryKey: ["/api/cart"],
+  });
+
+  const cartMutation = useMutation({
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      if (quantity === 0) {
+        await apiRequest("DELETE", `/api/cart/items/${id}`);
+      } else {
+        await apiRequest("PATCH", `/api/cart/items/${id}`, { quantity });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/cart"] }),
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -291,7 +303,39 @@ export default function Header() {
                           </p>
                         </Link>
                       </SheetClose>
-                      <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-6 h-6"
+                          onClick={() => cartMutation.mutate({ id: item.id, quantity: Math.max(0, item.quantity - 1) })}
+                          disabled={cartMutation.isPending}
+                          data-testid={`button-mini-decrease-qty-${item.id}`}
+                        >
+                          <Minus className="w-2.5 h-2.5" />
+                        </Button>
+                        <span className="text-xs font-semibold w-5 text-center" data-testid={`text-mini-qty-${item.id}`}>{item.quantity}</span>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-6 h-6"
+                          onClick={() => cartMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}
+                          disabled={cartMutation.isPending}
+                          data-testid={`button-mini-increase-qty-${item.id}`}
+                        >
+                          <Plus className="w-2.5 h-2.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6 ml-auto text-destructive"
+                          onClick={() => cartMutation.mutate({ id: item.id, quantity: 0 })}
+                          disabled={cartMutation.isPending}
+                          data-testid={`button-mini-remove-item-${item.id}`}
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </Button>
+                      </div>
                       {item.isFreeItem ? (
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs line-through text-red-400">{formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}</span>
