@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { useParams, Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import SEO, { BreadcrumbJsonLd } from "@/components/SEO";
@@ -22,6 +23,7 @@ const categoryBanners: Record<string, string> = {
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+  const offerLabel = useOfferLabel();
 
   const { data: category, isLoading: categoryLoading } = useQuery<Category>({
     queryKey: ["/api/categories", slug],
@@ -74,7 +76,7 @@ export default function CategoryPage() {
                 )}
               </div>
               <Badge className="no-default-hover-elevate no-default-active-elevate bg-white/15 text-white border-white/25 backdrop-blur-sm">
-                Buy 2 Get 1 Free
+                {offerLabel}
               </Badge>
             </div>
           </div>
@@ -100,7 +102,7 @@ export default function CategoryPage() {
               )}
             </div>
             <Badge className="no-default-hover-elevate no-default-active-elevate bg-primary/10 text-primary border-primary/20">
-              Buy 2 Get 1 Free
+              {offerLabel}
             </Badge>
           </div>
         </div>

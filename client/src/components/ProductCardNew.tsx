@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useOfferLabel } from "@/hooks/useOfferLabel";
 import type { Product } from "@shared/types";
 
 interface ProductCardNewProps {
@@ -17,6 +18,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
   const { formatPrice } = useCurrency();
   const { isWishlisted, toggle } = useWishlist();
   const wishlisted = isWishlisted(product.id);
+  const offerLabel = useOfferLabel();
 
   return (
     <Card
@@ -36,7 +38,7 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
             className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground no-default-hover-elevate no-default-active-elevate"
             data-testid={`badge-offer-${product.id}`}
           >
-            Buy 2 Get 1 Free
+            {offerLabel}
           </Badge>
         </div>
       </Link>

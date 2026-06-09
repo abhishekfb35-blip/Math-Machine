@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart } from "@/lib/analytics";
+import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 import NudgeCard from "@/components/NudgeCard";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -36,6 +37,7 @@ interface QuickAddSheetProps {
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
   const { formatPrice, convertPrice } = useCurrency();
+  const offerLabel = useOfferLabel();
   const [personalizationName, setPersonalizationName] = useState("");
   const [gentlemanName, setGentlemanName] = useState("");
   const [ladyName, setLadyName] = useState("");
@@ -233,7 +235,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           ) : (
             <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
               <Gift className="w-4 h-4 shrink-0" />
-              <span>Buy 2 Get 1 Free - discount applied at checkout</span>
+              <span>{offerLabel} - discount applied at checkout</span>
             </div>
           )}
 
