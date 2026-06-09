@@ -256,6 +256,16 @@ export default function Header() {
                   <Button size="sm" data-testid="button-mini-cart-shop">Start Shopping</Button>
                 </Link>
               </SheetClose>
+              {cart?.engineThresholds && (
+                <div className="w-full mt-1" data-testid="mini-cart-teaser">
+                  <NudgeCard
+                    itemCount={0}
+                    engineThresholds={cart.engineThresholds}
+                    compact
+                    showTeaser
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <>
