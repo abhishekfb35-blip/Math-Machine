@@ -245,7 +245,7 @@ export default function CartPage() {
               <div className="flex justify-between gap-4 text-green-600">
                 <span>
                   {items.some(i => i.isFreeItem)
-                    ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
+                    ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free`
                     : items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
                       ? `${items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
                       : "Best Rates"}

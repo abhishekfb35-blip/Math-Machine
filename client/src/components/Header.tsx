@@ -367,7 +367,7 @@ export default function Header() {
                     <div className="flex justify-between text-sm text-green-600 font-medium">
                       <span>
                         {cart.items.some(i => i.isFreeItem)
-                          ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
+                          ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free`
                           : cart.items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
                             ? `${cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
                             : "Best Rates"}
