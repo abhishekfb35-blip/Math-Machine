@@ -362,18 +362,24 @@ export default function Header() {
                     <span>Subtotal</span>
                     <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
                   </div>
-                  {cart.discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600 font-medium">
-                      <span>
-                        {cart.items.some(i => i.isFreeItem)
-                          ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free`
-                          : cart.items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
-                            ? `${cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
-                            : "Best Rates"}
-                      </span>
-                      <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
-                    </div>
-                  )}
+                  {cart.discount > 0 && (() => {
+                    const hasFree = cart.items.some(i => i.isFreeItem);
+                    const bonusItem = cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
+                    const hasBonus = !!bonusItem;
+                    const label = hasFree && hasBonus
+                      ? `1 Free Item + ${bonusItem!.bonusDiscountPct}% Off*`
+                      : hasFree
+                        ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free*`
+                        : hasBonus
+                          ? `${bonusItem!.bonusDiscountPct}% Discount*`
+                          : "Best Rates";
+                    return (
+                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                        <span data-testid="mini-cart-discount-label">{label}</span>
+                        <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
+                      </div>
+                    );
+                  })()}
                   {cart.shippingFee > 0 && (
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Delivery</span>
@@ -384,6 +390,15 @@ export default function Header() {
                     <span>Total</span>
                     <span data-testid="mini-cart-total">{formatPrice(cart.total)}</span>
                   </div>
+                  {cart.discount > 0 && (() => {
+                    const hasFree = cart.items.some(i => i.isFreeItem);
+                    const hasBonus = cart.items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
+                    return (hasFree || hasBonus) ? (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400" data-testid="mini-cart-discount-footnote">
+                        *Discounts apply to the lowest-priced items in your order.
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
                 <SheetClose asChild>
                   <Link href="/cart">

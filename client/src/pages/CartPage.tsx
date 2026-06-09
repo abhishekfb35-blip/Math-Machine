@@ -237,18 +237,24 @@ export default function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span data-testid="text-subtotal">{cart ? formatPrice(cart.subtotal) : "—"}</span>
             </div>
-            {cart && cart.discount > 0 && (
-              <div className="flex justify-between gap-4 text-green-600">
-                <span>
-                  {items.some(i => i.isFreeItem)
-                    ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free`
-                    : items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)
-                      ? `${items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)!.bonusDiscountPct}% Discount`
-                      : "Best Rates"}
-                </span>
-                <span data-testid="text-discount">−{formatPrice(cart.discount)}</span>
-              </div>
-            )}
+            {cart && cart.discount > 0 && (() => {
+              const hasFree = items.some(i => i.isFreeItem);
+              const bonusItem = items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
+              const hasBonus = !!bonusItem;
+              const label = hasFree && hasBonus
+                ? `1 Free Item + ${bonusItem!.bonusDiscountPct}% Off*`
+                : hasFree
+                  ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free*`
+                  : hasBonus
+                    ? `${bonusItem!.bonusDiscountPct}% Discount*`
+                    : "Best Rates";
+              return (
+                <div className="flex justify-between gap-4 text-green-600">
+                  <span data-testid="text-discount-label">{label}</span>
+                  <span data-testid="text-discount">−{formatPrice(cart.discount)}</span>
+                </div>
+              );
+            })()}
             <div className="flex justify-between gap-4 text-muted-foreground">
               <span>Delivery</span>
               {cart && cart.shippingFee > 0 ? (
@@ -262,6 +268,15 @@ export default function CartPage() {
               <span>Total</span>
               <span data-testid="text-total">{cart ? formatPrice(cart.total) : "—"}</span>
             </div>
+            {cart && cart.discount > 0 && (() => {
+              const hasFree = items.some(i => i.isFreeItem);
+              const hasBonus = items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
+              return (hasFree || hasBonus) ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="text-discount-footnote">
+                  *Discounts apply to the lowest-priced items in your order.
+                </p>
+              ) : null;
+            })()}
             {currency !== "INR" && (
               <p className="text-xs text-muted-foreground text-right">Charged in {currency} at current exchange rate.</p>
             )}
