@@ -752,7 +752,6 @@ export default function ProductPage() {
               <NudgeCard
                 itemCount={cart.itemCount}
                 engineThresholds={cart.engineThresholds}
-                compact
                 showTeaser
               />
             )}
