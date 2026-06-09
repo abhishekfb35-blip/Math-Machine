@@ -35,6 +35,9 @@ import NudgeCard from "@/components/NudgeCard";
 interface MiniCartItem {
   id: string;
   quantity: number;
+  personalizationName?: string | null;
+  selectedColor?: string | null;
+  selectedSize?: string | null;
   effectivePrice?: number;
   originalEffectivePrice?: number;
   isFreeItem?: boolean;
@@ -296,13 +299,26 @@ export default function Header() {
                       </Link>
                     </SheetClose>
                     <div className="flex-1 min-w-0 space-y-0.5">
-                      <SheetClose asChild>
-                        <Link href={`/product/${item.product!.slug}`}>
-                          <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
-                            {item.product!.name}
-                          </p>
-                        </Link>
-                      </SheetClose>
+                      <div className="flex items-start gap-1.5 flex-wrap">
+                        <SheetClose asChild>
+                          <Link href={`/product/${item.product!.slug}`}>
+                            <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+                              {item.product!.name}
+                            </p>
+                          </Link>
+                        </SheetClose>
+                        {item.isFreeItem && (
+                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0">Free Gift</span>
+                        )}
+                      </div>
+                      {(item.selectedSize || item.selectedColor) && (
+                        <p className="text-xs text-muted-foreground">
+                          {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                      {item.personalizationName && (
+                        <p className="text-xs text-muted-foreground">Embroidered: {item.personalizationName}</p>
+                      )}
                       <div className="flex items-center gap-1.5 pt-0.5">
                         <Button
                           size="icon"
@@ -337,19 +353,9 @@ export default function Header() {
                         </Button>
                       </div>
                       {item.isFreeItem ? (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs line-through text-red-400">{formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}</span>
-                          <span className="text-sm font-bold text-green-600">FREE</span>
-                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1 py-0.5 rounded-full uppercase tracking-wide">Free Gift</span>
-                        </div>
-                      ) : item.bonusDiscountPct && item.bonusDiscountPct > 0 ? (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs line-through text-muted-foreground">{formatPrice((item.originalEffectivePrice ?? item.product!.price) * item.quantity)}</span>
-                          <span className="text-sm font-semibold text-green-600">{formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}</span>
-                          <span className="text-[9px] font-extrabold bg-green-100 text-green-700 px-1 py-0.5 rounded-full uppercase tracking-wide">{item.bonusDiscountPct}% off</span>
-                        </div>
+                        <p className="text-sm font-bold text-green-600" data-testid={`text-mini-price-${item.id}`}>FREE</p>
                       ) : (
-                        <p className="text-sm font-semibold text-primary">
+                        <p className="text-sm font-semibold text-primary" data-testid={`text-mini-price-${item.id}`}>
                           {formatPrice((item.effectivePrice ?? item.product!.price) * item.quantity)}
                         </p>
                       )}
@@ -370,19 +376,36 @@ export default function Header() {
 
               <div className="px-5 pb-5 space-y-3 shrink-0">
                 <Separator />
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm font-semibold">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Subtotal</span>
-                    <span data-testid="mini-cart-subtotal">
-                      {formatPrice(cart.discount > 0 ? cart.total - cart.shippingFee : cart.subtotal)}
-                    </span>
+                    <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
                   </div>
-                  {cart.discount > 0 && (
-                    <div className="flex justify-between text-xs text-green-600 font-medium">
-                      <span>You saved</span>
-                      <span data-testid="mini-cart-saving">{formatPrice(cart.discount)}</span>
+                  {cart.discount > 0 && (() => {
+                    const hasFree = cart.items.some(i => i.isFreeItem);
+                    const bonusPct = cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0)?.bonusDiscountPct;
+                    const label = hasFree
+                      ? `Buy ${cart.engineThresholds?.retailFreeItemTrigger ?? 2} Get 1 Free`
+                      : bonusPct
+                        ? `${bonusPct}% Discount`
+                        : "Discount";
+                    return (
+                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                        <span>{label}</span>
+                        <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
+                      </div>
+                    );
+                  })()}
+                  {cart.shippingFee > 0 && (
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Delivery</span>
+                      <span>{formatPrice(cart.shippingFee)}</span>
                     </div>
                   )}
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span>Total</span>
+                    <span data-testid="mini-cart-total">{formatPrice(cart.total)}</span>
+                  </div>
                 </div>
                 <SheetClose asChild>
                   <Link href="/cart">
