@@ -103,18 +103,11 @@ export default function NudgeCard({
   const pad = compact ? "p-3.5" : "p-5";
   const trackTop = compact ? "top-[10px]" : "top-[12px]";
 
-  function pillStyle(pos: number, state: "complete" | "active" | "locked"): string {
-    const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
+  function pillStyle(state: "complete" | "active" | "locked"): string {
     if (state === "complete") {
       return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white";
     }
-    if (state === "active") {
-      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 nudge-active-pulse";
-    }
-    if (isMilestone) {
-      return "bg-white dark:bg-amber-950/30 border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400 ring-1 ring-amber-300/60 dark:ring-amber-600/30";
-    }
-    return "bg-white dark:bg-amber-950/20 border-dashed border-amber-300 dark:border-amber-700 text-amber-500 dark:text-amber-500";
+    return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400";
   }
 
   return (
@@ -140,7 +133,7 @@ export default function NudgeCard({
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              <div className={`${pillBase} ${pillStyle(pos, state)}`}>
+              <div className={`${pillBase} ${pillStyle(state)}`}>
                 Item {pos}
               </div>
               {isMilestone && (
@@ -148,9 +141,7 @@ export default function NudgeCard({
                   className={`mt-1.5 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
                     state === "complete"
                       ? "text-amber-600 dark:text-amber-400"
-                      : state === "active"
-                      ? "text-orange-500 dark:text-orange-400"
-                      : "text-amber-600 dark:text-amber-400"
+                      : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
                   {icon && state !== "complete" && <span>{icon}</span>}
