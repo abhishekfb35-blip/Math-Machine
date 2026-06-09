@@ -164,8 +164,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       });
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/cart"], data);
       trackAddToCart(
         {
           id: product!.id,

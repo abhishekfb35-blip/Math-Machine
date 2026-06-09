@@ -28,7 +28,9 @@ export function registerCartRoutes(app: Express) {
     try {
       const input = addToCartSchema.parse(req.body);
       const sessionId = getSessionId(req, res);
-      const { item, isNew } = await cartService.addItem(
+      const currency: string = (req.cookies?.tl_currency as string) || "INR";
+      const isDomestic = currency.toUpperCase() === "INR";
+      const { isNew } = await cartService.addItem(
         sessionId,
         input.productId,
         input.quantity,
@@ -37,7 +39,8 @@ export function registerCartRoutes(app: Express) {
         input.selectedSize || null
       );
       await touchCart(req, res, sessionId);
-      res.status(isNew ? 201 : 200).json(item);
+      const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
+      res.status(isNew ? 201 : 200).json(cartDetails);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -54,13 +57,12 @@ export function registerCartRoutes(app: Express) {
       const input = updateCartItemSchema.parse(req.body);
       const id = req.params.id as string;
       const sessionId = getSessionId(req, res);
-      const result = await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
-      if ("deleted" in result) {
-        await touchCart(req, res, sessionId);
-        return res.status(204).send();
-      }
+      const currency: string = (req.cookies?.tl_currency as string) || "INR";
+      const isDomestic = currency.toUpperCase() === "INR";
+      await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
       await touchCart(req, res, sessionId);
-      res.json(result);
+      const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
+      res.json(cartDetails);
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input" });
@@ -75,8 +77,11 @@ export function registerCartRoutes(app: Express) {
   app.delete("/api/cart/items/:id", async (req, res) => {
     const id = req.params.id as string;
     const sessionId = getSessionId(req, res);
+    const currency: string = (req.cookies?.tl_currency as string) || "INR";
+    const isDomestic = currency.toUpperCase() === "INR";
     await cartService.removeItem(id);
     await touchCart(req, res, sessionId);
-    res.status(204).send();
+    const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
+    res.json(cartDetails);
   });
 }

@@ -289,8 +289,8 @@ export default function ProductPage() {
       });
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/cart"], data);
       trackAddToCart({
         id: product!.id,
         name: product!.name,

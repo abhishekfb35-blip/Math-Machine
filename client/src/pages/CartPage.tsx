@@ -136,24 +136,20 @@ export default function CartPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
-      if (quantity === 0) {
-        await apiRequest("DELETE", `/api/cart/items/${id}`);
-      } else {
-        await apiRequest("PATCH", `/api/cart/items/${id}`, { quantity });
-      }
+      const res = quantity === 0
+        ? await apiRequest("DELETE", `/api/cart/items/${id}`)
+        : await apiRequest("PATCH", `/api/cart/items/${id}`, { quantity });
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
+    onSuccess: (data) => queryClient.setQueryData(["/api/cart"], data),
   });
 
   const removeMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/cart/items/${id}`);
+      const res = await apiRequest("DELETE", `/api/cart/items/${id}`);
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
+    onSuccess: (data) => queryClient.setQueryData(["/api/cart"], data),
   });
 
   if (isLoading) {
