@@ -1,0 +1,108 @@
+Here is the complete, production-ready React component for NudgeCard.tsx using Tailwind CSS.
+This implementation combines your space-saving layout (text inside responsive pills, rewards stacked cleanly underneath) and fixes the "dullness" by utilizing high-energy, vibrant empty-state treatments instead of dead greys.
+## Updated NudgeCard.tsx Component Code
+
+import React from 'react';
+interface NudgeCardProps {
+  itemCount: number;
+  showTeaser?: boolean;
+}
+export const NudgeCard: React.FC<NudgeCardProps> = ({ itemCount, showTeaser = false }) => {
+  // If cart is empty and teaser isn't explicitly requested, render nothing
+  if (itemCount === 0 && !showTeaser) return null;
+
+  // Define milestone data configuration
+  const milestones = [
+    { id: 1, label: 'Item 1', subtext: null },
+    { id: 2, label: 'Item 2', subtext: null },
+    { id: 3, label: 'Item 3', subtext: 'Free*', isReward: true, rewardIcon: '🎁' },
+    { id: 4, label: 'Item 4', subtext: '30% Off*', isReward: true, rewardIcon: '⭐' },
+  ];
+
+  // Helper text logic based on current progress
+  const getStatusMessage = () => {
+    if (itemCount === 0) return "Add 3 items and get 1 FREE — automatically!";
+    if (itemCount === 1) return "Awesome! Add 1 more item to unlock your FREE gift!";
+    if (itemCount === 2) return "You're only 1 item away from a FREE gift!";
+    return "Congratulations! Your special offer has been applied.";
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto my-6 p-5 rounded-2xl border border-[#FDE68A] bg-amber-50/60 shadow-sm transition-all duration-300">
+      
+      {/* 1. Space-Saving Responsive Pill Row */}
+      <div className="relative flex justify-between items-start gap-2 sm:gap-4 mb-6">
+        
+        {/* Background connector track line */}
+        <div className="absolute top-[18px] left-[10%] right-[10%] h-[3px] bg-amber-200/50 -z-10 rounded-full" />
+        
+        {milestones.map((milestone) => {
+          const isActive = itemCount >= milestone.id;
+          const isNextUp = itemCount === milestone.id - 1;
+          
+          return (
+            <div key={milestone.id} className="flex flex-col items-center flex-1 min-w-0">
+              
+              {/* The Pill Component */}
+              <div
+                className={`
+                  w-full py-1.5 px-2 rounded-full text-center font-semibold text-xs sm:text-sm tracking-wide shadow-sm
+                  transition-all duration-300 transform border
+                  ${isActive 
+                    ? 'bg-[#15803D] text-white border-[#15803D] scale-105' // Active completed milestone
+                    : isNextUp 
+                    ? 'bg-amber-100 text-amber-800 border-amber-400 border-dashed animate-pulse' // Prompting next action
+                    : milestone.isReward
+                    ? 'bg-white text-amber-600 border-amber-300 ring-2 ring-amber-200/50' // High-energy locked reward slot
+                    : 'bg-stone-50 text-stone-500 border-stone-200' // Clean, uncompleted item container
+                  }
+                `}
+              >
+                <span className="truncate block">
+                  {isActive && '✓ '}
+                  {milestone.label}
+                </span>
+              </div>
+
+              {/* Stacked Subtext Layout - Perfect for Mobile Spacing */}
+              {milestone.subtext && (
+                <span 
+                  className={`
+                    mt-2 text-[11px] sm:text-xs font-bold text-center flex items-center gap-0.5 whitespace-nowrap
+                    ${isActive ? 'text-[#15803D]' : 'text-amber-600'}
+                  `}
+                >
+                  {!isActive && milestone.rewardIcon}
+                  {milestone.subtext}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 2. High-Contrast Highlight Callout Text */}
+      <div className="text-center bg-white border border-amber-100 rounded-xl py-3 px-4 shadow-inner">
+        <p className="text-sm sm:text-base font-extrabold text-[#D97706] tracking-tight flex items-center justify-center gap-1.5">
+          {itemCount === 0 && <span className="animate-bounce">🎁</span>}
+          {getStatusMessage()}
+        </p>
+      </div>
+
+      {/* 3. Muted Footnote */}
+      <p className="mt-2.5 text-center text-[10px] text-stone-400 font-medium italic">
+        *Discounts apply to the lowest-priced items in your order.
+      </p>
+    </div>
+  );
+};
+
+## Key UI Features Built into This Code
+
+* No Extra Height on Mobile: By omitting separate top circles, the pills layout stacks subtext seamlessly. The background connecting line scales mathematically to keep elements visually uniform.
+* Animated Incentive Styling: When a user sits at a state (e.g., itemCount === 0), the first pill (Item 1) subtly animates with a pulse effect (animate-pulse) and dashed borders to cue action without being aggressive.
+* High-Contrast Reward Anchors: Locked rewards (Item 3 and Item 4) explicitly avoid flat greys. They render on crisp white surfaces framed by warm amber boundaries (ring-2 ring-amber-200/50) to maintain continuous visual gravity.
+
+Would you like to write the integration code for passing the correct itemCount state values from your global cart context, or look at how this renders inside the smaller mini-cart drawer wrapper?
+
+
