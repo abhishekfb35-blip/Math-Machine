@@ -150,8 +150,8 @@
 }
 
 @keyframes nudgeActivePulse {
-  0%   { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.45); }
-  70%  { box-shadow: 0 0 0 6px rgba(251, 146, 60, 0); }
+  0%   { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
+  70%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
   100% { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
 }
 
