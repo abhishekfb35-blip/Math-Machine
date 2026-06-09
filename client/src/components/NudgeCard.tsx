@@ -107,8 +107,10 @@ export default function NudgeCard({
     if (state === "complete") {
       return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white";
     }
-    const base = "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400";
-    return state === "active" ? `${base} nudge-active-pulse` : base;
+    if (state === "active") {
+      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400 nudge-active-pulse";
+    }
+    return "bg-amber-50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/40 text-amber-400 dark:text-amber-700";
   }
 
   return (
@@ -131,7 +133,7 @@ export default function NudgeCard({
           return (
             <div
               key={pos}
-              className="relative z-10 flex flex-col items-center flex-1"
+              className="relative z-10 flex flex-col items-start flex-1"
               data-testid={`nudge-node-${pos}`}
             >
               <div className={`${pillBase} ${pillStyle(state)}`}>
