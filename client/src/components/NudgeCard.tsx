@@ -60,6 +60,13 @@ export default function NudgeCard({
     return `Item ${pos}`;
   }
 
+  function rewardIcon(pos: number): string | null {
+    if (pos === wholesale) return "🏆";
+    if (pos === trigger + 1) return "⭐";
+    if (pos === trigger) return "🎁";
+    return null;
+  }
+
   const atBonus = !atWholesale && itemCount >= trigger + 1;
   const atFree = !atWholesale && !atBonus && itemCount >= trigger;
 
@@ -87,7 +94,7 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  const pillClasses = compact
+  const pillBase = compact
     ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold border-2 transition-all whitespace-nowrap"
     : "px-3 py-1 rounded-full text-[11px] font-bold border-2 transition-all whitespace-nowrap";
   const labelFont = compact ? "text-[11px] tracking-tight" : "text-[13px]";
@@ -96,13 +103,27 @@ export default function NudgeCard({
   const pad = compact ? "p-3.5" : "p-5";
   const trackTop = compact ? "top-[10px]" : "top-[12px]";
 
+  function pillStyle(pos: number, state: "complete" | "active" | "locked"): string {
+    const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
+    if (state === "complete") {
+      return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white";
+    }
+    if (state === "active") {
+      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 nudge-active-pulse";
+    }
+    if (isMilestone) {
+      return "bg-white dark:bg-amber-950/30 border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400 ring-1 ring-amber-300/60 dark:ring-amber-600/30";
+    }
+    return "bg-white dark:bg-amber-950/20 border-dashed border-amber-300 dark:border-amber-700 text-amber-500 dark:text-amber-500";
+  }
+
   return (
     <div
       className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm`}
       data-testid="nudge-card"
     >
       <div className="flex justify-between relative" data-testid="nudge-track">
-        <div className={`absolute ${trackTop} left-0 right-0 h-1 bg-amber-100 dark:bg-amber-900/40 rounded-full z-0`}>
+        <div className={`absolute ${trackTop} left-0 right-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0`}>
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out"
             style={{ width: `${fillPct}%` }}
@@ -112,33 +133,27 @@ export default function NudgeCard({
         {nodes.map((pos) => {
           const state = nodeState(pos);
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
+          const icon = rewardIcon(pos);
           return (
             <div
               key={pos}
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              <div
-                className={`${pillClasses} ${
-                  state === "complete"
-                    ? "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white"
-                    : state === "active"
-                    ? "bg-white dark:bg-amber-950/40 border-orange-400 text-orange-500 nudge-active-pulse"
-                    : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 text-amber-300 dark:text-amber-700"
-                }`}
-              >
+              <div className={`${pillBase} ${pillStyle(pos, state)}`}>
                 Item {pos}
               </div>
               {isMilestone && (
                 <span
-                  className={`mt-1.5 ${labelFont} font-semibold text-center whitespace-nowrap leading-tight ${
+                  className={`mt-1.5 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
                     state === "complete"
                       ? "text-amber-600 dark:text-amber-400"
                       : state === "active"
-                      ? "text-slate-800 dark:text-slate-200 font-bold"
-                      : "text-slate-500 dark:text-slate-400"
+                      ? "text-orange-500 dark:text-orange-400"
+                      : "text-amber-600 dark:text-amber-400"
                   }`}
                 >
+                  {icon && state !== "complete" && <span>{icon}</span>}
                   {nodeLabel(pos)}
                 </span>
               )}
