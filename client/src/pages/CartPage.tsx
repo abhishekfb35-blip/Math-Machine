@@ -238,16 +238,13 @@ export default function CartPage() {
               <span data-testid="text-subtotal">{cart ? formatPrice(cart.subtotal) : "—"}</span>
             </div>
             {cart && cart.discount > 0 && (() => {
-              const hasFree = items.some(i => i.isFreeItem);
-              const bonusItem = items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
-              const hasBonus = !!bonusItem;
-              const label = hasFree && hasBonus
-                ? `1 Free Item + ${bonusItem!.bonusDiscountPct}% Off*`
-                : hasFree
-                  ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free*`
-                  : hasBonus
-                    ? `${bonusItem!.bonusDiscountPct}% Discount*`
-                    : "Best Rates";
+              const { retailFreeItemTrigger: trigger, retailBonusDiscountPct: bonusPct, wholesaleThreshold: wholesale } = cart.engineThresholds ?? { retailFreeItemTrigger: 3, retailBonusDiscountPct: 30, wholesaleThreshold: 5 };
+              const count = cart.itemCount;
+              const label = count >= wholesale
+                ? "Best Rates"
+                : count >= trigger + 1
+                  ? `1 Free Item + ${bonusPct}% Off*`
+                  : `Buy ${trigger - 1} Get 1 Free*`;
               return (
                 <div className="flex justify-between gap-4 text-green-600">
                   <span data-testid="text-discount-label">{label}</span>
@@ -269,9 +266,8 @@ export default function CartPage() {
               <span data-testid="text-total">{cart ? formatPrice(cart.total) : "—"}</span>
             </div>
             {cart && cart.discount > 0 && (() => {
-              const hasFree = items.some(i => i.isFreeItem);
-              const hasBonus = items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
-              return (hasFree || hasBonus) ? (
+              const { wholesaleThreshold: wholesale } = cart.engineThresholds ?? { wholesaleThreshold: 5 };
+              return cart.itemCount < wholesale ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="text-discount-footnote">
                   *Discounts apply to the lowest-priced items in your order.
                 </p>

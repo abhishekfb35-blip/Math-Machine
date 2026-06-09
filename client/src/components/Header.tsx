@@ -363,16 +363,13 @@ export default function Header() {
                     <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
                   </div>
                   {cart.discount > 0 && (() => {
-                    const hasFree = cart.items.some(i => i.isFreeItem);
-                    const bonusItem = cart.items.find(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
-                    const hasBonus = !!bonusItem;
-                    const label = hasFree && hasBonus
-                      ? `1 Free Item + ${bonusItem!.bonusDiscountPct}% Off*`
-                      : hasFree
-                        ? `Buy ${(cart.engineThresholds?.retailFreeItemTrigger ?? 3) - 1} Get 1 Free*`
-                        : hasBonus
-                          ? `${bonusItem!.bonusDiscountPct}% Discount*`
-                          : "Best Rates";
+                    const { retailFreeItemTrigger: trigger, retailBonusDiscountPct: bonusPct, wholesaleThreshold: wholesale } = cart.engineThresholds ?? { retailFreeItemTrigger: 3, retailBonusDiscountPct: 30, wholesaleThreshold: 5 };
+                    const count = cart.itemCount;
+                    const label = count >= wholesale
+                      ? "Best Rates"
+                      : count >= trigger + 1
+                        ? `1 Free Item + ${bonusPct}% Off*`
+                        : `Buy ${trigger - 1} Get 1 Free*`;
                     return (
                       <div className="flex justify-between text-sm text-green-600 font-medium">
                         <span data-testid="mini-cart-discount-label">{label}</span>
@@ -391,9 +388,8 @@ export default function Header() {
                     <span data-testid="mini-cart-total">{formatPrice(cart.total)}</span>
                   </div>
                   {cart.discount > 0 && (() => {
-                    const hasFree = cart.items.some(i => i.isFreeItem);
-                    const hasBonus = cart.items.some(i => i.bonusDiscountPct && i.bonusDiscountPct > 0);
-                    return (hasFree || hasBonus) ? (
+                    const { retailFreeItemTrigger: trigger, wholesaleThreshold: wholesale } = cart.engineThresholds ?? { retailFreeItemTrigger: 3, wholesaleThreshold: 5 };
+                    return cart.itemCount < wholesale ? (
                       <p className="text-[11px] text-slate-500 dark:text-slate-400" data-testid="mini-cart-discount-footnote">
                         *Discounts apply to the lowest-priced items in your order.
                       </p>
