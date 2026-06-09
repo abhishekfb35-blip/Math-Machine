@@ -60,12 +60,6 @@ export default function NudgeCard({
     return `Item ${pos}`;
   }
 
-  function circleContent(pos: number, state: "complete" | "active" | "locked"): string {
-    if (state === "complete") return "✓";
-    if (pos === wholesale) return "★";
-    return String(pos);
-  }
-
   const atBonus = !atWholesale && itemCount >= trigger + 1;
   const atFree = !atWholesale && !atBonus && itemCount >= trigger;
 
@@ -73,7 +67,7 @@ export default function NudgeCard({
   let line2: React.ReactNode = null;
 
   if (itemCount === 0) {
-    line1 = <>🎁 Add <Hi>{trigger} items</Hi> and get <Hi>1 FREE</Hi> — automatically!</>;
+    line1 = <>🎁 Add {trigger} items and get <Hi>1 FREE</Hi> — automatically!</>;
   } else if (atWholesale) {
     line1 = <>🏆 You've unlocked <Hi>Our Absolute Best Rates</Hi> on everything!</>;
   } else if (atBonus) {
@@ -93,13 +87,14 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  const circleSize = compact ? "w-5 h-5" : "w-7 h-7";
-  const circleFont = compact ? "text-[9px]" : "text-[11px]";
-  const labelFont = compact ? "text-[11px] tracking-tight" : "text-[15px]";
+  const pillClasses = compact
+    ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold border-2 transition-all whitespace-nowrap"
+    : "px-3 py-1 rounded-full text-[11px] font-bold border-2 transition-all whitespace-nowrap";
+  const labelFont = compact ? "text-[11px] tracking-tight" : "text-[13px]";
   const msgFont = compact ? "text-xs" : "text-sm";
   const line2Font = compact ? "text-[13px]" : "text-[15px]";
   const pad = compact ? "p-3.5" : "p-5";
-  const trackTop = compact ? "top-[10px]" : "top-[14px]";
+  const trackTop = compact ? "top-[10px]" : "top-[12px]";
 
   return (
     <div
@@ -116,6 +111,7 @@ export default function NudgeCard({
 
         {nodes.map((pos) => {
           const state = nodeState(pos);
+          const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           return (
             <div
               key={pos}
@@ -123,27 +119,29 @@ export default function NudgeCard({
               data-testid={`nudge-node-${pos}`}
             >
               <div
-                className={`${circleSize} rounded-full flex items-center justify-center font-bold ${circleFont} border-2 transition-all ${
+                className={`${pillClasses} ${
                   state === "complete"
                     ? "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white"
                     : state === "active"
-                    ? "bg-white dark:bg-amber-950/40 border-orange-400 text-orange-400 nudge-active-pulse"
+                    ? "bg-white dark:bg-amber-950/40 border-orange-400 text-orange-500 nudge-active-pulse"
                     : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 text-amber-300 dark:text-amber-700"
                 }`}
               >
-                {circleContent(pos, state)}
+                Item {pos}
               </div>
-              <span
-                className={`mt-1.5 ${labelFont} font-semibold text-center whitespace-nowrap leading-tight ${
-                  state === "complete"
-                    ? "text-amber-600 dark:text-amber-400"
-                    : state === "active"
-                    ? "text-slate-800 dark:text-slate-200 font-bold"
-                    : "text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                {nodeLabel(pos)}
-              </span>
+              {isMilestone && (
+                <span
+                  className={`mt-1.5 ${labelFont} font-semibold text-center whitespace-nowrap leading-tight ${
+                    state === "complete"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : state === "active"
+                      ? "text-slate-800 dark:text-slate-200 font-bold"
+                      : "text-slate-500 dark:text-slate-400"
+                  }`}
+                >
+                  {nodeLabel(pos)}
+                </span>
+              )}
             </div>
           );
         })}
