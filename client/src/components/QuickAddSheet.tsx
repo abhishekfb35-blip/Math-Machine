@@ -228,6 +228,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               itemCount={cart.itemCount}
               engineThresholds={cart.engineThresholds}
               compact
+              showTeaser
             />
           ) : (
             <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
