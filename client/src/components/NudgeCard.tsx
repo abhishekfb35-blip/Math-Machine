@@ -162,7 +162,7 @@ export default function NudgeCard({
 
       {hasAsterisk && (
         <p
-          className="text-[11px] text-slate-600 dark:text-slate-400 text-left border-t border-dashed border-amber-200 dark:border-amber-800/40 pt-2.5 leading-tight px-0.5"
+          className="text-[12px] text-slate-600 dark:text-slate-400 text-left border-t border-dashed border-amber-200 dark:border-amber-800/40 pt-2.5 leading-tight px-0.5"
           data-testid="nudge-footnote"
         >
           *Discounts apply to the lowest-priced items in your order.
