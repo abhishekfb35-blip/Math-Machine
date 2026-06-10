@@ -1,4 +1,4 @@
-import { ShoppingCart, Key } from "lucide-react";
+import { ShoppingCart, KeySquare } from "lucide-react";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -198,7 +198,7 @@ export default function NudgeCard({
                   } ${isWholesale ? "text-orange-500 dark:text-orange-400" : ""}`}
                 >
                   {isWholesale && !isComplete ? (
-                    <Key
+                    <KeySquare
                       className="fill-amber-400 stroke-orange-500"
                       strokeWidth={2}
                       style={{ width: "1.1em", height: "1.1em" }}
