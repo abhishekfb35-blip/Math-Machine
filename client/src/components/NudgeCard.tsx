@@ -1,4 +1,4 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, LockOpen } from "lucide-react";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -63,7 +63,6 @@ export default function NudgeCard({
   }
 
   function rewardIcon(pos: number): string | null {
-    if (pos === wholesale) return "🏆";
     if (pos === trigger + 1) return null;
     if (pos === trigger) return null;
     return null;
@@ -198,9 +197,15 @@ export default function NudgeCard({
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {icon && !isComplete && (
-                    <span className={isWholesale ? "text-[1.1em]" : ""}>{icon}</span>
-                  )}
+                  {isWholesale && !isComplete ? (
+                    <LockOpen
+                      className="fill-amber-400 stroke-orange-700"
+                      strokeWidth={2}
+                      style={{ width: "1.1em", height: "1.1em" }}
+                    />
+                  ) : icon && !isComplete ? (
+                    <span>{icon}</span>
+                  ) : null}
                   <span className="whitespace-nowrap">{nodeLabel(pos)}</span>
                 </span>
               )}
