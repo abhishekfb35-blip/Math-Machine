@@ -119,7 +119,7 @@ export default function NudgeCard({
           style={{ top: `${Math.round(wsCartW / 2)}px` }}
         >
           <div
-            className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out"
+            className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out progress-arrows"
             style={{ width: `${fillPct}%` }}
           />
         </div>
@@ -195,7 +195,7 @@ export default function NudgeCard({
                       : isLocked
                       ? "text-orange-400 dark:text-orange-300 opacity-80"
                       : "text-orange-500 dark:text-orange-400"
-                  } ${isWholesale ? "text-orange-500 dark:text-orange-400" : ""}`}
+                  } ${isWholesale ? "text-orange-500 dark:text-orange-400 nudge-blink" : ""}`}
                 >
                   {isWholesale && !isComplete ? (
                     <KeySquare

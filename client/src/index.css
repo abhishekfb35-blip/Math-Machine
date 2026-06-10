@@ -166,3 +166,22 @@
 .cart-stroke-dashed rect {
   stroke-dasharray: 5 3;
 }
+
+.progress-arrows {
+  background-image: repeating-linear-gradient(
+    72deg,
+    transparent,
+    transparent 8px,
+    rgba(255,255,255,0.28) 8px,
+    rgba(255,255,255,0.28) 10px
+  );
+}
+
+.nudge-blink {
+  animation: nudgeBlink 1.2s ease-in-out infinite;
+}
+
+@keyframes nudgeBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
