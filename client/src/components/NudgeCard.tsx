@@ -145,14 +145,20 @@ export default function NudgeCard({
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              {/* Bare cart icon with number inside */}
+              {/* Cart icon with bubble badge */}
               <div className={`relative ${cartIconSize} flex items-center justify-center`}>
                 <ShoppingCart
                   className={`w-full h-full ${iconColor} ${state === "active" ? "nudge-active-pulse" : ""}`}
                   strokeWidth={1.5}
                 />
                 <span
-                  className={`absolute bottom-[4px] left-1/2 -translate-x-1/2 ${numFont} ${numColor} leading-none pointer-events-none`}
+                  className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center ${numFont} font-black text-white leading-none pointer-events-none ${
+                    isWholesale
+                      ? "bg-rose-500"
+                      : isComplete
+                      ? "bg-amber-500"
+                      : "bg-orange-500"
+                  }`}
                 >
                   {label}
                 </span>
