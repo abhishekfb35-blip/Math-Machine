@@ -33,7 +33,6 @@ import { ensureRequestLogsTables } from "./migrations/request-logs-table";
 import { addWholesalePriceColumn } from "./migrations/add-wholesale-price";
 import { purgeStaleConfigKeys } from "./migrations/purge-stale-site-config";
 import { purgeCartBannersKey } from "./migrations/purge-cart-banners";
-import { ensureCategoryAudiencePricingTable } from "./migrations/category-audience-pricing";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
@@ -295,7 +294,6 @@ function startRateLimitStatsScheduler() {
             { id: "add-wholesale-price",                run: addWholesalePriceColumn },
             { id: "purge-stale-site-config",            run: purgeStaleConfigKeys },
             { id: "purge-cart-banners",                  run: purgeCartBannersKey },
-            { id: "category-audience-pricing",           run: ensureCategoryAudiencePricingTable },
           ]);
           currentStep = "seed-database";
           if (process.env.NODE_ENV === "production") {

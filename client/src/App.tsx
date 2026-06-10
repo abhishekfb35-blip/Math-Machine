@@ -50,7 +50,6 @@ import AdminColorSwatches from "@/pages/AdminColorSwatches";
 import AdminTags from "@/pages/AdminTags";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminSecurity from "@/pages/AdminSecurity";
-import AdminBestRates from "@/pages/AdminBestRates";
 import AdminFunnelReport from "@/pages/admin/AdminFunnelReport";
 import AdminTrafficReport from "@/pages/admin/AdminTrafficReport";
 import AdminProductPageConfig from "@/pages/AdminProductPageConfig";
@@ -107,7 +106,6 @@ function Router() {
       <Route path="/admin/pricing" component={() => <PermissionGuard permission="pricing"><AdminPricing /></PermissionGuard>} />
       <Route path="/admin/customers" component={() => <PermissionGuard permission="customers"><AdminCustomers /></PermissionGuard>} />
       <Route path="/admin/offers" component={() => <PermissionGuard permission="offers"><AdminOffers /></PermissionGuard>} />
-      <Route path="/admin/best-rates" component={() => <PermissionGuard permission="offers"><AdminBestRates /></PermissionGuard>} />
       <Route path="/admin/occasions" component={() => <PermissionGuard permission="catalog"><AdminOccasions /></PermissionGuard>} />
       <Route path="/admin/attributes" component={() => <PermissionGuard permission="catalog"><AdminAttributes /></PermissionGuard>} />
       <Route path="/admin/color-swatches" component={() => <PermissionGuard permission="catalog"><AdminColorSwatches /></PermissionGuard>} />

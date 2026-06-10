@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts, requestLogs, ipGeoCache, categoryAudiencePricing } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts, requestLogs, ipGeoCache } from "@shared/schema";
 import { resolveGeo } from "./lib/geoLookup";
 
 import type {
@@ -38,7 +38,6 @@ import type {
   ColorSwatch, InsertColorSwatch,
   CategorySizeDefinition, InsertCategorySizeDefinition,
   PaymentAttempt, InsertPaymentAttempt,
-  CategoryAudiencePricing,
 } from "@shared/types";
 import { db } from "./db";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
@@ -249,12 +248,6 @@ export interface IStorage {
   setProductThemes(productId: string, themeIds: string[]): Promise<void>;
   setProductStyles(productId: string, styleIds: string[]): Promise<void>;
   getProductAttributeIds(productId: string): Promise<{ audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>;
-
-  getCategoryAudiencePricingAll(): Promise<CategoryAudiencePricing[]>;
-  upsertCategoryAudiencePrice(categoryId: string, audienceId: string, wholesalePrice: number): Promise<CategoryAudiencePricing>;
-  deleteCategoryAudiencePrice(categoryId: string, audienceId: string): Promise<void>;
-  getProductCountByCategoryAndAudience(): Promise<Array<{ categoryId: string; audienceId: string; count: number }>>;
-  getProductFirstAudienceIds(productIds: string[]): Promise<Map<string, string>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2375,62 +2368,6 @@ export class DatabaseStorage implements IStorage {
       ipRows,
       abandonedCartCount: Number(abandonedRow?.count ?? 0),
     };
-  }
-
-  async getCategoryAudiencePricingAll(): Promise<CategoryAudiencePricing[]> {
-    return db.select().from(categoryAudiencePricing);
-  }
-
-  async upsertCategoryAudiencePrice(categoryId: string, audienceId: string, wholesalePrice: number): Promise<CategoryAudiencePricing> {
-    const existing = await db.select().from(categoryAudiencePricing)
-      .where(and(eq(categoryAudiencePricing.categoryId, categoryId), eq(categoryAudiencePricing.audienceId, audienceId)));
-    if (existing.length > 0) {
-      const [updated] = await db.update(categoryAudiencePricing)
-        .set({ wholesalePrice })
-        .where(and(eq(categoryAudiencePricing.categoryId, categoryId), eq(categoryAudiencePricing.audienceId, audienceId)))
-        .returning();
-      return updated;
-    }
-    const [created] = await db.insert(categoryAudiencePricing)
-      .values({ id: createId(), categoryId, audienceId, wholesalePrice })
-      .returning();
-    return created;
-  }
-
-  async deleteCategoryAudiencePrice(categoryId: string, audienceId: string): Promise<void> {
-    await db.delete(categoryAudiencePricing)
-      .where(and(eq(categoryAudiencePricing.categoryId, categoryId), eq(categoryAudiencePricing.audienceId, audienceId)));
-  }
-
-  async getProductCountByCategoryAndAudience(): Promise<Array<{ categoryId: string; audienceId: string; count: number }>> {
-    const rows = await db
-      .select({
-        categoryId: products.categoryId,
-        audienceId: productAudience.audienceId,
-        count: sql<number>`count(distinct ${products.id})::int`,
-      })
-      .from(products)
-      .innerJoin(productAudience, eq(productAudience.productId, products.id))
-      .where(eq(products.active, true))
-      .groupBy(products.categoryId, productAudience.audienceId);
-    return rows.map(r => ({ categoryId: r.categoryId, audienceId: r.audienceId, count: Number(r.count) }));
-  }
-
-  async getProductFirstAudienceIds(productIds: string[]): Promise<Map<string, string>> {
-    if (productIds.length === 0) return new Map();
-    const rows = await db
-      .select({ productId: productAudience.productId, audienceId: productAudience.audienceId, sortOrder: audience.sortOrder })
-      .from(productAudience)
-      .innerJoin(audience, eq(productAudience.audienceId, audience.id))
-      .where(inArray(productAudience.productId, productIds))
-      .orderBy(asc(audience.sortOrder));
-    const result = new Map<string, string>();
-    for (const row of rows) {
-      if (!result.has(row.productId)) {
-        result.set(row.productId, row.audienceId);
-      }
-    }
-    return result;
   }
 }
 

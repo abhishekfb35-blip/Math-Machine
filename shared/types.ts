@@ -525,19 +525,6 @@ export interface ProductVariantOptions {
   sizes: VariantSize[];
 }
 
-export interface CategoryAudiencePricing {
-  id: string;
-  categoryId: string;
-  audienceId: string;
-  wholesalePrice: number;
-}
-
-export interface InsertCategoryAudiencePricing {
-  categoryId: string;
-  audienceId: string;
-  wholesalePrice: number;
-}
-
 export interface ColorSwatch {
   id: string;
   name: string;
