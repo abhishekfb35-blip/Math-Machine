@@ -1,4 +1,4 @@
-import { ShoppingCart, ChevronRight } from "lucide-react";
+import { ShoppingCart, ArrowRight } from "lucide-react";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -212,9 +212,9 @@ export default function NudgeCard({
             <div
               key={`arrow-${pos}`}
               className={`flex-shrink-0 flex items-center justify-center ${arrowColor}`}
-              style={{ height: `${wsCartW}px`, width: compact ? '14px' : '18px' }}
+              style={{ height: `${wsCartW}px`, width: compact ? '18px' : '24px' }}
             >
-              <ChevronRight size={compact ? 14 : 18} strokeWidth={2.5} />
+              <ArrowRight size={compact ? 16 : 22} strokeWidth={2.5} />
             </div>
           ) : null;
 
