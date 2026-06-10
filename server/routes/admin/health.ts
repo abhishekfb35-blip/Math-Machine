@@ -1180,7 +1180,7 @@ export function registerAdminHealthRoutes(app: Express) {
   app.get("/api/admin/db-snapshot", requireSnapshotAccess, async (_req, res) => {
     try {
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
         pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
         pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
         pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
