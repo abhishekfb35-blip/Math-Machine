@@ -137,7 +137,7 @@ export default function NudgeCard({
               data-testid={`nudge-node-${pos}`}
             >
               <div className={`${pillBase} ${pillStyle(state)}`}>
-                {nodeLabel(pos)}
+                Item {pos}
               </div>
               {isMilestone && (
                 <span
