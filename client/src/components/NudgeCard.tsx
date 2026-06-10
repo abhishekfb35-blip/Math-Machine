@@ -115,7 +115,7 @@ export default function NudgeCard({
       <div className="flex justify-between relative" data-testid="nudge-track">
         {/* Progress track */}
         <div
-          className="absolute inset-x-0 mx-[10%] h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
+          className="absolute inset-x-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
           style={{ top: `${Math.round(wsCartW / 2)}px` }}
         >
           <div
