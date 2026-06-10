@@ -3294,9 +3294,10 @@ export default function AdminCatalog() {
                 const newMrp = bulkPriceFields.mrp !== "" ? parseInt(bulkPriceFields.mrp, 10) : null;
                 if (newPrice !== null && newPrice <= 0) return;
                 if (newMrp !== null && newMrp <= 0) return;
+                const selectedIds = Array.from(selectedProductIds);
                 setPendingChanges(prev => {
                   const next = { ...prev };
-                  for (const id of selectedProductIds) {
+                  for (const id of selectedIds) {
                     next[id] = {
                       ...next[id],
                       ...(newPrice !== null ? { price: newPrice } : {}),
