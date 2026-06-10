@@ -190,12 +190,14 @@ export default function NudgeCard({
               {isMilestone && (
                 <span
                   className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center leading-tight flex flex-col items-center justify-center gap-0 ${!isWholesale ? "translate-x-1" : ""} ${
-                    isComplete
+                    isWholesale
+                      ? "text-orange-500 dark:text-orange-400 nudge-blink"
+                      : isComplete
                       ? "text-amber-600 dark:text-amber-400"
                       : isLocked
                       ? "text-orange-400 dark:text-orange-300 opacity-80"
                       : "text-orange-500 dark:text-orange-400"
-                  } ${isWholesale ? "text-orange-500 dark:text-orange-400 nudge-blink" : ""}`}
+                  }`}
                 >
                   {isWholesale && !isComplete ? (
                     <span className="font-black text-orange-500 tracking-tight" style={{ fontSize: "1em" }}>Unlock</span>
