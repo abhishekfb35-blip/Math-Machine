@@ -62,7 +62,7 @@ export default function NudgeCard({
 
   function rewardIcon(pos: number): string | null {
     if (pos === wholesale) return "🏆";
-    if (pos === trigger + 1) return "⭐";
+    if (pos === trigger + 1) return null;
     if (pos === trigger) return "🎁";
     return null;
   }
