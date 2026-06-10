@@ -136,8 +136,8 @@ export default function NudgeCard({
             isComplete
               ? "text-amber-500 dark:text-amber-400"
               : state === "active"
-              ? "text-orange-300 dark:text-orange-400"
-              : "text-orange-200 dark:text-orange-800 opacity-60";
+              ? "text-orange-400 dark:text-orange-400"
+              : "text-orange-300 dark:text-orange-300 opacity-80";
 
           const nodeEl = (
             <div
@@ -214,7 +214,7 @@ export default function NudgeCard({
               className={`flex-shrink-0 flex items-center justify-center ${arrowColor}`}
               style={{ height: `${wsCartW}px`, width: compact ? '18px' : '24px' }}
             >
-              <ArrowRight size={compact ? 16 : 22} strokeWidth={2.5} />
+              <ArrowRight size={compact ? 16 : 22} strokeWidth={7.5} />
             </div>
           ) : null;
 
