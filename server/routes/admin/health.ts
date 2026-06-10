@@ -1206,6 +1206,9 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
         pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
         pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
+        pool.query(`SELECT id, selling_price, bulk_rate FROM bulk_price_rules ORDER BY selling_price`),
+        pool.query(`SELECT id, name, swatch_url, sort_order FROM color_swatches ORDER BY sort_order`),
+        pool.query(`SELECT id, category_id, name, description, sort_order FROM category_size_definitions ORDER BY sort_order`),
       ]);
       res.json({
         categories:                 cats.rows,
@@ -1228,6 +1231,9 @@ export function registerAdminHealthRoutes(app: Express) {
         categoryTagVariantConfigs:  ctvcs.rows,
         variantSizes:               vsizes.rows,
         variantColors:              vcolors.rows,
+        bulkPriceRules:             bulk.rows,
+        colorSwatches:              swatches.rows,
+        categorySizeDefinitions:    csds.rows,
       });
     } catch (err: any) {
       console.error("db-snapshot error:", err.message);
@@ -1245,7 +1251,7 @@ export function registerAdminHealthRoutes(app: Express) {
       const [localSnap, prodResp] = await Promise.all([
         (async () => {
           const { pool } = await import("../../db");
-          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors] = await Promise.all([
+          const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
             pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
             pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
             pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
@@ -1271,6 +1277,9 @@ export function registerAdminHealthRoutes(app: Express) {
             pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
             pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
             pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
+            pool.query(`SELECT id, selling_price, bulk_rate FROM bulk_price_rules ORDER BY selling_price`),
+            pool.query(`SELECT id, name, swatch_url, sort_order FROM color_swatches ORDER BY sort_order`),
+            pool.query(`SELECT id, category_id, name, description, sort_order FROM category_size_definitions ORDER BY sort_order`),
           ]);
           return {
             categories: cats.rows, products: prods.rows, tagTypes: ttypes.rows, tags: tgs.rows,
@@ -1279,6 +1288,7 @@ export function registerAdminHealthRoutes(app: Express) {
             occasions: occs.rows, productAudience: pags.rows, productGenders: pgens.rows,
             productThemes: pths.rows, productStyles: psts.rows, siteContent: sc.rows,
             categoryTagVariantConfigs: ctvcs.rows, variantSizes: vsizes.rows, variantColors: vcolors.rows,
+            bulkPriceRules: bulk.rows, colorSwatches: swatches.rows, categorySizeDefinitions: csds.rows,
           };
         })(),
         fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/db-snapshot`, {
@@ -1396,6 +1406,18 @@ export function registerAdminHealthRoutes(app: Express) {
                             (localSnap as any).variantColors as any[] ?? [],
                             (prodSnap as any).variantColors as any[] ?? [],
                             ["name", "size_id", "sort_order"]),
+        bulkPriceRules:   diffById(
+                            (localSnap as any).bulkPriceRules as any[] ?? [],
+                            (prodSnap as any).bulkPriceRules as any[] ?? [],
+                            ["selling_price", "bulk_rate"]),
+        colorSwatches:    diffById(
+                            (localSnap as any).colorSwatches as any[] ?? [],
+                            (prodSnap as any).colorSwatches as any[] ?? [],
+                            ["name", "swatch_url", "sort_order"]),
+        categorySizeDefinitions: diffById(
+                            (localSnap as any).categorySizeDefinitions as any[] ?? [],
+                            (prodSnap as any).categorySizeDefinitions as any[] ?? [],
+                            ["name", "description", "sort_order", "category_id"]),
       });
     } catch (err: any) {
       console.error("db-compare error:", err.message);
@@ -1502,6 +1524,7 @@ export function registerAdminHealthRoutes(app: Express) {
         "audience", "genders", "themes", "styles", "occasions",
         "productAudience", "productGenders", "productThemes", "productStyles",
         "categoryTagVariantConfigs", "variantSizes", "variantColors",
+        "bulkPriceRules", "colorSwatches", "categorySizeDefinitions",
       ];
       for (const table of catalogTables) {
         await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
@@ -1747,6 +1770,27 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.slug, s.name`
       );
 
+      // Export bulk_price_rules
+      const bprResult = await pool.query(
+        `SELECT id, selling_price AS "sellingPrice", bulk_rate AS "bulkRate"
+         FROM bulk_price_rules ORDER BY selling_price`
+      );
+
+      // Export color_swatches
+      const csResult = await pool.query(
+        `SELECT id, name, swatch_url AS "swatchUrl", sort_order AS "sortOrder"
+         FROM color_swatches ORDER BY sort_order`
+      );
+
+      // Export category_size_definitions (with categorySlug via JOIN)
+      const csdResult = await pool.query(
+        `SELECT csd.id, c.slug AS "categorySlug", csd.name, csd.description,
+                csd.sort_order AS "sortOrder"
+         FROM category_size_definitions csd
+         JOIN categories c ON c.id = csd.category_id
+         ORDER BY c.slug, csd.sort_order`
+      );
+
       // Export site_content — all shared admin-configured content rows
       const scResult = await pool.query(
         `SELECT key, value FROM site_content ORDER BY key`
@@ -1777,6 +1821,9 @@ export function registerAdminHealthRoutes(app: Express) {
         productGenders:            pgenResult.rows,
         productThemes:             pthResult.rows,
         productStyles:             pstResult.rows,
+        bulkPriceRules:            bprResult.rows,
+        colorSwatches:             csResult.rows,
+        categorySizeDefinitions:   csdResult.rows,
       };
 
       fs.writeFileSync(seedPath, JSON.stringify(updated, null, 2));
@@ -1806,6 +1853,9 @@ export function registerAdminHealthRoutes(app: Express) {
           productGenders:            pgenResult.rowCount,
           productThemes:             pthResult.rowCount,
           productStyles:             pstResult.rowCount,
+          bulkPriceRules:            bprResult.rowCount,
+          colorSwatches:             csResult.rowCount,
+          categorySizeDefinitions:   csdResult.rowCount,
         },
         message: "seed-data.json updated successfully. Changes will take effect on next deployment.",
       });

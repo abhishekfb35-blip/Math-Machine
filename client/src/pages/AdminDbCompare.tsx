@@ -51,6 +51,9 @@ interface CompareResult {
   categoryTagVariantConfigs: IdTableDiff;
   variantSizes: IdTableDiff;
   variantColors: IdTableDiff;
+  bulkPriceRules: IdTableDiff;
+  colorSwatches: IdTableDiff;
+  categorySizeDefinitions: IdTableDiff;
 }
 
 function statusIcon(ok: boolean) {
@@ -275,7 +278,10 @@ export default function AdminDbCompare() {
       isContentTableClean(result.siteContent) &&
       isIdTableClean(result.categoryTagVariantConfigs) &&
       isIdTableClean(result.variantSizes) &&
-      isIdTableClean(result.variantColors)
+      isIdTableClean(result.variantColors) &&
+      isIdTableClean(result.bulkPriceRules) &&
+      isIdTableClean(result.colorSwatches) &&
+      isIdTableClean(result.categorySizeDefinitions)
     : null;
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
@@ -506,6 +512,25 @@ export default function AdminDbCompare() {
             <CollapsibleList label="IDs only in dev"  items={result.variantColors.onlyInDev}  color={DEV_COLOR} />
             <CollapsibleList label="IDs only in prod" items={result.variantColors.onlyInProd} color={PROD_COLOR} />
             <FieldMismatches mismatches={result.variantColors.fieldMismatches} />
+          </SectionShell>
+
+          {/* ── Pricing & admin config ── */}
+          <SectionShell title="Bulk Price Rules" clean={isIdTableClean(result.bulkPriceRules)} devCount={result.bulkPriceRules.devCount} prodCount={result.bulkPriceRules.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.bulkPriceRules.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.bulkPriceRules.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.bulkPriceRules.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Color Swatches" clean={isIdTableClean(result.colorSwatches)} devCount={result.colorSwatches.devCount} prodCount={result.colorSwatches.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.colorSwatches.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.colorSwatches.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.colorSwatches.fieldMismatches} />
+          </SectionShell>
+
+          <SectionShell title="Category Size Definitions" clean={isIdTableClean(result.categorySizeDefinitions)} devCount={result.categorySizeDefinitions.devCount} prodCount={result.categorySizeDefinitions.prodCount}>
+            <CollapsibleList label="IDs only in dev"  items={result.categorySizeDefinitions.onlyInDev}  color={DEV_COLOR} />
+            <CollapsibleList label="IDs only in prod" items={result.categorySizeDefinitions.onlyInProd} color={PROD_COLOR} />
+            <FieldMismatches mismatches={result.categorySizeDefinitions.fieldMismatches} />
           </SectionShell>
         </div>
       )}
