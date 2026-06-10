@@ -1535,7 +1535,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Query final counts for the response summary
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, ctvcs, vsizes, vcolors] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
         pool.query(`SELECT COUNT(*) FROM categories`),
         pool.query(`SELECT COUNT(*) FROM products`),
         pool.query(`SELECT COUNT(*) FROM tag_types`),
@@ -1555,6 +1555,9 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT COUNT(*) FROM category_tag_variant_configs`),
         pool.query(`SELECT COUNT(*) FROM variant_sizes`),
         pool.query(`SELECT COUNT(*) FROM variant_colors`),
+        pool.query(`SELECT COUNT(*) FROM bulk_price_rules`),
+        pool.query(`SELECT COUNT(*) FROM color_swatches`),
+        pool.query(`SELECT COUNT(*) FROM category_size_definitions`),
       ]);
 
       res.json({
@@ -1580,6 +1583,9 @@ export function registerAdminHealthRoutes(app: Express) {
           categoryTagVariantConfigs: Number(ctvcs.rows[0].count),
           variantSizes:              Number(vsizes.rows[0].count),
           variantColors:             Number(vcolors.rows[0].count),
+          bulkPriceRules:            Number(bulk.rows[0].count),
+          colorSwatches:             Number(swatches.rows[0].count),
+          categorySizeDefinitions:   Number(csds.rows[0].count),
         },
       });
     } catch (err: any) {
