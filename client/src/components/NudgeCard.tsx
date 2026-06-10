@@ -96,7 +96,7 @@ export default function NudgeCard({
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
   /* sizes — regular carts 30% bigger than original, wholesale 50% bigger still */
-  const cartW   = compact ? 42 : 52;   /* px — regular cart */
+  const cartW   = compact ? 36 : 44;   /* px — regular cart */
   const wsCartW = Math.round(cartW * 1.5); /* px — wholesale cart */
 
   const badgeBase  = compact ? "min-w-[20px] h-5 text-[13px]"   : "min-w-[24px] h-6 text-[15px]";
@@ -135,7 +135,7 @@ export default function NudgeCard({
           const isLocked = state === "locked";
 
           const iconClass = isWholesale
-            ? "w-full h-full fill-amber-400 stroke-orange-500 text-orange-500"
+            ? "w-full h-full fill-none stroke-orange-500 text-orange-500"
             : isComplete
             ? "w-full h-full fill-amber-500 stroke-amber-500 text-amber-700"
             : state === "active"
