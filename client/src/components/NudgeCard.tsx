@@ -214,7 +214,7 @@ export default function NudgeCard({
               className={`flex-shrink-0 flex items-center justify-center ${arrowColor}`}
               style={{ height: `${wsCartW}px`, width: compact ? '18px' : '24px' }}
             >
-              <ArrowRight size={compact ? 16 : 22} strokeWidth={7.5} />
+              <ArrowRight size={compact ? 16 : 22} strokeWidth={5} />
             </div>
           ) : null;
 
