@@ -935,11 +935,11 @@ export function registerAdminCatalogRoutes(app: Express) {
       const data = schema.parse(req.body);
       const rule = await storage.upsertBulkPriceRule(data);
       await storage.createAuditLog({
-        adminUsername: getAdminUsername(req),
-        action: "upsert",
         entityType: "bulk_price_rule",
         entityId: String(data.sellingPrice),
-        details: data,
+        action: "upsert",
+        changes: JSON.stringify(data),
+        username: getAdminUsername(req),
       });
       res.json(rule);
     } catch (err) {
