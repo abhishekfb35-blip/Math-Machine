@@ -65,6 +65,7 @@ export interface IStorage {
   getProductsByIds(ids: string[]): Promise<Product[]>;
   createProduct(prod: InsertProduct): Promise<Product>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
+  bulkUpdateProductFields(updates: Array<{ id: string } & Partial<InsertProduct>>): Promise<number>;
   deleteProduct(id: string): Promise<void>;
 
   getOrCreateCart(sessionId: string): Promise<Cart>;
@@ -491,6 +492,19 @@ export class DatabaseStorage implements IStorage {
     }
     const [enriched] = await this.withEnriched([updated]);
     return enriched;
+  }
+
+  async bulkUpdateProductFields(updates: Array<{ id: string } & Partial<InsertProduct>>): Promise<number> {
+    if (updates.length === 0) return 0;
+    let count = 0;
+    await db.transaction(async (tx) => {
+      for (const { id, imageUrl, ...fields } of updates) {
+        if (Object.keys(fields).length === 0) continue;
+        await tx.update(products).set({ ...fields, updatedAt: new Date() }).where(eq(products.id, id));
+        count++;
+      }
+    });
+    return count;
   }
 
   async deleteProduct(id: string): Promise<void> {

@@ -192,6 +192,29 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  app.post("/api/admin/products/bulk-update-fields", requirePermission("catalog"), async (req, res) => {
+    try {
+      const updateSchema = z.object({
+        updates: z.array(
+          insertProductSchema.partial().extend({ id: z.string() })
+        ).min(1),
+      });
+      const { updates } = updateSchema.parse(req.body);
+      const count = await storage.bulkUpdateProductFields(updates);
+      await storage.createAuditLog({
+        entityType: "product", entityId: "bulk", entityName: `${count} products`,
+        action: "bulk-updated-fields",
+        changes: JSON.stringify({ productIds: updates.map(u => u.id), fields: Object.keys(updates[0] ?? {}).filter(k => k !== "id") }),
+        username: getAdminUsername(req),
+      });
+      res.json({ updated: count });
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("Bulk update fields error:", err);
+      res.status(500).json({ message: "Failed to bulk update products" });
+    }
+  });
+
   app.delete("/api/admin/products/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });

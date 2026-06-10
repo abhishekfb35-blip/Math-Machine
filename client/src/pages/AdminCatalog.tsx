@@ -1523,13 +1523,13 @@ export default function AdminCatalog() {
   const saveAllProductsMutation = useMutation({
     mutationFn: async ({ productChanges, dirtyImageIds }: { productChanges: Record<string, Partial<Product>>; dirtyImageIds: string[] }) => {
       const entries = Object.entries(productChanges);
-      await Promise.all(
-        entries.map(([productId, patch]) => {
+      if (entries.length > 0) {
+        const updates = entries.map(([productId, patch]) => {
           const original = products?.find(p => p.id === productId);
-          const merged = { ...original, ...patch };
-          return apiRequest("PUT", `/api/admin/products/${productId}`, merged);
-        })
-      );
+          return { ...original, ...patch, id: productId };
+        });
+        await apiRequest("POST", "/api/admin/products/bulk-update-fields", { updates });
+      }
       await Promise.all(
         dirtyImageIds.map(productId => imageManagerSaveRefsMap.current[productId]?.current?.())
       );
