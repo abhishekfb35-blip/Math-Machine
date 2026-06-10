@@ -174,7 +174,7 @@ export default function NudgeCard({
                       isWholesale ? badgeWs : badgeBase
                     } ${
                       isWholesale
-                        ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
+                        ? "bg-orange-700 border-2 border-white"
                         : isComplete
                         ? "bg-orange-500"
                         : isLocked
