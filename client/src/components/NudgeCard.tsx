@@ -167,7 +167,7 @@ export default function NudgeCard({
                     isWholesale
                       ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
                       : isComplete
-                      ? "bg-amber-600"
+                      ? "bg-orange-500"
                       : isLocked
                       ? "bg-orange-400 opacity-80"
                       : "bg-orange-500"
