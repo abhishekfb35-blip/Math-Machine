@@ -201,7 +201,7 @@ export default function NudgeCard({
                     <KeySquare
                       className="fill-amber-400 stroke-orange-500"
                       strokeWidth={2}
-                      style={{ width: "1.1em", height: "1.1em" }}
+                      style={{ width: "1.4em", height: "1.4em" }}
                     />
                   ) : icon && !isComplete ? (
                     <span>{icon}</span>
