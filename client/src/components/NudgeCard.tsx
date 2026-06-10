@@ -136,7 +136,11 @@ export default function NudgeCard({
               className="relative z-10 flex flex-col items-start flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              <div className={`${pillBase} ${pillStyle(state)}`}>
+              <div className={`${
+                pos === wholesale
+                  ? "px-2.5 py-0.5 rounded-full font-extrabold text-[12px] border-2 transition-all whitespace-nowrap bg-gradient-to-r from-amber-500 to-rose-500 text-white border-transparent shadow-md scale-110 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.4)]"
+                  : `${pillBase} ${pillStyle(state)}`
+              }`}>
                 {pos === wholesale ? `${pos}+ Items` : `Item ${pos}`}
               </div>
               {isMilestone && (
