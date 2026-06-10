@@ -1,4 +1,4 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, ChevronRight } from "lucide-react";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -112,19 +112,8 @@ export default function NudgeCard({
       className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm`}
       data-testid="nudge-card"
     >
-      <div className="flex justify-between relative" data-testid="nudge-track">
-        {/* Progress track — spans exactly from cart-1 center to cart-5 center (each slot = 20%, so offset = 10%) */}
-        <div
-          className="absolute h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
-          style={{ top: `${Math.round(wsCartW / 2)}px`, left: '5%', right: '5%' }}
-        >
-          <div
-            className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out progress-arrows"
-            style={{ width: `${fillPct}%` }}
-          />
-        </div>
-
-        {nodes.map((pos) => {
+      <div className="flex items-start" data-testid="nudge-track">
+        {nodes.flatMap((pos, idx) => {
           const state = nodeState(pos);
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           const icon = rewardIcon(pos);
@@ -143,7 +132,14 @@ export default function NudgeCard({
 
           const iconSize = isWholesale ? wsCartW : cartW;
 
-          return (
+          const arrowColor =
+            isComplete
+              ? "text-amber-500 dark:text-amber-400"
+              : state === "active"
+              ? "text-orange-300 dark:text-orange-400"
+              : "text-orange-200 dark:text-orange-800 opacity-60";
+
+          const nodeEl = (
             <div
               key={pos}
               className={`relative z-10 flex flex-col flex-1 ${isWholesale ? 'items-center' : 'items-start'}`}
@@ -154,11 +150,6 @@ export default function NudgeCard({
                 className="relative flex items-center justify-center flex-shrink-0"
                 style={{ width: `${iconSize}px`, height: `${wsCartW}px` }}
               >
-                {/* Background disc — hides progress track behind icon */}
-                <div
-                  className="absolute rounded-full bg-amber-50 dark:bg-amber-950/20 pointer-events-none"
-                  style={{ width: `${iconSize + 10}px`, height: `${iconSize + 10}px` }}
-                />
                 {/* Icon + badge sized to actual icon dimensions */}
                 <div
                   className="relative flex-shrink-0"
@@ -216,6 +207,18 @@ export default function NudgeCard({
               )}
             </div>
           );
+
+          const arrowEl = idx < nodes.length - 1 ? (
+            <div
+              key={`arrow-${pos}`}
+              className={`flex-shrink-0 flex items-center justify-center ${arrowColor}`}
+              style={{ height: `${wsCartW}px`, width: compact ? '14px' : '18px' }}
+            >
+              <ChevronRight size={compact ? 14 : 18} strokeWidth={2.5} />
+            </div>
+          ) : null;
+
+          return arrowEl ? [nodeEl, arrowEl] : [nodeEl];
         })}
       </div>
 
