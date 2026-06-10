@@ -57,7 +57,7 @@ export default function NudgeCard({
     if (pos === wholesale) return "Best Rates!";
     if (pos === trigger + 1) return `${bonusPct}% Off*`;
     if (pos === trigger) return "Free*";
-    return `Item ${pos}`;
+    return `${pos}+ Items`;
   }
 
   function rewardIcon(pos: number): string | null {
@@ -128,7 +128,7 @@ export default function NudgeCard({
 
         {nodes.map((pos) => {
           const state = nodeState(pos);
-          const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
+          const isMilestone = nodeLabel(pos) !== `${pos}+ Items`;
           const icon = rewardIcon(pos);
           return (
             <div
@@ -137,7 +137,7 @@ export default function NudgeCard({
               data-testid={`nudge-node-${pos}`}
             >
               <div className={`${pillBase} ${pillStyle(state)}`}>
-                Item {pos}
+                {nodeLabel(pos)}
               </div>
               {isMilestone && (
                 <span
