@@ -6,7 +6,7 @@ import {
   categories, products, siteConfig, siteContent, productImages, productReviews, tags, tagTypes, productTags,
   currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, productVariants,
   audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles,
-  occasions,
+  occasions, bulkPriceRules, colorSwatches, categorySizeDefinitions,
 } from "@shared/schema";
 
 import { and, eq, like, sql } from "drizzle-orm";
@@ -764,6 +764,64 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     }
     if (occSynced > 0) console.log(`[seed] occasions: synced ${occSynced} entries`);
     else console.log(`[seed] occasions: all entries up to date`);
+
+    // ── 11. bulkPriceRules: upsert by sellingPrice ────────────────────────────
+    const bprEntries = (sd.bulkPriceRules ?? []) as Array<{id: string; sellingPrice: number; bulkRate: number}>;
+    let bprSynced = 0;
+    for (const bpr of bprEntries) {
+      const [existing] = await db.select().from(bulkPriceRules).where(eq(bulkPriceRules.sellingPrice, bpr.sellingPrice));
+      if (!existing) {
+        await db.insert(bulkPriceRules).values({ id: bpr.id, sellingPrice: bpr.sellingPrice, bulkRate: bpr.bulkRate });
+        bprSynced++;
+      } else if (existing.bulkRate !== bpr.bulkRate) {
+        await db.update(bulkPriceRules).set({ bulkRate: bpr.bulkRate }).where(eq(bulkPriceRules.sellingPrice, bpr.sellingPrice));
+        bprSynced++;
+      }
+    }
+    if (bprSynced > 0) console.log(`[seed] bulkPriceRules: synced ${bprSynced}`);
+    else console.log(`[seed] bulkPriceRules: all entries up to date`);
+
+    // ── 12. colorSwatches: upsert by id ──────────────────────────────────────
+    const swatchEntries = (sd.colorSwatches ?? []) as Array<{id: string; name: string; swatchUrl?: string; sortOrder?: number}>;
+    let swatchSynced = 0;
+    for (const sw of swatchEntries) {
+      const [existing] = await db.select().from(colorSwatches).where(eq(colorSwatches.id, sw.id));
+      if (!existing) {
+        await db.insert(colorSwatches).values({ id: sw.id, name: sw.name, swatchUrl: sw.swatchUrl ?? null, sortOrder: sw.sortOrder ?? 0 });
+        swatchSynced++;
+      } else {
+        const changed = existing.name !== sw.name || existing.swatchUrl !== (sw.swatchUrl ?? null) || existing.sortOrder !== (sw.sortOrder ?? 0);
+        if (changed) {
+          await db.update(colorSwatches).set({ name: sw.name, swatchUrl: sw.swatchUrl ?? null, sortOrder: sw.sortOrder ?? 0 }).where(eq(colorSwatches.id, sw.id));
+          swatchSynced++;
+        }
+      }
+    }
+    if (swatchSynced > 0) console.log(`[seed] colorSwatches: synced ${swatchSynced}`);
+    else console.log(`[seed] colorSwatches: all entries up to date`);
+
+    // ── 13. categorySizeDefinitions: upsert by id (categorySlug → categoryId) ─
+    const csdEntries = (sd.categorySizeDefinitions ?? []) as Array<{id: string; categorySlug: string; name: string; description?: string; sortOrder?: number}>;
+    let csdSynced = 0;
+    const allCatsForCsd = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
+    const catSlugToIdCsd: Record<string, string> = Object.fromEntries(allCatsForCsd.map(c => [c.slug, c.id]));
+    for (const csd of csdEntries) {
+      const categoryId = catSlugToIdCsd[csd.categorySlug];
+      if (!categoryId) { console.warn(`[seed] categorySizeDefinitions: unknown categorySlug "${csd.categorySlug}"`); continue; }
+      const [existing] = await db.select().from(categorySizeDefinitions).where(eq(categorySizeDefinitions.id, csd.id));
+      if (!existing) {
+        await db.insert(categorySizeDefinitions).values({ id: csd.id, categoryId, name: csd.name, description: csd.description ?? null, sortOrder: csd.sortOrder ?? 0 });
+        csdSynced++;
+      } else {
+        const changed = existing.name !== csd.name || existing.description !== (csd.description ?? null) || existing.sortOrder !== (csd.sortOrder ?? 0);
+        if (changed) {
+          await db.update(categorySizeDefinitions).set({ name: csd.name, description: csd.description ?? null, sortOrder: csd.sortOrder ?? 0 }).where(eq(categorySizeDefinitions.id, csd.id));
+          csdSynced++;
+        }
+      }
+    }
+    if (csdSynced > 0) console.log(`[seed] categorySizeDefinitions: synced ${csdSynced}`);
+    else console.log(`[seed] categorySizeDefinitions: all entries up to date`);
 
     // ── 10. Default shop-sections config (first-time seed only) ──────────────
     const [existingShopSections] = await db
