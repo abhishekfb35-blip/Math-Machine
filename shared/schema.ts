@@ -276,6 +276,13 @@ export const categorySizeDefinitions = pgTable("category_size_definitions", {
   sortOrder: integer("sort_order").default(0),
 });
 
+export const bulkPriceRules = pgTable("bulk_price_rules", {
+  id: text("id").primaryKey(),
+  sellingPrice: integer("selling_price").notNull().unique(),
+  bulkRate: integer("bulk_rate").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAudienceSchema = createInsertSchema(audience).omit({ id: true });

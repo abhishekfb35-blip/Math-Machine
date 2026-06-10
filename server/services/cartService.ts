@@ -43,11 +43,14 @@ export class CartService {
     const engineConfig = await this.loadEngineConfig();
     const deliveryTiers = await this.loadDeliveryTiers();
 
+    const bulkRules = await this.storage.getBulkPriceRules();
+    const bulkLookup = new Map(bulkRules.map(r => [r.sellingPrice, r.bulkRate]));
+
     const priceItems = enrichedItems
       .filter(i => i.product)
       .map(i => ({
         price: i.effectivePrice,
-        wholesalePrice: i.product?.wholesalePrice ?? null,
+        wholesalePrice: bulkLookup.get(i.effectivePrice) ?? i.product?.wholesalePrice ?? null,
         quantity: i.quantity,
       }));
 

@@ -920,41 +920,40 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json({ success: true });
   });
 
-  // ── Price Sheet ─────────────────────────────────────────────────────────────
-  app.get("/api/admin/price-sheet", requirePermission("catalog"), async (_req, res) => {
+  // ── Bulk Price Rules ─────────────────────────────────────────────────────────
+  app.get("/api/admin/bulk-price-rules", requirePermission("catalog"), async (_req, res) => {
     try {
-      const products = await storage.getProducts();
-      const rows = products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        sku: p.sku,
-        price: p.price,
-        wholesalePrice: p.wholesalePrice ?? null,
-      }));
-      res.json(rows);
+      res.json(await storage.getBulkPriceRules());
     } catch {
-      res.status(500).json({ message: "Failed to fetch price sheet" });
+      res.status(500).json({ message: "Failed to fetch bulk price rules" });
     }
   });
 
-  app.put("/api/admin/price-sheet", requirePermission("catalog"), async (req, res) => {
+  app.put("/api/admin/bulk-price-rules", requirePermission("catalog"), async (req, res) => {
     try {
-      const rowSchema = z.object({ id: z.string(), wholesalePrice: z.number().int().positive().nullable() });
-      const rows = z.array(rowSchema).parse(req.body);
-      for (const row of rows) {
-        await storage.updateProduct(row.id, { wholesalePrice: row.wholesalePrice });
-      }
+      const schema = z.object({ sellingPrice: z.number().int().positive(), bulkRate: z.number().int().positive() });
+      const data = schema.parse(req.body);
+      const rule = await storage.upsertBulkPriceRule(data);
       await storage.createAuditLog({
         adminUsername: getAdminUsername(req),
-        action: "bulk_update",
-        entityType: "price_sheet",
-        entityId: "bulk",
-        details: { count: rows.length },
+        action: "upsert",
+        entityType: "bulk_price_rule",
+        entityId: String(data.sellingPrice),
+        details: data,
       });
-      res.json({ success: true, updated: rows.length });
+      res.json(rule);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
-      res.status(500).json({ message: "Failed to save price sheet" });
+      res.status(500).json({ message: "Failed to save bulk price rule" });
+    }
+  });
+
+  app.delete("/api/admin/bulk-price-rules/:id", requirePermission("catalog"), async (req, res) => {
+    try {
+      await storage.deleteBulkPriceRule(req.params.id);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to delete bulk price rule" });
     }
   });
 }

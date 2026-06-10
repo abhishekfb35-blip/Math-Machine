@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import fs from "fs";
 import path from "path";
-import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts, requestLogs, ipGeoCache } from "@shared/schema";
+import { categories, products, carts, cartItems, orders, orderItems, siteConfig, siteContent, productImages, productReviews, tagTypes, tags, productTags, occasions, auditLogs, customers, customerOtps, customerSessions, customerConsents, productVariants, currencyRates, pricingRules, categoryTagVariantConfigs, variantSizes, variantColors, adminUsers, wishlists, rateLimitStats, audience, genders, themes, styles, productAudience, productGenders, productThemes, productStyles, colorSwatches, categorySizeDefinitions, paymentAttempts, requestLogs, ipGeoCache, bulkPriceRules } from "@shared/schema";
 import { resolveGeo } from "./lib/geoLookup";
 
 import type {
@@ -35,6 +35,7 @@ import type {
   PricingRule, InsertPricingRule,
   AdminUser, InsertAdminUser,
   RateLimitStats,
+  BulkPriceRule, InsertBulkPriceRule,
   ColorSwatch, InsertColorSwatch,
   CategorySizeDefinition, InsertCategorySizeDefinition,
   PaymentAttempt, InsertPaymentAttempt,
@@ -184,6 +185,10 @@ export interface IStorage {
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string>;
   deleteVariantConfig(id: string): Promise<void>;
+
+  getBulkPriceRules(): Promise<BulkPriceRule[]>;
+  upsertBulkPriceRule(data: InsertBulkPriceRule): Promise<BulkPriceRule>;
+  deleteBulkPriceRule(id: string): Promise<void>;
 
   listColorSwatches(): Promise<ColorSwatch[]>;
   createColorSwatch(data: InsertColorSwatch): Promise<ColorSwatch>;
@@ -1821,6 +1826,24 @@ export class DatabaseStorage implements IStorage {
 
   async deleteColorSwatch(id: string): Promise<void> {
     await db.delete(colorSwatches).where(eq(colorSwatches.id, id));
+  }
+
+  async getBulkPriceRules(): Promise<BulkPriceRule[]> {
+    return await db.select().from(bulkPriceRules).orderBy(asc(bulkPriceRules.sellingPrice));
+  }
+
+  async upsertBulkPriceRule(data: InsertBulkPriceRule): Promise<BulkPriceRule> {
+    const existing = await db.select().from(bulkPriceRules).where(eq(bulkPriceRules.sellingPrice, data.sellingPrice));
+    if (existing.length > 0) {
+      const [row] = await db.update(bulkPriceRules).set({ bulkRate: data.bulkRate }).where(eq(bulkPriceRules.sellingPrice, data.sellingPrice)).returning();
+      return row;
+    }
+    const [row] = await db.insert(bulkPriceRules).values({ id: createId(), sellingPrice: data.sellingPrice, bulkRate: data.bulkRate }).returning();
+    return row;
+  }
+
+  async deleteBulkPriceRule(id: string): Promise<void> {
+    await db.delete(bulkPriceRules).where(eq(bulkPriceRules.id, id));
   }
 
   async listCategorySizeDefinitions(categoryId: string): Promise<CategorySizeDefinition[]> {

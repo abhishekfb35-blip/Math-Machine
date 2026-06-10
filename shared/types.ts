@@ -526,6 +526,18 @@ export interface ProductVariantOptions {
   sizes: VariantSize[];
 }
 
+export interface BulkPriceRule {
+  id: string;
+  sellingPrice: number;
+  bulkRate: number;
+  createdAt: Date | null;
+}
+
+export interface InsertBulkPriceRule {
+  sellingPrice: number;
+  bulkRate: number;
+}
+
 export interface ColorSwatch {
   id: string;
   name: string;
