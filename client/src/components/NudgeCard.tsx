@@ -146,7 +146,7 @@ export default function NudgeCard({
           return (
             <div
               key={pos}
-              className="relative z-10 flex flex-col items-center flex-1"
+              className={`relative z-10 flex flex-col flex-1 ${isWholesale ? 'items-center' : 'items-start'}`}
               data-testid={`nudge-node-${pos}`}
             >
               {/* Bare cart icon with number badge */}
