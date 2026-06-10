@@ -1,3 +1,5 @@
+import { ShoppingCart } from "lucide-react";
+
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
   retailBonusDiscountPct: number;
@@ -94,23 +96,35 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  const pillBase = compact
-    ? "px-1.5 py-0.5 rounded-full text-[11px] font-bold border-2 transition-all whitespace-nowrap"
-    : "px-2 py-1 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap";
+  const iconBox   = compact ? "w-8 h-8"   : "w-10 h-10";
+  const cartIcon  = compact ? "w-4 h-4"   : "w-5 h-5";
+  const numFont   = compact ? "text-[8px]" : "text-[9px]";
   const labelFont = compact ? "text-[11px] tracking-tight" : "text-[13px]";
-  const msgFont = compact ? "text-xs" : "text-sm";
+  const msgFont   = compact ? "text-xs"   : "text-sm";
   const line2Font = compact ? "text-[13px]" : "text-[15px]";
-  const pad = compact ? "p-3.5" : "p-5";
-  const trackTop = compact ? "top-[10px]" : "top-[12px]";
+  const pad       = compact ? "p-3.5"     : "p-5";
+  const trackTop  = compact ? "top-[16px]" : "top-[20px]";
 
-  function pillStyle(state: "complete" | "active" | "locked"): string {
+  function cartStyle(state: "complete" | "active" | "locked"): string {
     if (state === "complete") {
-      return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400 text-white";
+      return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400";
     }
     if (state === "active") {
-      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed text-orange-500 dark:text-orange-400 nudge-active-pulse";
+      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed nudge-active-pulse";
     }
-    return "bg-amber-50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/40 text-amber-400 dark:text-amber-700";
+    return "bg-amber-50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/40";
+  }
+
+  function cartIconColor(state: "complete" | "active" | "locked"): string {
+    if (state === "complete") return "text-white";
+    if (state === "active") return "text-orange-500 dark:text-orange-400";
+    return "text-amber-300 dark:text-amber-700";
+  }
+
+  function numColor(state: "complete" | "active" | "locked"): string {
+    if (state === "complete") return "text-white";
+    if (state === "active") return "text-orange-600 dark:text-orange-300";
+    return "text-amber-400 dark:text-amber-600";
   }
 
   return (
@@ -130,19 +144,31 @@ export default function NudgeCard({
           const state = nodeState(pos);
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           const icon = rewardIcon(pos);
+          const label = pos === wholesale ? "5+" : String(pos);
           return (
             <div
               key={pos}
-              className="relative z-10 flex flex-col items-start flex-1"
+              className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              <div className={`${
+              {/* Cart icon box */}
+              <div className={`relative ${iconBox} rounded-xl border-2 flex items-center justify-center transition-all ${
                 pos === wholesale
-                  ? "px-1.5 py-0.5 rounded-full font-extrabold text-[13px] border-2 transition-all whitespace-nowrap bg-gradient-to-r from-amber-500 to-rose-500 text-white border-transparent shadow-md drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.4)]"
-                  : `${pillBase} ${pillStyle(state)}`
+                  ? "bg-gradient-to-br from-amber-500 to-rose-500 border-transparent shadow-md drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.3)]"
+                  : cartStyle(state)
               }`}>
-                {pos === wholesale ? `${pos}+ Items` : `Item ${pos}`}
+                <ShoppingCart
+                  className={`${cartIcon} ${pos === wholesale ? "text-white" : cartIconColor(state)}`}
+                  strokeWidth={2}
+                />
+                <span className={`absolute bottom-[3px] right-[3px] ${numFont} font-extrabold leading-none ${
+                  pos === wholesale ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]" : numColor(state)
+                }`}>
+                  {label}
+                </span>
               </div>
+
+              {/* Milestone label below */}
               {isMilestone && (
                 <span
                   className={`mt-1.5 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
@@ -151,7 +177,9 @@ export default function NudgeCard({
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {icon && state !== "complete" && <span className={pos === wholesale ? "text-[1.1em]" : ""}>{icon}</span>}
+                  {icon && state !== "complete" && (
+                    <span className={pos === wholesale ? "text-[1.1em]" : ""}>{icon}</span>
+                  )}
                   {nodeLabel(pos)}
                 </span>
               )}
