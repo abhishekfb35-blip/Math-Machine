@@ -143,13 +143,16 @@ export default function NudgeCard({
               }`}>
                 {pos === wholesale ? `${pos}+ Items` : `Item ${pos}`}
               </div>
-              {isMilestone && icon && state !== "complete" && (
+              {isMilestone && (
                 <span
-                  className={`mt-1.5 ${labelFont} leading-tight ${
-                    pos === wholesale ? "text-[1.1em]" : ""
+                  className={`mt-1.5 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
+                    state === "complete"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {icon}
+                  {icon && state !== "complete" && <span className={pos === wholesale ? "text-[1.1em]" : ""}>{icon}</span>}
+                  {nodeLabel(pos)}
                 </span>
               )}
             </div>
