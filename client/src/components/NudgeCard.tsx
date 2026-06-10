@@ -96,36 +96,13 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  const iconBox   = compact ? "w-8 h-8"   : "w-10 h-10";
-  const cartIcon  = compact ? "w-4 h-4"   : "w-5 h-5";
-  const numFont   = compact ? "text-[8px]" : "text-[9px]";
-  const labelFont = compact ? "text-[11px] tracking-tight" : "text-[13px]";
-  const msgFont   = compact ? "text-xs"   : "text-sm";
-  const line2Font = compact ? "text-[13px]" : "text-[15px]";
-  const pad       = compact ? "p-3.5"     : "p-5";
-  const trackTop  = compact ? "top-[16px]" : "top-[20px]";
-
-  function cartStyle(state: "complete" | "active" | "locked"): string {
-    if (state === "complete") {
-      return "bg-amber-500 dark:bg-amber-400 border-amber-500 dark:border-amber-400";
-    }
-    if (state === "active") {
-      return "bg-white dark:bg-amber-950/40 border-orange-400 border-dashed nudge-active-pulse";
-    }
-    return "bg-amber-50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/40";
-  }
-
-  function cartIconColor(state: "complete" | "active" | "locked"): string {
-    if (state === "complete") return "text-white";
-    if (state === "active") return "text-orange-500 dark:text-orange-400";
-    return "text-amber-300 dark:text-amber-700";
-  }
-
-  function numColor(state: "complete" | "active" | "locked"): string {
-    if (state === "complete") return "text-white";
-    if (state === "active") return "text-orange-600 dark:text-orange-300";
-    return "text-amber-400 dark:text-amber-600";
-  }
+  const cartIconSize = compact ? "w-8 h-8" : "w-10 h-10";
+  const numFont      = compact ? "text-[10px]" : "text-[12px]";
+  const labelFont    = compact ? "text-[11px] tracking-tight" : "text-[13px]";
+  const msgFont      = compact ? "text-xs" : "text-sm";
+  const line2Font    = compact ? "text-[13px]" : "text-[15px]";
+  const pad          = compact ? "p-3.5" : "p-5";
+  const trackTop     = compact ? "top-[16px]" : "top-[20px]";
 
   return (
     <div
@@ -133,6 +110,7 @@ export default function NudgeCard({
       data-testid="nudge-card"
     >
       <div className="flex justify-between relative" data-testid="nudge-track">
+        {/* Progress track */}
         <div className={`absolute ${trackTop} left-0 right-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0`}>
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out"
@@ -145,25 +123,37 @@ export default function NudgeCard({
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           const icon = rewardIcon(pos);
           const label = pos === wholesale ? "5+" : String(pos);
+
+          const isComplete = state === "complete";
+          const isWholesale = pos === wholesale;
+
+          const iconColor = isWholesale
+            ? "text-rose-500 dark:text-rose-400"
+            : isComplete
+            ? "text-amber-500 dark:text-amber-400"
+            : "text-orange-400 dark:text-orange-400";
+
+          const numColor = isWholesale
+            ? "text-rose-600 dark:text-rose-400 font-black"
+            : isComplete
+            ? "text-amber-600 dark:text-amber-400 font-black"
+            : "text-orange-500 dark:text-orange-400 font-black";
+
           return (
             <div
               key={pos}
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              {/* Cart icon box */}
-              <div className={`relative ${iconBox} rounded-xl border-2 flex items-center justify-center transition-all ${
-                pos === wholesale
-                  ? "bg-gradient-to-br from-amber-500 to-rose-500 border-transparent shadow-md drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.3)]"
-                  : cartStyle(state)
-              }`}>
+              {/* Bare cart icon with number inside */}
+              <div className={`relative ${cartIconSize} flex items-center justify-center`}>
                 <ShoppingCart
-                  className={`${cartIcon} ${pos === wholesale ? "text-white" : cartIconColor(state)}`}
-                  strokeWidth={2}
+                  className={`w-full h-full ${iconColor} ${state === "active" ? "nudge-active-pulse" : ""}`}
+                  strokeWidth={1.5}
                 />
-                <span className={`absolute bottom-[3px] right-[3px] ${numFont} font-extrabold leading-none ${
-                  pos === wholesale ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]" : numColor(state)
-                }`}>
+                <span
+                  className={`absolute bottom-[4px] left-1/2 -translate-x-1/2 ${numFont} ${numColor} leading-none pointer-events-none`}
+                >
                   {label}
                 </span>
               </div>
@@ -171,14 +161,14 @@ export default function NudgeCard({
               {/* Milestone label below */}
               {isMilestone && (
                 <span
-                  className={`mt-1.5 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
-                    state === "complete"
+                  className={`mt-1 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
+                    isComplete
                       ? "text-amber-600 dark:text-amber-400"
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {icon && state !== "complete" && (
-                    <span className={pos === wholesale ? "text-[1.1em]" : ""}>{icon}</span>
+                  {icon && !isComplete && (
+                    <span className={isWholesale ? "text-[1.1em]" : ""}>{icon}</span>
                   )}
                   {nodeLabel(pos)}
                 </span>
