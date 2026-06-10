@@ -180,7 +180,7 @@ export default function NudgeCard({
               {/* Milestone label below — centered under the cart, same size for all */}
               {isMilestone && (
                 <span
-                  className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center leading-tight flex flex-col items-center justify-center gap-0 ${
+                  className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center leading-tight flex flex-col items-center justify-center gap-0 ${!isWholesale ? "translate-x-1" : ""} ${
                     isComplete
                       ? "text-amber-600 dark:text-amber-400"
                       : isLocked
