@@ -47,7 +47,7 @@ export default function NudgeCard({
       : Math.min(100, Math.max(0, ((Math.min(itemCount, wholesale) - 1) / (wholesale - 1)) * 100));
 
   function nodeState(pos: number): "complete" | "active" | "locked" {
-    if (itemCount === 0) return "locked";
+    if (itemCount === 0) return pos === 1 ? "active" : "locked";
     if (pos <= itemCount) return "complete";
     if (pos === itemCount + 1 && !atWholesale) return "active";
     return "locked";
