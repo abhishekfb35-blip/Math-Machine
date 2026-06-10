@@ -113,10 +113,10 @@ export default function NudgeCard({
       data-testid="nudge-card"
     >
       <div className="flex justify-between relative" data-testid="nudge-track">
-        {/* Progress track */}
+        {/* Progress track — spans exactly from cart-1 center to cart-5 center (each slot = 20%, so offset = 10%) */}
         <div
-          className="absolute inset-x-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
-          style={{ top: `${Math.round(wsCartW / 2)}px` }}
+          className="absolute h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
+          style={{ top: `${Math.round(wsCartW / 2)}px`, left: '10%', right: '10%' }}
         >
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out progress-arrows"
@@ -149,17 +149,6 @@ export default function NudgeCard({
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
-              {/* Cover track gap before first / after last cart */}
-              {(pos === 1 || pos === wholesale) && (
-                <div
-                  className="absolute bg-amber-50 dark:bg-amber-950/20 pointer-events-none"
-                  style={{
-                    top: `${Math.round(wsCartW / 2) - 2}px`,
-                    height: '4px',
-                    ...(pos === 1 ? { left: 0, right: '50%' } : { left: '50%', right: 0 }),
-                  }}
-                />
-              )}
               {/* Bare cart icon with number badge */}
               <div
                 className="relative flex items-center justify-center flex-shrink-0"
