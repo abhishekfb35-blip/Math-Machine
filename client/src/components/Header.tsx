@@ -355,6 +355,16 @@ export default function Header() {
               </div>
 
 
+              {cart?.engineThresholds && (
+                <div className="px-5 pt-3" data-testid="mini-cart-nudge">
+                  <NudgeCard
+                    itemCount={cart.itemCount}
+                    engineThresholds={cart.engineThresholds}
+                    compact
+                  />
+                </div>
+              )}
+
               <div className="px-5 pb-5 space-y-3 shrink-0">
                 <Separator />
                 <div className="space-y-1.5">
