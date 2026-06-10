@@ -919,4 +919,42 @@ export function registerAdminCatalogRoutes(app: Express) {
     await storage.deleteCategorySizeDefinition(req.params.id);
     res.json({ success: true });
   });
+
+  // ── Price Sheet ─────────────────────────────────────────────────────────────
+  app.get("/api/admin/price-sheet", requirePermission("catalog"), async (_req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const rows = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        price: p.price,
+        wholesalePrice: p.wholesalePrice ?? null,
+      }));
+      res.json(rows);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch price sheet" });
+    }
+  });
+
+  app.put("/api/admin/price-sheet", requirePermission("catalog"), async (req, res) => {
+    try {
+      const rowSchema = z.object({ id: z.string(), wholesalePrice: z.number().int().positive().nullable() });
+      const rows = z.array(rowSchema).parse(req.body);
+      for (const row of rows) {
+        await storage.updateProduct(row.id, { wholesalePrice: row.wholesalePrice });
+      }
+      await storage.createAuditLog({
+        adminUsername: getAdminUsername(req),
+        action: "bulk_update",
+        entityType: "price_sheet",
+        entityId: "bulk",
+        details: { count: rows.length },
+      });
+      res.json({ success: true, updated: rows.length });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      res.status(500).json({ message: "Failed to save price sheet" });
+    }
+  });
 }
