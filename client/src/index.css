@@ -158,3 +158,11 @@
 .nudge-active-pulse {
   animation: nudgeActivePulse 2s infinite;
 }
+
+.cart-stroke-dashed path,
+.cart-stroke-dashed circle,
+.cart-stroke-dashed line,
+.cart-stroke-dashed polyline,
+.cart-stroke-dashed rect {
+  stroke-dasharray: 5 3;
+}
