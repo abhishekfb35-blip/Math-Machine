@@ -178,16 +178,16 @@
 }
 
 .nudge-blink {
-  animation: nudgeBlink 4.8s linear infinite;
+  animation: nudgeBlink 6s linear infinite;
 }
 
 @keyframes nudgeBlink {
   0%      { opacity: 1;    }
-  6.25%   { opacity: 0.15; }
-  12.5%   { opacity: 1;    }
-  18.75%  { opacity: 0.15; }
-  25%     { opacity: 1;    }
-  31.25%  { opacity: 0.15; }
-  37.5%   { opacity: 1;    }
+  8.33%   { opacity: 0.15; }
+  16.67%  { opacity: 1;    }
+  25%     { opacity: 0.15; }
+  33.33%  { opacity: 1;    }
+  41.67%  { opacity: 0.15; }
+  50%     { opacity: 1;    }
   100%    { opacity: 1;    }
 }
