@@ -96,13 +96,18 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  const cartIconSize = compact ? "w-8 h-8" : "w-10 h-10";
-  const numFont      = compact ? "text-[10px]" : "text-[12px]";
-  const labelFont    = compact ? "text-[11px] tracking-tight" : "text-[13px]";
-  const msgFont      = compact ? "text-xs" : "text-sm";
-  const line2Font    = compact ? "text-[13px]" : "text-[15px]";
-  const pad          = compact ? "p-3.5" : "p-5";
-  const trackTop     = compact ? "top-[16px]" : "top-[20px]";
+  /* sizes — regular carts 30% bigger than original, wholesale 50% bigger still */
+  const cartW   = compact ? 42 : 52;   /* px — regular cart */
+  const wsCartW = Math.round(cartW * 1.5); /* px — wholesale cart */
+
+  const badgeBase  = compact ? "min-w-[20px] h-5 text-[13px]"   : "min-w-[24px] h-6 text-[15px]";
+  const badgeWs    = compact ? "min-w-[28px] h-7 text-[16px]"   : "min-w-[34px] h-8 text-[19px]";
+  const labelFont  = compact ? "text-[14px] tracking-tight"      : "text-[17px]";
+  const wsLabelFont = compact ? "text-[16px] tracking-tight font-extrabold" : "text-[20px] font-extrabold";
+  const msgFont    = compact ? "text-xs"  : "text-sm";
+  const line2Font  = compact ? "text-[13px]" : "text-[15px]";
+  const pad        = compact ? "p-3.5"    : "p-5";
+  const trackTop   = compact ? `top-[${Math.round(cartW / 2)}px]` : `top-[${Math.round(cartW / 2)}px]`;
 
   return (
     <div
@@ -111,7 +116,10 @@ export default function NudgeCard({
     >
       <div className="flex justify-between relative" data-testid="nudge-track">
         {/* Progress track */}
-        <div className={`absolute ${trackTop} left-0 right-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0`}>
+        <div
+          className="absolute left-0 right-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
+          style={{ top: `${Math.round(cartW / 2)}px` }}
+        >
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out"
             style={{ width: `${fillPct}%` }}
@@ -123,21 +131,19 @@ export default function NudgeCard({
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           const icon = rewardIcon(pos);
           const label = pos === wholesale ? "5+" : String(pos);
-
           const isComplete = state === "complete";
           const isWholesale = pos === wholesale;
+          const isLocked = state === "locked";
 
           const iconColor = isWholesale
-            ? "text-rose-500 dark:text-rose-400"
+            ? "text-white"
             : isComplete
             ? "text-amber-500 dark:text-amber-400"
+            : isLocked
+            ? "text-orange-300 dark:text-orange-300 opacity-80"
             : "text-orange-400 dark:text-orange-400";
 
-          const numColor = isWholesale
-            ? "text-rose-600 dark:text-rose-400 font-black"
-            : isComplete
-            ? "text-amber-600 dark:text-amber-400 font-black"
-            : "text-orange-500 dark:text-orange-400 font-black";
+          const iconSize = isWholesale ? wsCartW : cartW;
 
           return (
             <div
@@ -146,17 +152,28 @@ export default function NudgeCard({
               data-testid={`nudge-node-${pos}`}
             >
               {/* Cart icon with bubble badge */}
-              <div className={`relative ${cartIconSize} flex items-center justify-center`}>
+              <div
+                className={`relative flex items-center justify-center flex-shrink-0 ${
+                  isWholesale
+                    ? "rounded-2xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 shadow-lg drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)] p-1.5"
+                    : ""
+                }`}
+                style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+              >
                 <ShoppingCart
                   className={`w-full h-full ${iconColor} ${state === "active" ? "nudge-active-pulse" : ""}`}
-                  strokeWidth={1.5}
+                  strokeWidth={isWholesale ? 2 : 1.5}
                 />
                 <span
-                  className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center ${numFont} font-black text-white leading-none pointer-events-none ${
+                  className={`absolute -top-2 -right-2 rounded-full flex items-center justify-center px-1 font-black text-white leading-none pointer-events-none shadow-sm ${
+                    isWholesale ? badgeWs : badgeBase
+                  } ${
                     isWholesale
-                      ? "bg-rose-500"
+                      ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
                       : isComplete
                       ? "bg-amber-500"
+                      : isLocked
+                      ? "bg-orange-400 opacity-80"
                       : "bg-orange-500"
                   }`}
                 >
@@ -167,9 +184,11 @@ export default function NudgeCard({
               {/* Milestone label below */}
               {isMilestone && (
                 <span
-                  className={`mt-1 ${labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
+                  className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
                     isComplete
                       ? "text-amber-600 dark:text-amber-400"
+                      : isLocked
+                      ? "text-orange-400 dark:text-orange-300 opacity-80"
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
