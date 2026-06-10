@@ -505,6 +505,7 @@ export interface VariantSize {
   description?: string;
   descriptionFontSize?: number;
   priceAdd: number;
+  mrpAdd: number;
   isDefault: boolean;
   blurOnFront: boolean;
   sortOrder: number;

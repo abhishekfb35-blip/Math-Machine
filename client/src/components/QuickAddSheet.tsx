@@ -146,6 +146,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   })();
 
   const effectivePrice = (product?.price ?? 0) + (selectedSizeObj?.priceAdd ?? 0);
+  const effectiveMrp = (product?.mrp ?? 0) + (selectedSizeObj?.mrpAdd ?? 0);
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -216,9 +217,9 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               </h3>
               <p className="text-lg font-bold text-primary mt-1" data-testid="text-quickadd-price">
                 {formatPrice(effectivePrice)}
-                {(selectedSizeObj?.priceAdd ?? 0) > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground ml-1">
-                    (base {formatPrice(product.price)} + size)
+                {effectiveMrp > effectivePrice && (
+                  <span className="text-sm font-normal text-muted-foreground line-through ml-2" data-testid="text-quickadd-mrp">
+                    {formatPrice(effectiveMrp)}
                   </span>
                 )}
               </p>

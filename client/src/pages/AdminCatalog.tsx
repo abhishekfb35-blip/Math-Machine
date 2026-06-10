@@ -764,6 +764,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
 
   const [selectedSizeIds, setSelectedSizeIds] = useState<string[]>([]);
   const [sizePriceAdds, setSizePriceAdds] = useState<Record<string, number>>({});
+  const [sizeMrpAdds, setSizeMrpAdds] = useState<Record<string, number>>({});
   const [sizeDefaultId, setSizeDefaultId] = useState<string | null>(null);
   const [sizeHide, setSizeHide] = useState<Record<string, boolean>>({});
   const [sizeSwatchIds, setSizeSwatchIds] = useState<Record<string, string[]>>({});
@@ -811,6 +812,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     if (activeConfig) {
       const ids: string[] = [];
       const priceAdds: Record<string, number> = {};
+      const mrpAdds: Record<string, number> = {};
       const hide: Record<string, boolean> = {};
       const swatchIds: Record<string, string[]> = {};
       const cHide: Record<string, Record<string, boolean>> = {};
@@ -820,6 +822,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
         if (def) {
           ids.push(def.id);
           priceAdds[def.id] = sz.priceAdd;
+          mrpAdds[def.id] = sz.mrpAdd;
           hide[def.id] = sz.blurOnFront;
           if (sz.isDefault) defaultId = def.id;
           swatchIds[def.id] = [];
@@ -832,6 +835,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
       }
       setSelectedSizeIds(ids);
       setSizePriceAdds(priceAdds);
+      setSizeMrpAdds(mrpAdds);
       setSizeHide(hide);
       setSizeDefaultId(defaultId);
       setSizeSwatchIds(swatchIds);
@@ -839,6 +843,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
     } else {
       setSelectedSizeIds([]);
       setSizePriceAdds({});
+      setSizeMrpAdds({});
       setSizeHide({});
       setSizeDefaultId(null);
       setSizeSwatchIds({});
@@ -854,6 +859,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
         name: def?.name ?? "",
         description: def?.description ?? undefined,
         priceAdd: sizePriceAdds[id] ?? 0,
+        mrpAdd: sizeMrpAdds[id] ?? 0,
         isDefault: sizeDefaultId === id,
         blurOnFront: sizeHide[id] ?? false,
         sortOrder: si,
@@ -1036,10 +1042,16 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                       {selected && (
                         <>
                           <div className="flex items-center gap-1 shrink-0">
-                            <span className="text-xs text-muted-foreground">+₹</span>
+                            <span className="text-xs text-muted-foreground">Price+₹</span>
                             <Input type="number" value={sizePriceAdds[def!.id] ?? 0}
                               onChange={e => setSizePriceAdds(prev => ({ ...prev, [def!.id]: parseInt(e.target.value) || 0 }))}
                               className="h-7 w-20 text-xs" data-testid={`input-size-price-${def!.id}`} />
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-xs text-muted-foreground">MRP+₹</span>
+                            <Input type="number" value={sizeMrpAdds[def!.id] ?? 0}
+                              onChange={e => setSizeMrpAdds(prev => ({ ...prev, [def!.id]: parseInt(e.target.value) || 0 }))}
+                              className="h-7 w-20 text-xs" data-testid={`input-size-mrp-${def!.id}`} />
                           </div>
                           <label className="flex items-center gap-1 text-xs cursor-pointer shrink-0">
                             <Checkbox checked={sizeDefaultId === def!.id} onCheckedChange={() => setSizeDefaultId(sizeDefaultId === def!.id ? null : def!.id)} />

@@ -320,8 +320,9 @@ export default function ProductPage() {
   })() : [];
 
   const effectivePriceAdd = selectedSizeObj?.priceAdd ?? 0;
+  const effectiveMrpAdd = selectedSizeObj?.mrpAdd ?? 0;
   const effectiveSellingPrice = (product?.price ?? 0) + effectivePriceAdd;
-  const effectiveMrp = (product?.mrp ?? 0) + effectivePriceAdd;
+  const effectiveMrp = (product?.mrp ?? 0) + effectiveMrpAdd;
   const discountPercent = product?.mrp && effectiveMrp > effectiveSellingPrice
     ? Math.round(((effectiveMrp - effectiveSellingPrice) / effectiveMrp) * 100)
     : 0;

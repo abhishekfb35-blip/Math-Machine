@@ -246,6 +246,7 @@ export const variantSizes = pgTable("variant_sizes", {
   description: text("description"),
   descriptionFontSize: integer("description_font_size").default(12),
   priceAdd: integer("price_add").notNull().default(0),
+  mrpAdd: integer("mrp_add").notNull().default(0),
   isDefault: boolean("is_default").notNull().default(false),
   blurOnFront: boolean("blur_on_front").notNull().default(false),
   sortOrder: integer("sort_order").default(0),

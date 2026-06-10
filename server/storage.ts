@@ -1593,6 +1593,7 @@ export class DatabaseStorage implements IStorage {
         description: size.description ?? undefined,
         descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
+        mrpAdd: size.mrpAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,
         sortOrder: size.sortOrder ?? 0,
@@ -1646,6 +1647,7 @@ export class DatabaseStorage implements IStorage {
           description: size.description ?? undefined,
           descriptionFontSize: size.descriptionFontSize ?? 12,
           priceAdd: size.priceAdd,
+          mrpAdd: size.mrpAdd,
           isDefault: size.isDefault,
           blurOnFront: size.blurOnFront,
           sortOrder: size.sortOrder ?? 0,
@@ -1674,6 +1676,7 @@ export class DatabaseStorage implements IStorage {
         description: size.description ?? undefined,
         descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
+        mrpAdd: size.mrpAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,
         sortOrder: size.sortOrder ?? 0,
@@ -1741,7 +1744,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertVariantConfig(categoryId: string, tagId: string | null, audienceId: string | null, sizes: Array<{
-    name: string; description?: string; descriptionFontSize?: number; priceAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
+    name: string; description?: string; descriptionFontSize?: number; priceAdd: number; mrpAdd: number; isDefault: boolean; blurOnFront: boolean; sortOrder: number;
     colors: Array<{ name: string; swatchUrl?: string; blurOnFront: boolean; sortOrder: number; }>;
   }>): Promise<string> {
     let whereClause;
@@ -1781,6 +1784,7 @@ export class DatabaseStorage implements IStorage {
         description: size.description ?? null,
         descriptionFontSize: size.descriptionFontSize ?? 12,
         priceAdd: size.priceAdd,
+        mrpAdd: size.mrpAdd,
         isDefault: size.isDefault,
         blurOnFront: size.blurOnFront,
         sortOrder: size.sortOrder,
