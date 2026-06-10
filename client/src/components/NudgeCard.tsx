@@ -87,8 +87,7 @@ export default function NudgeCard({
     line1 = <>🎉 Awesome! You have <Hi>1 FREE item</Hi>.</>;
     line2 = <>Add a {ord(trigger + 1)} item to get <Hi>{bonusPct}% OFF</Hi>!</>;
   } else if (itemCount === 1) {
-    line1 = <>🛍️ Welcome! Add a 2nd item.</>;
-    line2 = <>Add a {ord(trigger)} item to unlock <Hi>1 FREE item</Hi>!</>;
+    line1 = <>🛍️ Add 2 items to start unlocking rewards!</>;
   } else {
     line1 = <>🎉 Awesome! You have {itemCount} items.</>;
     line2 = <>Add a {ord(trigger)} item to unlock <Hi>1 FREE item</Hi>!</>;
@@ -118,7 +117,7 @@ export default function NudgeCard({
         {/* Progress track */}
         <div
           className="absolute left-0 right-0 h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
-          style={{ top: `${Math.round(cartW / 2)}px` }}
+          style={{ top: `${Math.round(wsCartW / 2)}px` }}
         >
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out"
@@ -154,27 +153,38 @@ export default function NudgeCard({
               {/* Bare cart icon with number badge */}
               <div
                 className="relative flex items-center justify-center flex-shrink-0"
-                style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+                style={{ width: `${iconSize}px`, height: `${wsCartW}px` }}
               >
-                <ShoppingCart
-                  className={iconClass}
-                  strokeWidth={isWholesale || isComplete ? 2 : 1.5}
+                {/* Background disc — hides progress track behind icon */}
+                <div
+                  className="absolute rounded-full bg-amber-50 dark:bg-amber-950/20 pointer-events-none"
+                  style={{ width: `${iconSize + 10}px`, height: `${iconSize + 10}px` }}
                 />
-                <span
-                  className={`absolute -top-2 -right-2 rounded-full flex items-center justify-center px-1 font-black text-white leading-none pointer-events-none shadow-sm ${
-                    isWholesale ? badgeWs : badgeBase
-                  } ${
-                    isWholesale
-                      ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
-                      : isComplete
-                      ? "bg-orange-500"
-                      : isLocked
-                      ? "bg-orange-400 opacity-80"
-                      : "bg-orange-500"
-                  }`}
+                {/* Icon + badge sized to actual icon dimensions */}
+                <div
+                  className="relative flex-shrink-0"
+                  style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
                 >
-                  {label}
-                </span>
+                  <ShoppingCart
+                    className={iconClass}
+                    strokeWidth={isWholesale || isComplete ? 2 : 1.5}
+                  />
+                  <span
+                    className={`absolute -top-2 -right-2 rounded-full flex items-center justify-center px-1 font-black text-white leading-none pointer-events-none shadow-sm ${
+                      isWholesale ? badgeWs : badgeBase
+                    } ${
+                      isWholesale
+                        ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
+                        : isComplete
+                        ? "bg-orange-500"
+                        : isLocked
+                        ? "bg-orange-400 opacity-80"
+                        : "bg-orange-500"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </div>
               </div>
 
               {/* Milestone label below — centered under the cart, same size for all */}
