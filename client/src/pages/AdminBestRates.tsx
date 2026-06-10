@@ -45,7 +45,7 @@ export default function AdminBestRates() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: attributes, isLoading: loadingAttrs } = useQuery<{ audiences: Audience[] }>({
+  const { data: attributes, isLoading: loadingAttrs } = useQuery<{ audience: Audience[] }>({
     queryKey: ["/api/attributes"],
   });
 
@@ -73,7 +73,7 @@ export default function AdminBestRates() {
 
   const isLoading = loadingPricing || loadingCats || loadingAttrs;
 
-  const audiences = attributes?.audiences ?? [];
+  const audiences = attributes?.audience ?? [];
   const cats = categories ?? [];
   const pricingList = pricingData?.pricing ?? [];
   const counts = pricingData?.counts ?? [];
