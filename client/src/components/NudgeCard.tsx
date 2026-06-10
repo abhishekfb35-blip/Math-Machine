@@ -65,7 +65,7 @@ export default function NudgeCard({
   function rewardIcon(pos: number): string | null {
     if (pos === wholesale) return "🏆";
     if (pos === trigger + 1) return null;
-    if (pos === trigger) return "🎁";
+    if (pos === trigger) return null;
     return null;
   }
 
@@ -135,10 +135,8 @@ export default function NudgeCard({
           const isWholesale = pos === wholesale;
           const isLocked = state === "locked";
 
-          const iconColor = isWholesale
+          const iconColor = isWholesale || isComplete
             ? "text-white"
-            : isComplete
-            ? "text-amber-500 dark:text-amber-400"
             : isLocked
             ? "text-orange-300 dark:text-orange-300 opacity-80"
             : "text-orange-400 dark:text-orange-400";
@@ -156,14 +154,26 @@ export default function NudgeCard({
                 className={`relative flex items-center justify-center flex-shrink-0 ${
                   isWholesale
                     ? "rounded-2xl bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 shadow-lg drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)] p-1.5"
+                    : isComplete
+                    ? "rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-md p-1.5"
+                    : state === "active"
+                    ? "rounded-2xl border-2 border-dashed border-orange-400 nudge-active-pulse"
                     : ""
                 }`}
                 style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
               >
                 <ShoppingCart
-                  className={`w-full h-full ${iconColor} ${state === "active" ? "nudge-active-pulse" : ""}`}
-                  strokeWidth={isWholesale ? 2 : 1.5}
+                  className={`w-full h-full ${iconColor}`}
+                  strokeWidth={isWholesale || isComplete ? 2 : 1.5}
                 />
+                {/* 30% Off* overlaid inside the cart body */}
+                {pos === trigger + 1 && (
+                  <span className={`absolute bottom-[5px] left-0 right-0 text-center text-[9px] font-black leading-none pointer-events-none ${
+                    isComplete ? "text-white/90" : "text-orange-700 dark:text-orange-600"
+                  }`}>
+                    {bonusPct}%Off*
+                  </span>
+                )}
                 <span
                   className={`absolute -top-2 -right-2 rounded-full flex items-center justify-center px-1 font-black text-white leading-none pointer-events-none shadow-sm ${
                     isWholesale ? badgeWs : badgeBase
@@ -171,7 +181,7 @@ export default function NudgeCard({
                     isWholesale
                       ? "bg-gradient-to-br from-yellow-500 to-orange-600 border-2 border-white"
                       : isComplete
-                      ? "bg-amber-500"
+                      ? "bg-amber-700"
                       : isLocked
                       ? "bg-orange-400 opacity-80"
                       : "bg-orange-500"
@@ -181,8 +191,8 @@ export default function NudgeCard({
                 </span>
               </div>
 
-              {/* Milestone label below */}
-              {isMilestone && (
+              {/* Milestone label below — skip trigger+1 since it's overlaid on the cart */}
+              {isMilestone && pos !== trigger + 1 && (
                 <span
                   className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center whitespace-nowrap leading-tight flex items-center gap-0.5 ${
                     isComplete
