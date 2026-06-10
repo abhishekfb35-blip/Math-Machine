@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Trash2, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  Loader2, Undo2, Save, Palette, ExternalLink, Ruler
+  Loader2, Undo2, Save, Palette, ExternalLink, Ruler, IndianRupee
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1222,6 +1222,9 @@ export default function AdminCatalog() {
   const [bulkClearConfirmOpen, setBulkClearConfirmOpen] = useState(false);
   const BULK_REMOVE_CONFIRM_THRESHOLD = 5;
 
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkPriceFields, setBulkPriceFields] = useState({ price: "", mrp: "" });
+
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [renderedPage, setRenderedPage] = useState(1);
@@ -2285,6 +2288,15 @@ export default function AdminCatalog() {
                   <Pencil className="w-4 h-4 mr-1" />
                   {selectedProductIds.size > 15 ? "Max 15" : `Edit ${selectedProductIds.size}`}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setBulkPriceFields({ price: "", mrp: "" }); setBulkPriceOpen(true); }}
+                  data-testid="button-bulk-update-prices"
+                >
+                  <IndianRupee className="w-4 h-4 mr-1" />
+                  Bulk Update Prices
+                </Button>
               </>
             )}
             <Button
@@ -3228,6 +3240,77 @@ export default function AdminCatalog() {
               {bulkClearAttrsMutation.isPending
                 ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Clearing…</>
                 : `Yes, clear all from ${selectedProductIds.size} product${selectedProductIds.size !== 1 ? "s" : ""}`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Update Prices Dialog */}
+      <Dialog open={bulkPriceOpen} onOpenChange={(open) => { if (!open) { setBulkPriceOpen(false); setBulkPriceFields({ price: "", mrp: "" }); } }}>
+        <DialogContent className="max-w-sm" data-testid="dialog-bulk-update-prices">
+          <DialogHeader>
+            <DialogTitle>Bulk Update Prices ({selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""})</DialogTitle>
+            <DialogDescription>
+              Fill in the fields you want to update. Leave a field blank to keep existing values unchanged.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Selling Price (₹)</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 999"
+                value={bulkPriceFields.price}
+                onChange={(e) => setBulkPriceFields(prev => ({ ...prev, price: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                data-testid="input-bulk-price"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">MRP (₹)</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 1449"
+                value={bulkPriceFields.mrp}
+                onChange={(e) => setBulkPriceFields(prev => ({ ...prev, mrp: e.target.value }))}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                data-testid="input-bulk-mrp"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" size="sm" onClick={() => { setBulkPriceOpen(false); setBulkPriceFields({ price: "", mrp: "" }); }} data-testid="button-bulk-prices-cancel">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={bulkPriceFields.price === "" && bulkPriceFields.mrp === ""}
+              onClick={() => {
+                const newPrice = bulkPriceFields.price !== "" ? parseInt(bulkPriceFields.price, 10) : null;
+                const newMrp = bulkPriceFields.mrp !== "" ? parseInt(bulkPriceFields.mrp, 10) : null;
+                if (newPrice !== null && newPrice <= 0) return;
+                if (newMrp !== null && newMrp <= 0) return;
+                setPendingChanges(prev => {
+                  const next = { ...prev };
+                  for (const id of selectedProductIds) {
+                    next[id] = {
+                      ...next[id],
+                      ...(newPrice !== null ? { price: newPrice } : {}),
+                      ...(newMrp !== null ? { mrp: newMrp } : {}),
+                    };
+                  }
+                  return next;
+                });
+                setBulkPriceOpen(false);
+                setBulkPriceFields({ price: "", mrp: "" });
+              }}
+              data-testid="button-bulk-prices-apply"
+            >
+              Apply to {selectedProductIds.size} product{selectedProductIds.size !== 1 ? "s" : ""}
             </Button>
           </div>
         </DialogContent>
