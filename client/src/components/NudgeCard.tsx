@@ -138,7 +138,7 @@ export default function NudgeCard({
           const iconClass = isWholesale
             ? "w-full h-full fill-amber-400 stroke-orange-500 text-orange-500"
             : isComplete
-            ? "w-full h-full fill-amber-500 stroke-amber-700 text-amber-700"
+            ? "w-full h-full fill-amber-500 stroke-amber-400 text-amber-700"
             : state === "active"
             ? "w-full h-full fill-none stroke-orange-400 text-orange-400 nudge-active-pulse cart-stroke-dashed"
             : "w-full h-full fill-none stroke-orange-300 text-orange-300 opacity-80";
