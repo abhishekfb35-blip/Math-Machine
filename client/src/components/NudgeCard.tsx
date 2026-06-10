@@ -1,4 +1,4 @@
-import { ShoppingCart, LockOpen } from "lucide-react";
+import { ShoppingCart, KeyRound } from "lucide-react";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -195,11 +195,11 @@ export default function NudgeCard({
                       : isLocked
                       ? "text-orange-400 dark:text-orange-300 opacity-80"
                       : "text-orange-500 dark:text-orange-400"
-                  }`}
+                  } ${isWholesale ? "text-orange-500 dark:text-orange-400" : ""}`}
                 >
                   {isWholesale && !isComplete ? (
-                    <LockOpen
-                      className="fill-amber-400 stroke-orange-700"
+                    <KeyRound
+                      className="fill-amber-400 stroke-orange-500"
                       strokeWidth={2}
                       style={{ width: "1.1em", height: "1.1em" }}
                     />
