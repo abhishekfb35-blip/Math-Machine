@@ -944,6 +944,7 @@ export function registerAdminCatalogRoutes(app: Express) {
       res.json(rule);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      console.error("upsert bulk-price-rule error:", err);
       res.status(500).json({ message: "Failed to save bulk price rule" });
     }
   });
