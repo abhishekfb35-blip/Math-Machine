@@ -95,8 +95,8 @@ export default function NudgeCard({
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
   const pillBase = compact
-    ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold border-2 transition-all whitespace-nowrap"
-    : "px-3 py-1 rounded-full text-[11px] font-bold border-2 transition-all whitespace-nowrap";
+    ? "px-2.5 py-0.5 rounded-full text-[11px] font-bold border-2 transition-all whitespace-nowrap"
+    : "px-3 py-1 rounded-full text-[12px] font-bold border-2 transition-all whitespace-nowrap";
   const labelFont = compact ? "text-[11px] tracking-tight" : "text-[13px]";
   const msgFont = compact ? "text-xs" : "text-sm";
   const line2Font = compact ? "text-[13px]" : "text-[15px]";
