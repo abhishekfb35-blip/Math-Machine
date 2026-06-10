@@ -116,7 +116,7 @@ export default function NudgeCard({
         {/* Progress track — spans exactly from cart-1 center to cart-5 center (each slot = 20%, so offset = 10%) */}
         <div
           className="absolute h-1 bg-amber-200 dark:bg-amber-800/50 rounded-full z-0"
-          style={{ top: `${Math.round(wsCartW / 2)}px`, left: '10%', right: '10%' }}
+          style={{ top: `${Math.round(wsCartW / 2)}px`, left: '5%', right: '5%' }}
         >
           <div
             className="h-full bg-amber-500 dark:bg-amber-400 rounded-full transition-[width] duration-500 ease-in-out progress-arrows"
