@@ -115,7 +115,7 @@ export default function AdminBestRates() {
             </Button>
           </TooltipTrigger>
           <TooltipContent className="max-w-xs text-sm">
-            If a product belongs to a category and audience combination with a price set here, that wholesale price is used when the cart hits the wholesale threshold. Falls back to the per-product wholesale price if no cell price is set.
+            If a product belongs to a category and audience combination with a price set here, that wholesale price is used when the cart hits the wholesale threshold. If no price is set for a cell, items in that category/audience are charged at their regular retail price with no wholesale discount.
           </TooltipContent>
         </Tooltip>
       </div>

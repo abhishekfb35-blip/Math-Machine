@@ -56,7 +56,7 @@ export class CartService {
         const prod = i.product!;
         const audienceId = firstAudienceIds.get(prod.id);
         const key = audienceId ? `${prod.categoryId}:${audienceId}` : null;
-        const wholesalePrice = (key && pricingMap.has(key)) ? pricingMap.get(key)! : (prod.wholesalePrice ?? null);
+        const wholesalePrice = (key && pricingMap.has(key)) ? pricingMap.get(key)! : null;
         return {
           price: i.effectivePrice,
           wholesalePrice,
