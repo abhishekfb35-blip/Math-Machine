@@ -178,10 +178,10 @@
 }
 
 .nudge-blink {
-  animation: nudgeBlink 1.2s ease-in-out infinite;
+  animation: nudgeBlink 2.4s ease-in-out infinite;
 }
 
 @keyframes nudgeBlink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  50% { opacity: 0.55; }
 }
