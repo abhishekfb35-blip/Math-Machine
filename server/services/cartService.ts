@@ -43,13 +43,26 @@ export class CartService {
     const engineConfig = await this.loadEngineConfig();
     const deliveryTiers = await this.loadDeliveryTiers();
 
+    const productIds = enrichedItems.filter(i => i.product).map(i => i.product!.id);
+    const [allCategoryPricing, firstAudienceIds] = await Promise.all([
+      this.storage.getCategoryAudiencePricingAll(),
+      this.storage.getProductFirstAudienceIds(productIds),
+    ]);
+    const pricingMap = new Map(allCategoryPricing.map(p => [`${p.categoryId}:${p.audienceId}`, p.wholesalePrice]));
+
     const priceItems = enrichedItems
       .filter(i => i.product)
-      .map(i => ({
-        price: i.effectivePrice,
-        wholesalePrice: i.product?.wholesalePrice ?? null,
-        quantity: i.quantity,
-      }));
+      .map(i => {
+        const prod = i.product!;
+        const audienceId = firstAudienceIds.get(prod.id);
+        const key = audienceId ? `${prod.categoryId}:${audienceId}` : null;
+        const wholesalePrice = (key && pricingMap.has(key)) ? pricingMap.get(key)! : (prod.wholesalePrice ?? null);
+        return {
+          price: i.effectivePrice,
+          wholesalePrice,
+          quantity: i.quantity,
+        };
+      });
 
     const pricing = calculateCartPricing(priceItems, engineConfig, deliveryTiers, isDomestic);
 

@@ -275,6 +275,15 @@ export const categorySizeDefinitions = pgTable("category_size_definitions", {
   sortOrder: integer("sort_order").default(0),
 });
 
+export const categoryAudiencePricing = pgTable("category_audience_pricing", {
+  id: text("id").primaryKey(),
+  categoryId: text("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  audienceId: text("audience_id").notNull().references(() => audience.id, { onDelete: "cascade" }),
+  wholesalePrice: integer("wholesale_price").notNull(),
+}, (t) => [uniqueIndex("cat_audience_pricing_uniq").on(t.categoryId, t.audienceId)]);
+
+export const insertCategoryAudiencePricingSchema = createInsertSchema(categoryAudiencePricing).omit({ id: true });
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAudienceSchema = createInsertSchema(audience).omit({ id: true });
@@ -477,4 +486,5 @@ export type {
   PricingRule, InsertPricingRule,
   RateLimitStats, InsertRateLimitStats,
   PaymentAttempt, InsertPaymentAttempt,
+  CategoryAudiencePricing, InsertCategoryAudiencePricing,
 } from "./types";

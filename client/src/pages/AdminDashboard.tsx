@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette, BarChart3, Activity } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette, BarChart3, Activity, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -123,6 +123,15 @@ const sections = [
     icon: Tag,
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/30",
+    permission: "offers",
+  },
+  {
+    title: "Best Rates",
+    description: "Set wholesale prices by category and audience for bulk order pricing",
+    href: "/admin/best-rates",
+    icon: DollarSign,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
     permission: "offers",
   },
   {
