@@ -136,11 +136,11 @@ export default function NudgeCard({
           const isLocked = state === "locked";
 
           const iconClass = isWholesale
-            ? "w-full h-full fill-orange-500 stroke-amber-300 text-amber-300 [filter:drop-shadow(0_0_8px_rgba(251,146,60,0.75))]"
+            ? "w-full h-full fill-amber-400 stroke-orange-500 text-orange-500"
             : isComplete
             ? "w-full h-full fill-amber-500 stroke-amber-700 text-amber-700"
             : state === "active"
-            ? "w-full h-full fill-none stroke-orange-200 text-orange-200 nudge-active-pulse cart-stroke-dashed"
+            ? "w-full h-full fill-none stroke-orange-400 text-orange-400 nudge-active-pulse cart-stroke-dashed"
             : "w-full h-full fill-none stroke-orange-300 text-orange-300 opacity-80";
 
           const iconSize = isWholesale ? wsCartW : cartW;
@@ -191,14 +191,7 @@ export default function NudgeCard({
                   {icon && !isComplete && (
                     <span className={isWholesale ? "text-[1.1em]" : ""}>{icon}</span>
                   )}
-                  {pos === trigger + 1 ? (
-                    <>
-                      <span className="whitespace-nowrap">{bonusPct}%</span>
-                      <span className="whitespace-nowrap">Off*</span>
-                    </>
-                  ) : (
-                    <span className="whitespace-nowrap">{nodeLabel(pos)}</span>
-                  )}
+                  <span className="whitespace-nowrap">{nodeLabel(pos)}</span>
                 </span>
               )}
             </div>
