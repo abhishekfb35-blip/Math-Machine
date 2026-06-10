@@ -149,6 +149,17 @@ export default function NudgeCard({
               className="relative z-10 flex flex-col items-center flex-1"
               data-testid={`nudge-node-${pos}`}
             >
+              {/* Cover track gap before first / after last cart */}
+              {(pos === 1 || pos === wholesale) && (
+                <div
+                  className="absolute bg-amber-50 dark:bg-amber-950/20 pointer-events-none"
+                  style={{
+                    top: `${Math.round(wsCartW / 2) - 2}px`,
+                    height: '4px',
+                    ...(pos === 1 ? { left: 0, right: '50%' } : { left: '50%', right: 0 }),
+                  }}
+                />
+              )}
               {/* Bare cart icon with number badge */}
               <div
                 className="relative flex items-center justify-center flex-shrink-0"
