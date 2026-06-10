@@ -54,7 +54,7 @@ export default function NudgeCard({
   }
 
   function nodeLabel(pos: number): string {
-    if (pos === wholesale) return "Best Rates!";
+    if (pos === wholesale) return "Bulk Rates!";
     if (pos === trigger + 1) return `${bonusPct}% Off*`;
     if (pos === trigger) return "Free*";
     return `Item ${pos}`;
@@ -151,7 +151,7 @@ export default function NudgeCard({
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {icon && state !== "complete" && <span>{icon}</span>}
+                  {icon && state !== "complete" && <span className={pos === wholesale ? "text-[1.1em]" : ""}>{icon}</span>}
                   {nodeLabel(pos)}
                 </span>
               )}
