@@ -182,12 +182,22 @@
 }
 
 @keyframes nudgeBlink {
-  0%      { opacity: 1;    }
-  8.33%   { opacity: 0.15; }
-  16.67%  { opacity: 1;    }
-  25%     { opacity: 0.15; }
-  33.33%  { opacity: 1;    }
-  41.67%  { opacity: 0.15; }
-  50%     { opacity: 1;    }
-  100%    { opacity: 1;    }
+  /* blink 1 */
+  0%    { opacity: 1;    }
+  5.8%  { opacity: 0.12; }
+  8.3%  { opacity: 0.12; }
+  14.2% { opacity: 1;    }
+  16.7% { opacity: 1;    }
+  /* blink 2 */
+  22.5% { opacity: 0.12; }
+  25%   { opacity: 0.12; }
+  30.8% { opacity: 1;    }
+  33.3% { opacity: 1;    }
+  /* blink 3 */
+  39.2% { opacity: 0.12; }
+  41.7% { opacity: 0.12; }
+  47.5% { opacity: 1;    }
+  /* steady for 3s */
+  50%   { opacity: 1;    }
+  100%  { opacity: 1;    }
 }
