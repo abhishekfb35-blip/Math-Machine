@@ -30,6 +30,36 @@ uri = "file://client/public/og-option-c3.png"
 type = "image"
 title = "knolling flat lay OG image"
 
+[[generated]]
+id = "8aIpwgOH4cy2McYpAw4C_"
+uri = "file://attached_assets/amazon_store/banner_hero.png"
+type = "image"
+title = "hero banner luxury embroidered towels"
+
+[[generated]]
+id = "pu_GO6uARTSNWpJbksdCL"
+uri = "file://attached_assets/amazon_store/banner_kids.png"
+type = "image"
+title = "kids category banner embroidered towels"
+
+[[generated]]
+id = "jXkvfYoBi9XPe28w88kQQ"
+uri = "file://attached_assets/amazon_store/banner_adults.png"
+type = "image"
+title = "adults couples banner monogram bathrobes"
+
+[[generated]]
+id = "dG6lWklxFAY_KmDbdCiE5"
+uri = "file://attached_assets/amazon_store/product_kids_towel.png"
+type = "image"
+title = "kids lion hooded towel product shot"
+
+[[generated]]
+id = "SsPjmJNUNhyneGG-XGQsQ"
+uri = "file://attached_assets/amazon_store/product_couple_bathrobe.png"
+type = "image"
+title = "couple monogram bathrobes product shot"
+
 [[outputs]]
 id = "noORaAFXjVlzqPKq4T32j"
 uri = "file://client/public/og-option-a.png"

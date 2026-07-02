@@ -130,6 +130,9 @@ app.use((req, res, next) => {
 const PRODUCT_IMAGES_SRC = path.resolve(process.cwd(), "client", "public", "images", "products");
 app.use("/images/products", express.static(PRODUCT_IMAGES_SRC, { maxAge: "7d" }));
 
+const AMAZON_ASSETS_SRC = path.resolve(process.cwd(), "attached_assets", "amazon_store");
+app.use("/amazon-store", express.static(AMAZON_ASSETS_SRC, { maxAge: "1d" }));
+
 function startGuestCartCleanupScheduler() {
   const INTERVAL_MS = 24 * 60 * 60 * 1000;
 
