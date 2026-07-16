@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks, Heart } from "lucide-react";
+import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks, Heart, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,15 @@ const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
   ctaText: "Save my wishlist",
 };
 
+interface OneTapNudgeConfig {
+  enabled: boolean;
+  promptDelaySeconds: number;
+  nudgeLeadSeconds: number;
+  title: string;
+  body: string;
+  buttonText: string;
+}
+
 function Toggle({ value, onChange, testId }: { value: boolean; onChange: (v: boolean) => void; testId?: string }) {
   return (
     <button
@@ -101,6 +110,7 @@ export default function AdminConsent() {
   const [page, setPage] = useState(1);
   const [settings, setSettings] = useState<ConsentSettings>(DEFAULT_SETTINGS);
   const [wishlistPrompt, setWishlistPrompt] = useState<WishlistPromptConfig>(DEFAULT_WISHLIST_PROMPT);
+  const [nudgeConfig, setNudgeConfig] = useState<OneTapNudgeConfig | null>(null);
 
   const { data: configData, isLoading: configLoading } = useQuery<{ key: string; value: ConsentSettings }>({
     queryKey: ["/api/site-config", "consent-popup"],
@@ -115,6 +125,15 @@ export default function AdminConsent() {
     queryKey: ["/api/site-config", "wishlist-signup-prompt"],
     queryFn: async () => {
       const res = await fetch("/api/site-config/wishlist-signup-prompt");
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const { data: nudgeConfigData, isLoading: nudgeConfigLoading } = useQuery<{ key: string; value: OneTapNudgeConfig }>({
+    queryKey: ["/api/site-config", "onetap-nudge"],
+    queryFn: async () => {
+      const res = await fetch("/api/site-config/onetap-nudge");
       if (!res.ok) return null;
       return res.json();
     },
@@ -136,6 +155,12 @@ export default function AdminConsent() {
       setWishlistPrompt({ ...DEFAULT_WISHLIST_PROMPT, ...wishlistConfigData.value });
     }
   }, [wishlistConfigData]);
+
+  useEffect(() => {
+    if (nudgeConfigData?.value) {
+      setNudgeConfig(nudgeConfigData.value);
+    }
+  }, [nudgeConfigData]);
 
   const { data: consentsData, isLoading: consentsLoading } = useQuery<ConsentsResponse>({
     queryKey: ["/api/admin/consents", page],
@@ -171,12 +196,29 @@ export default function AdminConsent() {
     },
   });
 
+  const saveNudgeMutation = useMutation({
+    mutationFn: async (data: OneTapNudgeConfig) => {
+      await apiRequest("POST", "/api/site-config/onetap-nudge", { value: data });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config", "onetap-nudge"] });
+      toast({ title: "Sign-in nudge settings saved" });
+    },
+    onError: () => {
+      toast({ title: "Failed to save", variant: "destructive" });
+    },
+  });
+
   const handleSave = () => {
     saveMutation.mutate(settings);
   };
 
   const handleSaveWishlist = () => {
     saveWishlistMutation.mutate(wishlistPrompt);
+  };
+
+  const handleSaveNudge = () => {
+    if (nudgeConfig) saveNudgeMutation.mutate(nudgeConfig);
   };
 
   const updateField = (index: number, key: keyof FormFieldConfig, value: boolean | string) => {
@@ -481,6 +523,101 @@ export default function AdminConsent() {
                   Preview Popup
                 </Button>
               </div>
+            </div>
+          )}
+        </Card>
+
+        <Separator />
+
+        {/* ── Sign-in Nudge Config ──────────────────────────────────────── */}
+        <Card className="p-5 space-y-4">
+          <h2 className="font-semibold flex items-center gap-2">
+            <LogIn className="w-4 h-4" /> Sign-in Nudge (Google One Tap)
+          </h2>
+          <p className="text-xs text-muted-foreground -mt-2">
+            A small card that appears in the top-right corner on returning visitors, prompting them to sign in with Google. The nudge only shows when enabled and all fields are filled.
+          </p>
+
+          {nudgeConfigLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
+                <Toggle
+                  value={nudgeConfig?.enabled ?? false}
+                  onChange={v => setNudgeConfig(c => c ? { ...c, enabled: v } : { enabled: v, promptDelaySeconds: 0, nudgeLeadSeconds: 0, title: "", body: "", buttonText: "" })}
+                  testId="toggle-nudge-enabled"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {nudgeConfig?.enabled ? "Nudge is active" : "Nudge is hidden"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium block mb-1">Prompt delay (seconds)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={nudgeConfig?.promptDelaySeconds ?? ""}
+                    onChange={e => setNudgeConfig(c => c ? { ...c, promptDelaySeconds: parseInt(e.target.value) || 0 } : null)}
+                    placeholder="e.g. 4"
+                    data-testid="input-nudge-prompt-delay"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">How long after page load before One Tap fires</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Nudge lead (seconds)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={nudgeConfig?.nudgeLeadSeconds ?? ""}
+                    onChange={e => setNudgeConfig(c => c ? { ...c, nudgeLeadSeconds: parseInt(e.target.value) || 0 } : null)}
+                    placeholder="e.g. 1"
+                    data-testid="input-nudge-lead-seconds"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">How many seconds before One Tap the card appears</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Card title</label>
+                <Input
+                  value={nudgeConfig?.title ?? ""}
+                  onChange={e => setNudgeConfig(c => c ? { ...c, title: e.target.value } : null)}
+                  placeholder="e.g. Member perks await"
+                  data-testid="input-nudge-title"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Card body text</label>
+                <textarea
+                  value={nudgeConfig?.body ?? ""}
+                  onChange={e => setNudgeConfig(c => c ? { ...c, body: e.target.value } : null)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
+                  placeholder="e.g. Sign in to save your wishlist & get early access to exclusive deals."
+                  data-testid="input-nudge-body"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">Button label</label>
+                <Input
+                  value={nudgeConfig?.buttonText ?? ""}
+                  onChange={e => setNudgeConfig(c => c ? { ...c, buttonText: e.target.value } : null)}
+                  placeholder="e.g. Sign in with Google"
+                  data-testid="input-nudge-button-text"
+                />
+              </div>
+
+              <Button onClick={handleSaveNudge} disabled={saveNudgeMutation.isPending || !nudgeConfig} data-testid="button-save-nudge">
+                {saveNudgeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Nudge Settings
+              </Button>
             </div>
           )}
         </Card>

@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -8,10 +9,14 @@ import { X, Gift } from "lucide-react";
 const DISMISSED_KEY = "google_onetap_dismissed";
 const VISITED_KEY = "tl_has_visited";
 
-// How long to wait (ms) before showing One Tap on 2nd+ visits
-const PROMPT_DELAY_MS = 4000;
-// How long the incentive nudge shows before One Tap appears
-const NUDGE_LEAD_MS = 800;
+interface OneTapNudgeConfig {
+  enabled: boolean;
+  promptDelaySeconds: number;
+  nudgeLeadSeconds: number;
+  title: string;
+  body: string;
+  buttonText: string;
+}
 
 export default function GoogleOneTap() {
   const [location, navigate] = useLocation();
@@ -19,6 +24,17 @@ export default function GoogleOneTap() {
   const { toast } = useToast();
   const initialized = useRef(false);
   const [showNudge, setShowNudge] = useState(false);
+
+  const { data: nudgeConfigData } = useQuery<{ key: string; value: OneTapNudgeConfig }>({
+    queryKey: ["/api/site-config", "onetap-nudge"],
+    queryFn: async () => {
+      const res = await fetch("/api/site-config/onetap-nudge");
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const config = nudgeConfigData?.value;
 
   const handleCredential = useCallback(async (response: any) => {
     if (!response.credential) return;
@@ -39,6 +55,7 @@ export default function GoogleOneTap() {
     if (location.startsWith("/admin") || location === "/signin") return;
     if (sessionStorage.getItem(DISMISSED_KEY)) return;
     if (initialized.current) return;
+    if (!config || !config.enabled) return;
 
     const hasVisitedBefore = localStorage.getItem(VISITED_KEY);
     if (!hasVisitedBefore) {
@@ -48,6 +65,9 @@ export default function GoogleOneTap() {
 
     let cancelled = false;
 
+    const promptDelayMs = config.promptDelaySeconds * 1000;
+    const nudgeLeadMs = config.nudgeLeadSeconds * 1000;
+
     const run = () => {
       fetch("/api/auth/google-client-id")
         .then(r => r.json())
@@ -55,9 +75,10 @@ export default function GoogleOneTap() {
           if (cancelled || !d.clientId) return;
 
           // Show incentive nudge slightly before One Tap appears
+          const nudgeDelay = Math.max(0, promptDelayMs - nudgeLeadMs);
           setTimeout(() => {
             if (!cancelled) setShowNudge(true);
-          }, PROMPT_DELAY_MS - NUDGE_LEAD_MS);
+          }, nudgeDelay);
 
           const tryPrompt = () => {
             const google = (window as any).google;
@@ -77,7 +98,6 @@ export default function GoogleOneTap() {
             return true;
           };
 
-          // Wait PROMPT_DELAY_MS before triggering One Tap
           setTimeout(() => {
             if (cancelled) return;
             if (!tryPrompt()) {
@@ -87,7 +107,7 @@ export default function GoogleOneTap() {
               }, 300);
               setTimeout(() => clearInterval(interval), 5000);
             }
-          }, PROMPT_DELAY_MS);
+          }, promptDelayMs);
         })
         .catch(() => {});
     };
@@ -95,9 +115,9 @@ export default function GoogleOneTap() {
     run();
 
     return () => { cancelled = true; };
-  }, [isLoading, isAuthenticated, location, handleCredential]);
+  }, [isLoading, isAuthenticated, location, handleCredential, config]);
 
-  if (!showNudge) return null;
+  if (!showNudge || !config) return null;
 
   return (
     <div
@@ -109,10 +129,8 @@ export default function GoogleOneTap() {
           <Gift className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground leading-snug">Member perks await</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-            Sign in to save your wishlist &amp; get early access to exclusive deals.
-          </p>
+          <p className="text-sm font-semibold text-foreground leading-snug">{config.title}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{config.body}</p>
         </div>
         <button
           onClick={() => {
@@ -140,7 +158,7 @@ export default function GoogleOneTap() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-        Sign in with Google
+        {config.buttonText}
       </button>
     </div>
   );
