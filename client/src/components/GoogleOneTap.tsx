@@ -12,7 +12,6 @@ const VISITED_KEY = "tl_has_visited";
 interface OneTapNudgeConfig {
   enabled: boolean;
   promptDelaySeconds: number;
-  nudgeLeadSeconds: number;
   title: string;
   body: string;
   buttonText: string;
@@ -66,7 +65,6 @@ export default function GoogleOneTap() {
     let cancelled = false;
 
     const promptDelayMs = config.promptDelaySeconds * 1000;
-    const nudgeLeadMs = config.nudgeLeadSeconds * 1000;
 
     const run = () => {
       fetch("/api/auth/google-client-id")
@@ -74,11 +72,9 @@ export default function GoogleOneTap() {
         .then(d => {
           if (cancelled || !d.clientId) return;
 
-          // Show incentive nudge slightly before One Tap appears
-          const nudgeDelay = Math.max(0, promptDelayMs - nudgeLeadMs);
           setTimeout(() => {
             if (!cancelled) setShowNudge(true);
-          }, nudgeDelay);
+          }, promptDelayMs);
 
           const tryPrompt = () => {
             const google = (window as any).google;

@@ -80,7 +80,6 @@ const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
 interface OneTapNudgeConfig {
   enabled: boolean;
   promptDelaySeconds: number;
-  nudgeLeadSeconds: number;
   title: string;
   body: string;
   buttonText: string;
@@ -548,7 +547,7 @@ export default function AdminConsent() {
                 <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
                 <Toggle
                   value={nudgeConfig?.enabled ?? false}
-                  onChange={v => setNudgeConfig(c => c ? { ...c, enabled: v } : { enabled: v, promptDelaySeconds: 0, nudgeLeadSeconds: 0, title: "", body: "", buttonText: "" })}
+                  onChange={v => setNudgeConfig(c => c ? { ...c, enabled: v } : { enabled: v, promptDelaySeconds: 0, title: "", body: "", buttonText: "" })}
                   testId="toggle-nudge-enabled"
                 />
                 <span className="text-sm text-muted-foreground">
@@ -556,31 +555,17 @@ export default function AdminConsent() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium block mb-1">Prompt delay (seconds)</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={nudgeConfig?.promptDelaySeconds ?? ""}
-                    onChange={e => setNudgeConfig(c => c ? { ...c, promptDelaySeconds: parseInt(e.target.value) || 0 } : null)}
-                    placeholder="e.g. 4"
-                    data-testid="input-nudge-prompt-delay"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">How long after page load before One Tap fires</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1">Nudge lead (seconds)</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={nudgeConfig?.nudgeLeadSeconds ?? ""}
-                    onChange={e => setNudgeConfig(c => c ? { ...c, nudgeLeadSeconds: parseInt(e.target.value) || 0 } : null)}
-                    placeholder="e.g. 1"
-                    data-testid="input-nudge-lead-seconds"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">How many seconds before One Tap the card appears</p>
-                </div>
+              <div className="max-w-xs">
+                <label className="text-sm font-medium block mb-1">Show after (seconds)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={nudgeConfig?.promptDelaySeconds ?? ""}
+                  onChange={e => setNudgeConfig(c => c ? { ...c, promptDelaySeconds: parseInt(e.target.value) || 0 } : null)}
+                  placeholder="e.g. 4"
+                  data-testid="input-nudge-prompt-delay"
+                />
+                <p className="text-xs text-muted-foreground mt-1">How many seconds after the page loads before the card appears</p>
               </div>
 
               <div>
