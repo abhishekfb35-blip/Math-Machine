@@ -71,7 +71,6 @@ export default function GoogleOneTap() {
             google.accounts.id.prompt((notification: any) => {
               if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
                 sessionStorage.setItem(DISMISSED_KEY, "1");
-                setShowNudge(false);
               }
             });
             initialized.current = true;
