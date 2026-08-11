@@ -104,7 +104,7 @@ function buildOrderItemsHtml(items: OrderItemDetail[]): string {
   `).join("");
 }
 
-function buildCustomerEmailHtml(n: OrderNotification): string {
+export function buildCustomerEmailHtml(n: OrderNotification): string {
   const itemsHtml = n.items ? buildOrderItemsHtml(n.items) : "";
   const hasDiscount = (n.discount || 0) > 0;
 
