@@ -126,7 +126,9 @@ export default function OrderConfirmation() {
             )}
             <div className="flex justify-between gap-4 text-muted-foreground">
               <span>Shipping</span>
-              <span className="text-primary font-medium">Free</span>
+              {order.shippingFee > 0
+                ? <span>{formatPrice(order.shippingFee)}</span>
+                : <span className="text-primary font-medium">Free</span>}
             </div>
             <Separator />
             <div className="flex justify-between gap-4 font-semibold text-base">

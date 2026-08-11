@@ -18,6 +18,7 @@ export interface OrderNotification {
   itemCount: number;
   subtotal?: number;
   discount?: number;
+  shippingFee?: number;
   items?: OrderItemDetail[];
   shippingAddress?: string;
   shippingCity?: string;
@@ -169,7 +170,7 @@ function buildCustomerEmailHtml(n: OrderNotification): string {
           ` : ""}
           <tr>
             <td style="color: #666; padding: 4px 0;">Shipping</td>
-            <td style="text-align: right; color: #16a34a; font-weight: 500;">FREE</td>
+            <td style="text-align: right; color: #16a34a; font-weight: 500;">${(n.shippingFee && n.shippingFee > 0) ? formatCurrency(n.shippingFee) : "FREE"}</td>
           </tr>
           <tr style="border-top: 2px solid #e0e0e0;">
             <td style="padding: 12px 0 4px; font-weight: 700; font-size: 16px; color: #1a1a1a;">Total</td>
