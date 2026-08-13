@@ -94,18 +94,34 @@ export default function NudgeCard({
 
   const hasAsterisk = nodes.some((p) => nodeLabel(p).includes("*"));
 
-  /* sizes — regular carts 30% bigger than original, wholesale 50% bigger still */
-  const cartW   = compact ? 32 : 40;   /* px — regular cart */
-  const wsCartW = Math.round(cartW * 1.5); /* px — wholesale cart */
+  /*
+   * Fluid sizing strategy
+   * ──────────────────────
+   * Icons use CSS min(100%, Npx) + aspect-ratio:1 so they shrink proportionally when
+   * `wholesaleThreshold` is large and many nodes share limited horizontal space.
+   *
+   * Arrows are a fixed narrow width; all remaining space goes to flex-1 nodes.
+   *
+   * Max icon sizes (px):
+   *   compact → regular 24, wholesale 32, arrow 12
+   *   normal  → regular 36, wholesale 48, arrow 14
+   *
+   * Budget check at 375 px (page px-4 + card p-5 = 303 px content):
+   *   With N nodes, N-1 arrows at 14 px each:
+   *     per-node = (303 − (N−1)×14) / N
+   *   N=5  → 49.4 px each → icon capped at 36/48 px  ✓
+   *   N=7  → 33.2 px each → icon capped at 33.2 px   ✓
+   *   N=10 → 18.6 px each → icon scales to 18.6 px   ✓
+   * Labels wrap naturally (no whitespace-nowrap) so they never widen the node.
+   */
+  const iconMaxPx   = compact ? 24 : 36;   // regular cart icon cap (px)
+  const wsIconMaxPx = compact ? 32 : 48;   // wholesale cart icon cap (px)
+  const arrowPx     = compact ? 12 : 14;   // fixed arrow container width (px)
+  const trackH      = compact ? "h-10"     : "h-12";  // uniform track row height
 
-  const badgeBase  = compact ? "min-w-[20px] h-5 text-[13px]"   : "min-w-[24px] h-6 text-[15px]";
-  const badgeWs    = compact ? "min-w-[28px] h-7 text-[16px]"   : "min-w-[34px] h-8 text-[19px]";
-  const labelFont  = compact ? "text-[14px] tracking-tight"      : "text-[17px]";
-  const wsLabelFont = compact ? "text-[16px] tracking-tight font-extrabold" : "text-[20px] font-extrabold";
-  const msgFont    = compact ? "text-xs"  : "text-sm";
-  const line2Font  = compact ? "text-[13px]" : "text-[15px]";
-  const pad        = compact ? "p-3.5"    : "p-5";
-  const trackTop   = compact ? `top-[${Math.round(cartW / 2)}px]` : `top-[${Math.round(cartW / 2)}px]`;
+  const msgFont   = compact ? "text-xs"     : "text-sm";
+  const line2Font = compact ? "text-[13px]" : "text-[15px]";
+  const pad       = compact ? "p-3.5"       : "p-5";
 
   return (
     <div
@@ -117,7 +133,7 @@ export default function NudgeCard({
           const state = nodeState(pos);
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;
           const icon = rewardIcon(pos);
-          const label = pos === wholesale ? "5+" : String(pos);
+          const label = pos === wholesale ? `${wholesale}+` : String(pos);
           const isComplete = state === "complete";
           const isWholesale = pos === wholesale;
           const isLocked = state === "locked";
@@ -130,8 +146,6 @@ export default function NudgeCard({
             ? "w-full h-full fill-none stroke-orange-400 text-orange-400 nudge-active-pulse cart-stroke-dashed"
             : "w-full h-full fill-none stroke-orange-300 text-orange-300 opacity-80";
 
-          const iconSize = isWholesale ? wsCartW : cartW;
-
           const arrowColor =
             isComplete
               ? "text-amber-500 dark:text-amber-400"
@@ -139,32 +153,42 @@ export default function NudgeCard({
               ? "text-orange-400 dark:text-orange-400"
               : "text-orange-300 dark:text-orange-300 opacity-80";
 
+          /* Cap at design max; when flex allocation is smaller, icon shrinks to fit */
+          const iconCapPx = isWholesale ? wsIconMaxPx : iconMaxPx;
+
           const nodeEl = (
             <div
               key={pos}
-              className={`relative z-10 flex flex-col flex-1 items-start`}
+              className="relative z-10 flex flex-col flex-1 min-w-0 items-center"
               data-testid={`nudge-node-${pos}`}
             >
-              {/* Bare cart icon with number badge */}
-              <div
-                className="relative flex items-center justify-center flex-shrink-0"
-                style={{ width: `${iconSize}px`, height: `${wsCartW}px` }}
-              >
-                {/* Icon + badge sized to actual icon dimensions */}
+              {/* Track row: uniform height, icon fluid-centered within the flex share */}
+              <div className={`relative w-full flex items-center justify-center ${trackH}`}>
+                {/*
+                 * Icon box: width = min(100% of parent, iconCapPx).
+                 * aspect-ratio:1 keeps it square at any size.
+                 * Badges are positioned relative to this box.
+                 */}
                 <div
-                  className="relative flex-shrink-0"
-                  style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
+                  className="relative"
+                  style={{ width: `min(100%, ${iconCapPx}px)`, aspectRatio: "1" }}
                 >
                   <ShoppingCart
                     className={iconClass}
                     strokeWidth={isWholesale || isComplete ? 2 : 1.5}
                   />
                   <span
-                    className={`absolute -top-2 -right-2 rounded-full flex items-center justify-center px-1 font-black text-white leading-none pointer-events-none shadow-sm ${
-                      isWholesale ? badgeWs : badgeBase
+                    className={`absolute -top-1.5 -right-1.5 rounded-full flex items-center justify-center px-0.5 font-black text-white leading-none pointer-events-none shadow-sm ${
+                      isWholesale
+                        ? compact
+                          ? "min-w-[18px] h-[18px] text-[9px]"
+                          : "min-w-[22px] h-[22px] text-[11px]"
+                        : compact
+                          ? "min-w-[15px] h-[15px] text-[9px]"
+                          : "min-w-[18px] h-[18px] text-[10px]"
                     } ${
                       isWholesale
-                        ? "bg-orange-700 border-2 border-white"
+                        ? "bg-orange-700 border border-white"
                         : isComplete
                         ? "bg-orange-500"
                         : isLocked
@@ -177,10 +201,14 @@ export default function NudgeCard({
                 </div>
               </div>
 
-              {/* Milestone label below — centered under the cart, same size for all */}
+              {/* Milestone label — breaks freely within the node's flex-1 width */}
               {isMilestone && (
                 <span
-                  className={`mt-1.5 ${isWholesale ? wsLabelFont : labelFont} font-bold text-center leading-tight flex flex-col items-center justify-center gap-0 ${!isWholesale ? "translate-x-1" : ""} ${
+                  className={`mt-1 w-full text-center font-bold leading-tight ${
+                    compact ? "text-[10px]" : "text-[11px] sm:text-[13px]"
+                  } ${
+                    isWholesale ? "font-extrabold" : ""
+                  } ${
                     isWholesale
                       ? "text-orange-500 dark:text-orange-400 nudge-blink"
                       : isComplete
@@ -190,18 +218,14 @@ export default function NudgeCard({
                       : "text-orange-500 dark:text-orange-400"
                   }`}
                 >
-                  {isWholesale && !isComplete ? (
-                    <span className="font-black text-orange-500 tracking-tight" style={{ fontSize: "1em" }}>Unlock</span>
-                  ) : icon && !isComplete ? (
-                    <span>{icon}</span>
-                  ) : null}
+                  {isWholesale && !isComplete && (
+                    <span className="block font-black tracking-tight">Unlock</span>
+                  )}
+                  {icon && !isComplete && <span>{icon}</span>}
                   {pos === trigger + 1 ? (
-                    <>
-                      <span className="whitespace-nowrap">{bonusPct}%</span>
-                      <span className="whitespace-nowrap">Off*</span>
-                    </>
+                    <span className="block">{bonusPct}%<br />Off*</span>
                   ) : (
-                    <span className="whitespace-nowrap">{nodeLabel(pos)}</span>
+                    <span className="block">{nodeLabel(pos)}</span>
                   )}
                 </span>
               )}
@@ -211,10 +235,13 @@ export default function NudgeCard({
           const arrowEl = idx < nodes.length - 1 ? (
             <div
               key={`arrow-${pos}`}
-              className={`flex-shrink-0 flex items-center justify-center ${arrowColor}`}
-              style={{ height: `${wsCartW}px`, width: compact ? '18px' : '24px' }}
+              className={`flex-shrink-0 flex items-center justify-center ${arrowColor} ${trackH}`}
+              style={{ width: `${arrowPx}px` }}
             >
-              <ArrowRight size={compact ? 16 : 22} strokeWidth={5} />
+              <ArrowRight
+                className={compact ? "w-2.5 h-2.5" : "w-3 h-3"}
+                strokeWidth={5}
+              />
             </div>
           ) : null;
 
