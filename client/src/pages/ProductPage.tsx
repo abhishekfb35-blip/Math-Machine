@@ -366,7 +366,7 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-20 md:pb-8 overflow-x-hidden">
       {product && (
         <SEO
           title={product.name}
@@ -412,7 +412,7 @@ export default function ProductPage() {
       <div className="max-w-7xl mx-auto px-4 pb-8">
         <div className="grid md:grid-cols-2 gap-6">
 
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             <div
               className="relative aspect-square overflow-hidden rounded-md bg-muted cursor-zoom-in group"
               onClick={() => setZoomDialogOpen(true)}
@@ -474,7 +474,7 @@ export default function ProductPage() {
             )}
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0">
             <div>
               {category && (
                 <p className="text-xs text-muted-foreground mb-1" data-testid="text-product-category">
