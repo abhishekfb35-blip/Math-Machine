@@ -39844,27 +39844,27 @@
     {
       "id": "lkojlaycg2x7k4lv31kbn89j",
       "currency": "AUD",
-      "rateFromInr": "0.014850"
+      "rateFromInr": "0.014830"
     },
     {
       "id": "dly9xbqt8mx5iwew44n9gt1n",
       "currency": "CAD",
-      "rateFromInr": "0.014600"
+      "rateFromInr": "0.014610"
     },
     {
       "id": "fjchlp46qf0qmcy2qjoru08d",
       "currency": "EUR",
-      "rateFromInr": "0.009060"
+      "rateFromInr": "0.009090"
     },
     {
       "id": "lfhgv2bgfc6msxk19uex8e25",
       "currency": "GBP",
-      "rateFromInr": "0.007820"
+      "rateFromInr": "0.007750"
     },
     {
       "id": "lqbiu2aztljnowd9fosrlkkm",
       "currency": "SGD",
-      "rateFromInr": "0.013480"
+      "rateFromInr": "0.013420"
     },
     {
       "id": "vm31e274ch378a72nsi3uba9",
@@ -50653,6 +50653,10 @@
     {
       "key": "consent-popup",
       "value": "{\"enabled\":true,\"headline\":\"Join the TurtleLittle Family and Save 10% Instantly!\",\"description\":\"Add your phone number to get exclusive deals and join in our insider list.\",\"consentText\":\"By signing up via text you agree to receive recurring automated marketing messages and shopping cart reminders at the phone number & email provided. Reply STOP to unsubscribe.\",\"buttonText\":\"Join Now\",\"discountPercent\":10,\"fields\":[{\"name\":\"firstName\",\"label\":\"First Name\",\"type\":\"text\",\"placeholder\":\"First name\",\"enabled\":true,\"required\":true,\"hideWhenLoggedIn\":true},{\"name\":\"lastName\",\"label\":\"Last Name\",\"type\":\"text\",\"placeholder\":\"Last name\",\"enabled\":true,\"required\":true,\"hideWhenLoggedIn\":true},{\"name\":\"email\",\"label\":\"Email\",\"type\":\"email\",\"placeholder\":\"Email address\",\"enabled\":true,\"required\":true,\"hideWhenLoggedIn\":true},{\"name\":\"phone\",\"label\":\"Phone\",\"type\":\"tel\",\"placeholder\":\"Phone number\",\"enabled\":true,\"required\":true,\"hideWhenLoggedIn\":false}]}"
+    },
+    {
+      "key": "delivery-tiers",
+      "value": "[{\"minItems\":3,\"maxItems\":5,\"fee\":300},{\"minItems\":6,\"maxItems\":10,\"fee\":500}]"
     },
     {
       "key": "featuredSections",
