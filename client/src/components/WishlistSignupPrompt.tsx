@@ -276,7 +276,7 @@ export default function WishlistSignupPrompt() {
     >
       <div className="absolute inset-0 bg-black/40" onClick={handleDismiss} />
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto shadow-xl animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[88vh]">
+      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto shadow-xl animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[88vh] overflow-x-hidden">
         <button
           type="button"
           onClick={handleDismiss}

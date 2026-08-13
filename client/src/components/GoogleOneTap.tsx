@@ -125,7 +125,7 @@ export default function GoogleOneTap() {
         .tl-nudge-card { animation: tl-nudge-in 220ms ease-out forwards; }
       `}</style>
       <div
-        className="tl-nudge-card fixed top-4 right-4 z-[999] w-72 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-700 rounded-2xl p-5 space-y-4"
+        className="tl-nudge-card fixed top-4 right-4 z-[999] w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-700 rounded-2xl p-5 space-y-4"
         style={{ boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08), 0 1px 4px 0 rgba(0,0,0,0.04)" }}
         data-testid="onetap-nudge"
       >
