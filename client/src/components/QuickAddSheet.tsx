@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart } from "@/lib/analytics";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
@@ -36,6 +37,7 @@ interface QuickAddSheetProps {
 
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
+  const { gateAddToCart } = useCartGate();
   const { formatPrice, convertPrice } = useCurrency();
   const offerLabel = useOfferLabel();
   const [personalizationName, setPersonalizationName] = useState("");
@@ -169,6 +171,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/cart"], data);
+      window.dispatchEvent(new CustomEvent("cart:item-added-for-popup"));
       trackAddToCart(
         {
           id: product!.id,
@@ -420,7 +423,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 ? gentlemanName.trim() === "" && ladyName.trim() === ""
                 : personalizationName.trim() === "";
               if (nameEmpty) { setShowNameConfirm(true); return; }
-              addToCartMutation.mutate();
+              gateAddToCart(() => addToCartMutation.mutate());
             }}
             disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
               const min = nameMin ?? 0;
@@ -457,7 +460,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           <AlertDialogCancel data-testid="button-name-confirm-cancel">Add a name</AlertDialogCancel>
           <AlertDialogAction
             data-testid="button-name-confirm-proceed"
-            onClick={() => { setShowNameConfirm(false); addToCartMutation.mutate(); }}
+            onClick={() => { setShowNameConfirm(false); gateAddToCart(() => addToCartMutation.mutate()); }}
           >
             Proceed without name
           </AlertDialogAction>

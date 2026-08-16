@@ -41,4 +41,5 @@ export const VALID_SITE_CONFIG_KEYS = [
   "abandoned_cart_recovery_code",
   "pwa-install-banner",
   "stats",
+  "signup-popup",
 ] as const;

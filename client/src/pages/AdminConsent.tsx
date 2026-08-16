@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Gift, Save, Loader2, ChevronLeft, ChevronRight, Users, ListChecks, Heart, LogIn } from "lucide-react";
+import { ArrowLeft, LogIn, Save, Loader2, ChevronLeft, ChevronRight, Users, Heart, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,53 +11,36 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CustomerConsent } from "@shared/types";
 
-export interface FormFieldConfig {
-  name: string;
-  label: string;
-  type: string;
-  placeholder: string;
-  enabled: boolean;
-  required: boolean;
-  hideWhenLoggedIn: boolean;
-}
+// ── Interfaces ────────────────────────────────────────────────────────────────
 
-const DEFAULT_FIELDS: FormFieldConfig[] = [
-  { name: "firstName", label: "First Name", type: "text", placeholder: "First name", enabled: true, required: true, hideWhenLoggedIn: true },
-  { name: "lastName", label: "Last Name", type: "text", placeholder: "Last name", enabled: true, required: true, hideWhenLoggedIn: true },
-  { name: "email", label: "Email", type: "email", placeholder: "Email address", enabled: true, required: true, hideWhenLoggedIn: true },
-  { name: "phone", label: "Phone", type: "tel", placeholder: "Phone number", enabled: true, required: false, hideWhenLoggedIn: false },
-];
-
-interface ConsentSettings {
+interface SignupPopupConfig {
   enabled: boolean;
-  headline: string;
-  description: string;
-  consentText: string;
+  /** Seconds from session start before auto-showing. Default 15. */
+  delaySeconds: number;
+  /** Seconds after first cart add before auto-showing. Default 2. */
+  cartAddDelaySeconds: number;
+  /** Nudge card title */
+  title: string;
+  /** Nudge card body text */
+  body: string;
+  /** Google sign-in button label */
   buttonText: string;
-  discountPercent: number;
-  fields: FormFieldConfig[];
-  triggerDelaySecs: number;
-  triggerScrollCount: number;
+  /** Text shown below the phone field (incentive). No default. */
+  incentiveText: string;
+  /** Consent statement / T&C shown below incentive. No default. */
+  consentText: string;
 }
 
-const DEFAULT_SETTINGS: ConsentSettings = {
-  enabled: true,
-  headline: "Get 10% Off Your First Order",
-  description: "Sign up for updates and get an exclusive discount code",
-  consentText: "I agree to receive order updates and promotional messages from TurtleLittle via WhatsApp and email.",
+const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
+  enabled: false,
+  delaySeconds: 15,
+  cartAddDelaySeconds: 2,
+  title: "",
+  body: "",
   buttonText: "",
-  discountPercent: 10,
-  fields: DEFAULT_FIELDS,
-  triggerDelaySecs: 0,
-  triggerScrollCount: 0,
+  incentiveText: "",
+  consentText: "",
 };
-
-interface ConsentsResponse {
-  consents: CustomerConsent[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
 
 interface WishlistPromptConfig {
   enabled: boolean;
@@ -77,13 +60,14 @@ const DEFAULT_WISHLIST_PROMPT: WishlistPromptConfig = {
   ctaText: "Save my wishlist",
 };
 
-interface OneTapNudgeConfig {
-  enabled: boolean;
-  promptDelaySeconds: number;
-  title: string;
-  body: string;
-  buttonText: string;
+interface ConsentsResponse {
+  consents: CustomerConsent[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
 
 function Toggle({ value, onChange, testId }: { value: boolean; onChange: (v: boolean) => void; testId?: string }) {
   return (
@@ -104,17 +88,20 @@ function Toggle({ value, onChange, testId }: { value: boolean; onChange: (v: boo
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function AdminConsent() {
   const { toast } = useToast();
   const [page, setPage] = useState(1);
-  const [settings, setSettings] = useState<ConsentSettings>(DEFAULT_SETTINGS);
+  const [signupPopup, setSignupPopup] = useState<SignupPopupConfig>(DEFAULT_SIGNUP_POPUP);
   const [wishlistPrompt, setWishlistPrompt] = useState<WishlistPromptConfig>(DEFAULT_WISHLIST_PROMPT);
-  const [nudgeConfig, setNudgeConfig] = useState<OneTapNudgeConfig | null>(null);
 
-  const { data: configData, isLoading: configLoading } = useQuery<{ key: string; value: ConsentSettings }>({
-    queryKey: ["/api/site-config", "consent-popup"],
+  // ── Queries ─────────────────────────────────────────────────────────────────
+
+  const { data: signupConfigData, isLoading: signupConfigLoading } = useQuery<{ key: string; value: SignupPopupConfig }>({
+    queryKey: ["/api/site-config", "signup-popup"],
     queryFn: async () => {
-      const res = await fetch("/api/site-config/consent-popup");
+      const res = await fetch("/api/site-config/signup-popup");
       if (!res.ok) return null;
       return res.json();
     },
@@ -129,38 +116,6 @@ export default function AdminConsent() {
     },
   });
 
-  const { data: nudgeConfigData, isLoading: nudgeConfigLoading } = useQuery<{ key: string; value: OneTapNudgeConfig }>({
-    queryKey: ["/api/site-config", "onetap-nudge"],
-    queryFn: async () => {
-      const res = await fetch("/api/site-config/onetap-nudge");
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
-
-  useEffect(() => {
-    if (configData?.value) {
-      const saved = configData.value;
-      const mergedFields = DEFAULT_FIELDS.map(df => {
-        const sf = saved.fields?.find((f: FormFieldConfig) => f.name === df.name);
-        return sf ? { ...df, ...sf } : df;
-      });
-      setSettings({ ...DEFAULT_SETTINGS, ...saved, fields: mergedFields });
-    }
-  }, [configData]);
-
-  useEffect(() => {
-    if (wishlistConfigData?.value) {
-      setWishlistPrompt({ ...DEFAULT_WISHLIST_PROMPT, ...wishlistConfigData.value });
-    }
-  }, [wishlistConfigData]);
-
-  useEffect(() => {
-    if (nudgeConfigData?.value) {
-      setNudgeConfig(nudgeConfigData.value);
-    }
-  }, [nudgeConfigData]);
-
   const { data: consentsData, isLoading: consentsLoading } = useQuery<ConsentsResponse>({
     queryKey: ["/api/admin/consents", page],
     queryFn: async () => {
@@ -169,13 +124,29 @@ export default function AdminConsent() {
     },
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (data: ConsentSettings) => {
-      await apiRequest("POST", "/api/site-config/consent-popup", { value: data });
+  // ── Seed state from API ──────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (signupConfigData?.value) {
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, ...signupConfigData.value });
+    }
+  }, [signupConfigData]);
+
+  useEffect(() => {
+    if (wishlistConfigData?.value) {
+      setWishlistPrompt({ ...DEFAULT_WISHLIST_PROMPT, ...wishlistConfigData.value });
+    }
+  }, [wishlistConfigData]);
+
+  // ── Mutations ────────────────────────────────────────────────────────────────
+
+  const saveSignupMutation = useMutation({
+    mutationFn: async (data: SignupPopupConfig) => {
+      await apiRequest("POST", "/api/site-config/signup-popup", { value: data });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/site-config", "consent-popup"] });
-      toast({ title: "Settings saved" });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config", "signup-popup"] });
+      toast({ title: "Signup popup settings saved" });
     },
     onError: () => {
       toast({ title: "Failed to save", variant: "destructive" });
@@ -194,46 +165,6 @@ export default function AdminConsent() {
       toast({ title: "Failed to save", variant: "destructive" });
     },
   });
-
-  const saveNudgeMutation = useMutation({
-    mutationFn: async (data: OneTapNudgeConfig) => {
-      await apiRequest("POST", "/api/site-config/onetap-nudge", { value: data });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/site-config", "onetap-nudge"] });
-      toast({ title: "Sign-in nudge settings saved" });
-    },
-    onError: () => {
-      toast({ title: "Failed to save", variant: "destructive" });
-    },
-  });
-
-  const handleSave = () => {
-    saveMutation.mutate(settings);
-  };
-
-  const handleSaveWishlist = () => {
-    saveWishlistMutation.mutate(wishlistPrompt);
-  };
-
-  const handleSaveNudge = () => {
-    if (nudgeConfig) saveNudgeMutation.mutate(nudgeConfig);
-  };
-
-  const updateField = (index: number, key: keyof FormFieldConfig, value: boolean | string) => {
-    setSettings(s => ({
-      ...s,
-      fields: s.fields.map((f, i) => {
-        if (i !== index) return f;
-        const updated = { ...f, [key]: value };
-        if (key === "enabled" && value === false) {
-          updated.required = false;
-          updated.hideWhenLoggedIn = false;
-        }
-        return updated;
-      }),
-    }));
-  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 pb-24" data-testid="page-admin-consent">
@@ -254,177 +185,148 @@ export default function AdminConsent() {
       </div>
 
       <div className="space-y-6">
-        <Card className="p-5 space-y-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Gift className="w-4 h-4" /> Popup Settings
-          </h2>
 
-          {configLoading ? (
+        {/* ── Signup Popup ─────────────────────────────────────────────────────── */}
+        <Card className="p-5 space-y-5" data-testid="card-signup-popup">
+          <div>
+            <h2 className="font-semibold flex items-center gap-2">
+              <LogIn className="w-4 h-4" /> Signup Popup
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              A card that appears in the top-right corner for unauthenticated visitors. Fires automatically after a delay
+              and again a few seconds after the first cart add. Dismissing it once enables a hard gate on subsequent
+              cart adds until the user signs in or registers.
+            </p>
+          </div>
+
+          {signupConfigLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <>
+            <div className="space-y-4">
+              {/* Enabled */}
               <div className="flex items-center gap-3">
-                <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
+                <label className="text-sm font-medium w-32 shrink-0">Enabled</label>
                 <Toggle
-                  value={settings.enabled}
-                  onChange={v => setSettings(s => ({ ...s, enabled: v }))}
-                  testId="toggle-popup-enabled"
+                  value={signupPopup.enabled}
+                  onChange={v => setSignupPopup(s => ({ ...s, enabled: v }))}
+                  testId="toggle-signup-popup-enabled"
                 />
                 <span className="text-sm text-muted-foreground">
-                  {settings.enabled ? "Popup is active" : "Popup is hidden"}
+                  {signupPopup.enabled ? "Popup is active" : "Popup is disabled"}
                 </span>
               </div>
 
-              <div className="space-y-3">
+              {/* Timing */}
+              <div className="flex gap-4 flex-wrap">
                 <div>
-                  <label className="text-sm font-medium block mb-1">Headline</label>
-                  <Input
-                    value={settings.headline}
-                    onChange={e => setSettings(s => ({ ...s, headline: e.target.value }))}
-                    placeholder="e.g. Get 10% Off Your First Order"
-                    data-testid="input-popup-headline"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1">Description</label>
-                  <Input
-                    value={settings.description}
-                    onChange={e => setSettings(s => ({ ...s, description: e.target.value }))}
-                    placeholder="e.g. Sign up for updates..."
-                    data-testid="input-popup-description"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1">Consent Text</label>
-                  <textarea
-                    value={settings.consentText}
-                    onChange={e => setSettings(s => ({ ...s, consentText: e.target.value }))}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y"
-                    placeholder="Legal consent wording..."
-                    data-testid="input-popup-consent-text"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1">Discount Percentage</label>
+                  <label className="text-sm font-medium block mb-1">Session delay (seconds)</label>
                   <Input
                     type="number"
                     min={0}
-                    max={100}
-                    value={settings.discountPercent}
-                    onChange={e => setSettings(s => ({ ...s, discountPercent: parseInt(e.target.value) || 0 }))}
-                    className="w-32"
-                    data-testid="input-popup-discount"
+                    value={signupPopup.delaySeconds}
+                    onChange={e => setSignupPopup(s => ({ ...s, delaySeconds: Math.max(0, parseInt(e.target.value) || 0) }))}
+                    className="w-28"
+                    data-testid="input-signup-delay"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Seconds from session start</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1">Button Text</label>
+                  <label className="text-sm font-medium block mb-1">Cart-add delay (seconds)</label>
                   <Input
-                    value={settings.buttonText}
-                    onChange={e => setSettings(s => ({ ...s, buttonText: e.target.value }))}
-                    placeholder={`e.g. Get My ${settings.discountPercent}% Discount`}
-                    data-testid="input-popup-button-text"
+                    type="number"
+                    min={0}
+                    value={signupPopup.cartAddDelaySeconds}
+                    onChange={e => setSignupPopup(s => ({ ...s, cartAddDelaySeconds: Math.max(0, parseInt(e.target.value) || 0) }))}
+                    className="w-28"
+                    data-testid="input-signup-cart-delay"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave empty to use default: "Get My {settings.discountPercent}% Discount"
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-1">Delay (seconds)</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={settings.triggerDelaySecs}
-                      onChange={e => setSettings(s => ({ ...s, triggerDelaySecs: Math.max(0, parseInt(e.target.value) || 0) }))}
-                      className="w-32"
-                      data-testid="input-popup-trigger-delay"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Time before popup appears automatically</p>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-1">Scroll count to trigger</label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={settings.triggerScrollCount}
-                      onChange={e => setSettings(s => ({ ...s, triggerScrollCount: Math.max(0, parseInt(e.target.value) || 0) }))}
-                      className="w-32"
-                      data-testid="input-popup-trigger-scroll"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Number of scroll events before popup appears</p>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Seconds after first item added</p>
                 </div>
               </div>
 
               <Separator />
 
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <ListChecks className="w-4 h-4" /> Form Fields
-                </h3>
-                <p className="text-xs text-muted-foreground">Choose which fields appear in the popup and whether they are required.</p>
-
-                <div className="rounded-md border overflow-x-auto">
-                  <table className="w-full text-sm" data-testid="table-form-fields">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="px-3 py-2 text-left font-medium">Field</th>
-                        <th className="px-3 py-2 text-center font-medium w-20">Show</th>
-                        <th className="px-3 py-2 text-center font-medium w-24">Required</th>
-                        <th className="px-3 py-2 text-center font-medium w-32">Hide if logged in</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {settings.fields.map((field, i) => (
-                        <tr key={field.name} className="border-b last:border-0" data-testid={`field-row-${field.name}`}>
-                          <td className="px-3 py-2.5">
-                            <span className="font-medium">{field.label}</span>
-                            <span className="text-xs text-muted-foreground ml-2">({field.type})</span>
-                          </td>
-                          <td className="px-3 py-2.5 text-center">
-                            <Toggle
-                              value={field.enabled}
-                              onChange={v => updateField(i, "enabled", v)}
-                              testId={`toggle-field-enabled-${field.name}`}
-                            />
-                          </td>
-                          <td className="px-3 py-2.5 text-center">
-                            <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
-                              <Toggle
-                                value={field.required}
-                                onChange={v => updateField(i, "required", v)}
-                                testId={`toggle-field-required-${field.name}`}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-3 py-2.5 text-center">
-                            <div className={!field.enabled ? "opacity-40 pointer-events-none" : ""}>
-                              <Toggle
-                                value={field.hideWhenLoggedIn}
-                                onChange={v => updateField(i, "hideWhenLoggedIn", v)}
-                                testId={`toggle-field-hide-logged-in-${field.name}`}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              {/* Nudge card copy */}
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nudge card</p>
+              <div>
+                <label className="text-sm font-medium block mb-1">Card title</label>
+                <Input
+                  value={signupPopup.title}
+                  onChange={e => setSignupPopup(s => ({ ...s, title: e.target.value }))}
+                  placeholder="e.g. Member perks await"
+                  data-testid="input-signup-title"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Card body text</label>
+                <textarea
+                  value={signupPopup.body}
+                  onChange={e => setSignupPopup(s => ({ ...s, body: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
+                  placeholder="e.g. Sign in to save your wishlist and get exclusive deals."
+                  data-testid="input-signup-body"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Sign-in button label</label>
+                <Input
+                  value={signupPopup.buttonText}
+                  onChange={e => setSignupPopup(s => ({ ...s, buttonText: e.target.value }))}
+                  placeholder="e.g. Sign in with Google"
+                  data-testid="input-signup-button-text"
+                />
               </div>
 
-              <Button onClick={handleSave} disabled={saveMutation.isPending} data-testid="button-save-settings">
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Settings
+              <Separator />
+
+              {/* Phone form copy (shown to new users after Google credential) */}
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phone form (new users only)</p>
+              <div>
+                <label className="text-sm font-medium block mb-1">Incentive text</label>
+                <textarea
+                  value={signupPopup.incentiveText}
+                  onChange={e => setSignupPopup(s => ({ ...s, incentiveText: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
+                  placeholder="Shown below the phone field — e.g. a reward or benefit for signing up"
+                  data-testid="input-signup-incentive"
+                />
+                <p className="text-xs text-muted-foreground mt-1">No default. Leave empty to hide.</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Consent statement</label>
+                <textarea
+                  value={signupPopup.consentText}
+                  onChange={e => setSignupPopup(s => ({ ...s, consentText: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y"
+                  placeholder="Legal / T&C wording shown with a checkbox — e.g. I agree to receive…"
+                  data-testid="input-signup-consent-text"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  No default. Leave empty to skip the consent checkbox (the form submits without it).
+                </p>
+              </div>
+
+              <Button
+                onClick={() => saveSignupMutation.mutate(signupPopup)}
+                disabled={saveSignupMutation.isPending}
+                data-testid="button-save-signup-popup"
+              >
+                {saveSignupMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Signup Popup
               </Button>
-            </>
+            </div>
           )}
         </Card>
 
         <Separator />
 
+        {/* ── Wishlist Sign-up Prompt ──────────────────────────────────────────── */}
         <Card className="p-5 space-y-4" data-testid="card-wishlist-prompt">
           <h2 className="font-semibold flex items-center gap-2">
             <Heart className="w-4 h-4 text-rose-500" /> Wishlist Sign-up Prompt
@@ -509,7 +411,11 @@ export default function AdminConsent() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                <Button onClick={handleSaveWishlist} disabled={saveWishlistMutation.isPending} data-testid="button-save-wishlist-prompt">
+                <Button
+                  onClick={() => saveWishlistMutation.mutate(wishlistPrompt)}
+                  disabled={saveWishlistMutation.isPending}
+                  data-testid="button-save-wishlist-prompt"
+                >
                   {saveWishlistMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                   Save Wishlist Prompt
                 </Button>
@@ -528,87 +434,7 @@ export default function AdminConsent() {
 
         <Separator />
 
-        {/* ── Sign-in Nudge Config ──────────────────────────────────────── */}
-        <Card className="p-5 space-y-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <LogIn className="w-4 h-4" /> Sign-in Nudge (Google One Tap)
-          </h2>
-          <p className="text-xs text-muted-foreground -mt-2">
-            A small card that appears in the top-right corner on returning visitors, prompting them to sign in with Google. The nudge only shows when enabled and all fields are filled.
-          </p>
-
-          {nudgeConfigLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium w-20 shrink-0">Enabled</label>
-                <Toggle
-                  value={nudgeConfig?.enabled ?? false}
-                  onChange={v => setNudgeConfig(c => c ? { ...c, enabled: v } : { enabled: v, promptDelaySeconds: 0, title: "", body: "", buttonText: "" })}
-                  testId="toggle-nudge-enabled"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {nudgeConfig?.enabled ? "Nudge is active" : "Nudge is hidden"}
-                </span>
-              </div>
-
-              <div className="max-w-xs">
-                <label className="text-sm font-medium block mb-1">Show after (seconds)</label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={nudgeConfig?.promptDelaySeconds ?? ""}
-                  onChange={e => setNudgeConfig(c => c ? { ...c, promptDelaySeconds: parseInt(e.target.value) || 0 } : null)}
-                  placeholder="e.g. 4"
-                  data-testid="input-nudge-prompt-delay"
-                />
-                <p className="text-xs text-muted-foreground mt-1">How many seconds after the page loads before the card appears</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium block mb-1">Card title</label>
-                <Input
-                  value={nudgeConfig?.title ?? ""}
-                  onChange={e => setNudgeConfig(c => c ? { ...c, title: e.target.value } : null)}
-                  placeholder="e.g. Member perks await"
-                  data-testid="input-nudge-title"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium block mb-1">Card body text</label>
-                <textarea
-                  value={nudgeConfig?.body ?? ""}
-                  onChange={e => setNudgeConfig(c => c ? { ...c, body: e.target.value } : null)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
-                  placeholder="e.g. Sign in to save your wishlist & get early access to exclusive deals."
-                  data-testid="input-nudge-body"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium block mb-1">Button label</label>
-                <Input
-                  value={nudgeConfig?.buttonText ?? ""}
-                  onChange={e => setNudgeConfig(c => c ? { ...c, buttonText: e.target.value } : null)}
-                  placeholder="e.g. Sign in with Google"
-                  data-testid="input-nudge-button-text"
-                />
-              </div>
-
-              <Button onClick={handleSaveNudge} disabled={saveNudgeMutation.isPending || !nudgeConfig} data-testid="button-save-nudge">
-                {saveNudgeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Nudge Settings
-              </Button>
-            </div>
-          )}
-        </Card>
-
-        <Separator />
-
+        {/* ── Signups table ────────────────────────────────────────────────────── */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold flex items-center gap-2">
@@ -656,7 +482,13 @@ export default function AdminConsent() {
                           ) : "—"}
                         </td>
                         <td className="py-2 text-muted-foreground whitespace-nowrap">
-                          {c.consentedAt ? new Date(c.consentedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                          {c.consentedAt
+                            ? new Date(c.consentedAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "—"}
                         </td>
                       </tr>
                     ))}

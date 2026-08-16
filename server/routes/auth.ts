@@ -171,11 +171,24 @@ export function registerAuthRoutes(app: Express) {
       if (!customer) {
         customer = await storage.getCustomerByEmail(email);
         if (customer) {
-          customer = await storage.updateCustomer(customer.id, { googleId, avatarUrl: picture, name: customer.name || name });
+          // Existing account linked by email — link Google ID and log in
+          customer = await storage.updateCustomer(customer.id, {
+            googleId,
+            avatarUrl: picture,
+            name: customer.name || name,
+          });
         } else {
-          customer = await storage.createCustomer({ email, name, googleId, avatarUrl: picture });
+          // Brand-new user — ask the client for a phone number before creating the account
+          const nameParts = (name || "").split(" ");
+          const firstName = nameParts[0] || "";
+          const lastName = nameParts.slice(1).join(" ") || "";
+          return res.json({
+            needsPhone: true,
+            googleData: { firstName, lastName, email },
+          });
         }
       }
+
       if (!customer) {
         return res.status(500).json({ message: "Failed to create account" });
       }
@@ -197,6 +210,115 @@ export function registerAuthRoutes(app: Express) {
     } catch (err) {
       console.error("Google auth error:", err);
       res.status(500).json({ message: "Google sign-in failed" });
+    }
+  });
+
+  /**
+   * Complete Google sign-up for new users who provided their phone number.
+   * Re-verifies the credential, creates the customer + consent record, and
+   * opens a session — identical response shape to a successful /api/auth/google.
+   */
+  app.post("/api/auth/google/complete", async (req: Request, res: Response) => {
+    try {
+      const { credential, phone, consentGiven, consentText } = req.body;
+      if (!credential) {
+        return res.status(400).json({ message: "Google credential is required" });
+      }
+
+      const googleClientId = process.env.GOOGLE_CLIENT_ID;
+      if (!googleClientId) {
+        return res.status(500).json({ message: "Google Sign-In not configured" });
+      }
+
+      // Re-verify credential (tokens are short-lived; we accept the same one)
+      const client = new OAuth2Client(googleClientId);
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: googleClientId,
+      });
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(400).json({ message: "Invalid Google credential" });
+      }
+
+      const { sub: googleId, email, name, picture } = payload;
+      if (!email) {
+        return res.status(400).json({ message: "Email not available from Google" });
+      }
+
+      const normalizedPhone = phone?.trim() || null;
+
+      // Guard against race conditions: customer may already exist
+      let customer = await storage.getCustomerByGoogleId(googleId);
+      if (!customer) {
+        customer = await storage.getCustomerByEmail(email);
+        if (customer) {
+          customer = await storage.updateCustomer(customer.id, { googleId, avatarUrl: picture });
+        } else {
+          customer = await storage.createCustomer({
+            email,
+            name,
+            googleId,
+            avatarUrl: picture,
+            phone: normalizedPhone,
+          });
+        }
+      }
+
+      if (!customer) {
+        return res.status(500).json({ message: "Failed to create account" });
+      }
+
+      // Save phone on existing customer if not already set
+      if (normalizedPhone && !customer.phone) {
+        customer = await storage.updateCustomer(customer.id, { phone: normalizedPhone });
+      }
+
+      // Record marketing consent
+      if (consentGiven) {
+        const nameParts = (name || "").split(" ");
+        const firstName = nameParts[0] || ".";
+        const lastName = nameParts.slice(1).join(" ") || ".";
+        const ip = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
+        try {
+          await storage.createCustomerConsent({
+            customerId: customer.id,
+            firstName,
+            lastName,
+            email,
+            phone: normalizedPhone,
+            consentType: "whatsapp_marketing",
+            consentGiven: true,
+            discountCode: null,
+            ipAddress: ip,
+            userAgent: req.headers["user-agent"] || null,
+            pageUrl: null,
+            consentMethod: "google_signup",
+            consentText: consentText || null,
+          });
+        } catch (consentErr) {
+          // Non-fatal — account is created; log and continue
+          console.error("Google signup consent record error:", consentErr);
+        }
+      }
+
+      const token = crypto.randomUUID() + crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await storage.createCustomerSession(customer.id, token, expiresAt);
+
+      const isProduction = process.env.NODE_ENV === "production";
+      res.cookie("customer_token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        sameSite: "lax",
+        path: "/",
+      });
+
+      res.json({ success: true, customer, token });
+    } catch (err) {
+      console.error("Google complete error:", err);
+      res.status(500).json({ message: "Google sign-up failed" });
     }
   });
 }

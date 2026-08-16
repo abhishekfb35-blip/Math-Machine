@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useCartGate } from "@/context/CartGateContext";
 import { trackProductView, trackAddToCart } from "@/lib/analytics";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
@@ -47,6 +48,7 @@ export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { gateAddToCart } = useCartGate();
   const { formatPrice } = useCurrency();
   const { customer, isAuthenticated } = useAuth();
   const { isWishlisted, toggle: toggleWishlist } = useWishlist();
@@ -291,6 +293,7 @@ export default function ProductPage() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/cart"], data);
+      window.dispatchEvent(new CustomEvent("cart:item-added-for-popup"));
       trackAddToCart({
         id: product!.id,
         name: product!.name,
@@ -771,7 +774,7 @@ export default function ProductPage() {
                   ? gentlemanName.trim() === "" && ladyName.trim() === ""
                   : personalizationName.trim() === "";
                 if (nameEmpty) { setShowNameConfirm(true); return; }
-                addToCartMutation.mutate();
+                gateAddToCart(() => addToCartMutation.mutate());
               }}
               disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
                 const min = nameMin ?? 0;
@@ -1015,7 +1018,7 @@ export default function ProductPage() {
             <AlertDialogCancel data-testid="button-name-confirm-cancel">Add a name</AlertDialogCancel>
             <AlertDialogAction
               data-testid="button-name-confirm-proceed"
-              onClick={() => { setShowNameConfirm(false); addToCartMutation.mutate(); }}
+              onClick={() => { setShowNameConfirm(false); gateAddToCart(() => addToCartMutation.mutate()); }}
             >
               Proceed without name
             </AlertDialogAction>

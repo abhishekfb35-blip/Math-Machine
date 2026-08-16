@@ -13,9 +13,9 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import GoogleOneTap from "@/components/GoogleOneTap";
-import ConsentPopup from "@/components/ConsentPopup";
+import SignupPopup from "@/components/SignupPopup";
 import WishlistSignupPrompt from "@/components/WishlistSignupPrompt";
+import { CartGateProvider } from "@/context/CartGateContext";
 import SignInModal from "@/components/SignInModal";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Home from "@/pages/Home";
@@ -135,6 +135,7 @@ function App() {
     <HelmetProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <CartGateProvider>
         <CurrencyProvider>
         <WishlistProvider>
         <TooltipProvider>
@@ -150,14 +151,14 @@ function App() {
           </div>
           <BottomNav />
           <WhatsAppButton />
-          <GoogleOneTap />
-          <ConsentPopup />
+          <SignupPopup />
           <WishlistSignupPrompt />
           <SignInModal />
           <Toaster />
         </TooltipProvider>
         </WishlistProvider>
         </CurrencyProvider>
+        </CartGateProvider>
       </QueryClientProvider>
     </ThemeProvider>
     </HelmetProvider>
