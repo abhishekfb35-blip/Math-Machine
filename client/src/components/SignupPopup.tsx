@@ -39,6 +39,11 @@ interface SignupPopupConfig {
   delaySeconds: number;
   /** Seconds after first cart add before auto-showing (default 2) */
   cartAddDelaySeconds: number;
+  /**
+   * Seconds after dismissal before the popup re-shows automatically.
+   * 0 = disabled (popup stays gone for the session after one dismissal).
+   */
+  reshowIntervalSeconds: number;
   /** Nudge card title */
   title: string;
   /** Nudge card body text */
@@ -75,6 +80,7 @@ export default function SignupPopup() {
   const sessionTimerSet = useRef(false);
   const cartTriggered = useRef(false);
   const cartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reshowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Always holds the latest isAuthenticated value for use inside setTimeout closures */
   const isAuthRef = useRef(isAuthenticated);
 
@@ -100,6 +106,7 @@ export default function SignupPopup() {
       setConsentChecked(false);
       pendingCredential.current = null;
       setGoogleUserData(null);
+      if (reshowTimerRef.current) { clearTimeout(reshowTimerRef.current); reshowTimerRef.current = null; }
       _onAuthSuccess();
     }
   }, [isAuthenticated, _onAuthSuccess]);
@@ -189,11 +196,25 @@ export default function SignupPopup() {
     setConsentChecked(false);
     pendingCredential.current = null;
     setGoogleUserData(null);
-    // Suppress auto-triggers for the rest of this session
+    // Suppress auto-triggers until the reshow timer fires (or forever if disabled)
     sessionStorage.setItem(DISMISSED_KEY, "1");
     // Notify CartGateContext — may activate the hard gate
     _onDismissed();
-  }, [_onDismissed]);
+
+    // Reshow timer: if configured, clear the dismissed flag after the interval
+    // and re-attempt autoShow — loops each dismissal until user authenticates.
+    if (reshowTimerRef.current) clearTimeout(reshowTimerRef.current);
+    const interval = config?.reshowIntervalSeconds ?? 0;
+    if (interval > 0) {
+      reshowTimerRef.current = setTimeout(() => {
+        if (isAuthRef.current) return;
+        sessionStorage.removeItem(DISMISSED_KEY);
+        // autoShow checks canAutoTrigger (which re-reads the cleared key)
+        setView("nudge");
+        setVisible(true);
+      }, interval * 1000);
+    }
+  }, [_onDismissed, config]);
 
   // ── Google credential callback ────────────────────────────────────────────
   const handleCredential = useCallback(

@@ -19,6 +19,11 @@ interface SignupPopupConfig {
   delaySeconds: number;
   /** Seconds after first cart add before auto-showing. Default 2. */
   cartAddDelaySeconds: number;
+  /**
+   * Seconds after dismissal before the popup re-shows automatically.
+   * 0 = disabled (popup stays gone for the session after one dismissal).
+   */
+  reshowIntervalSeconds: number;
   /** Nudge card title */
   title: string;
   /** Nudge card body text */
@@ -35,6 +40,7 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   enabled: false,
   delaySeconds: 15,
   cartAddDelaySeconds: 2,
+  reshowIntervalSeconds: 0,
   title: "",
   body: "",
   buttonText: "",
@@ -243,6 +249,18 @@ export default function AdminConsent() {
                     data-testid="input-signup-cart-delay"
                   />
                   <p className="text-xs text-muted-foreground mt-1">Seconds after first item added</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Re-show interval (seconds)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={signupPopup.reshowIntervalSeconds}
+                    onChange={e => setSignupPopup(s => ({ ...s, reshowIntervalSeconds: Math.max(0, parseInt(e.target.value) || 0) }))}
+                    className="w-28"
+                    data-testid="input-signup-reshow-interval"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">0 = don't re-show after dismiss</p>
                 </div>
               </div>
 
