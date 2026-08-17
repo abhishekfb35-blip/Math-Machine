@@ -269,15 +269,8 @@ export default function SignupPopup() {
             callback: handleCredential,
             cancel_on_tap_outside: true,
           });
-          google.accounts.id.prompt((notification: any) => {
-            // isSkippedMoment / isDismissedMoment are present in all GSI versions.
-            // isNotDisplayedMoment was added later — call it only if it exists.
-            const skipped = notification.isSkippedMoment();
-            const dismissed = notification.isDismissedMoment();
-            const notDisplayed = notification.isNotDisplayedMoment?.() ?? false;
-            if (skipped || dismissed || notDisplayed) {
-              handleDismissRef.current();
-            }
+          google.accounts.id.prompt((_notification: any) => {
+            // no-op — One Tap manages its own lifecycle.
           });
           return true;
         };
