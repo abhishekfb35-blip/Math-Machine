@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, ShoppingCart, CreditCard, CheckCircle2, Mail, AlertCircle, ExternalLink, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, BarChart3, ShoppingCart, CreditCard, CheckCircle2, Mail, AlertCircle, ExternalLink, Users, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { FunnelReport } from "@shared/types";
+
+const PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -92,6 +94,8 @@ export default function AdminFunnelReport() {
   const [toDate, setToDate] = useState(defaults.to);
   const [appliedFrom, setAppliedFrom] = useState(defaults.from);
   const [appliedTo, setAppliedTo] = useState(defaults.to);
+  const [abPage, setAbPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
 
   const { data, isLoading, isError, refetch } = useQuery<FunnelReport>({
     queryKey: ["/api/admin/reports/funnel", appliedFrom, appliedTo],
@@ -108,7 +112,12 @@ export default function AdminFunnelReport() {
   function applyDateRange() {
     setAppliedFrom(fromDate);
     setAppliedTo(toDate);
+    setAbPage(1);
   }
+
+  const totalAbandoned = data?.abandonedCarts.length ?? 0;
+  const totalAbPages = Math.max(1, Math.ceil(totalAbandoned / perPage));
+  const pagedCarts = data?.abandonedCarts.slice((abPage - 1) * perPage, abPage * perPage) ?? [];
 
   const checkoutDropOff = data && data.cartsWithItems > 0
     ? Math.round(((data.cartsWithItems - data.checkoutStarted) / data.cartsWithItems) * 100)
@@ -343,8 +352,30 @@ export default function AdminFunnelReport() {
 
           {data.abandonedCarts.length > 0 && (
             <Card className="p-5 space-y-3">
-              <h2 className="font-semibold text-base">Abandoned Carts</h2>
-              <p className="text-xs text-muted-foreground">Carts with items that went cold (&gt;1 hour) without placing an order.</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-semibold text-base">Abandoned Carts</h2>
+                  <p className="text-xs text-muted-foreground">Carts with items that went cold (&gt;1 hour) without placing an order.</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground text-xs">Per page:</span>
+                  {PER_PAGE_OPTIONS.map(n => (
+                    <button
+                      key={n}
+                      onClick={() => { setPerPage(n); setAbPage(1); }}
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
+                        perPage === n
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-foreground"
+                      }`}
+                      data-testid={`btn-perpage-${n}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" data-testid="table-abandoned-carts">
                   <thead>
@@ -358,7 +389,7 @@ export default function AdminFunnelReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.abandonedCarts.map(c => (
+                    {pagedCarts.map(c => (
                       <tr key={c.cartId} className="border-b last:border-0 hover:bg-muted/40 align-top">
                         <td className="py-2.5 pr-4 whitespace-nowrap text-muted-foreground">
                           {formatDate(c.createdAt)}
@@ -405,6 +436,37 @@ export default function AdminFunnelReport() {
                   </tbody>
                 </table>
               </div>
+
+              {totalAbPages > 1 && (
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {(abPage - 1) * perPage + 1}–{Math.min(abPage * perPage, totalAbandoned)} of {totalAbandoned}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAbPage(p => Math.max(1, p - 1))}
+                      disabled={abPage === 1}
+                      data-testid="btn-ab-prev"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-1">
+                      {abPage} / {totalAbPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAbPage(p => Math.min(totalAbPages, p + 1))}
+                      disabled={abPage === totalAbPages}
+                      data-testid="btn-ab-next"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
           )}
 
