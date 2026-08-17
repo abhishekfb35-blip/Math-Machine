@@ -353,7 +353,8 @@ export function registerAdminHealthRoutes(app: Express) {
       // Normalise Drizzle SQL type strings to what information_schema.columns returns
       function normalizePgType(sqlType: string): string {
         if (sqlType === "serial" || sqlType === "bigserial") return "integer";
-        if (sqlType.startsWith("timestamp")) return "timestamp without time zone";
+        if (sqlType === "timestamp" || /^timestamp\(\d+\)$/.test(sqlType)) return "timestamp without time zone";
+        if (sqlType === "timestamp with time zone" || /^timestamp\(\d+\) with time zone$/.test(sqlType)) return "timestamp with time zone";
         if (sqlType.startsWith("varchar")) return "character varying";
         return sqlType;
       }
