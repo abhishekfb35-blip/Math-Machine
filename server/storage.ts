@@ -99,6 +99,7 @@ export interface IStorage {
   getSiteConfig(key: string): Promise<SiteConfig | undefined>;
   getAllSiteConfigs(): Promise<SiteConfig[]>;
   upsertSiteConfig(key: string, value: string): Promise<SiteConfig>;
+  deleteSeedHash(table: string): Promise<void>;
 
   getSiteContent(key: string): Promise<SiteContent | undefined>;
   getAllSiteContents(): Promise<SiteContent[]>;
@@ -1031,6 +1032,10 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(siteConfig).values({ key, value }).returning();
     return created;
+  }
+
+  async deleteSeedHash(table: string): Promise<void> {
+    await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
   }
 
   async getSiteContent(key: string): Promise<SiteContent | undefined> {

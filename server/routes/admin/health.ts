@@ -6,9 +6,6 @@ import { storage } from "../../storage";
 import { requireAdmin, requirePermission, requireSuperAdmin, requireSnapshotAccess } from "../../adminAuth";
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
-import { db } from "../../db";
-import { siteConfig } from "@shared/schema";
-import { eq } from "drizzle-orm";
 import { seedDatabase } from "../../seed";
 import { Resend } from "resend";
 
@@ -1527,7 +1524,7 @@ export function registerAdminHealthRoutes(app: Express) {
         "bulkPriceRules", "colorSwatches", "categorySizeDefinitions",
       ];
       for (const table of catalogTables) {
-        await db.delete(siteConfig).where(eq(siteConfig.key, `seed-hash-${table}`));
+        await storage.deleteSeedHash(table);
       }
       console.log("[force-reseed] Cleared catalog hashes, running seed...");
 
