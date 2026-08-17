@@ -247,6 +247,9 @@ export function registerAuthRoutes(app: Express) {
       }
 
       const normalizedPhone = phone?.trim() || null;
+      if (!normalizedPhone) {
+        return res.status(400).json({ message: "Phone number is required to complete sign-up" });
+      }
 
       // Guard against race conditions: customer may already exist
       let customer = await storage.getCustomerByGoogleId(googleId);

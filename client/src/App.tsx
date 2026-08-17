@@ -14,7 +14,9 @@ import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import WishlistSignupPrompt from "@/components/WishlistSignupPrompt";
+import SignupPopup from "@/components/SignupPopup";
 import SignInModal from "@/components/SignInModal";
+import { CartGateProvider } from "@/context/CartGateContext";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Home from "@/pages/Home";
 import ShopPage from "@/pages/ShopPage";
@@ -133,6 +135,7 @@ function App() {
     <HelmetProvider>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <CartGateProvider>
         <CurrencyProvider>
         <WishlistProvider>
         <TooltipProvider>
@@ -148,12 +151,14 @@ function App() {
           </div>
           <BottomNav />
           <WhatsAppButton />
+          <SignupPopup />
           <WishlistSignupPrompt />
           <SignInModal />
           <Toaster />
         </TooltipProvider>
         </WishlistProvider>
         </CurrencyProvider>
+        </CartGateProvider>
       </QueryClientProvider>
     </ThemeProvider>
     </HelmetProvider>

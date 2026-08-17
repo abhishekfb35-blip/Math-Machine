@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const SIGNIN_MODAL_EVENT = "show:signin-modal";
 
@@ -13,6 +15,10 @@ export default function SignInModal() {
   const { toast } = useToast();
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"google" | "phone">("google");
+  const [pendingCredential, setPendingCredential] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [submittingPhone, setSubmittingPhone] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitialized = useRef(false);
@@ -30,6 +36,11 @@ export default function SignInModal() {
     try {
       const res = await apiRequest("POST", "/api/auth/google", { credential: response.credential });
       const data = await res.json();
+      if (data.needsPhone) {
+        setPendingCredential(response.credential);
+        setView("phone");
+        return;
+      }
       queryClient.setQueryData(["/api/auth/me"], data.customer);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       setVisible(false);
@@ -41,9 +52,35 @@ export default function SignInModal() {
     }
   }, [toast]);
 
+  const handlePhoneSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneInput.trim() || !pendingCredential) return;
+    setSubmittingPhone(true);
+    try {
+      const res = await apiRequest("POST", "/api/auth/google/complete", {
+        credential: pendingCredential,
+        phone: phoneInput.trim(),
+        consentGiven: false,
+        consentText: "",
+      });
+      const data = await res.json();
+      queryClient.setQueryData(["/api/auth/me"], data.customer);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setVisible(false);
+      toast({ title: "Welcome!", description: "Your account has been created." });
+    } catch (err: any) {
+      toast({ title: "Sign-up failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSubmittingPhone(false);
+    }
+  }, [phoneInput, pendingCredential, toast]);
+
   useEffect(() => {
     if (!visible) return;
     setLoading(false);
+    setView("google");
+    setPendingCredential(null);
+    setPhoneInput("");
     googleInitialized.current = false;
   }, [visible]);
 
@@ -115,40 +152,63 @@ export default function SignInModal() {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center space-y-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-              Sign in to TurtleLittle
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Save your wishlist and shop faster
+        {view === "phone" ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">One last step</h3>
+              <p className="text-sm text-muted-foreground mt-1">Add your phone number to complete sign-up.</p>
+            </div>
+            <form onSubmit={handlePhoneSubmit} className="space-y-3">
+              <Input
+                type="tel"
+                placeholder="Phone number"
+                value={phoneInput}
+                onChange={e => setPhoneInput(e.target.value)}
+                required
+                autoFocus
+                data-testid="signin-modal-phone-input"
+              />
+              <Button type="submit" className="w-full" disabled={submittingPhone || !phoneInput.trim()} data-testid="signin-modal-phone-submit">
+                {submittingPhone ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</> : "Create my account"}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          <div className="text-center space-y-4">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Sign in to TurtleLittle
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Save your wishlist and shop faster
+              </p>
+            </div>
+
+            <div className="relative min-h-[44px]">
+              <div
+                ref={googleButtonRef}
+                className="flex justify-center min-h-[44px]"
+                data-testid="signin-modal-google-btn"
+              />
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              By signing in, you agree to our{" "}
+              <a href="/terms" className="underline hover:text-foreground" onClick={handleClose}>
+                terms
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="underline hover:text-foreground" onClick={handleClose}>
+                privacy policy
+              </a>.
             </p>
           </div>
-
-          <div className="relative min-h-[44px]">
-            <div
-              ref={googleButtonRef}
-              className="flex justify-center min-h-[44px]"
-              data-testid="signin-modal-google-btn"
-            />
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            )}
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            By signing in, you agree to our{" "}
-            <a href="/terms" className="underline hover:text-foreground" onClick={handleClose}>
-              terms
-            </a>{" "}
-            and{" "}
-            <a href="/privacy" className="underline hover:text-foreground" onClick={handleClose}>
-              privacy policy
-            </a>.
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
