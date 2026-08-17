@@ -4,21 +4,17 @@ import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTy
 import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
-import { fileStorage } from "../../providers/fileStorage";
+import {
+  getCatalogByCategory,
+  bulkUpdateAttributes,
+  bulkRemoveAttributes,
+  bulkReplaceAttributes,
+  bulkClearAttributes,
+  bulkRestoreAttributes,
+  bulkUploadImages,
+} from "../../services/catalogService";
 
 const sseClients = new Set<Response>();
-
-// ── Server-side undo store for bulk-clear-attributes ──
-type ClearSnapshot = {
-  productId: string;
-  audienceIds: string[];
-  genderIds: string[];
-  themeIds: string[];
-  styleIds: string[];
-  tagIds: string[];
-};
-const clearUndoStore = new Map<string, { snapshot: ClearSnapshot[]; expiresAt: number }>();
-const UNDO_TTL_MS = 60_000;
 
 function broadcastProductUpdate(product: object) {
   const data = `event: product-updated\ndata: ${JSON.stringify(product)}\n\n`;
@@ -126,13 +122,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.get("/api/admin/catalog/category/:categoryId", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.categoryId as string;
     if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
-    const [prods, { productTagMap, productTagNameMap }, productImages] = await Promise.all([
-      storage.getAllProductsByCategoryNoTags(categoryId),
-      storage.getProductTagsForCatalog(categoryId),
-      storage.getProductImagesByCategory(categoryId),
-    ]);
-    const products = prods.map(p => ({ ...p, tagNames: productTagNameMap[p.id] ?? [] }));
-    res.json({ products, productTagMap, productImages });
+    res.json(await getCatalogByCategory(categoryId));
   });
 
   app.post("/api/admin/products", requirePermission("catalog"), async (req, res) => {
@@ -417,21 +407,8 @@ export function registerAdminCatalogRoutes(app: Express) {
           sourceUrl: z.string().min(1),
         })).min(1),
       }).parse(req.body);
-
-      for (let i = 0; i < productIds.length; i++) {
-        const perProductSlots: { sortOrder: number; imageUrl: string }[] = [];
-        for (const slot of imageSlots) {
-          if (i === 0) {
-            perProductSlots.push({ sortOrder: slot.sortOrder, imageUrl: slot.sourceUrl });
-          } else {
-            const copied = await fileStorage.copy(slot.sourceUrl);
-            perProductSlots.push({ sortOrder: slot.sortOrder, imageUrl: copied.url });
-          }
-        }
-        await storage.bulkReplaceProductImages([productIds[i]], perProductSlots);
-      }
-
-      res.json({ updated: productIds.length });
+      const updated = await bulkUploadImages(productIds, imageSlots);
+      res.json({ updated });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk upload images error:", err);
@@ -579,40 +556,21 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  const attrBodySchema = z.object({
+    productIds:   z.array(z.string()).min(1),
+    audienceIds:  z.array(z.string()).optional(),
+    genderIds:    z.array(z.string()).optional(),
+    themeIds:     z.array(z.string()).optional(),
+    styleIds:     z.array(z.string()).optional(),
+    tagIds:       z.array(z.string()).optional(),
+  });
+
   // ── Bulk Update Attributes ──
   app.post("/api/admin/products/bulk-update-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const bodySchema = z.object({
-        productIds:   z.array(z.string()).min(1),
-        audienceIds:  z.array(z.string()).optional(),
-        genderIds:    z.array(z.string()).optional(),
-        themeIds:     z.array(z.string()).optional(),
-        styleIds:     z.array(z.string()).optional(),
-        tagIds:       z.array(z.string()).optional(),
-      });
-      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
-      const needsAttrs = audienceIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
-      const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
-      await Promise.all(productIds.map(async (productId) => {
-        const [existing, existingTagIds] = await Promise.all([
-          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ audienceIds: [], genderIds: [], themeIds: [], styleIds: [] }),
-          tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
-        ]);
-        await Promise.all([
-          audienceIds !== undefined ? storage.setProductAudiences(productId, union(existing.audienceIds, audienceIds)) : Promise.resolve(),
-          genderIds   !== undefined ? storage.setProductGenders(productId, union(existing.genderIds, genderIds))       : Promise.resolve(),
-          themeIds    !== undefined ? storage.setProductThemes(productId, union(existing.themeIds, themeIds))           : Promise.resolve(),
-          styleIds    !== undefined ? storage.setProductStyles(productId, union(existing.styleIds, styleIds))           : Promise.resolve(),
-          tagIds      !== undefined ? storage.setProductTags(productId, union(existingTagIds, tagIds))                 : Promise.resolve(),
-        ]);
-      }));
-      await storage.createAuditLog({
-        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
-        action: "bulk-update-attributes",
-        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
-        username: getAdminUsername(req),
-      });
-      res.json({ updated: productIds.length });
+      const { productIds, ...attrs } = attrBodySchema.parse(req.body);
+      const updated = await bulkUpdateAttributes(productIds, attrs, getAdminUsername(req));
+      res.json({ updated });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk update attributes error:", err);
@@ -623,37 +581,9 @@ export function registerAdminCatalogRoutes(app: Express) {
   // ── Bulk Remove Attributes ──
   app.post("/api/admin/products/bulk-remove-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const bodySchema = z.object({
-        productIds:   z.array(z.string()).min(1),
-        audienceIds:  z.array(z.string()).optional(),
-        genderIds:    z.array(z.string()).optional(),
-        themeIds:     z.array(z.string()).optional(),
-        styleIds:     z.array(z.string()).optional(),
-        tagIds:       z.array(z.string()).optional(),
-      });
-      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
-      const needsAttrs = audienceIds !== undefined || genderIds !== undefined || themeIds !== undefined || styleIds !== undefined;
-      const subtract = (existing: string[], toRemove: string[]) => existing.filter(id => !toRemove.includes(id));
-      await Promise.all(productIds.map(async (productId) => {
-        const [existing, existingTagIds] = await Promise.all([
-          needsAttrs ? storage.getProductAttributeIds(productId) : Promise.resolve({ audienceIds: [], genderIds: [], themeIds: [], styleIds: [] }),
-          tagIds !== undefined ? storage.getProductTagIds(productId) : Promise.resolve([]),
-        ]);
-        await Promise.all([
-          audienceIds !== undefined ? storage.setProductAudiences(productId, subtract(existing.audienceIds, audienceIds)) : Promise.resolve(),
-          genderIds   !== undefined ? storage.setProductGenders(productId, subtract(existing.genderIds, genderIds))       : Promise.resolve(),
-          themeIds    !== undefined ? storage.setProductThemes(productId, subtract(existing.themeIds, themeIds))           : Promise.resolve(),
-          styleIds    !== undefined ? storage.setProductStyles(productId, subtract(existing.styleIds, styleIds))           : Promise.resolve(),
-          tagIds      !== undefined ? storage.setProductTags(productId, subtract(existingTagIds, tagIds))                 : Promise.resolve(),
-        ]);
-      }));
-      await storage.createAuditLog({
-        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
-        action: "bulk-remove-attributes",
-        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
-        username: getAdminUsername(req),
-      });
-      res.json({ updated: productIds.length });
+      const { productIds, ...attrs } = attrBodySchema.parse(req.body);
+      const updated = await bulkRemoveAttributes(productIds, attrs, getAdminUsername(req));
+      res.json({ updated });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk remove attributes error:", err);
@@ -664,31 +594,9 @@ export function registerAdminCatalogRoutes(app: Express) {
   // ── Bulk Replace Attributes ──
   app.post("/api/admin/products/bulk-replace-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const bodySchema = z.object({
-        productIds:   z.array(z.string()).min(1),
-        audienceIds:  z.array(z.string()).optional(),
-        genderIds:    z.array(z.string()).optional(),
-        themeIds:     z.array(z.string()).optional(),
-        styleIds:     z.array(z.string()).optional(),
-        tagIds:       z.array(z.string()).optional(),
-      });
-      const { productIds, audienceIds, genderIds, themeIds, styleIds, tagIds } = bodySchema.parse(req.body);
-      await Promise.all(productIds.map(async (productId) => {
-        await Promise.all([
-          audienceIds !== undefined ? storage.setProductAudiences(productId, audienceIds) : Promise.resolve(),
-          genderIds   !== undefined ? storage.setProductGenders(productId, genderIds)     : Promise.resolve(),
-          themeIds    !== undefined ? storage.setProductThemes(productId, themeIds)       : Promise.resolve(),
-          styleIds    !== undefined ? storage.setProductStyles(productId, styleIds)       : Promise.resolve(),
-          tagIds      !== undefined ? storage.setProductTags(productId, tagIds)           : Promise.resolve(),
-        ]);
-      }));
-      await storage.createAuditLog({
-        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
-        action: "bulk-replace-attributes",
-        changes: JSON.stringify({ productIds, audienceIds, genderIds, themeIds, styleIds, tagIds }),
-        username: getAdminUsername(req),
-      });
-      res.json({ updated: productIds.length });
+      const { productIds, ...attrs } = attrBodySchema.parse(req.body);
+      const updated = await bulkReplaceAttributes(productIds, attrs, getAdminUsername(req));
+      res.json({ updated });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk replace attributes error:", err);
@@ -699,36 +607,9 @@ export function registerAdminCatalogRoutes(app: Express) {
   // ── Bulk Clear Attributes ──
   app.post("/api/admin/products/bulk-clear-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const bodySchema = z.object({ productIds: z.array(z.string()).min(1) });
-      const { productIds } = bodySchema.parse(req.body);
-      // 1. Capture snapshot FIRST, before any writes
-      const snapshot: ClearSnapshot[] = await Promise.all(productIds.map(async (productId) => {
-        const [attrs, tagIds] = await Promise.all([
-          storage.getProductAttributeIds(productId),
-          storage.getProductTagIds(productId),
-        ]);
-        return { productId, ...attrs, tagIds };
-      }));
-      // 2. Store snapshot server-side immediately with a token (never leaves as round-trip data)
-      const undoToken = crypto.randomUUID();
-      clearUndoStore.set(undoToken, { snapshot, expiresAt: Date.now() + UNDO_TTL_MS });
-      // 3. Now clear
-      await Promise.all(productIds.map(async (productId) => {
-        await Promise.all([
-          storage.setProductAudiences(productId, []),
-          storage.setProductGenders(productId, []),
-          storage.setProductThemes(productId, []),
-          storage.setProductStyles(productId, []),
-          storage.setProductTags(productId, []),
-        ]);
-      }));
-      await storage.createAuditLog({
-        entityType: "product", entityId: productIds.join(","), entityName: `${productIds.length} products`,
-        action: "bulk-clear-attributes",
-        changes: JSON.stringify({ productIds }),
-        username: getAdminUsername(req),
-      });
-      res.json({ updated: productIds.length, undoToken });
+      const { productIds } = z.object({ productIds: z.array(z.string()).min(1) }).parse(req.body);
+      const result = await bulkClearAttributes(productIds, getAdminUsername(req));
+      res.json(result);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk clear attributes error:", err);
@@ -739,34 +620,10 @@ export function registerAdminCatalogRoutes(app: Express) {
   // ── Bulk Restore Attributes (undo clear) ──
   app.post("/api/admin/products/bulk-restore-attributes", requirePermission("catalog"), async (req, res) => {
     try {
-      const bodySchema = z.object({ undoToken: z.string() });
-      const { undoToken } = bodySchema.parse(req.body);
-      const entry = clearUndoStore.get(undoToken);
-      if (!entry) return res.status(410).json({ message: "Undo window has expired. Please re-apply attributes manually." });
-      if (Date.now() > entry.expiresAt) {
-        clearUndoStore.delete(undoToken);
-        return res.status(410).json({ message: "Undo window has expired. Please re-apply attributes manually." });
-      }
-      const { snapshot } = entry;
-      clearUndoStore.delete(undoToken);
-      await Promise.all(snapshot.map(async ({ productId, audienceIds, genderIds, themeIds, styleIds, tagIds }) => {
-        await Promise.all([
-          storage.setProductAudiences(productId, audienceIds),
-          storage.setProductGenders(productId, genderIds),
-          storage.setProductThemes(productId, themeIds),
-          storage.setProductStyles(productId, styleIds),
-          storage.setProductTags(productId, tagIds),
-        ]);
-      }));
-      await storage.createAuditLog({
-        entityType: "product",
-        entityId: snapshot.map(s => s.productId).join(","),
-        entityName: `${snapshot.length} products`,
-        action: "bulk-restore-attributes",
-        changes: JSON.stringify({ productIds: snapshot.map(s => s.productId) }),
-        username: getAdminUsername(req),
-      });
-      res.json({ updated: snapshot.length });
+      const { undoToken } = z.object({ undoToken: z.string() }).parse(req.body);
+      const result = await bulkRestoreAttributes(undoToken, getAdminUsername(req));
+      if ("expired" in result) return res.status(410).json({ message: "Undo window has expired. Please re-apply attributes manually." });
+      res.json(result);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
       console.error("Bulk restore attributes error:", err);
