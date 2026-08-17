@@ -32,8 +32,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 
-/** sessionStorage key — suppresses auto-triggers after dismissal */
-const DISMISSED_KEY = "signup_popup_dismissed";
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 
 interface SignupPopupConfig {
@@ -111,10 +109,8 @@ export default function SignupPopup() {
   }, [isAuthenticated, _onAuthSuccess]);
 
   // ── Eligibility helpers ───────────────────────────────────────────────────
-  /** Auto-triggers (timer, cart soft) respect the session dismissal key. */
   const canAutoTrigger = useCallback(() => {
     if (isAuthRef.current) return false;
-    if (sessionStorage.getItem(DISMISSED_KEY)) return false;
     if (EXCLUDED_PREFIXES.some((p) => location.startsWith(p))) return false;
     return true;
   }, [location]);
@@ -148,13 +144,12 @@ export default function SignupPopup() {
     if (sessionTimerSet.current) return;
     if (authLoading || !config) return;
     if (isAuthenticated || !config.enabled) return;
-    if (sessionStorage.getItem(DISMISSED_KEY)) return;
 
     sessionTimerSet.current = true;
     const delay = Math.max(0, (config.delaySeconds ?? 15)) * 1000;
 
     const timer = setTimeout(() => {
-      if (!sessionStorage.getItem(DISMISSED_KEY) && !isAuthRef.current) {
+      if (!isAuthRef.current) {
         setView("nudge");
         setVisible(true);
       }
@@ -173,7 +168,7 @@ export default function SignupPopup() {
       cartTriggered.current = true;
       const delay = Math.max(0, (config.cartAddDelaySeconds ?? 2)) * 1000;
       cartTimerRef.current = setTimeout(() => {
-        if (!sessionStorage.getItem(DISMISSED_KEY) && !isAuthRef.current) {
+        if (!isAuthRef.current) {
           setView("nudge");
           setVisible(true);
         }
@@ -195,24 +190,19 @@ export default function SignupPopup() {
     setConsentChecked(false);
     pendingCredential.current = null;
     setGoogleUserData(null);
-    // Suppress auto-triggers until the reshow timer fires (or forever if disabled)
-    sessionStorage.setItem(DISMISSED_KEY, "1");
     // Notify CartGateContext — may activate the hard gate
     _onDismissed();
 
-    // Reshow timer: if configured, clear the dismissed flag after the interval
-    // and re-attempt autoShow — loops each dismissal until user authenticates.
+    // Always reshow: use reshowIntervalSeconds if configured, else delaySeconds.
     if (reshowTimerRef.current) clearTimeout(reshowTimerRef.current);
-    const interval = config?.reshowIntervalSeconds ?? 0;
-    if (interval > 0) {
-      reshowTimerRef.current = setTimeout(() => {
-        if (isAuthRef.current) return;
-        sessionStorage.removeItem(DISMISSED_KEY);
-        // autoShow checks canAutoTrigger (which re-reads the cleared key)
-        setView("nudge");
-        setVisible(true);
-      }, interval * 1000);
-    }
+    const interval = (config?.reshowIntervalSeconds ?? 0) > 0
+      ? config!.reshowIntervalSeconds
+      : (config?.delaySeconds ?? 15);
+    reshowTimerRef.current = setTimeout(() => {
+      if (isAuthRef.current) return;
+      setView("nudge");
+      setVisible(true);
+    }, interval * 1000);
   }, [_onDismissed, config]);
 
   // ── Google credential callback ────────────────────────────────────────────
