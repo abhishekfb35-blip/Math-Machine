@@ -539,7 +539,8 @@ export function registerAdminHealthRoutes(app: Express) {
         } catch { return "unknown"; }
       };
 
-      const idFormatTables = ["categories", "products", "product_images", "product_reviews", "tags"];
+      // categories intentionally uses fixed-format IDs (e.g. bathrobescat000000000001) — skip CUID2 check
+      const idFormatTables = ["products", "product_images", "product_reviews", "tags"];
       const idFormatChecks: { table: string; column: string; actualType: string; expectedType: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; sampleIds: string[]; status: "pass" | "fail" | "empty" }[] = [];
 
       for (const table of idFormatTables) {
