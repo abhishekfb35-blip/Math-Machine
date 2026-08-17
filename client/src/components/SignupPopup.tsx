@@ -1,7 +1,5 @@
 /**
- * SignupPopup — unified Google sign-in / phone-collection popup.
- *
- * Replaces both ConsentPopup and GoogleOneTap.
+ * SignupPopup — Google One Tap sign-in + phone-collection popup.
  *
  * Trigger logic:
  *   1. Session-start timer: fires after config.delaySeconds for every unauthenticated
@@ -15,8 +13,12 @@
  * Sign-in flow:
  *   - Google One Tap native overlay fires; credential sent to /api/auth/google.
  *   - Existing user → silent login, popup closes.
- *   - New user → server returns { needsPhone: true }; card switches to phone form.
+ *   - New user → server returns { needsPhone: true }; phone-collection card appears.
  *   - Phone form sends credential + phone to /api/auth/google/complete.
+ *
+ * No custom nudge card is rendered. The "nudge" view is invisible — it only
+ * triggers the native One Tap overlay. Dismissing One Tap activates the reshow
+ * timer and the cart hard-gate just like dismissing the old card did.
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -28,6 +30,7 @@ import { useCartGateInternal } from "@/context/CartGateContext";
 import { X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
 
 /** sessionStorage key — suppresses auto-triggers after dismissal */
 const DISMISSED_KEY = "signup_popup_dismissed";
@@ -44,12 +47,6 @@ interface SignupPopupConfig {
    * 0 = disabled (popup stays gone for the session after one dismissal).
    */
   reshowIntervalSeconds: number;
-  /** Nudge card title */
-  title: string;
-  /** Nudge card body text */
-  body: string;
-  /** Google sign-in button label */
-  buttonText: string;
   /** Shown below the phone input in the phone form */
   incentiveText: string;
   /** Consent statement / T&C shown below incentive */
@@ -83,6 +80,8 @@ export default function SignupPopup() {
   const reshowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Always holds the latest isAuthenticated value for use inside setTimeout closures */
   const isAuthRef = useRef(isAuthenticated);
+  /** Always holds the latest handleDismiss — lets the One Tap effect call it without re-running */
+  const handleDismissRef = useRef<() => void>(() => {});
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -248,7 +247,11 @@ export default function SignupPopup() {
     [toast],
   );
 
-  // ── Google One Tap initialisation (nudge view only) ───────────────────────
+  // Keep handleDismissRef current so the One Tap callback can call it without
+  // being listed as an effect dependency (avoids re-initialising One Tap on every dismiss).
+  useEffect(() => { handleDismissRef.current = handleDismiss; }, [handleDismiss]);
+
+  // ── Google One Tap initialisation (fires when nudge view is active) ───────
   useEffect(() => {
     if (!visible || view !== "nudge") return;
     let cancelled = false;
@@ -267,9 +270,10 @@ export default function SignupPopup() {
             cancel_on_tap_outside: true,
           });
           google.accounts.id.prompt((notification: any) => {
-            // Native overlay dismissed — our card stays; user can still click the button.
+            // Treat One Tap dismissal/skip the same as dismissing our old card:
+            // activates the reshow timer and the cart hard-gate.
             if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
-              // no-op
+              handleDismissRef.current();
             }
           });
           return true;
@@ -325,7 +329,9 @@ export default function SignupPopup() {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-  if (!visible) return null;
+  // "nudge" view = invisible; only the native One Tap overlay fires.
+  // "phone" view = phone-collection card shown after Google sign-in for new users.
+  if (!visible || view === "nudge") return null;
 
   return (
     <>
@@ -342,94 +348,24 @@ export default function SignupPopup() {
         style={{ boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08), 0 1px 4px 0 rgba(0,0,0,0.04)" }}
         data-testid="signup-popup"
       >
-        {view === "nudge" ? (
-          <NudgeView
-            config={config}
-            onDismiss={handleDismiss}
-            onSignInClick={() => {
-              setVisible(false);
-              window.dispatchEvent(new CustomEvent("show:signin-modal"));
-            }}
-          />
-        ) : (
-          <PhoneView
-            googleUserData={googleUserData}
-            phoneInput={phoneInput}
-            onPhoneChange={setPhoneInput}
-            consentChecked={consentChecked}
-            onConsentChange={setConsentChecked}
-            incentiveText={config?.incentiveText ?? ""}
-            consentText={config?.consentText ?? ""}
-            submitting={submitting}
-            onSubmit={handlePhoneSubmit}
-            onDismiss={handleDismiss}
-          />
-        )}
+        <PhoneView
+          googleUserData={googleUserData}
+          phoneInput={phoneInput}
+          onPhoneChange={setPhoneInput}
+          consentChecked={consentChecked}
+          onConsentChange={setConsentChecked}
+          incentiveText={config?.incentiveText ?? ""}
+          consentText={config?.consentText ?? ""}
+          submitting={submitting}
+          onSubmit={handlePhoneSubmit}
+          onDismiss={handleDismiss}
+        />
       </div>
     </>
   );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-function NudgeView({
-  config,
-  onDismiss,
-  onSignInClick,
-}: {
-  config: SignupPopupConfig | null;
-  onDismiss: () => void;
-  onSignInClick: () => void;
-}) {
-  return (
-    <div className="p-5 space-y-4">
-      {/* Header row */}
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 shrink-0 p-2 rounded-full" style={{ backgroundColor: "#edf3ea" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a7c59" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/>
-            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-          </svg>
-        </div>
-        <div className="flex-1 min-w-0">
-          {config?.title && (
-            <p className="text-sm font-bold leading-snug" style={{ color: "#4a7c59" }}>
-              {config.title}
-            </p>
-          )}
-          {config?.body && (
-            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{config.body}</p>
-          )}
-        </div>
-        <button
-          onClick={onDismiss}
-          className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-          aria-label="Dismiss"
-          data-testid="btn-dismiss-signup-popup"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      <div className="h-px bg-gray-100 dark:bg-zinc-700" />
-
-      {/* Google sign-in button */}
-      <button
-        onClick={onSignInClick}
-        className="w-full flex items-center justify-center gap-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 rounded-xl px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-        data-testid="btn-signup-popup-signin"
-      >
-        <GoogleIcon />
-        {config?.buttonText || "Sign in with Google"}
-      </button>
-
-      <p className="text-center text-[10px] text-muted-foreground -mt-1">
-        Free account · No password required
-      </p>
-    </div>
-  );
-}
 
 function PhoneView({
   googleUserData,
@@ -524,13 +460,3 @@ function PhoneView({
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    </svg>
-  );
-}

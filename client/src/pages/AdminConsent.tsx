@@ -24,15 +24,9 @@ interface SignupPopupConfig {
    * 0 = disabled (popup stays gone for the session after one dismissal).
    */
   reshowIntervalSeconds: number;
-  /** Nudge card title */
-  title: string;
-  /** Nudge card body text */
-  body: string;
-  /** Google sign-in button label */
-  buttonText: string;
-  /** Text shown below the phone field (incentive). No default. */
+  /** Text shown below the phone input in the phone form (new users only). */
   incentiveText: string;
-  /** Consent statement / T&C shown below incentive. No default. */
+  /** Consent statement / T&C shown below incentive. */
   consentText: string;
 }
 
@@ -41,9 +35,6 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   delaySeconds: 15,
   cartAddDelaySeconds: 2,
   reshowIntervalSeconds: 0,
-  title: "",
-  body: "",
-  buttonText: "",
   incentiveText: "",
   consentText: "",
 };
@@ -199,8 +190,8 @@ export default function AdminConsent() {
               <LogIn className="w-4 h-4" /> Signup Popup
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              A card that appears in the top-right corner for unauthenticated visitors. Fires automatically after a delay
-              and again a few seconds after the first cart add. Dismissing it once enables a hard gate on subsequent
+              Controls Google One Tap sign-in for unauthenticated visitors. Fires automatically after a delay
+              and again a few seconds after the first cart add. Dismissing One Tap enables a hard gate on subsequent
               cart adds until the user signs in or registers.
             </p>
           </div>
@@ -262,39 +253,6 @@ export default function AdminConsent() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">0 = don't re-show after dismiss</p>
                 </div>
-              </div>
-
-              <Separator />
-
-              {/* Nudge card copy */}
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nudge card</p>
-              <div>
-                <label className="text-sm font-medium block mb-1">Card title</label>
-                <Input
-                  value={signupPopup.title}
-                  onChange={e => setSignupPopup(s => ({ ...s, title: e.target.value }))}
-                  placeholder="e.g. Member perks await"
-                  data-testid="input-signup-title"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-1">Card body text</label>
-                <textarea
-                  value={signupPopup.body}
-                  onChange={e => setSignupPopup(s => ({ ...s, body: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
-                  placeholder="e.g. Sign in to save your wishlist and get exclusive deals."
-                  data-testid="input-signup-body"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-1">Sign-in button label</label>
-                <Input
-                  value={signupPopup.buttonText}
-                  onChange={e => setSignupPopup(s => ({ ...s, buttonText: e.target.value }))}
-                  placeholder="e.g. Sign in with Google"
-                  data-testid="input-signup-button-text"
-                />
               </div>
 
               <Separator />
