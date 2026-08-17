@@ -7,6 +7,16 @@ import { requireAdmin, requirePermission, requireSuperAdmin, requireSnapshotAcce
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { seedDatabase } from "../../seed";
+import { getTableColumns } from "drizzle-orm";
+import {
+  categories, products, productImages, productReviews, tags, productTags,
+  carts, cartItems, orders, orderItems, siteConfig, auditLogs,
+  customers, customerOtps, customerSessions,
+  audience, genders, themes, styles,
+  productAudience, productGenders, productThemes, productStyles,
+  tagTypes, occasions, categoryTagVariantConfigs, variantSizes, variantColors,
+  colorSwatches, categorySizeDefinitions, bulkPriceRules,
+} from "@shared/schema";
 import { Resend } from "resend";
 
 const BRAND_SLOTS: Record<string, string> = {
@@ -340,198 +350,55 @@ export function registerAdminHealthRoutes(app: Express) {
       const { pool } = await import("../../db");
       const environment = process.env.NODE_ENV || "development";
 
+      // Normalise Drizzle SQL type strings to what information_schema.columns returns
+      function normalizePgType(sqlType: string): string {
+        if (sqlType === "serial" || sqlType === "bigserial") return "integer";
+        if (sqlType.startsWith("timestamp")) return "timestamp without time zone";
+        if (sqlType.startsWith("varchar")) return "character varying";
+        return sqlType;
+      }
+
+      // Derive expected columns directly from Drizzle table objects — always in sync with migrations
+      function drizzleToSchemaEntry(table: Parameters<typeof getTableColumns>[0]) {
+        return Object.values(getTableColumns(table)).map((col: any) => ({
+          column: col.name as string,
+          type: normalizePgType(col.getSQLType()),
+          nullable: !col.notNull,
+        }));
+      }
+
       const expectedSchema: Record<string, { column: string; type: string; nullable: boolean }[]> = {
-        categories: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "slug", type: "text", nullable: false },
-          { column: "description", type: "text", nullable: true },
-          { column: "image_url", type: "text", nullable: true },
-          { column: "sort_order", type: "integer", nullable: true },
-        ],
-        products: [
-          { column: "id", type: "text", nullable: false },
-          { column: "sku", type: "text", nullable: true },
-          { column: "name", type: "text", nullable: false },
-          { column: "slug", type: "text", nullable: false },
-          { column: "description", type: "text", nullable: true },
-          { column: "price", type: "integer", nullable: false },
-          { column: "mrp", type: "integer", nullable: true },
-          { column: "image_url", type: "text", nullable: false },
-          { column: "category_id", type: "text", nullable: false },
-          { column: "amazon_asin", type: "text", nullable: true },
-          { column: "color", type: "text", nullable: true },
-          { column: "material", type: "text", nullable: true },
-          { column: "gsm", type: "integer", nullable: true },
-          { column: "dimensions", type: "text", nullable: true },
-          { column: "weight_grams", type: "integer", nullable: true },
-          { column: "items_in_set", type: "integer", nullable: true },
-          { column: "special_features", type: "text", nullable: true },
-          { column: "bullet_points", type: "text", nullable: true },
-          { column: "search_keywords", type: "text", nullable: true },
-          { column: "product_type", type: "text", nullable: true },
-          { column: "active", type: "boolean", nullable: true },
-          { column: "sort_order", type: "integer", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-          { column: "updated_at", type: "timestamp without time zone", nullable: true },
-        ],
-        product_images: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "image_url", type: "text", nullable: false },
-          { column: "sort_order", type: "integer", nullable: true },
-          { column: "is_primary", type: "boolean", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-          { column: "updated_at", type: "timestamp without time zone", nullable: true },
-        ],
-        product_reviews: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "reviewer_name", type: "text", nullable: false },
-          { column: "rating", type: "integer", nullable: false },
-          { column: "title", type: "text", nullable: true },
-          { column: "body", type: "text", nullable: false },
-          { column: "amz_review_date", type: "text", nullable: true },
-          { column: "verified_purchase", type: "boolean", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-        ],
-        tags: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "description", type: "text", nullable: true },
-        ],
-        product_tags: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "tag_id", type: "text", nullable: false },
-        ],
-        carts: [
-          { column: "id", type: "text", nullable: false },
-          { column: "session_id", type: "character varying", nullable: false },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-        ],
-        cart_items: [
-          { column: "id", type: "text", nullable: false },
-          { column: "cart_id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "quantity", type: "integer", nullable: false },
-          { column: "personalization_name", type: "text", nullable: true },
-        ],
-        orders: [
-          { column: "id", type: "text", nullable: false },
-          { column: "customer_id", type: "text", nullable: true },
-          { column: "customer_name", type: "text", nullable: false },
-          { column: "customer_email", type: "text", nullable: false },
-          { column: "customer_phone", type: "text", nullable: false },
-          { column: "shipping_address", type: "text", nullable: false },
-          { column: "shipping_city", type: "text", nullable: false },
-          { column: "shipping_state", type: "text", nullable: false },
-          { column: "shipping_pincode", type: "text", nullable: false },
-          { column: "subtotal", type: "integer", nullable: false },
-          { column: "discount", type: "integer", nullable: false },
-          { column: "total", type: "integer", nullable: false },
-          { column: "status", type: "text", nullable: false },
-          { column: "payment_id", type: "text", nullable: true },
-          { column: "razorpay_order_id", type: "text", nullable: true },
-          { column: "payment_status", type: "text", nullable: true },
-          { column: "notes", type: "text", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-          { column: "updated_at", type: "timestamp without time zone", nullable: true },
-        ],
-        order_items: [
-          { column: "id", type: "text", nullable: false },
-          { column: "order_id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "product_name", type: "text", nullable: false },
-          { column: "product_price", type: "integer", nullable: false },
-          { column: "quantity", type: "integer", nullable: false },
-          { column: "personalization_name", type: "text", nullable: true },
-          { column: "is_free", type: "boolean", nullable: true },
-        ],
-        site_config: [
-          { column: "id", type: "text", nullable: false },
-          { column: "key", type: "text", nullable: false },
-          { column: "value", type: "text", nullable: false },
-        ],
-        audit_logs: [
-          { column: "id", type: "text", nullable: false },
-          { column: "entity_type", type: "text", nullable: false },
-          { column: "entity_id", type: "text", nullable: false },
-          { column: "entity_name", type: "text", nullable: true },
-          { column: "action", type: "text", nullable: false },
-          { column: "changes", type: "text", nullable: true },
-          { column: "username", type: "text", nullable: false },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-        ],
-        customers: [
-          { column: "id", type: "text", nullable: false },
-          { column: "email", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: true },
-          { column: "phone", type: "text", nullable: true },
-          { column: "shipping_address", type: "text", nullable: true },
-          { column: "shipping_city", type: "text", nullable: true },
-          { column: "shipping_state", type: "text", nullable: true },
-          { column: "shipping_pincode", type: "text", nullable: true },
-          { column: "google_id", type: "text", nullable: true },
-          { column: "avatar_url", type: "text", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-          { column: "updated_at", type: "timestamp without time zone", nullable: true },
-        ],
-        customer_otps: [
-          { column: "id", type: "text", nullable: false },
-          { column: "email", type: "text", nullable: false },
-          { column: "otp", type: "text", nullable: false },
-          { column: "expires_at", type: "timestamp without time zone", nullable: false },
-          { column: "used", type: "boolean", nullable: true },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-        ],
-        customer_sessions: [
-          { column: "id", type: "text", nullable: false },
-          { column: "customer_id", type: "text", nullable: false },
-          { column: "token", type: "text", nullable: false },
-          { column: "expires_at", type: "timestamp without time zone", nullable: false },
-          { column: "created_at", type: "timestamp without time zone", nullable: true },
-        ],
-        audience: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "sort_order", type: "integer", nullable: true },
-        ],
-        genders: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "sort_order", type: "integer", nullable: true },
-        ],
-        themes: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "sort_order", type: "integer", nullable: true },
-        ],
-        styles: [
-          { column: "id", type: "text", nullable: false },
-          { column: "name", type: "text", nullable: false },
-          { column: "sort_order", type: "integer", nullable: true },
-        ],
-        product_audience: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "audience_id", type: "text", nullable: false },
-        ],
-        product_genders: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "gender_id", type: "text", nullable: false },
-        ],
-        product_themes: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "theme_id", type: "text", nullable: false },
-        ],
-        product_styles: [
-          { column: "id", type: "text", nullable: false },
-          { column: "product_id", type: "text", nullable: false },
-          { column: "style_id", type: "text", nullable: false },
-        ],
+        categories:                   drizzleToSchemaEntry(categories),
+        products:                     drizzleToSchemaEntry(products),
+        product_images:               drizzleToSchemaEntry(productImages),
+        product_reviews:              drizzleToSchemaEntry(productReviews),
+        tags:                         drizzleToSchemaEntry(tags),
+        tag_types:                    drizzleToSchemaEntry(tagTypes),
+        product_tags:                 drizzleToSchemaEntry(productTags),
+        occasions:                    drizzleToSchemaEntry(occasions),
+        carts:                        drizzleToSchemaEntry(carts),
+        cart_items:                   drizzleToSchemaEntry(cartItems),
+        orders:                       drizzleToSchemaEntry(orders),
+        order_items:                  drizzleToSchemaEntry(orderItems),
+        site_config:                  drizzleToSchemaEntry(siteConfig),
+        audit_logs:                   drizzleToSchemaEntry(auditLogs),
+        customers:                    drizzleToSchemaEntry(customers),
+        customer_otps:                drizzleToSchemaEntry(customerOtps),
+        customer_sessions:            drizzleToSchemaEntry(customerSessions),
+        audience:                     drizzleToSchemaEntry(audience),
+        genders:                      drizzleToSchemaEntry(genders),
+        themes:                       drizzleToSchemaEntry(themes),
+        styles:                       drizzleToSchemaEntry(styles),
+        product_audience:             drizzleToSchemaEntry(productAudience),
+        product_genders:              drizzleToSchemaEntry(productGenders),
+        product_themes:               drizzleToSchemaEntry(productThemes),
+        product_styles:               drizzleToSchemaEntry(productStyles),
+        category_tag_variant_configs: drizzleToSchemaEntry(categoryTagVariantConfigs),
+        variant_sizes:                drizzleToSchemaEntry(variantSizes),
+        variant_colors:               drizzleToSchemaEntry(variantColors),
+        color_swatches:               drizzleToSchemaEntry(colorSwatches),
+        category_size_definitions:    drizzleToSchemaEntry(categorySizeDefinitions),
+        bulk_price_rules:             drizzleToSchemaEntry(bulkPriceRules),
       };
 
       const schemaQuery = await pool.query(`
