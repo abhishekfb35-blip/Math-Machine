@@ -270,9 +270,13 @@ export default function SignupPopup() {
             cancel_on_tap_outside: true,
           });
           google.accounts.id.prompt((notification: any) => {
-            // Treat One Tap dismissal/skip the same as dismissing our old card:
-            // activates the reshow timer and the cart hard-gate.
-            if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+            // Treat every non-display outcome the same as dismissing:
+            // activates the reshow timer and cleans up state.
+            if (
+              notification.isNotDisplayedMoment() ||
+              notification.isSkippedMoment() ||
+              notification.isDismissedMoment()
+            ) {
               handleDismissRef.current();
             }
           });
