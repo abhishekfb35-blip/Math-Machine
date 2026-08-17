@@ -39,6 +39,7 @@ interface SignupPopupConfig {
   cartAddDelaySeconds: number;
   reshowIntervalSeconds: number;
   incentiveText: string;
+  subtitleText: string;
   consentText: string;
 }
 
@@ -78,9 +79,9 @@ export default function SignupPopup() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.value) {
-          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText } =
+          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, consentText } =
             d.value;
-          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText });
+          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", consentText });
         }
       })
       .catch(() => {});
@@ -344,9 +345,11 @@ export default function SignupPopup() {
                 </button>
               </div>
 
-              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                Save your wishlist, track orders, and check out faster.
-              </p>
+              {config?.subtitleText && (
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  {config.subtitleText}
+                </p>
+              )}
 
               {/* GSI rendered button mounts here */}
               <div

@@ -24,8 +24,10 @@ interface SignupPopupConfig {
    * 0 = disabled (popup stays gone for the session after one dismissal).
    */
   reshowIntervalSeconds: number;
-  /** Text shown below the phone input in the phone form (new users only). */
+  /** Heading shown on the nudge card. */
   incentiveText: string;
+  /** Subtitle line shown below the heading on the nudge card. */
+  subtitleText: string;
   /** Consent statement / T&C shown below incentive. */
   consentText: string;
 }
@@ -36,6 +38,7 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   cartAddDelaySeconds: 2,
   reshowIntervalSeconds: 0,
   incentiveText: "",
+  subtitleText: "Save your wishlist, track orders, and check out faster.",
   consentText: "",
 };
 
@@ -126,8 +129,8 @@ export default function AdminConsent() {
   useEffect(() => {
     if (signupConfigData?.value) {
       // Destructure only known fields — drops any stale keys (e.g. old nudge-card fields).
-      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText } = signupConfigData.value;
-      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText });
+      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, consentText } = signupConfigData.value;
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, consentText });
     }
   }, [signupConfigData]);
 
@@ -255,6 +258,22 @@ export default function AdminConsent() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">0 = don't re-show after dismiss</p>
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Nudge card copy */}
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nudge card copy</p>
+              <div>
+                <label className="text-sm font-medium block mb-1">Subtitle text</label>
+                <textarea
+                  value={signupPopup.subtitleText}
+                  onChange={e => setSignupPopup(s => ({ ...s, subtitleText: e.target.value }))}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px] resize-y"
+                  placeholder="e.g. Save your wishlist, track orders, and check out faster."
+                  data-testid="input-signup-subtitle"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Shown below the heading on the sign-in nudge card.</p>
               </div>
 
               <Separator />
