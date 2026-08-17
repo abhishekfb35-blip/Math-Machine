@@ -74,4 +74,20 @@ export function registerAdminCustomerRoutes(app: Express) {
       res.status(500).json({ message: "Failed to update customer" });
     }
   });
+
+  app.delete("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const existing = await storage.getCustomerById(id);
+      if (!existing) {
+        res.status(404).json({ message: "Customer not found" });
+        return;
+      }
+      await storage.deleteCustomer(id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Admin customer delete error:", err);
+      res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
 }

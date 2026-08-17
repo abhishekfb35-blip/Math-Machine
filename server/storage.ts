@@ -159,6 +159,7 @@ export interface IStorage {
   verifyOtp(email: string, otp: string): Promise<boolean>;
   createCustomerSession(customerId: string, token: string, expiresAt: Date): Promise<void>;
   getCustomerBySessionToken(token: string): Promise<Customer | undefined>;
+  deleteCustomer(id: string): Promise<void>;
   deleteCustomerSession(token: string): Promise<void>;
   getOrdersByCustomerId(customerId: string): Promise<Order[]>;
 
@@ -1483,6 +1484,10 @@ export class DatabaseStorage implements IStorage {
       ));
     if (!session) return undefined;
     return this.getCustomerById(session.customerId);
+  }
+
+  async deleteCustomer(id: string): Promise<void> {
+    await db.delete(customers).where(eq(customers.id, id));
   }
 
   async deleteCustomerSession(token: string): Promise<void> {

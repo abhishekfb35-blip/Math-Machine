@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft, Search, ChevronLeft, ChevronRight, Edit2, X, Save, Loader2,
-  ShoppingBag, Mail, Phone, MapPin, User, Calendar, ExternalLink
+  ShoppingBag, Mail, Phone, MapPin, User, Calendar, ExternalLink, Trash2, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -53,6 +53,7 @@ function CustomerEditDrawer({
 }) {
   const { toast } = useToast();
   const [form, setForm] = useState<EditForm | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data, isLoading } = useQuery<CustomerDetailResponse>({
     queryKey: ["/api/admin/customers", customerId],
@@ -86,6 +87,19 @@ function CustomerEditDrawer({
     },
     onError: () => {
       toast({ title: "Failed to update customer", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", `/api/admin/customers/${customerId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      toast({ title: "Customer deleted" });
+      onClose();
+    },
+    onError: () => {
+      toast({ title: "Failed to delete customer", variant: "destructive" });
+      setShowDeleteConfirm(false);
     },
   });
 
@@ -223,6 +237,58 @@ function CustomerEditDrawer({
                 )}
               </Button>
             </div>
+
+            {/* Delete section */}
+            {!showDeleteConfirm ? (
+              <div className="border border-red-200 dark:border-red-900 rounded-lg p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Danger Zone</h3>
+                <Button
+                  variant="outline"
+                  className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  data-testid="button-delete-customer"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete Customer
+                </Button>
+              </div>
+            ) : (
+              <div className="border border-red-300 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-950/30 space-y-3" data-testid="section-delete-confirm">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-700 dark:text-red-300">Delete this customer?</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                      This permanently removes <strong>{customer?.name || customer?.email}</strong> and all their data. This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleteMutation.isPending}
+                    data-testid="button-cancel-delete"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => deleteMutation.mutate()}
+                    disabled={deleteMutation.isPending}
+                    data-testid="button-confirm-delete"
+                  >
+                    {deleteMutation.isPending ? (
+                      <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> Deleting...</>
+                    ) : (
+                      <><Trash2 className="w-3 h-3 mr-1.5" /> Yes, Delete</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {orders.length > 0 && (
               <div className="border rounded-lg p-4 space-y-3">
