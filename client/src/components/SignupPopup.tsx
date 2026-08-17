@@ -270,11 +270,12 @@ export default function SignupPopup() {
             cancel_on_tap_outside: true,
           });
           google.accounts.id.prompt((notification: any) => {
-            // Treat every non-display outcome the same as dismissing:
-            // activates the reshow timer and cleans up state.
-            // Use optional chaining — not all GSI library versions expose every method.
-            const displayed = notification.isDisplayedMoment?.() ?? false;
-            if (!displayed) {
+            // isSkippedMoment / isDismissedMoment are present in all GSI versions.
+            // isNotDisplayedMoment was added later — call it only if it exists.
+            const skipped = notification.isSkippedMoment();
+            const dismissed = notification.isDismissedMoment();
+            const notDisplayed = notification.isNotDisplayedMoment?.() ?? false;
+            if (skipped || dismissed || notDisplayed) {
               handleDismissRef.current();
             }
           });
