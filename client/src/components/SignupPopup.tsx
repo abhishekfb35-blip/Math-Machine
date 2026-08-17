@@ -1,5 +1,5 @@
 /**
- * SignupPopup — Google One Tap sign-in + phone-collection popup.
+ * SignupPopup — Custom sign-in popup with a "Continue with Google" card.
  *
  * Trigger logic:
  *   1. Session timer: fires after config.delaySeconds for every unauthenticated guest.
@@ -8,15 +8,17 @@
  *   3. Hard cart gate (via CartGateContext): after the popup is dismissed with cart
  *      activity, every subsequent add-to-cart is blocked until the user signs in.
  *
- * Sign-in flow:
- *   - Google One Tap native overlay fires; credential sent to /api/auth/google.
- *   - Existing user → silent login, popup closes.
- *   - New user → server returns { needsPhone: true }; phone-collection card appears.
- *   - Phone form sends credential + phone to /api/auth/google/complete.
+ * Sign-in flow (no Google One Tap — fully custom card):
+ *   1. Popup shows a visible card with incentive text + "Continue with Google" button.
+ *   2. User clicks → GSI calls handleCredential with the JWT credential.
+ *   3. Credential sent to /api/auth/google:
+ *      - Existing user → update auth cache, close popup.
+ *      - New user (needsPhone:true) → switch card to phone-collection view.
+ *   4. Phone form → /api/auth/google/complete → update cache, close.
  *
  * Dismiss behaviour:
- *   - No sessionStorage suppression. On dismiss, a reshow timer fires after
- *     reshowIntervalSeconds (or delaySeconds as fallback), then the popup re-appears.
+ *   - Dismiss X arms the cart hard gate and starts the reshow timer.
+ *   - reshowIntervalSeconds = 0 means "never reshow after dismiss".
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -59,6 +61,7 @@ export default function SignupPopup() {
   const [submitting, setSubmitting] = useState(false);
   const [googleUserData, setGoogleUserData] = useState<GoogleUserData | null>(null);
   const [config, setConfig] = useState<SignupPopupConfig | null>(null);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
 
   const pendingCredential = useRef<string | null>(null);
   const sessionTimerSet = useRef(false);
@@ -66,7 +69,8 @@ export default function SignupPopup() {
   const cartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reshowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAuthRef = useRef(isAuthenticated);
-  const handleDismissRef = useRef<() => void>(() => {});
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const gsiInitialized = useRef(false);
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -74,10 +78,19 @@ export default function SignupPopup() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.value) {
-          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText } = d.value;
+          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText } =
+            d.value;
           setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText });
         }
       })
+      .catch(() => {});
+  }, []);
+
+  // ── Google client ID fetch (once) ─────────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/auth/google-client-id")
+      .then((r) => r.json())
+      .then((d) => { if (d.clientId) setGoogleClientId(d.clientId); })
       .catch(() => {});
   }, []);
 
@@ -95,6 +108,7 @@ export default function SignupPopup() {
       setConsentChecked(false);
       pendingCredential.current = null;
       setGoogleUserData(null);
+      gsiInitialized.current = false;
       if (reshowTimerRef.current) { clearTimeout(reshowTimerRef.current); reshowTimerRef.current = null; }
       _onAuthSuccess();
     }
@@ -111,6 +125,7 @@ export default function SignupPopup() {
   // ── forceShow (used by CartGate hard gate) ────────────────────────────────
   const forceShow = useCallback(() => {
     if (!canShow()) return;
+    gsiInitialized.current = false; // allow re-render of button on next open
     setView("nudge");
     setVisible(true);
   }, [canShow]);
@@ -130,6 +145,7 @@ export default function SignupPopup() {
 
     const timer = setTimeout(() => {
       if (!isAuthRef.current && canShow()) {
+        gsiInitialized.current = false;
         setView("nudge");
         setVisible(true);
       }
@@ -147,6 +163,7 @@ export default function SignupPopup() {
       const delay = Math.max(0, config.cartAddDelaySeconds ?? 2) * 1000;
       cartTimerRef.current = setTimeout(() => {
         if (!isAuthRef.current && canShow()) {
+          gsiInitialized.current = false;
           setView("nudge");
           setVisible(true);
         }
@@ -168,6 +185,7 @@ export default function SignupPopup() {
     setConsentChecked(false);
     pendingCredential.current = null;
     setGoogleUserData(null);
+    gsiInitialized.current = false;
 
     _onDismissed();
 
@@ -177,15 +195,13 @@ export default function SignupPopup() {
     if (interval > 0) {
       reshowTimerRef.current = setTimeout(() => {
         if (!isAuthRef.current && canShow()) {
+          gsiInitialized.current = false;
           setView("nudge");
           setVisible(true);
         }
       }, interval * 1000);
     }
   }, [_onDismissed, config, canShow]);
-
-  // Keep ref current so One Tap effect can call it without re-initialising
-  useEffect(() => { handleDismissRef.current = handleDismiss; }, [handleDismiss]);
 
   // ── Google credential callback ────────────────────────────────────────────
   const handleCredential = useCallback(
@@ -217,54 +233,40 @@ export default function SignupPopup() {
     [toast],
   );
 
-  // ── Google One Tap initialisation ─────────────────────────────────────────
+  // ── GSI rendered button (replaces One Tap) ────────────────────────────────
+  // Initialises whenever the nudge card becomes visible. Uses the same
+  // renderButton pattern as SignInModal — no prompt(), no One Tap overlay.
   useEffect(() => {
     if (!visible || view !== "nudge") return;
-    let cancelled = false;
+    if (!googleClientId || !googleButtonRef.current) return;
+    if (gsiInitialized.current) return;
 
-    fetch("/api/auth/google-client-id")
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || !d.clientId) return;
+    const tryRender = (): boolean => {
+      const google = (window as any).google;
+      if (!google?.accounts?.id || !googleButtonRef.current) return false;
 
-        const tryInit = (): boolean => {
-          const google = (window as any).google;
-          if (!google?.accounts?.id) return false;
-          google.accounts.id.initialize({
-            client_id: d.clientId,
-            callback: handleCredential,
-            cancel_on_tap_outside: true,
-          });
-          google.accounts.id.prompt((notification: any) => {
-            // Only treat the moment as abandonment when the user genuinely
-            // walked away — NOT when they selected an account (credential_returned),
-            // which fires as a dismissed moment before the credential callback runs.
-            const reason = notification.getDismissedReason?.() ?? "";
-            const credentialReturned = reason === "credential_returned";
-            if (credentialReturned) return; // credential callback handles this path
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleCredential,
+      });
+      google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        width: googleButtonRef.current.offsetWidth || 240,
+      });
+      gsiInitialized.current = true;
+      return true;
+    };
 
-            const skipped = notification.isSkippedMoment?.() ?? false;
-            const dismissed = notification.isDismissedMoment?.() ?? false;
-            const notDisplayed = notification.isNotDisplayedMoment?.() ?? false;
-            if (skipped || dismissed || notDisplayed) {
-              handleDismissRef.current();
-            }
-          });
-          return true;
-        };
-
-        if (!tryInit()) {
-          const iv = setInterval(() => {
-            if (cancelled) { clearInterval(iv); return; }
-            if (tryInit()) clearInterval(iv);
-          }, 300);
-          setTimeout(() => clearInterval(iv), 5000);
-        }
-      })
-      .catch(() => {});
-
-    return () => { cancelled = true; };
-  }, [visible, view, handleCredential]);
+    if (!tryRender()) {
+      const iv = setInterval(() => {
+        if (tryRender()) clearInterval(iv);
+      }, 200);
+      const timeout = setTimeout(() => clearInterval(iv), 5000);
+      return () => { clearInterval(iv); clearTimeout(timeout); };
+    }
+  }, [visible, view, googleClientId, handleCredential]);
 
   // ── Phone form submit ─────────────────────────────────────────────────────
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -303,9 +305,7 @@ export default function SignupPopup() {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-  // "nudge" view: invisible — One Tap native overlay fires.
-  // "phone" view: phone-collection card.
-  if (!visible || view === "nudge") return null;
+  if (!visible) return null;
 
   const name = googleUserData
     ? [googleUserData.firstName, googleUserData.lastName].filter(Boolean).join(" ")
@@ -327,70 +327,103 @@ export default function SignupPopup() {
         data-testid="signup-popup"
       >
         <div className="p-5">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug">
-                {name ? `Welcome, ${name}!` : "One last step"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Add your phone number to complete sign-up.
-              </p>
-            </div>
-            <button
-              onClick={handleDismiss}
-              className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-              aria-label="Dismiss"
-              data-testid="btn-dismiss-phone-form"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {view === "nudge" ? (
+            /* ── Nudge view: incentive + "Continue with Google" button ── */
+            <>
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                  {config?.incentiveText || "Sign in to TurtleLittle"}
+                </p>
+                <button
+                  onClick={handleDismiss}
+                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                  aria-label="Dismiss"
+                  data-testid="btn-dismiss-nudge"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
-          <form onSubmit={handlePhoneSubmit} className="space-y-3">
-            <Input
-              type="tel"
-              placeholder="Phone number"
-              value={phoneInput}
-              onChange={(e) => setPhoneInput(e.target.value)}
-              required
-              autoFocus
-              data-testid="input-signup-phone"
-            />
-
-            {config?.incentiveText && (
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {config.incentiveText}
+              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                Save your wishlist, track orders, and check out faster.
               </p>
-            )}
 
-            {config?.consentText && (
-              <label className="flex items-start gap-2 cursor-pointer" data-testid="signup-consent-label">
-                <input
-                  type="checkbox"
-                  checked={consentChecked}
-                  onChange={(e) => setConsentChecked(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
-                  data-testid="signup-consent-checkbox"
+              {/* GSI rendered button mounts here */}
+              <div
+                ref={googleButtonRef}
+                className="flex justify-center min-h-[44px]"
+                data-testid="signup-popup-google-btn"
+              />
+            </>
+          ) : (
+            /* ── Phone view: collect phone before creating account ── */
+            <>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug">
+                    {name ? `Welcome, ${name}!` : "One last step"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add your phone number to complete sign-up.
+                  </p>
+                </div>
+                <button
+                  onClick={handleDismiss}
+                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                  aria-label="Dismiss"
+                  data-testid="btn-dismiss-phone-form"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handlePhoneSubmit} className="space-y-3">
+                <Input
+                  type="tel"
+                  placeholder="Phone number"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  required
+                  autoFocus
+                  data-testid="input-signup-phone"
                 />
-                <span className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  {config.consentText}
-                </span>
-              </label>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={submitting || (!!config?.consentText && !consentChecked)}
-              data-testid="btn-signup-phone-submit"
-            >
-              {submitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</>
-              ) : (
-                "Create my account"
-              )}
-            </Button>
-          </form>
+                {config?.incentiveText && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {config.incentiveText}
+                  </p>
+                )}
+
+                {config?.consentText && (
+                  <label className="flex items-start gap-2 cursor-pointer" data-testid="signup-consent-label">
+                    <input
+                      type="checkbox"
+                      checked={consentChecked}
+                      onChange={(e) => setConsentChecked(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
+                      data-testid="signup-consent-checkbox"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                      {config.consentText}
+                    </span>
+                  </label>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={submitting || (!!config?.consentText && !consentChecked)}
+                  data-testid="btn-signup-phone-submit"
+                >
+                  {submitting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</>
+                  ) : (
+                    "Create my account"
+                  )}
+                </Button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </>
