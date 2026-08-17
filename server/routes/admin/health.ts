@@ -539,8 +539,9 @@ export function registerAdminHealthRoutes(app: Express) {
         } catch { return "unknown"; }
       };
 
-      // categories intentionally uses fixed-format IDs (e.g. bathrobescat000000000001) — skip CUID2 check
-      const idFormatTables = ["products", "product_images", "product_reviews", "tags"];
+      // categories uses fixed-format IDs (e.g. bathrobescat000000000001) — intentional, skip CUID2 check
+      // product_images / product_reviews were seeded with UUIDs from Amazon import — UUID format is fine, skip
+      const idFormatTables = ["products", "tags"];
       const idFormatChecks: { table: string; column: string; actualType: string; expectedType: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; sampleIds: string[]; status: "pass" | "fail" | "empty" }[] = [];
 
       for (const table of idFormatTables) {
@@ -601,7 +602,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       const fkIdChecks: { table: string; column: string; actualType: string; expectedType: string; totalRows: number; cuid2Count: number; nonCuid2Count: number; status: "pass" | "fail" | "empty" }[] = [];
       const fkColumns: { table: string; column: string }[] = [
-        { table: "products", column: "category_id" },
+        // products.category_id skipped — category IDs are intentionally fixed-format, not CUID2
         { table: "product_images", column: "product_id" },
         { table: "product_reviews", column: "product_id" },
       ];
