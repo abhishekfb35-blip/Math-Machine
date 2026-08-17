@@ -125,7 +125,9 @@ export default function AdminConsent() {
 
   useEffect(() => {
     if (signupConfigData?.value) {
-      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, ...signupConfigData.value });
+      // Destructure only known fields — drops any stale keys (e.g. old nudge-card fields).
+      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText } = signupConfigData.value;
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, consentText });
     }
   }, [signupConfigData]);
 
