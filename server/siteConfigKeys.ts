@@ -43,5 +43,6 @@ export const VALID_SITE_CONFIG_KEYS = [
   "pwa-install-banner",
   "stats",
   "signup-popup",
+  "payment-methods",
   "traffic-log-retention",
 ] as const;

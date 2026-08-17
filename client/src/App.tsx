@@ -55,6 +55,7 @@ import AdminFunnelReport from "@/pages/admin/AdminFunnelReport";
 import AdminTrafficReport from "@/pages/admin/AdminTrafficReport";
 import AdminProductPageConfig from "@/pages/AdminProductPageConfig";
 import AdminAmazonAssets from "@/pages/AdminAmazonAssets";
+import AdminPaymentMethods from "@/pages/AdminPaymentMethods";
 import WishlistPage from "@/pages/WishlistPage";
 import AdminGuard from "@/components/AdminGuard";
 import SuperAdminGuard from "@/components/SuperAdminGuard";
@@ -119,6 +120,7 @@ function Router() {
       <Route path="/admin/reports/traffic" component={() => <PermissionGuard permission="orders"><AdminTrafficReport /></PermissionGuard>} />
       <Route path="/admin/product-page" component={() => <PermissionGuard permission="builder"><AdminProductPageConfig /></PermissionGuard>} />
       <Route path="/admin/amazon-assets" component={() => <AdminGuard><AdminAmazonAssets /></AdminGuard>} />
+      <Route path="/admin/payment-methods" component={() => <PermissionGuard permission="offers"><AdminPaymentMethods /></PermissionGuard>} />
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />

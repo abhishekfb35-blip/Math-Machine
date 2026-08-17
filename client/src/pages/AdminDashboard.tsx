@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette, BarChart3, Activity, Banknote, Store } from "lucide-react";
+import { Package, ShoppingCart, Layout, FileText, Shield, History, Download, LogOut, Image, Gift, GitCompare, Globe, Users, Tag, Tags, Mail, CheckCircle2, UserCog, Lock, Send, CalendarDays, Layers, Settings2, Palette, BarChart3, Activity, Banknote, Store, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -123,6 +123,15 @@ const sections = [
     icon: Tag,
     color: "text-orange-600 dark:text-orange-400",
     bg: "bg-orange-50 dark:bg-orange-950/30",
+    permission: "offers",
+  },
+  {
+    title: "Payment Methods",
+    description: "Enable or disable COD and view online payment availability",
+    href: "/admin/payment-methods",
+    icon: CreditCard,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/30",
     permission: "offers",
   },
   {
