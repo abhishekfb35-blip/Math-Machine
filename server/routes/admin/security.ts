@@ -50,6 +50,15 @@ export function registerAdminSecurityRoutes(app: Express) {
         if (record) alertConfig = { ...alertConfig, ...JSON.parse(record.value) };
       } catch {}
 
+      let trafficLogRetentionDays = 10;
+      try {
+        const record = await storage.getSiteConfig("traffic-log-retention");
+        if (record) {
+          const parsed = JSON.parse(record.value);
+          trafficLogRetentionDays = parsed.retentionDays ?? 10;
+        }
+      } catch {}
+
       res.json({
         rateLimitConfig,
         guestCartCleanup: {
@@ -57,6 +66,7 @@ export function registerAdminSecurityRoutes(app: Express) {
           retentionDays: guestCartRetentionDays,
         },
         alertConfig,
+        trafficLogRetentionDays,
       });
     } catch (err) {
       console.error("Get security config error:", err);
@@ -92,12 +102,39 @@ export function registerAdminSecurityRoutes(app: Express) {
         await storage.upsertSiteConfig("security-alert-config", JSON.stringify(parsed.data));
       }
 
+      if (req.body.trafficLogRetentionDays !== undefined) {
+        const days = z.number().int().min(1).max(365).safeParse(req.body.trafficLogRetentionDays);
+        if (!days.success) {
+          return res.status(400).json({ message: "trafficLogRetentionDays must be an integer between 1 and 365" });
+        }
+        await storage.upsertSiteConfig("traffic-log-retention", JSON.stringify({ retentionDays: days.data }));
+      }
+
       await loadRateLimitConfig();
 
       res.json({ success: true });
     } catch (err) {
       console.error("Save security config error:", err);
       res.status(500).json({ message: "Failed to save security config" });
+    }
+  });
+
+  app.post("/api/admin/security/run-traffic-cleanup", requireAdmin, requireSuperAdmin, async (_req: Request, res: Response) => {
+    try {
+      let retentionDays = 10;
+      try {
+        const record = await storage.getSiteConfig("traffic-log-retention");
+        if (record) {
+          const parsed = JSON.parse(record.value);
+          retentionDays = parsed.retentionDays ?? 10;
+        }
+      } catch {}
+      await storage.pruneRateLimitStats(retentionDays);
+      await storage.pruneRequestLogs(retentionDays);
+      res.json({ success: true, retentionDays });
+    } catch (err) {
+      console.error("Traffic cleanup error:", err);
+      res.status(500).json({ message: "Failed to run traffic cleanup" });
     }
   });
 

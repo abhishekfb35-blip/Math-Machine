@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Activity, Globe, Users, ShoppingCart, AlertTriangle, RefreshCw, MonitorSmartphone, MapPin, Clock, TrendingUp, Download } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { ArrowLeft, Activity, Globe, Users, ShoppingCart, AlertTriangle, RefreshCw, MonitorSmartphone, MapPin, Clock, TrendingUp, Download, Settings2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { TrafficReport, TrafficIpRow } from "@shared/types";
 
 function toInputDate(d: Date) {
@@ -108,6 +111,7 @@ function downloadTrafficCsv(rows: TrafficIpRow[], from: string, to: string) {
 }
 
 export default function AdminTrafficReport() {
+  const { toast } = useToast();
   const [period, setPeriod] = useState<"daily" | "weekly" | "custom">("daily");
   const defaults = getDefaultDates("daily");
   const [fromDate, setFromDate] = useState(defaults.from);
@@ -116,6 +120,41 @@ export default function AdminTrafficReport() {
   const [appliedTo, setAppliedTo] = useState<string | null>(null);
   const [appliedPeriod, setAppliedPeriod] = useState<"daily" | "weekly">("daily");
   const [sortBy, setSortBy] = useState<"count" | "lastSeen">("count");
+  const [retentionInput, setRetentionInput] = useState<string>("10");
+
+  const { data: secConfig } = useQuery<{ trafficLogRetentionDays: number }>({
+    queryKey: ["/api/admin/security-config"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/security-config", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 60_000,
+    select: (d) => {
+      setRetentionInput(String(d.trafficLogRetentionDays ?? 10));
+      return d;
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (days: number) => {
+      const res = await apiRequest("POST", "/api/admin/security-config", { trafficLogRetentionDays: days });
+      if (!res.ok) throw new Error("Failed to save");
+    },
+    onSuccess: () => toast({ title: "Retention saved", description: `Traffic logs will be kept for ${retentionInput} days.` }),
+    onError: () => toast({ title: "Save failed", variant: "destructive" }),
+  });
+
+  const purgeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/security/run-traffic-cleanup", {});
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: (d: { retentionDays: number }) =>
+      toast({ title: "Purge complete", description: `Logs older than ${d.retentionDays} days removed.` }),
+    onError: () => toast({ title: "Purge failed", variant: "destructive" }),
+  });
 
   function buildUrl() {
     if (period === "custom" && appliedFrom && appliedTo) {
@@ -441,6 +480,61 @@ export default function AdminTrafficReport() {
           )}
         </>
       )}
+
+      {/* ── Retention settings ─────────────────────────────────────────── */}
+      <Card className="p-5">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-muted rounded-lg shrink-0">
+            <Settings2 className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-base">Log Retention</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Traffic logs older than this are deleted automatically every night.
+            </p>
+            <div className="flex flex-wrap items-end gap-3 mt-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Keep logs for (days)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={retentionInput}
+                  onChange={e => setRetentionInput(e.target.value)}
+                  className="w-28"
+                  data-testid="input-traffic-retention-days"
+                />
+              </div>
+              <Button
+                onClick={() => {
+                  const days = parseInt(retentionInput, 10);
+                  if (!days || days < 1 || days > 365) {
+                    toast({ title: "Enter a value between 1 and 365", variant: "destructive" });
+                    return;
+                  }
+                  saveMutation.mutate(days);
+                }}
+                disabled={saveMutation.isPending}
+                data-testid="btn-save-traffic-retention"
+              >
+                {saveMutation.isPending ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => purgeMutation.mutate()}
+                disabled={purgeMutation.isPending}
+                data-testid="btn-purge-traffic-logs"
+              >
+                {purgeMutation.isPending ? "Purging…" : "Purge now"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Current setting: <strong>{secConfig?.trafficLogRetentionDays ?? 10} days</strong>.
+              "Purge now" deletes all logs older than the saved value immediately.
+            </p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

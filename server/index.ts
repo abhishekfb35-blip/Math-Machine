@@ -149,8 +149,16 @@ function startGuestCartCleanupScheduler() {
         }
       } catch {}
 
-      try { await storage.pruneRateLimitStats(30); } catch {}
-      try { await storage.pruneRequestLogs(30); } catch {}
+      let trafficRetentionDays = 10;
+      try {
+        const tlr = await storage.getSiteConfig("traffic-log-retention");
+        if (tlr) {
+          const parsed = JSON.parse(tlr.value);
+          trafficRetentionDays = parsed.retentionDays ?? 10;
+        }
+      } catch {}
+      try { await storage.pruneRateLimitStats(trafficRetentionDays); } catch {}
+      try { await storage.pruneRequestLogs(trafficRetentionDays); } catch {}
 
       if (!enabled) return;
 

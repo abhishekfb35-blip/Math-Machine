@@ -7,6 +7,7 @@
  * Runtime / environment-specific keys that live in site_config:
  *
  *   guest-cart-cleanup          – { enabled, retentionDays }      server/index.ts + security route
+ *   traffic-log-retention       – { retentionDays }               server/index.ts + security route
  *   security-alert-config       – { alertEmail, alertThreshold, … } server/index.ts + security route
  *   notification-bcc-config     – { email, types }                server/providers/notification.ts
  *   admin-emails                – { emails[] }                    server/routes/admin/health.ts
@@ -42,4 +43,5 @@ export const VALID_SITE_CONFIG_KEYS = [
   "pwa-install-banner",
   "stats",
   "signup-popup",
+  "traffic-log-retention",
 ] as const;
