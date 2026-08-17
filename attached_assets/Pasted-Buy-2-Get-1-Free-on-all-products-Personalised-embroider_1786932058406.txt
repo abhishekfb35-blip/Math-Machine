@@ -1,0 +1,379 @@
+Buy 2 Get 1 Free on all products
+Personalised embroidery on every product
+Premium towels, blankets & bathrobes
+Buy 2 Get 1 Free on all products
+Personalised embroidery on every product
+Premium towels, blankets & bathrobes
+Buy 2 Get 1 Free on all products
+Personalised embroidery on every product
+Premium towels, blankets & bathrobes
+TurtleLittle
+Home
+Shop
+
+Get the App
+
+
+INR
+₹
+
+
+
+
+Database Health Check
+Schema structure, ID formats, and data integrity
+
+Refresh
+Open this page on both dev (localhost) and production (turtlelittle.com) after publishing to compare side by side.
+
+development
+Checked: 8/17/2026, 7:30:33 AM
+Issues Detected
+
+Critical schema or data problems found. Immediate action required.
+
+Key Column Checks (IDs & SKU)
+3/6 OK
+IDs should be CUID2 format (24+ lowercase alphanumeric, text type). SKU should be text type with no null values.
+
+categories.id
+(3 rows)
+Fail
+Column type: text
+CUID2: 2
+1 of 3 rows mismatched
+Sample values: bathrobescat000000000001 blanketscat000000000001 towelscat0000000000000001
+products.id
+(451 rows)
+Pass
+Column type: text
+CUID2: 451
+Sample values: a0up141ue1eqwlntacbj7zv4 a275ht1mprpk3ea6teo53jf6 a4muenoij2qtr53dmuulojgd
+products.sku
+(451 rows)
+Pass
+Column type: text
+Populated: 451
+Sample values: TL02G6GSNC TL08LEX72G TL09KTWP05
+product_images.id
+(1682 rows)
+Fail
+Column type: text
+CUID2: 0
+1682 of 1682 rows mismatched
+Sample values: 00262cb7-f241-4a06-87b2-b2869dceab56 005b3556-91f1-4c2c-8bb1-dafa52c16b0d 008c5388-b5bd-4ff0-b6bc-beee248aa423
+product_reviews.id
+(1477 rows)
+Fail
+Column type: text
+CUID2: 0
+1477 of 1477 rows mismatched
+Sample values: 000b23bb-ea47-4331-8ac8-1ec3a8f67cf3 0042b1e4-5c1b-43f9-8d3d-3399c12c8794 007bda5c-1cd3-477f-9f50-2c1b14443c92
+tags.id
+(25 rows)
+Pass
+Column type: text
+CUID2: 25
+Sample values: b4cf8cnuevgqf0t3eoriv0t6 c5ewm6udsn0vcjrwfbkd750d ce324boqqci8lenvztb9fi9b
+ID Format (Foreign Keys)
+2/3 CUID2
+Foreign key references should also be CUID2 format to match primary keys.
+
+products.category_id
+Fail
+Column type: text
+CUID2: 379
+72 of 451 rows mismatched
+product_images.product_id
+Pass
+Column type: text
+CUID2: 1682
+product_reviews.product_id
+Pass
+Column type: text
+CUID2: 1477
+Schema Structure
+30/31 tables OK
+
+categories
+(6 cols)
+Pass
+
+products
+(26 cols)
+Pass
+
+product_images
+(7 cols)
+Pass
+
+product_reviews
+(10 cols)
+Pass
+
+tags
+(5 cols)
+Pass
+
+tag_types
+(5 cols)
+Pass
+
+product_tags
+(3 cols)
+Pass
+
+occasions
+(10 cols)
+Pass
+
+carts
+(8 cols)
+Fail
+Type mismatches:
+
+checkout_started_at: expected timestamp without time zone, got timestamp with time zone
+
+
+cart_items
+(7 cols)
+Pass
+
+orders
+(25 cols)
+Pass
+
+order_items
+(10 cols)
+Pass
+
+site_config
+(2 cols)
+Pass
+
+audit_logs
+(8 cols)
+Pass
+
+customers
+(12 cols)
+Pass
+
+customer_otps
+(6 cols)
+Pass
+
+customer_sessions
+(5 cols)
+Pass
+
+audience
+(3 cols)
+Pass
+
+genders
+(3 cols)
+Pass
+
+themes
+(3 cols)
+Pass
+
+styles
+(3 cols)
+Pass
+
+product_audience
+(3 cols)
+Pass
+
+product_genders
+(3 cols)
+Pass
+
+product_themes
+(3 cols)
+Pass
+
+product_styles
+(3 cols)
+Pass
+
+category_tag_variant_configs
+(5 cols)
+Pass
+
+variant_sizes
+(10 cols)
+Pass
+
+variant_colors
+(6 cols)
+Pass
+
+color_swatches
+(4 cols)
+Pass
+
+category_size_definitions
+(5 cols)
+Pass
+
+bulk_price_rules
+(4 cols)
+Pass
+Table Row Counts
+categories
+3
+products
+451
+product_images
+1,682
+product_reviews
+1,477
+tags
+25
+tag_types
+6
+product_tags
+0
+Warning
+occasions
+6
+carts
+297
+cart_items
+8
+orders
+14
+order_items
+38
+site_config
+30
+audit_logs
+597
+customers
+3
+customer_otps
+5
+customer_sessions
+1
+audience
+5
+genders
+3
+themes
+40
+styles
+5
+product_audience
+613
+product_genders
+451
+product_themes
+493
+product_styles
+504
+category_tag_variant_configs
+7
+variant_sizes
+16
+variant_colors
+76
+color_swatches
+9
+category_size_definitions
+4
+bulk_price_rules
+6
+Product Data Completeness
+Checks column data types and null/empty values in important product fields.
+
+Column	Type	Populated	Null/Empty	Status
+products.sku	text	451	0	
+products.material	text	451	0	
+products.color	text	396	55 of 451	
+products.dimensions	text	415	36 of 451	
+products.product_type	text	451	0	
+Data Integrity
+No integrity issues found.
+Sample Data (for comparison)
+Compare these values between dev and production to verify IDs and data match.
+
+Categories
+Slug	ID	Name
+bathrobes	bathrobescat000000000001	Bathrobes
+blankets	blanketscat000000000001	Blankets
+towels	towelscat0000000000000001	Towels
+Products
+Slug	ID	SKU
+100-cotton-dhoni-cricket-player-personalised-adult-bath-towel-500-gsm-set-of-1-w	lge2h1ridbmvt9q2zgey9w0m	TLOK4QWFNB
+100-cotton-footballer-soccer-player-personalised-adult-bath-towel-500-gsm-set-of	i7c1li7i7w2rilhebp6fyeh9	TLJVFUIRLI
+aeroplane-embroidered-kids-bath-towel	rnxeud83c526sqbfldw9t046	TL876VEXLR
+aeroplane-kids-bath-towel	z1cv9yonywlx98zjumzvf50z	TLT1216MFM
+aeroplane-kids-bath-towel-1	gjhrgmegxmj7kvr2y78i98ry	TLP6FEPGI4
+Site Configuration
+Existing config keys:
+
+seed-hash-genders
+seed-hash-styles
+seed-hash-productAgeGroups
+seed-hash-productGenders
+seed-hash-productStyles
+seed-hash-themes
+seed-hash-productThemes
+seed-hash-tags
+seed-hash-productImages
+brand-logo-favicon
+brand-pwa-favicon
+brand-pwa-icon-192
+brand-pwa-icon-512
+seed-hash-categories
+pwa-install-banner
+stats
+seed-hash-ageGroups
+notification-bcc-config
+guest-cart-cleanup
+cleanup-history
+security-alert-config
+seed-hash-productTags
+seed-hash-audience
+seed-hash-tagTypes
+seed-hash-products
+seed-hash-productReviews
+seed-hash-productAudience
+onetap-nudge
+signup-popup
+rate-limits
+Missing expected keys:
+
+header
+hero
+homepageCollections
+TurtleLittle
+Premium personalised towels and blankets, embroidered with love. Each product is crafted with the finest fabrics and meticulous attention to detail, making every piece a thoughtful gift.
+
+WhatsApp
+Email
+
+Shop
+Towels
+Bathrobes
+Blankets
+All Products
+My Cart
+Contact
++91 99900 79722
+hello@turtlelittle.com
+New Delhi, India
+About Us
+Terms & Conditions
+Privacy Policy
+Refund Policy
+Shipping Policy
+Admin Catalog
+Page Builder
+Policy Page Builders
+© 2026 TurtleLittle. All rights reserved.
+
+WhatsApp Us
