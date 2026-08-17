@@ -97,7 +97,7 @@ export const carts = pgTable("carts", {
   customerId: text("customer_id"),
   updatedAt: timestamp("updated_at"),
   abandonedEmailSentAt: timestamp("abandoned_email_sent_at"),
-  checkoutStartedAt: timestamp("checkout_started_at"),
+  checkoutStartedAt: timestamp("checkout_started_at", { withTimezone: true }),
   checkoutEmail: text("checkout_email"),
   createdAt: timestamp("created_at").defaultNow(),
 });
