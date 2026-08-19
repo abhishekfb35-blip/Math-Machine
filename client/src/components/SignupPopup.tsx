@@ -368,7 +368,7 @@ export default function SignupPopup() {
                 data-testid="signup-popup-google-btn"
               />
               <div
-                className="h-6 shrink-0"
+                className="mt-4 border-t border-primary/10 pt-5"
                 aria-hidden="true"
                 data-testid="signup-popup-google-footer"
               />
