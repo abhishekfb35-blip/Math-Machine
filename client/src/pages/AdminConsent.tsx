@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CustomerConsent } from "@shared/types";
+import RichTextEditor from "@/components/RichTextEditor";
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -268,13 +269,13 @@ export default function AdminConsent() {
               {/* Nudge card copy */}
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nudge card copy</p>
               <div>
-                <label className="text-sm font-medium block mb-1">Subtitle text</label>
-                <textarea
+                <RichTextEditor
                   value={signupPopup.subtitleText}
-                  onChange={e => setSignupPopup(s => ({ ...s, subtitleText: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px] resize-y"
+                  onChange={value => setSignupPopup(s => ({ ...s, subtitleText: value }))}
+                  label="Subtitle text"
                   placeholder="e.g. Save your wishlist, track orders, and check out faster."
-                  data-testid="input-signup-subtitle"
+                  testId="input-signup-subtitle"
+                  minHeight="60px"
                 />
                 <p className="text-xs text-muted-foreground mt-1">Shown below the heading on the sign-in nudge card.</p>
               </div>
@@ -284,15 +285,13 @@ export default function AdminConsent() {
               {/* Phone form copy (shown to new users after Google credential) */}
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phone form (new users only)</p>
               <div>
-                <label className="text-sm font-medium block mb-1">Incentive text</label>
-                <textarea
+                <RichTextEditor
                   value={signupPopup.incentiveText}
-                  onChange={e => setSignupPopup(s => ({ ...s, incentiveText: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px] resize-y"
+                  onChange={value => setSignupPopup(s => ({ ...s, incentiveText: value }))}
+                  label="Incentive text"
                   placeholder="Shown below the phone field — e.g. a reward or benefit for signing up"
-                  data-testid="input-signup-incentive"
+                  testId="input-signup-incentive"
                 />
-                <p className="text-xs text-muted-foreground mt-1">No default. Leave empty to hide.</p>
               </div>
               <label className="flex items-start gap-3 cursor-pointer rounded-md border border-input px-3 py-3">
                 <input
@@ -310,13 +309,13 @@ export default function AdminConsent() {
                 </span>
               </label>
               <div>
-                <label className="text-sm font-medium block mb-1">Consent statement</label>
-                <textarea
+                <RichTextEditor
                   value={signupPopup.consentText}
-                  onChange={e => setSignupPopup(s => ({ ...s, consentText: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px] resize-y"
+                  onChange={value => setSignupPopup(s => ({ ...s, consentText: value }))}
+                  label="Consent statement"
                   placeholder="Legal / T&C wording shown with a checkbox — e.g. I agree to receive…"
-                  data-testid="input-signup-consent-text"
+                  testId="input-signup-consent-text"
+                  minHeight="80px"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   No default. Leave empty to skip the consent checkbox (the form submits without it).

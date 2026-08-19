@@ -9,6 +9,7 @@ import { OrderService, EmptyCartError } from "../services/orderService";
 import { CartService } from "../services/cartService";
 import { requireAdmin, getAdminUsername, requirePermission } from "../adminAuth";
 import { convertFromINR } from "../services/exchangeRateService";
+import { sanitizeRichText } from "../utils/sanitizeRichText";
 
 const orderService = new OrderService(storage, codProvider, notificationService);
 const cartService = new CartService(storage);
@@ -302,7 +303,13 @@ export function registerCheckoutRoutes(app: Express) {
   }, async (req, res) => {
     try {
       const key = req.params.key as string;
-      const value = JSON.stringify(req.body.value);
+      const configValue = req.body.value;
+      if (key === "signup-popup" && configValue && typeof configValue === "object") {
+        for (const field of ["incentiveText", "subtitleText", "consentText"]) {
+          if (field in configValue) configValue[field] = sanitizeRichText(configValue[field]);
+        }
+      }
+      const value = JSON.stringify(configValue);
       // Route to the correct table based on whether this is shared content or env config
       const config = SITE_CONTENT_KEYS.has(key)
         ? await storage.upsertSiteContent(key, value)

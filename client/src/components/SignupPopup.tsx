@@ -30,6 +30,7 @@ import { useCartGateInternal } from "@/context/CartGateContext";
 import { X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { sanitizeRichTextHtml } from "@/components/RichTextEditor";
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 
@@ -339,9 +340,10 @@ export default function SignupPopup() {
             /* ── Nudge view: incentive + "Continue with Google" button ── */
             <>
               <div className="flex items-start justify-between mb-3">
-                <p className="text-sm font-semibold text-foreground leading-snug">
-                  {config?.incentiveText || "Sign in to TurtleLittle"}
-                </p>
+                <div
+                  className="text-sm font-semibold text-foreground leading-snug"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config?.incentiveText || "Sign in to TurtleLittle") }}
+                />
                 <button
                   onClick={handleDismiss}
                   className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
@@ -353,9 +355,10 @@ export default function SignupPopup() {
               </div>
 
               {config?.subtitleText && (
-                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                  {config.subtitleText}
-                </p>
+                <div
+                  className="text-xs text-muted-foreground mb-4 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.subtitleText) }}
+                />
               )}
 
               {/* GSI rendered button mounts here */}
@@ -399,9 +402,10 @@ export default function SignupPopup() {
                 />
 
                 {config?.incentiveText && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {config.incentiveText}
-                  </p>
+                  <div
+                    className="text-xs text-muted-foreground leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.incentiveText) }}
+                  />
                 )}
 
                 {config?.consentText && (
@@ -413,9 +417,10 @@ export default function SignupPopup() {
                       className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
                       data-testid="signup-consent-checkbox"
                     />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                      {config.consentText}
-                    </span>
+                    <span
+                      className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.consentText) }}
+                    />
                   </label>
                 )}
 
