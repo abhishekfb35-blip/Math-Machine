@@ -246,8 +246,18 @@ export function registerAuthRoutes(app: Express) {
         return res.status(400).json({ message: "Email not available from Google" });
       }
 
-      const normalizedPhone = phone?.trim() || null;
-      if (!normalizedPhone) {
+       const normalizedPhone = phone?.trim() || null;
+       let phoneRequired = true;
+       try {
+         const signupPopupConfig = await storage.getSiteConfig("signup-popup");
+         if (signupPopupConfig) {
+           const parsedConfig = JSON.parse(signupPopupConfig.value);
+           phoneRequired = parsedConfig.phoneRequired !== false;
+         }
+       } catch {
+         // Preserve the existing secure behavior if configuration is unavailable.
+       }
+       if (phoneRequired && !normalizedPhone) {
         return res.status(400).json({ message: "Phone number is required to complete sign-up" });
       }
 

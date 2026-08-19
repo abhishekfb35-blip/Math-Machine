@@ -28,6 +28,8 @@ interface SignupPopupConfig {
   incentiveText: string;
   /** Subtitle line shown below the heading on the nudge card. */
   subtitleText: string;
+  /** Whether a phone number must be provided before account creation. */
+  phoneRequired: boolean;
   /** Consent statement / T&C shown below incentive. */
   consentText: string;
 }
@@ -39,6 +41,7 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   reshowIntervalSeconds: 0,
   incentiveText: "",
   subtitleText: "Save your wishlist, track orders, and check out faster.",
+  phoneRequired: true,
   consentText: "",
 };
 
@@ -129,8 +132,8 @@ export default function AdminConsent() {
   useEffect(() => {
     if (signupConfigData?.value) {
       // Destructure only known fields — drops any stale keys (e.g. old nudge-card fields).
-      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, consentText } = signupConfigData.value;
-      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, consentText });
+      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneRequired, consentText } = signupConfigData.value;
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, phoneRequired: phoneRequired !== false, consentText });
     }
   }, [signupConfigData]);
 
@@ -291,6 +294,21 @@ export default function AdminConsent() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">No default. Leave empty to hide.</p>
               </div>
+              <label className="flex items-start gap-3 cursor-pointer rounded-md border border-input px-3 py-3">
+                <input
+                  type="checkbox"
+                  checked={signupPopup.phoneRequired}
+                  onChange={e => setSignupPopup(s => ({ ...s, phoneRequired: e.target.checked }))}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
+                  data-testid="checkbox-signup-phone-required"
+                />
+                <span>
+                  <span className="text-sm font-medium block">Make phone number mandatory</span>
+                  <span className="text-xs text-muted-foreground block mt-0.5">
+                    Require new Google sign-ups to provide a phone number before creating their account.
+                  </span>
+                </span>
+              </label>
               <div>
                 <label className="text-sm font-medium block mb-1">Consent statement</label>
                 <textarea

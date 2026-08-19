@@ -40,6 +40,7 @@ interface SignupPopupConfig {
   reshowIntervalSeconds: number;
   incentiveText: string;
   subtitleText: string;
+  phoneRequired: boolean;
   consentText: string;
 }
 
@@ -79,9 +80,9 @@ export default function SignupPopup() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.value) {
-          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, consentText } =
+          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneRequired, consentText } =
             d.value;
-          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", consentText });
+          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", phoneRequired: phoneRequired !== false, consentText });
         }
       })
       .catch(() => {});
@@ -272,7 +273,7 @@ export default function SignupPopup() {
   // ── Phone form submit ─────────────────────────────────────────────────────
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneInput.trim()) {
+    if (config?.phoneRequired !== false && !phoneInput.trim()) {
       toast({ title: "Phone number is required", variant: "destructive" });
       return;
     }
@@ -389,10 +390,10 @@ export default function SignupPopup() {
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 <Input
                   type="tel"
-                  placeholder="Phone number"
+                    placeholder={config?.phoneRequired === false ? "Phone number (optional)" : "Phone number"}
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  required
+                    required={config?.phoneRequired !== false}
                   autoFocus
                   data-testid="input-signup-phone"
                 />
