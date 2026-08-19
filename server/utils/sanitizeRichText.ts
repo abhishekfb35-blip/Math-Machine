@@ -7,6 +7,8 @@ const ALLOWED_STYLE_PROPERTIES = new Set([
   "font-style",
   "text-decoration",
 ]);
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 72;
 
 function escapeHtml(value: string): string {
   return value
@@ -27,6 +29,12 @@ function sanitizeStyle(value: string): string {
       const normalizedValue = parts.join(":").trim();
       if (!normalizedProperty || !normalizedValue || !ALLOWED_STYLE_PROPERTIES.has(normalizedProperty)) return "";
       if (/url\s*\(|expression\s*\(|javascript\s*:/i.test(normalizedValue)) return "";
+      if (normalizedProperty === "font-size") {
+        const match = normalizedValue.match(/^(\d+)px$/i);
+        const size = match ? Number(match[1]) : NaN;
+        if (!Number.isInteger(size) || size < MIN_FONT_SIZE || size > MAX_FONT_SIZE) return "";
+        return `font-size:${size}px`;
+      }
       return `${normalizedProperty}:${normalizedValue}`;
     })
     .filter(Boolean)

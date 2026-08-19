@@ -4,6 +4,8 @@ import { Bold, Italic, Underline, Smile, Palette } from "lucide-react";
 const ALLOWED_TAGS = new Set(["B", "STRONG", "I", "EM", "U", "S", "BR", "P", "DIV", "SPAN", "FONT"]);
 const ALLOWED_STYLE_PROPERTIES = new Set(["color", "font-family", "font-size", "font-weight", "font-style", "text-decoration"]);
 const EMOJIS = ["✨", "🎁", "💚", "🌟", "😊", "🛍️", "🚚", "❤️"];
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 72;
 
 function escapeHtml(value: string): string {
   return value
@@ -24,6 +26,7 @@ function safeStyle(value: string): string {
       const normalizedValue = parts.join(":").trim();
       if (!normalizedProperty || !normalizedValue || !ALLOWED_STYLE_PROPERTIES.has(normalizedProperty)) return "";
       if (/url\s*\(|expression\s*\(|javascript\s*:/i.test(normalizedValue)) return "";
+      if (normalizedProperty === "font-size" && !/^(?:[8-9]|[1-6][0-9]|7[0-2])px$/i.test(normalizedValue)) return "";
       return `${normalizedProperty}:${normalizedValue}`;
     })
     .filter(Boolean)
@@ -91,7 +94,9 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLInputElement>(null);
+  const selectionRef = useRef<Range | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [fontSize, setFontSize] = useState("16");
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -107,6 +112,39 @@ export default function RichTextEditor({
   const runCommand = (command: string, commandValue?: string) => {
     editorRef.current?.focus();
     document.execCommand(command, false, commandValue);
+    emitChange();
+  };
+
+  const rememberSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount || !editorRef.current) return;
+    const range = selection.getRangeAt(0);
+    if (editorRef.current.contains(range.commonAncestorContainer)) {
+      selectionRef.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || !selectionRef.current || !editorRef.current) return;
+    editorRef.current.focus();
+    selection.removeAllRanges();
+    selection.addRange(selectionRef.current);
+  };
+
+  const applyFontSize = () => {
+    if (!/^\d+$/.test(fontSize)) return;
+    const size = Number(fontSize);
+    if (!Number.isInteger(size) || size < MIN_FONT_SIZE || size > MAX_FONT_SIZE) return;
+
+    restoreSelection();
+    // execCommand creates a wrapper around the selected text. Convert that
+    // wrapper to an exact pixel style instead of relying on browser presets.
+    document.execCommand("fontSize", false, "7");
+    editorRef.current?.querySelectorAll('font[size="7"]').forEach((font) => {
+      font.removeAttribute("size");
+      font.setAttribute("style", `font-size:${size}px`);
+    });
     emitChange();
   };
 
@@ -136,12 +174,34 @@ export default function RichTextEditor({
             <option value="Verdana">Verdana</option>
             <option value="Courier New">Courier</option>
           </select>
-          <select aria-label="Font size" title="Font size" defaultValue="3" onChange={(e) => runCommand("fontSize", e.target.value)} className="h-8 rounded border border-input bg-background px-1 text-xs" data-testid={`${testId}-size`}>
-            <option value="2">Small</option>
-            <option value="3">Normal</option>
-            <option value="4">Large</option>
-            <option value="5">Huge</option>
-          </select>
+          <div className="flex items-center gap-1" onMouseDown={rememberSelection}>
+            <label htmlFor={`${testId}-size`} className="sr-only">Font size in pixels</label>
+            <input
+              id={`${testId}-size`}
+              type="number"
+              min={MIN_FONT_SIZE}
+              max={MAX_FONT_SIZE}
+              step={1}
+              inputMode="numeric"
+              value={fontSize}
+              onChange={(e) => setFontSize(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyFontSize(); } }}
+              aria-label="Font size in pixels"
+              title={`Font size in pixels (${MIN_FONT_SIZE}-${MAX_FONT_SIZE})`}
+              className="h-8 w-16 rounded border border-input bg-background px-1 text-xs"
+              data-testid={`${testId}-size`}
+            />
+            <button
+              type="button"
+              onClick={applyFontSize}
+              className="h-8 rounded border border-input px-1.5 text-xs hover:bg-background"
+              aria-label="Apply font size"
+              title="Apply font size"
+              data-testid={`${testId}-apply-size`}
+            >
+              px
+            </button>
+          </div>
           <button type="button" title="Text color" aria-label="Text color" onMouseDown={(e) => e.preventDefault()} onClick={() => colorRef.current?.click()} className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-background" data-testid={`${testId}-color-button`}>
             <Palette className="w-4 h-4" />
           </button>
@@ -175,7 +235,7 @@ export default function RichTextEditor({
           suppressContentEditableWarning
         />
       </div>
-      <p className="text-xs text-muted-foreground">Select text to format it. Formatting is saved with this field.</p>
+      <p className="text-xs text-muted-foreground">Select text to format it. Font size accepts whole pixels from {MIN_FONT_SIZE}–{MAX_FONT_SIZE}px.</p>
     </div>
   );
 }
