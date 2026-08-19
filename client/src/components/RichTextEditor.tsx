@@ -6,6 +6,9 @@ const ALLOWED_STYLE_PROPERTIES = new Set(["color", "font-family", "font-size", "
 const EMOJIS = ["✨", "🎁", "💚", "🌟", "😊", "🛍️", "🚚", "❤️"];
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 72;
+/** Marks spans that temporarily highlight the text the font-size control will change. */
+const SIZE_MARKER_ATTR = "data-size-marker";
+const SIZE_MARKER_HIGHLIGHT = "rgba(47, 143, 115, 0.28)";
 
 function escapeHtml(value: string): string {
   return value
@@ -95,13 +98,25 @@ export default function RichTextEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const colorRef = useRef<HTMLInputElement>(null);
   const selectionRef = useRef<Range | null>(null);
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sizeChangedRef = useRef(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [fontSize, setFontSize] = useState("16");
+  const [sizeHint, setSizeHint] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!editorRef.current) return;
     const nextHtml = isRichValue(value) ? sanitizeRichTextHtml(value) : escapeHtml(value);
-    if (editorRef.current.innerHTML !== nextHtml) editorRef.current.innerHTML = nextHtml;
+    // A temporary marker keeps the chosen range visible while the size input
+    // has focus. Ignore a parent update when its sanitized value already
+    // matches the editor, otherwise React would remove that marker mid-edit.
+    if (sanitizeRichTextHtml(editorRef.current.innerHTML) !== nextHtml) {
+      editorRef.current.innerHTML = nextHtml;
+    }
   }, [value]);
 
   const emitChange = () => {
@@ -119,33 +134,92 @@ export default function RichTextEditor({
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount || !editorRef.current) return;
     const range = selection.getRangeAt(0);
-    if (editorRef.current.contains(range.commonAncestorContainer)) {
+    if (!range.collapsed && editorRef.current.contains(range.commonAncestorContainer)) {
       selectionRef.current = range.cloneRange();
     }
   };
 
-  const restoreSelection = () => {
-    const selection = window.getSelection();
-    if (!selection || !selectionRef.current || !editorRef.current) return;
-    editorRef.current.focus();
-    selection.removeAllRanges();
-    selection.addRange(selectionRef.current);
+  const showSizeHint = (message: string) => {
+    setSizeHint(message);
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+    hintTimerRef.current = setTimeout(() => setSizeHint(null), 3000);
   };
 
-  const applyFontSize = () => {
-    if (!/^\d+$/.test(fontSize)) return;
-    const size = Number(fontSize);
-    if (!Number.isInteger(size) || size < MIN_FONT_SIZE || size > MAX_FONT_SIZE) return;
+  const getSizeMarker = () =>
+    editorRef.current?.querySelector<HTMLElement>(`[${SIZE_MARKER_ATTR}]`) ?? null;
 
-    restoreSelection();
-    // execCommand creates a wrapper around the selected text. Convert that
-    // wrapper to an exact pixel style instead of relying on browser presets.
-    document.execCommand("fontSize", false, "7");
-    editorRef.current?.querySelectorAll('font[size="7"]').forEach((font) => {
-      font.removeAttribute("size");
-      font.setAttribute("style", `font-size:${size}px`);
-    });
+  const clearSizeMarker = () => {
+    const marker = getSizeMarker();
+    if (!marker) return;
+    marker.removeAttribute(SIZE_MARKER_ATTR);
+    marker.style.removeProperty("background-color");
+  };
+
+  /**
+   * Wrap the saved range once, before focus moves to the number input. The
+   * wrapper is both the persistent highlight and the exact element that later
+   * receives font-size, so applying a size never depends on restoring browser
+   * selection state or document.execCommand.
+   */
+  const markSavedSelection = (): HTMLElement | null => {
+    const editor = editorRef.current;
+    const savedRange = selectionRef.current;
+    if (!editor || !savedRange || savedRange.collapsed ||
+      !editor.contains(savedRange.startContainer) || !editor.contains(savedRange.endContainer)) {
+      return null;
+    }
+
+    clearSizeMarker();
+    const range = savedRange.cloneRange();
+    const marker = document.createElement("span");
+    marker.setAttribute(SIZE_MARKER_ATTR, "true");
+    marker.style.backgroundColor = SIZE_MARKER_HIGHLIGHT;
+
+    try {
+      const contents = range.extractContents();
+      if (!contents.hasChildNodes()) return null;
+      marker.appendChild(contents);
+      range.insertNode(marker);
+
+      const markerRange = document.createRange();
+      markerRange.selectNodeContents(marker);
+      selectionRef.current = markerRange.cloneRange();
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(markerRange);
+      return marker;
+    } catch {
+      return null;
+    }
+  };
+
+  const prepareFontSizeTarget = () => {
+    rememberSelection();
+    return getSizeMarker() ?? markSavedSelection();
+  };
+
+  const applyFontSize = (rawSize = fontSize, showInvalidHint = true) => {
+    if (!/^\d+$/.test(rawSize)) {
+      if (showInvalidHint) showSizeHint(`Enter a whole number from ${MIN_FONT_SIZE} to ${MAX_FONT_SIZE}px.`);
+      return false;
+    }
+    const size = Number(rawSize);
+    if (!Number.isInteger(size) || size < MIN_FONT_SIZE || size > MAX_FONT_SIZE) {
+      if (showInvalidHint) showSizeHint(`Font size must be between ${MIN_FONT_SIZE} and ${MAX_FONT_SIZE}px.`);
+      return false;
+    }
+
+    const marker = getSizeMarker() ?? prepareFontSizeTarget();
+    if (!marker) {
+      showSizeHint("Select text in the editor before changing its font size.");
+      return false;
+    }
+
+    marker.style.fontSize = `${size}px`;
+    marker.style.backgroundColor = SIZE_MARKER_HIGHLIGHT;
     emitChange();
+    setSizeHint(null);
+    return true;
   };
 
   const insertEmoji = (emoji: string) => {
@@ -174,7 +248,7 @@ export default function RichTextEditor({
             <option value="Verdana">Verdana</option>
             <option value="Courier New">Courier</option>
           </select>
-          <div className="flex items-center gap-1" onMouseDown={rememberSelection}>
+          <div className="flex items-center gap-1">
             <label htmlFor={`${testId}-size`} className="sr-only">Font size in pixels</label>
             <input
               id={`${testId}-size`}
@@ -184,25 +258,38 @@ export default function RichTextEditor({
               step={1}
               inputMode="numeric"
               value={fontSize}
-              onChange={(e) => setFontSize(e.target.value)}
-              onPointerDownCapture={rememberSelection}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyFontSize(); } }}
+              onPointerDown={prepareFontSizeTarget}
+              onFocus={prepareFontSizeTarget}
+              onChange={(e) => {
+                const nextSize = e.target.value;
+                sizeChangedRef.current = true;
+                setFontSize(nextSize);
+                // Number input spinners and valid typed values take effect
+                // immediately, without a second click that would lose context.
+                applyFontSize(nextSize, false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyFontSize();
+                } else if (e.key === "Escape") {
+                  clearSizeMarker();
+                  setSizeHint(null);
+                  e.currentTarget.blur();
+                }
+              }}
+              onBlur={() => {
+                if (sizeChangedRef.current) applyFontSize();
+                sizeChangedRef.current = false;
+                clearSizeMarker();
+              }}
               aria-label="Font size in pixels"
+              aria-describedby={sizeHint ? `${testId}-size-hint` : undefined}
               title={`Font size in pixels (${MIN_FONT_SIZE}-${MAX_FONT_SIZE})`}
               className="h-8 w-16 rounded border border-input bg-background px-1 text-xs"
               data-testid={`${testId}-size`}
             />
-            <button
-              type="button"
-              onMouseDown={(e) => { rememberSelection(); e.preventDefault(); }}
-              onClick={applyFontSize}
-              className="h-8 rounded border border-input px-1.5 text-xs hover:bg-background"
-              aria-label="Apply font size"
-              title="Apply font size"
-              data-testid={`${testId}-apply-size`}
-            >
-              px
-            </button>
+            <span className="text-xs text-muted-foreground" aria-hidden="true">px</span>
           </div>
           <button type="button" title="Text color" aria-label="Text color" onMouseDown={(e) => e.preventDefault()} onClick={() => colorRef.current?.click()} className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-background" data-testid={`${testId}-color-button`}>
             <Palette className="w-4 h-4" />
@@ -240,7 +327,12 @@ export default function RichTextEditor({
           suppressContentEditableWarning
         />
       </div>
-      <p className="text-xs text-muted-foreground">Select text to format it. Font size accepts whole pixels from {MIN_FONT_SIZE}–{MAX_FONT_SIZE}px.</p>
+      <p className="text-xs text-muted-foreground">Select text to format it. Font size applies as you type and accepts whole pixels from {MIN_FONT_SIZE}–{MAX_FONT_SIZE}px.</p>
+      {sizeHint && (
+        <p id={`${testId}-size-hint`} role="status" className="text-xs text-muted-foreground">
+          {sizeHint}
+        </p>
+      )}
     </div>
   );
 }
