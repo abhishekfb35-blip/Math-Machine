@@ -364,8 +364,13 @@ export default function SignupPopup() {
               {/* GSI rendered button mounts here */}
               <div
                 ref={googleButtonRef}
-                className="flex justify-center min-h-[44px] pb-5"
+                className="flex justify-center min-h-[44px]"
                 data-testid="signup-popup-google-btn"
+              />
+              <div
+                className="h-6 shrink-0"
+                aria-hidden="true"
+                data-testid="signup-popup-google-footer"
               />
             </>
           ) : (
