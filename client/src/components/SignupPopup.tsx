@@ -323,8 +323,8 @@ export default function SignupPopup() {
       `}</style>
 
       <div
-        className="tl-popup-card fixed top-4 right-4 z-[999] w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-700 rounded-2xl overflow-hidden"
-        style={{ boxShadow: "0 4px 24px 0 rgba(0,0,0,0.08), 0 1px 4px 0 rgba(0,0,0,0.04)" }}
+        className="tl-popup-card fixed top-[6.5rem] md:top-[8rem] right-4 md:right-6 z-[999] w-72 max-w-[calc(100vw-2rem)] bg-background border border-primary/20 border-t-4 border-t-primary rounded-2xl overflow-hidden"
+        style={{ boxShadow: "0 8px 28px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent), 0 2px 8px 0 rgba(0,0,0,0.08)" }}
         data-testid="signup-popup"
       >
         <div className="p-5">
@@ -332,12 +332,12 @@ export default function SignupPopup() {
             /* ── Nudge view: incentive + "Continue with Google" button ── */
             <>
               <div className="flex items-start justify-between mb-3">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                <p className="text-sm font-semibold text-foreground leading-snug">
                   {config?.incentiveText || "Sign in to TurtleLittle"}
                 </p>
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-nudge"
                 >
@@ -363,7 +363,7 @@ export default function SignupPopup() {
             <>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug">
+                  <p className="text-sm font-bold text-foreground leading-snug">
                     {name ? `Welcome, ${name}!` : "One last step"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -372,7 +372,7 @@ export default function SignupPopup() {
                 </div>
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-phone-form"
                 >
