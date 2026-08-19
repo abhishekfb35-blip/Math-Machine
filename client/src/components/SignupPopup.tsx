@@ -335,7 +335,7 @@ export default function SignupPopup() {
         style={{ boxShadow: "0 8px 28px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent), 0 2px 8px 0 rgba(0,0,0,0.08)" }}
         data-testid="signup-popup"
       >
-        <div className="p-5">
+        <div className="p-5 pb-10">
           {view === "nudge" ? (
             /* ── Nudge view: incentive + "Continue with Google" button ── */
             <>
