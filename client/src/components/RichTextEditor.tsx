@@ -185,6 +185,7 @@ export default function RichTextEditor({
               inputMode="numeric"
               value={fontSize}
               onChange={(e) => setFontSize(e.target.value)}
+              onPointerDownCapture={rememberSelection}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyFontSize(); } }}
               aria-label="Font size in pixels"
               title={`Font size in pixels (${MIN_FONT_SIZE}-${MAX_FONT_SIZE})`}
@@ -193,6 +194,7 @@ export default function RichTextEditor({
             />
             <button
               type="button"
+              onMouseDown={(e) => { rememberSelection(); e.preventDefault(); }}
               onClick={applyFontSize}
               className="h-8 rounded border border-input px-1.5 text-xs hover:bg-background"
               aria-label="Apply font size"
@@ -229,6 +231,9 @@ export default function RichTextEditor({
           aria-multiline="true"
           data-placeholder={placeholder}
           onInput={emitChange}
+          onMouseUp={rememberSelection}
+          onKeyUp={rememberSelection}
+          onSelect={rememberSelection}
           className="px-3 py-2 text-sm leading-relaxed outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
           style={{ minHeight }}
           data-testid={testId}
