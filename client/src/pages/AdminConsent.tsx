@@ -35,6 +35,10 @@ interface SignupPopupConfig {
   phoneRequired: boolean;
   /** Consent statement / T&C shown below incentive. */
   consentText: string;
+  /** Label shown before the reader reaches the bottom. */
+  consentScrollPrompt: string;
+  /** Label shown after the reader reaches the bottom. */
+  consentAgreementLabel: string;
 }
 
 const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
@@ -47,6 +51,8 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   phoneSubtitleText: "Add your phone number to complete sign-up.",
   phoneRequired: true,
   consentText: "",
+  consentScrollPrompt: "Scroll to the bottom to enable agreement.",
+  consentAgreementLabel: "I agree to the consent text above.",
 };
 
 interface WishlistPromptConfig {
@@ -136,8 +142,8 @@ export default function AdminConsent() {
   useEffect(() => {
     if (signupConfigData?.value) {
       // Destructure only known fields — drops any stale keys (e.g. old nudge-card fields).
-      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText } = signupConfigData.value;
-      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, phoneSubtitleText: phoneSubtitleText ?? DEFAULT_SIGNUP_POPUP.phoneSubtitleText, phoneRequired: phoneRequired !== false, consentText });
+      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText, consentScrollPrompt, consentAgreementLabel } = signupConfigData.value;
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, phoneSubtitleText: phoneSubtitleText ?? DEFAULT_SIGNUP_POPUP.phoneSubtitleText, phoneRequired: phoneRequired !== false, consentText, consentScrollPrompt: consentScrollPrompt ?? DEFAULT_SIGNUP_POPUP.consentScrollPrompt, consentAgreementLabel: consentAgreementLabel ?? DEFAULT_SIGNUP_POPUP.consentAgreementLabel });
     }
   }, [signupConfigData]);
 

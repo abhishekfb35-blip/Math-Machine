@@ -3,6 +3,8 @@ import { sanitizeRichTextHtml } from "@/components/RichTextEditor";
 
 interface ConsentScrollGateProps {
   consentText: string;
+  scrollPrompt: string;
+  agreementLabel: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   onReadToBottomChange: (readToBottom: boolean) => void;
@@ -11,6 +13,8 @@ interface ConsentScrollGateProps {
 
 export function ConsentScrollGate({
   consentText,
+  scrollPrompt,
+  agreementLabel,
   checked,
   onCheckedChange,
   onReadToBottomChange,
@@ -60,7 +64,7 @@ export function ConsentScrollGate({
           data-testid={`${testIdPrefix}-consent-checkbox`}
         />
         <span className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-          {readToBottom ? "I agree to the consent text above." : "Scroll to the bottom to enable agreement."}
+          {readToBottom ? agreementLabel : scrollPrompt}
         </span>
       </label>
     </div>

@@ -22,6 +22,8 @@ export default function SignInPage() {
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
   const [consentText, setConsentText] = useState("");
+  const [consentScrollPrompt, setConsentScrollPrompt] = useState("Scroll to the bottom to enable agreement.");
+  const [consentAgreementLabel, setConsentAgreementLabel] = useState("I agree to the consent text above.");
   const [consentConfigLoaded, setConsentConfigLoaded] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
   const [consentReadToBottom, setConsentReadToBottom] = useState(false);
@@ -105,7 +107,11 @@ export default function SignInPage() {
   useEffect(() => {
     fetch("/api/site-config/signup-popup")
       .then(r => (r.ok ? r.json() : null))
-      .then(data => setConsentText(typeof data?.value?.consentText === "string" ? data.value.consentText : ""))
+      .then(data => {
+        setConsentText(typeof data?.value?.consentText === "string" ? data.value.consentText : "");
+        setConsentScrollPrompt(typeof data?.value?.consentScrollPrompt === "string" && data.value.consentScrollPrompt.trim() ? data.value.consentScrollPrompt : "Scroll to the bottom to enable agreement.");
+        setConsentAgreementLabel(typeof data?.value?.consentAgreementLabel === "string" && data.value.consentAgreementLabel.trim() ? data.value.consentAgreementLabel : "I agree to the consent text above.");
+      })
       .catch(() => setConsentText(""))
       .finally(() => setConsentConfigLoaded(true));
   }, []);
@@ -197,8 +203,8 @@ export default function SignInPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium" htmlFor="signin-page-country-code">Phone number</label>
-              <div className="flex gap-2">
-                <select id="signin-page-country-code" value={countryCode} onChange={e => setCountryCode(e.target.value)} className="h-10 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-country-code">
+              <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-2">
+                <select id="signin-page-country-code" value={countryCode} onChange={e => setCountryCode(e.target.value)} className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-country-code">
                   {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
                 </select>
                 <Input
@@ -218,6 +224,8 @@ export default function SignInPage() {
             {consentText && (
               <ConsentScrollGate
                 consentText={consentText}
+                scrollPrompt={consentScrollPrompt}
+                agreementLabel={consentAgreementLabel}
                 checked={consentChecked}
                 onCheckedChange={setConsentChecked}
                 onReadToBottomChange={setConsentReadToBottom}

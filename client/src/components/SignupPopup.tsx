@@ -46,6 +46,8 @@ interface SignupPopupConfig {
   phoneSubtitleText: string;
   phoneRequired: boolean;
   consentText: string;
+  consentScrollPrompt: string;
+  consentAgreementLabel: string;
 }
 
 interface GoogleUserData {
@@ -90,9 +92,9 @@ export default function SignupPopup() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.value) {
-          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText } =
+          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText, consentScrollPrompt, consentAgreementLabel } =
             d.value;
-          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", phoneSubtitleText: phoneSubtitleText ?? "Add your phone number to complete sign-up.", phoneRequired: phoneRequired !== false, consentText });
+          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", phoneSubtitleText: phoneSubtitleText ?? "Add your phone number to complete sign-up.", phoneRequired: phoneRequired !== false, consentText, consentScrollPrompt: consentScrollPrompt ?? "Scroll to the bottom to enable agreement.", consentAgreementLabel: consentAgreementLabel ?? "I agree to the consent text above." });
         }
       })
       .catch(() => {});
@@ -494,12 +496,12 @@ export default function SignupPopup() {
 
                 <div>
                   <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-2">
                     <select
                       id="signup-phone-country-code"
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
-                      className="h-10 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                      className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm"
                       data-testid="select-signup-phone-country-code"
                     >
                       {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
@@ -522,6 +524,8 @@ export default function SignupPopup() {
                 {config?.consentText && (
                   <ConsentScrollGate
                     consentText={config.consentText}
+                    scrollPrompt={config.consentScrollPrompt}
+                    agreementLabel={config.consentAgreementLabel}
                     checked={consentChecked}
                     onCheckedChange={setConsentChecked}
                     onReadToBottomChange={setConsentReadToBottom}
