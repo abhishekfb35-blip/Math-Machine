@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { sanitizeRichTextHtml } from "@/components/RichTextEditor";
 
 interface ConsentScrollGateProps {
@@ -17,16 +17,25 @@ export function ConsentScrollGate({
   testIdPrefix,
 }: ConsentScrollGateProps) {
   const scrollRegionRef = useRef<HTMLDivElement>(null);
+  const hasReachedBottomRef = useRef(false);
+  const [readToBottom, setReadToBottom] = useState(false);
 
   const updateReadState = useCallback(() => {
     const region = scrollRegionRef.current;
-    if (!region) return;
-    const readToBottom = region.scrollTop + region.clientHeight >= region.scrollHeight - 1;
-    onReadToBottomChange(readToBottom);
+    if (!region || hasReachedBottomRef.current) return;
+    if (region.scrollTop + region.clientHeight >= region.scrollHeight - 1) {
+      hasReachedBottomRef.current = true;
+      setReadToBottom(true);
+      onReadToBottomChange(true);
+    }
   }, [onReadToBottomChange]);
 
   useEffect(() => {
-    updateReadState();
+    hasReachedBottomRef.current = false;
+    setReadToBottom(false);
+    onReadToBottomChange(false);
+    const animationFrame = requestAnimationFrame(updateReadState);
+    return () => cancelAnimationFrame(animationFrame);
   }, [consentText, updateReadState]);
 
   return (
@@ -41,7 +50,7 @@ export function ConsentScrollGate({
         data-testid={`${testIdPrefix}-consent-text`}
         dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(consentText) }}
       />
-      <label className={`flex items-start gap-2 ${checked ? "cursor-pointer" : ""}`} data-testid={`${testIdPrefix}-consent-label`}>
+      <label className={`flex items-start gap-2 ${readToBottom ? "cursor-pointer" : ""}`} data-testid={`${testIdPrefix}-consent-label`}>
         <input
           type="checkbox"
           checked={checked}

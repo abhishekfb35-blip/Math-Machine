@@ -5,6 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
+import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 
 export const SIGNIN_MODAL_EVENT = "show:signin-modal";
 
@@ -24,6 +25,10 @@ export default function SignInModal() {
   const [anniversaryDay, setAnniversaryDay] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
+  const [consentText, setConsentText] = useState("");
+  const [consentConfigLoaded, setConsentConfigLoaded] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentReadToBottom, setConsentReadToBottom] = useState(false);
   const [submittingPhone, setSubmittingPhone] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -34,6 +39,14 @@ export default function SignInModal() {
       .then(r => r.json())
       .then(d => { if (d.clientId) setGoogleClientId(d.clientId); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/site-config/signup-popup")
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setConsentText(typeof data?.value?.consentText === "string" ? data.value.consentText : ""))
+      .catch(() => setConsentText(""))
+      .finally(() => setConsentConfigLoaded(true));
   }, []);
 
   const handleGoogleCredential = useCallback(async (response: any) => {
@@ -70,6 +83,14 @@ export default function SignInModal() {
       toast({ title: anniversary.error, variant: "destructive" });
       return;
     }
+    if (!consentConfigLoaded) {
+      toast({ title: "Preparing consent details", description: "Please wait a moment and try again.", variant: "destructive" });
+      return;
+    }
+    if (consentText && (!consentReadToBottom || !consentChecked)) {
+      toast({ title: consentReadToBottom ? "Please agree to the terms to continue" : "Please read the entire consent text to continue", variant: "destructive" });
+      return;
+    }
     if (!phoneInput.trim() || !pendingCredential) return;
     setSubmittingPhone(true);
     try {
@@ -79,8 +100,9 @@ export default function SignInModal() {
         countryCode,
         birthdayMonthDay: birthday.value,
         anniversaryMonthDay: anniversary.value,
-        consentGiven: false,
-        consentText: "",
+        consentGiven: consentChecked,
+        consentText,
+        consentReadToBottom,
       });
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
@@ -92,7 +114,7 @@ export default function SignInModal() {
     } finally {
       setSubmittingPhone(false);
     }
-  }, [anniversaryDay, anniversaryMonth, birthdayDay, birthdayMonth, countryCode, phoneInput, pendingCredential, toast]);
+  }, [anniversaryDay, anniversaryMonth, birthdayDay, birthdayMonth, consentChecked, consentConfigLoaded, consentReadToBottom, consentText, countryCode, phoneInput, pendingCredential, toast]);
 
   useEffect(() => {
     if (!visible) return;
@@ -105,6 +127,8 @@ export default function SignInModal() {
     setAnniversaryDay("");
     setCountryCode("+91");
     setPhoneInput("");
+    setConsentChecked(false);
+    setConsentReadToBottom(false);
     googleInitialized.current = false;
   }, [visible]);
 
@@ -235,7 +259,16 @@ export default function SignInModal() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={submittingPhone || !phoneInput.trim()} data-testid="signin-modal-phone-submit">
+              {consentText && (
+                <ConsentScrollGate
+                  consentText={consentText}
+                  checked={consentChecked}
+                  onCheckedChange={setConsentChecked}
+                  onReadToBottomChange={setConsentReadToBottom}
+                  testIdPrefix="signin-modal"
+                />
+              )}
+              <Button type="submit" className="w-full" disabled={submittingPhone || !consentConfigLoaded || !phoneInput.trim() || (!!consentText && (!consentReadToBottom || !consentChecked))} data-testid="signin-modal-phone-submit">
                 {submittingPhone ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</> : "Create my account"}
               </Button>
             </form>

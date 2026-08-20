@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
+import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 
 export default function SignInPage() {
   const [, navigate] = useLocation();
@@ -20,6 +21,10 @@ export default function SignInPage() {
   const [anniversaryDay, setAnniversaryDay] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
+  const [consentText, setConsentText] = useState("");
+  const [consentConfigLoaded, setConsentConfigLoaded] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentReadToBottom, setConsentReadToBottom] = useState(false);
   const [submittingPhone, setSubmittingPhone] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -58,6 +63,14 @@ export default function SignInPage() {
       toast({ title: anniversary.error, variant: "destructive" });
       return;
     }
+    if (!consentConfigLoaded) {
+      toast({ title: "Preparing consent details", description: "Please wait a moment and try again.", variant: "destructive" });
+      return;
+    }
+    if (consentText && (!consentReadToBottom || !consentChecked)) {
+      toast({ title: consentReadToBottom ? "Please agree to the terms to continue" : "Please read the entire consent text to continue", variant: "destructive" });
+      return;
+    }
     if (!phoneInput.trim() || !pendingCredential) return;
     setSubmittingPhone(true);
     try {
@@ -67,8 +80,9 @@ export default function SignInPage() {
         countryCode,
         birthdayMonthDay: birthday.value,
         anniversaryMonthDay: anniversary.value,
-        consentGiven: false,
-        consentText: "",
+        consentGiven: consentChecked,
+        consentText,
+        consentReadToBottom,
       });
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
@@ -79,13 +93,21 @@ export default function SignInPage() {
     } finally {
       setSubmittingPhone(false);
     }
-  }, [anniversaryDay, anniversaryMonth, birthdayDay, birthdayMonth, countryCode, phoneInput, pendingCredential, navigate, toast]);
+  }, [anniversaryDay, anniversaryMonth, birthdayDay, birthdayMonth, consentChecked, consentConfigLoaded, consentReadToBottom, consentText, countryCode, phoneInput, pendingCredential, navigate, toast]);
 
   useEffect(() => {
     fetch("/api/auth/google-client-id")
       .then(r => r.json())
       .then(d => { if (d.clientId) setGoogleClientId(d.clientId); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/site-config/signup-popup")
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setConsentText(typeof data?.value?.consentText === "string" ? data.value.consentText : ""))
+      .catch(() => setConsentText(""))
+      .finally(() => setConsentConfigLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -193,7 +215,16 @@ export default function SignInPage() {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={submittingPhone || !phoneInput.trim()} data-testid="signin-page-phone-submit">
+            {consentText && (
+              <ConsentScrollGate
+                consentText={consentText}
+                checked={consentChecked}
+                onCheckedChange={setConsentChecked}
+                onReadToBottomChange={setConsentReadToBottom}
+                testIdPrefix="signin-page"
+              />
+            )}
+            <Button type="submit" className="w-full" disabled={submittingPhone || !consentConfigLoaded || !phoneInput.trim() || (!!consentText && (!consentReadToBottom || !consentChecked))} data-testid="signin-page-phone-submit">
               {submittingPhone ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</> : "Create my account"}
             </Button>
           </form>

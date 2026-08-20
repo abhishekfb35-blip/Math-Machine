@@ -225,7 +225,7 @@ export function registerAuthRoutes(app: Express) {
    */
   app.post("/api/auth/google/complete", async (req: Request, res: Response) => {
     try {
-      const { credential, phone, countryCode, birthdayMonthDay, anniversaryMonthDay, consentGiven, consentText } = req.body;
+      const { credential, phone, countryCode, birthdayMonthDay, anniversaryMonthDay, consentGiven, consentText, consentReadToBottom } = req.body;
       if (!credential) {
         return res.status(400).json({ message: "Google credential is required" });
       }
@@ -293,11 +293,13 @@ export function registerAuthRoutes(app: Express) {
          return res.status(400).json({ message: dateError.message });
        }
        let phoneRequired = true;
+       let requiredConsentText = "";
        try {
          const signupPopupConfig = await storage.getSiteConfig("signup-popup");
          if (signupPopupConfig) {
            const parsedConfig = JSON.parse(signupPopupConfig.value);
            phoneRequired = parsedConfig.phoneRequired !== false;
+           requiredConsentText = typeof parsedConfig.consentText === "string" ? parsedConfig.consentText : "";
          }
        } catch {
          // Preserve the existing secure behavior if configuration is unavailable.
@@ -305,6 +307,13 @@ export function registerAuthRoutes(app: Express) {
        if (phoneRequired && !normalizedPhone) {
         return res.status(400).json({ message: "Phone number is required to complete sign-up" });
       }
+       if (requiredConsentText && (
+         consentGiven !== true ||
+         consentReadToBottom !== true ||
+         consentText !== requiredConsentText
+       )) {
+         return res.status(400).json({ message: "Please read the full consent text and agree before completing sign-up" });
+       }
 
       // Guard against race conditions: customer may already exist
       let customer = await storage.getCustomerByGoogleId(googleId);

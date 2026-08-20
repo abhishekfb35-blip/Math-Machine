@@ -325,6 +325,7 @@ export default function SignupPopup() {
         anniversaryMonthDay: anniversary.value,
         consentGiven: consentChecked,
         consentText: config?.consentText ?? "",
+        consentReadToBottom,
       });
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
