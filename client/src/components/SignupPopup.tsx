@@ -41,6 +41,7 @@ interface SignupPopupConfig {
   reshowIntervalSeconds: number;
   incentiveText: string;
   subtitleText: string;
+  phoneSubtitleText: string;
   phoneRequired: boolean;
   consentText: string;
 }
@@ -81,9 +82,9 @@ export default function SignupPopup() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.value) {
-          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneRequired, consentText } =
+          const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText } =
             d.value;
-          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", phoneRequired: phoneRequired !== false, consentText });
+          setConfig({ enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? "Save your wishlist, track orders, and check out faster.", phoneSubtitleText: phoneSubtitleText ?? "Add your phone number to complete sign-up.", phoneRequired: phoneRequired !== false, consentText });
         }
       })
       .catch(() => {});
@@ -381,9 +382,12 @@ export default function SignupPopup() {
                   <p className="text-sm font-bold text-foreground leading-snug">
                     {name ? `Welcome, ${name}!` : "One last step"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add your phone number to complete sign-up.
-                  </p>
+                  {config?.phoneSubtitleText && (
+                    <p
+                      className="text-xs text-muted-foreground mt-1"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.phoneSubtitleText) }}
+                    />
+                  )}
                 </div>
                 <button
                   onClick={handleDismiss}

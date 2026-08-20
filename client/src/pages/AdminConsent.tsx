@@ -29,6 +29,8 @@ interface SignupPopupConfig {
   incentiveText: string;
   /** Subtitle line shown below the heading on the nudge card. */
   subtitleText: string;
+  /** Subtitle line shown below the heading on the phone form. */
+  phoneSubtitleText: string;
   /** Whether a phone number must be provided before account creation. */
   phoneRequired: boolean;
   /** Consent statement / T&C shown below incentive. */
@@ -42,6 +44,7 @@ const DEFAULT_SIGNUP_POPUP: SignupPopupConfig = {
   reshowIntervalSeconds: 0,
   incentiveText: "",
   subtitleText: "Save your wishlist, track orders, and check out faster.",
+  phoneSubtitleText: "Add your phone number to complete sign-up.",
   phoneRequired: true,
   consentText: "",
 };
@@ -133,8 +136,8 @@ export default function AdminConsent() {
   useEffect(() => {
     if (signupConfigData?.value) {
       // Destructure only known fields — drops any stale keys (e.g. old nudge-card fields).
-      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneRequired, consentText } = signupConfigData.value;
-      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, phoneRequired: phoneRequired !== false, consentText });
+      const { enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText, phoneSubtitleText, phoneRequired, consentText } = signupConfigData.value;
+      setSignupPopup({ ...DEFAULT_SIGNUP_POPUP, enabled, delaySeconds, cartAddDelaySeconds, reshowIntervalSeconds, incentiveText, subtitleText: subtitleText ?? DEFAULT_SIGNUP_POPUP.subtitleText, phoneSubtitleText: phoneSubtitleText ?? DEFAULT_SIGNUP_POPUP.phoneSubtitleText, phoneRequired: phoneRequired !== false, consentText });
     }
   }, [signupConfigData]);
 
@@ -284,6 +287,17 @@ export default function AdminConsent() {
 
               {/* Phone form copy (shown to new users after Google credential) */}
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phone form (new users only)</p>
+              <div>
+                <RichTextEditor
+                  value={signupPopup.phoneSubtitleText}
+                  onChange={value => setSignupPopup(s => ({ ...s, phoneSubtitleText: value }))}
+                  label="Subtitle text"
+                  placeholder="e.g. Add your phone number to complete sign-up."
+                  testId="input-signup-phone-subtitle"
+                  minHeight="60px"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Shown below the heading on the phone collection form.</p>
+              </div>
               <div>
                 <RichTextEditor
                   value={signupPopup.incentiveText}

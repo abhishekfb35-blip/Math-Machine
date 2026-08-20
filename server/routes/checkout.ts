@@ -305,7 +305,7 @@ export function registerCheckoutRoutes(app: Express) {
       const key = req.params.key as string;
       const configValue = req.body.value;
       if (key === "signup-popup" && configValue && typeof configValue === "object") {
-        for (const field of ["incentiveText", "subtitleText", "consentText"]) {
+        for (const field of ["incentiveText", "subtitleText", "phoneSubtitleText", "consentText"]) {
           if (field in configValue) configValue[field] = sanitizeRichText(configValue[field]);
         }
       }
