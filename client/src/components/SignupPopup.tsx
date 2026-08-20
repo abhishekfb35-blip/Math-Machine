@@ -437,6 +437,33 @@ export default function SignupPopup() {
 
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 <div>
+                  <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
+                  <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-2">
+                    <select
+                      id="signup-phone-country-code"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-phone-country-code"
+                    >
+                      {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder={config?.phoneRequired === false ? "Local phone number (optional)" : "Local phone number"}
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                      required={config?.phoneRequired !== false}
+                      maxLength={15}
+                      autoFocus
+                      className="min-w-0 flex-1"
+                      data-testid="input-signup-phone"
+                    />
+                  </div>
+                </div>
+
+                <div>
                   <div className="mb-1 flex items-center gap-1.5">
                     <label className="text-xs font-medium" htmlFor="signup-birthday-month">Birthday</label>
                     <span className="text-xs text-muted-foreground">Optional</span>
@@ -491,33 +518,6 @@ export default function SignupPopup() {
                       <option value="">Day</option>
                       {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
                     </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
-                  <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-2">
-                    <select
-                      id="signup-phone-country-code"
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm"
-                      data-testid="select-signup-phone-country-code"
-                    >
-                      {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
-                    </select>
-                    <Input
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder={config?.phoneRequired === false ? "Local phone number (optional)" : "Local phone number"}
-                      value={phoneInput}
-                      onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
-                      required={config?.phoneRequired !== false}
-                      maxLength={15}
-                      autoFocus
-                      className="min-w-0 flex-1"
-                      data-testid="input-signup-phone"
-                    />
                   </div>
                 </div>
 
