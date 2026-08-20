@@ -1,5 +1,13 @@
 import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
 
+const regionNames = (() => {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "region" });
+  } catch {
+    return null;
+  }
+})();
+
 export const MONTH_OPTIONS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -9,12 +17,7 @@ export const PHONE_COUNTRY_CODES = [
   ...getCountries()
     .map((country: CountryCode) => {
       const code = `+${getCountryCallingCode(country)}`;
-      let name = country;
-      try {
-        name = new Intl.DisplayNames(["en"], { type: "region" }).of(country) || country;
-      } catch {
-        // Fall back to the ISO code in environments without Intl.DisplayNames.
-      }
+      const name = regionNames?.of(country) || country;
       return { code, label: `${name} ${code}`, country };
     })
     .sort((a, b) => {
