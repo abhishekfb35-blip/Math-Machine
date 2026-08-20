@@ -1,15 +1,27 @@
+import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
+
 export const MONTH_OPTIONS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
 export const PHONE_COUNTRY_CODES = [
-  { code: "+91", label: "India +91" },
-  { code: "+1", label: "USA / Canada +1" },
-  { code: "+44", label: "United Kingdom +44" },
-  { code: "+61", label: "Australia +61" },
-  { code: "+65", label: "Singapore +65" },
-  { code: "+971", label: "United Arab Emirates +971" },
+  ...getCountries()
+    .map((country: CountryCode) => {
+      const code = `+${getCountryCallingCode(country)}`;
+      let name = country;
+      try {
+        name = new Intl.DisplayNames(["en"], { type: "region" }).of(country) || country;
+      } catch {
+        // Fall back to the ISO code in environments without Intl.DisplayNames.
+      }
+      return { code, label: `${name} ${code}`, country };
+    })
+    .sort((a, b) => {
+      if (a.country === "IN") return -1;
+      if (b.country === "IN") return 1;
+      return a.label.localeCompare(b.label);
+    }),
 ];
 
 export function getMonthDayValue(month: string, day: string, label: string): { value: string | null; error?: string } {

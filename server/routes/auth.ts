@@ -4,6 +4,11 @@ import { storage } from "../storage";
 import { notificationService } from "../providers/notification";
 import { getCustomerToken, getAuthenticatedCustomer } from "./helpers";
 import { OAuth2Client } from "google-auth-library";
+import { getCountries, getCountryCallingCode, isValidPhoneNumber } from "libphonenumber-js";
+
+const SUPPORTED_PHONE_COUNTRY_CODES = new Set(
+  getCountries().map((country) => `+${getCountryCallingCode(country)}`),
+);
 
 export function registerAuthRoutes(app: Express) {
   app.post("/api/auth/send-otp", async (req: Request, res: Response) => {
@@ -247,28 +252,19 @@ export function registerAuthRoutes(app: Express) {
       }
 
        const submittedPhone = typeof phone === "string" ? phone.trim() : "";
-       const phoneRules: Record<string, { min: number; max: number }> = {
-         "+91": { min: 10, max: 10 },
-         "+1": { min: 10, max: 10 },
-         "+44": { min: 9, max: 10 },
-         "+61": { min: 9, max: 9 },
-         "+65": { min: 8, max: 8 },
-         "+971": { min: 8, max: 9 },
-       };
        let normalizedPhone: string | null;
        if (countryCode !== undefined && countryCode !== null) {
-         if (typeof countryCode !== "string" || !phoneRules[countryCode]) {
+         if (typeof countryCode !== "string" || !SUPPORTED_PHONE_COUNTRY_CODES.has(countryCode)) {
            return res.status(400).json({ message: "Please choose a supported country code" });
          }
           if (submittedPhone && !/^[0-9 ().-]+$/.test(submittedPhone)) {
            return res.status(400).json({ message: "Phone number can contain only digits and common formatting characters" });
          }
          const localDigits = submittedPhone.replace(/\D/g, "");
-         const rule = phoneRules[countryCode];
          if (submittedPhone && !localDigits) {
            return res.status(400).json({ message: "Phone number must contain digits only" });
          }
-         if (localDigits && (localDigits.length < rule.min || localDigits.length > rule.max)) {
+         if (localDigits && !isValidPhoneNumber(`${countryCode}${localDigits}`)) {
            return res.status(400).json({ message: "Please enter a valid phone number for the selected country code" });
          }
          normalizedPhone = localDigits ? `${countryCode}${localDigits}` : null;
