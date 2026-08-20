@@ -31,6 +31,7 @@ import { X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sanitizeRichTextHtml } from "@/components/RichTextEditor";
+import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
@@ -68,6 +69,7 @@ export default function SignupPopup() {
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
   const [consentChecked, setConsentChecked] = useState(false);
+  const [consentReadToBottom, setConsentReadToBottom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [googleUserData, setGoogleUserData] = useState<GoogleUserData | null>(null);
   const [config, setConfig] = useState<SignupPopupConfig | null>(null);
@@ -121,6 +123,7 @@ export default function SignupPopup() {
       setCountryCode("+91");
       setPhoneInput("");
       setConsentChecked(false);
+      setConsentReadToBottom(false);
       pendingCredential.current = null;
       setGoogleUserData(null);
       gsiInitialized.current = false;
@@ -203,6 +206,7 @@ export default function SignupPopup() {
     setCountryCode("+91");
     setPhoneInput("");
     setConsentChecked(false);
+    setConsentReadToBottom(false);
     pendingCredential.current = null;
     setGoogleUserData(null);
     gsiInitialized.current = false;
@@ -305,8 +309,8 @@ export default function SignupPopup() {
       toast({ title: "Phone number is required", variant: "destructive" });
       return;
     }
-    if (config?.consentText && !consentChecked) {
-      toast({ title: "Please agree to the terms to continue", variant: "destructive" });
+    if (config?.consentText && (!consentReadToBottom || !consentChecked)) {
+      toast({ title: consentReadToBottom ? "Please agree to the terms to continue" : "Please read the entire consent text to continue", variant: "destructive" });
       return;
     }
     if (!pendingCredential.current) return;
@@ -515,25 +519,19 @@ export default function SignupPopup() {
                 </div>
 
                 {config?.consentText && (
-                  <label className="flex items-start gap-2 cursor-pointer" data-testid="signup-consent-label">
-                    <input
-                      type="checkbox"
-                      checked={consentChecked}
-                      onChange={(e) => setConsentChecked(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] shrink-0"
-                      data-testid="signup-consent-checkbox"
-                    />
-                    <span
-                      className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.consentText) }}
-                    />
-                  </label>
+                  <ConsentScrollGate
+                    consentText={config.consentText}
+                    checked={consentChecked}
+                    onCheckedChange={setConsentChecked}
+                    onReadToBottomChange={setConsentReadToBottom}
+                    testIdPrefix="signup"
+                  />
                 )}
 
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={submitting || (!!config?.consentText && !consentChecked)}
+                  disabled={submitting || (!!config?.consentText && (!consentReadToBottom || !consentChecked))}
                   data-testid="btn-signup-phone-submit"
                 >
                   {submitting ? (
