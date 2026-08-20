@@ -3,7 +3,7 @@ name: Consent completion gate
 description: Rule for requiring configured signup consent across Google completion flows.
 ---
 
-When consent text is configured for signup, every Google account-completion surface must present the same scroll-to-complete agreement gate and submit the configured text with explicit acknowledgement.
+When consent text is configured for signup, every Google account-completion surface must present the same scroll-to-complete agreement gate and submit the configured text with explicit acknowledgement. The reader prompt and agreement label are part of that shared configured presentation.
 
 **Why:** The popup, full sign-in page, and sign-in modal share the completion endpoint. Gating only one surface leaves an alternate account-creation path that can skip consent.
 

@@ -341,6 +341,32 @@ export default function AdminConsent() {
                   No default. Leave empty to skip the consent checkbox (the form submits without it).
                 </p>
               </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium" htmlFor="input-signup-consent-scroll-prompt">Before reading</label>
+                  <Input
+                    id="input-signup-consent-scroll-prompt"
+                    value={signupPopup.consentScrollPrompt}
+                    onChange={e => setSignupPopup(s => ({ ...s, consentScrollPrompt: e.target.value }))}
+                    placeholder="Scroll to the bottom to enable agreement."
+                    maxLength={160}
+                    data-testid="input-signup-consent-scroll-prompt"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Shown while the consent text still needs to be read.</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium" htmlFor="input-signup-consent-agreement-label">After reading</label>
+                  <Input
+                    id="input-signup-consent-agreement-label"
+                    value={signupPopup.consentAgreementLabel}
+                    onChange={e => setSignupPopup(s => ({ ...s, consentAgreementLabel: e.target.value }))}
+                    placeholder="I agree to the consent text above."
+                    maxLength={160}
+                    data-testid="input-signup-consent-agreement-label"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Shown beside the checkbox after reaching the bottom.</p>
+                </div>
+              </div>
 
               <Button
                 onClick={() => saveSignupMutation.mutate(signupPopup)}
