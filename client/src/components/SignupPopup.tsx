@@ -406,13 +406,6 @@ export default function SignupPopup() {
                   data-testid="input-signup-phone"
                 />
 
-                {config?.incentiveText && (
-                  <div
-                    className="text-xs text-muted-foreground leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.incentiveText) }}
-                  />
-                )}
-
                 {config?.consentText && (
                   <label className="flex items-start gap-2 cursor-pointer" data-testid="signup-consent-label">
                     <input
