@@ -451,7 +451,7 @@ export default function SignupPopup() {
                     <Input
                       type="tel"
                       inputMode="numeric"
-                      placeholder={config?.phoneRequired === false ? "Local phone number (optional)" : "Local phone number"}
+                      placeholder="Phone number"
                       value={phoneInput}
                       onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
                       required={config?.phoneRequired !== false}

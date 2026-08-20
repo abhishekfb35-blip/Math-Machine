@@ -178,7 +178,7 @@ export default function SignInPage() {
                 <Input
                   type="tel"
                   inputMode="numeric"
-                  placeholder="Local phone number"
+                  placeholder="Phone number"
                   value={phoneInput}
                   onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ""))}
                   required
