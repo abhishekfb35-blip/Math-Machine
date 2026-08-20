@@ -309,6 +309,8 @@ export const customers = pgTable("customers", {
   email: text("email").notNull().unique(),
   name: text("name"),
   phone: text("phone"),
+  birthdayMonthDay: text("birthday_month_day"),
+  anniversaryMonthDay: text("anniversary_month_day"),
   shippingAddress: text("shipping_address"),
   shippingCity: text("shipping_city"),
   shippingState: text("shipping_state"),

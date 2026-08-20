@@ -31,6 +31,7 @@ import { X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sanitizeRichTextHtml } from "@/components/RichTextEditor";
+import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 
@@ -60,6 +61,11 @@ export default function SignupPopup() {
 
   const [visible, setVisible] = useState(false);
   const [view, setView] = useState<"nudge" | "phone">("nudge");
+  const [birthdayMonth, setBirthdayMonth] = useState("");
+  const [birthdayDay, setBirthdayDay] = useState("");
+  const [anniversaryMonth, setAnniversaryMonth] = useState("");
+  const [anniversaryDay, setAnniversaryDay] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
   const [consentChecked, setConsentChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -108,6 +114,11 @@ export default function SignupPopup() {
     if (isAuthenticated) {
       setVisible(false);
       setView("nudge");
+      setBirthdayMonth("");
+      setBirthdayDay("");
+      setAnniversaryMonth("");
+      setAnniversaryDay("");
+      setCountryCode("+91");
       setPhoneInput("");
       setConsentChecked(false);
       pendingCredential.current = null;
@@ -185,6 +196,11 @@ export default function SignupPopup() {
   const handleDismiss = useCallback(() => {
     setVisible(false);
     setView("nudge");
+    setBirthdayMonth("");
+    setBirthdayDay("");
+    setAnniversaryMonth("");
+    setAnniversaryDay("");
+    setCountryCode("+91");
     setPhoneInput("");
     setConsentChecked(false);
     pendingCredential.current = null;
@@ -275,6 +291,16 @@ export default function SignupPopup() {
   // ── Phone form submit ─────────────────────────────────────────────────────
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const birthday = getMonthDayValue(birthdayMonth, birthdayDay, "Birthday");
+    if (birthday.error) {
+      toast({ title: birthday.error, variant: "destructive" });
+      return;
+    }
+    const anniversary = getMonthDayValue(anniversaryMonth, anniversaryDay, "Anniversary");
+    if (anniversary.error) {
+      toast({ title: anniversary.error, variant: "destructive" });
+      return;
+    }
     if (config?.phoneRequired !== false && !phoneInput.trim()) {
       toast({ title: "Phone number is required", variant: "destructive" });
       return;
@@ -290,6 +316,9 @@ export default function SignupPopup() {
       const res = await apiRequest("POST", "/api/auth/google/complete", {
         credential: pendingCredential.current,
         phone: phoneInput.trim(),
+        countryCode,
+        birthdayMonthDay: birthday.value,
+        anniversaryMonthDay: anniversary.value,
         consentGiven: consentChecked,
         consentText: config?.consentText ?? "",
       });
@@ -400,15 +429,90 @@ export default function SignupPopup() {
               </div>
 
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
-                <Input
-                  type="tel"
-                    placeholder={config?.phoneRequired === false ? "Phone number (optional)" : "Phone number"}
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                    required={config?.phoneRequired !== false}
-                  autoFocus
-                  data-testid="input-signup-phone"
-                />
+                <div>
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <label className="text-xs font-medium" htmlFor="signup-birthday-month">Birthday</label>
+                    <span className="text-xs text-muted-foreground">Optional</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      id="signup-birthday-month"
+                      value={birthdayMonth}
+                      onChange={(e) => setBirthdayMonth(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-birthday-month"
+                    >
+                      <option value="">Month</option>
+                      {MONTH_OPTIONS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                    </select>
+                    <select
+                      aria-label="Birthday day"
+                      value={birthdayDay}
+                      onChange={(e) => setBirthdayDay(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-birthday-day"
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <label className="text-xs font-medium" htmlFor="signup-anniversary-month">Anniversary</label>
+                    <span className="text-xs text-muted-foreground">Optional</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      id="signup-anniversary-month"
+                      value={anniversaryMonth}
+                      onChange={(e) => setAnniversaryMonth(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-anniversary-month"
+                    >
+                      <option value="">Month</option>
+                      {MONTH_OPTIONS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                    </select>
+                    <select
+                      aria-label="Anniversary day"
+                      value={anniversaryDay}
+                      onChange={(e) => setAnniversaryDay(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-anniversary-day"
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
+                  <div className="flex gap-2">
+                    <select
+                      id="signup-phone-country-code"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="h-10 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                      data-testid="select-signup-phone-country-code"
+                    >
+                      {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder={config?.phoneRequired === false ? "Local phone number (optional)" : "Local phone number"}
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                      required={config?.phoneRequired !== false}
+                      maxLength={15}
+                      autoFocus
+                      className="min-w-0 flex-1"
+                      data-testid="input-signup-phone"
+                    />
+                  </div>
+                </div>
 
                 {config?.consentText && (
                   <label className="flex items-start gap-2 cursor-pointer" data-testid="signup-consent-label">

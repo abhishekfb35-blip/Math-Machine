@@ -1,3 +1,4 @@
 - [Variant config null-tagId pattern](variant-config-null-tagid.md) — configs now use tagId=NULL (one per category); old tag-based rows stay but are ignored by queries.
 - [Color-size repo tables](color-size-repo-tables.md) — `color_swatches` and `category_size_definitions` tables added; migration runs via `color-size-repos.ts`.
 - [Swatch cleanup ESM & error isolation](swatch-cleanup-esm.md) — __dirname unavailable in ESM; file-cleanup side-effects must never throw into callers.
+- [Shared Google completion compatibility](signup-phone-completion-compatibility.md) — new signup payload fields must remain opt-in because legacy sign-in surfaces share the completion endpoint.

@@ -187,6 +187,8 @@ export interface Customer {
   email: string;
   name: string | null;
   phone: string | null;
+  birthdayMonthDay: string | null;
+  anniversaryMonthDay: string | null;
   shippingAddress: string | null;
   shippingCity: string | null;
   shippingState: string | null;
@@ -201,6 +203,8 @@ export interface InsertCustomer {
   email: string;
   name?: string | null;
   phone?: string | null;
+  birthdayMonthDay?: string | null;
+  anniversaryMonthDay?: string | null;
   shippingAddress?: string | null;
   shippingCity?: string | null;
   shippingState?: string | null;

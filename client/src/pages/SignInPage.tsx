@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
 
 export default function SignInPage() {
   const [, navigate] = useLocation();
@@ -13,6 +14,11 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"google" | "phone">("google");
   const [pendingCredential, setPendingCredential] = useState<string | null>(null);
+  const [birthdayMonth, setBirthdayMonth] = useState("");
+  const [birthdayDay, setBirthdayDay] = useState("");
+  const [anniversaryMonth, setAnniversaryMonth] = useState("");
+  const [anniversaryDay, setAnniversaryDay] = useState("");
+  const [countryCode, setCountryCode] = useState("+91");
   const [phoneInput, setPhoneInput] = useState("");
   const [submittingPhone, setSubmittingPhone] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
@@ -42,12 +48,25 @@ export default function SignInPage() {
 
   const handlePhoneSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    const birthday = getMonthDayValue(birthdayMonth, birthdayDay, "Birthday");
+    if (birthday.error) {
+      toast({ title: birthday.error, variant: "destructive" });
+      return;
+    }
+    const anniversary = getMonthDayValue(anniversaryMonth, anniversaryDay, "Anniversary");
+    if (anniversary.error) {
+      toast({ title: anniversary.error, variant: "destructive" });
+      return;
+    }
     if (!phoneInput.trim() || !pendingCredential) return;
     setSubmittingPhone(true);
     try {
       const res = await apiRequest("POST", "/api/auth/google/complete", {
         credential: pendingCredential,
         phone: phoneInput.trim(),
+        countryCode,
+        birthdayMonthDay: birthday.value,
+        anniversaryMonthDay: anniversary.value,
         consentGiven: false,
         consentText: "",
       });
@@ -60,7 +79,7 @@ export default function SignInPage() {
     } finally {
       setSubmittingPhone(false);
     }
-  }, [phoneInput, pendingCredential, navigate, toast]);
+  }, [anniversaryDay, anniversaryMonth, birthdayDay, birthdayMonth, countryCode, phoneInput, pendingCredential, navigate, toast]);
 
   useEffect(() => {
     fetch("/api/auth/google-client-id")
@@ -122,15 +141,58 @@ export default function SignInPage() {
       <Card className="p-6 space-y-4">
         {view === "phone" ? (
           <form onSubmit={handlePhoneSubmit} className="space-y-3">
-            <Input
-              type="tel"
-              placeholder="Phone number"
-              value={phoneInput}
-              onChange={e => setPhoneInput(e.target.value)}
-              required
-              autoFocus
-              data-testid="signin-page-phone-input"
-            />
+            <div>
+              <div className="mb-1 flex items-center gap-1.5">
+                <label className="text-xs font-medium" htmlFor="signin-page-birthday-month">Birthday</label>
+                <span className="text-xs text-muted-foreground">Optional</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select id="signin-page-birthday-month" value={birthdayMonth} onChange={e => setBirthdayMonth(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-birthday-month">
+                  <option value="">Month</option>
+                  {MONTH_OPTIONS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                </select>
+                <select aria-label="Birthday day" value={birthdayDay} onChange={e => setBirthdayDay(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-birthday-day">
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 flex items-center gap-1.5">
+                <label className="text-xs font-medium" htmlFor="signin-page-anniversary-month">Anniversary</label>
+                <span className="text-xs text-muted-foreground">Optional</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select id="signin-page-anniversary-month" value={anniversaryMonth} onChange={e => setAnniversaryMonth(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-anniversary-month">
+                  <option value="">Month</option>
+                  {MONTH_OPTIONS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                </select>
+                <select aria-label="Anniversary day" value={anniversaryDay} onChange={e => setAnniversaryDay(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-anniversary-day">
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium" htmlFor="signin-page-country-code">Phone number</label>
+              <div className="flex gap-2">
+                <select id="signin-page-country-code" value={countryCode} onChange={e => setCountryCode(e.target.value)} className="h-10 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-sm" data-testid="signin-page-country-code">
+                  {PHONE_COUNTRY_CODES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+                </select>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Local phone number"
+                  value={phoneInput}
+                  onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                  required
+                  maxLength={15}
+                  autoFocus
+                  className="min-w-0 flex-1"
+                  data-testid="signin-page-phone-input"
+                />
+              </div>
+            </div>
             <Button type="submit" className="w-full" disabled={submittingPhone || !phoneInput.trim()} data-testid="signin-page-phone-submit">
               {submittingPhone ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Creating account…</> : "Create my account"}
             </Button>

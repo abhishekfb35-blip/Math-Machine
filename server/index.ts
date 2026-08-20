@@ -33,6 +33,7 @@ import { ensureRequestLogsTables } from "./migrations/request-logs-table";
 import { addWholesalePriceColumn } from "./migrations/add-wholesale-price";
 import { purgeStaleConfigKeys } from "./migrations/purge-stale-site-config";
 import { purgeCartBannersKey } from "./migrations/purge-cart-banners";
+import { ensureCustomerProfileDateColumns } from "./migrations/customer-profile-dates";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
@@ -74,10 +75,43 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+const SENSITIVE_RESPONSE_FIELDS = new Set([
+  "customer",
+  "googleData",
+  "token",
+  "credential",
+  "email",
+  "phone",
+  "birthdayMonthDay",
+  "anniversaryMonthDay",
+  "shippingAddress",
+  "shippingCity",
+  "shippingState",
+  "shippingPincode",
+  "googleId",
+]);
+
+function redactResponseForLogs(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactResponseForLogs);
+  if (!value || typeof value !== "object") return value;
+
+  const record = value as Record<string, unknown>;
+  if ("email" in record && ("phone" in record || "googleId" in record)) {
+    return "[redacted customer]";
+  }
+
+  return Object.fromEntries(
+    Object.entries(record).map(([key, childValue]) => [
+      key,
+      SENSITIVE_RESPONSE_FIELDS.has(key) ? "[redacted]" : redactResponseForLogs(childValue),
+    ]),
+  );
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: unknown;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -89,8 +123,8 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (capturedJsonResponse !== undefined) {
+        logLine += ` :: ${JSON.stringify(redactResponseForLogs(capturedJsonResponse))}`;
       }
 
       log(logLine);
@@ -305,6 +339,7 @@ function startRateLimitStatsScheduler() {
             { id: "add-wholesale-price",                run: addWholesalePriceColumn },
             { id: "purge-stale-site-config",            run: purgeStaleConfigKeys },
             { id: "purge-cart-banners",                  run: purgeCartBannersKey },
+            { id: "customer-profile-dates",              run: ensureCustomerProfileDateColumns },
           ]);
           currentStep = "seed-database";
           if (process.env.NODE_ENV === "production") {

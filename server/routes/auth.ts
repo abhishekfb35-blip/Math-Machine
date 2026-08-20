@@ -220,7 +220,7 @@ export function registerAuthRoutes(app: Express) {
    */
   app.post("/api/auth/google/complete", async (req: Request, res: Response) => {
     try {
-      const { credential, phone, consentGiven, consentText } = req.body;
+      const { credential, phone, countryCode, birthdayMonthDay, anniversaryMonthDay, consentGiven, consentText } = req.body;
       if (!credential) {
         return res.status(400).json({ message: "Google credential is required" });
       }
@@ -246,7 +246,56 @@ export function registerAuthRoutes(app: Express) {
         return res.status(400).json({ message: "Email not available from Google" });
       }
 
-       const normalizedPhone = phone?.trim() || null;
+       const submittedPhone = typeof phone === "string" ? phone.trim() : "";
+       const phoneRules: Record<string, { min: number; max: number }> = {
+         "+91": { min: 10, max: 10 },
+         "+1": { min: 10, max: 10 },
+         "+44": { min: 9, max: 10 },
+         "+61": { min: 9, max: 9 },
+         "+65": { min: 8, max: 8 },
+         "+971": { min: 8, max: 9 },
+       };
+       let normalizedPhone: string | null;
+       if (countryCode !== undefined && countryCode !== null) {
+         if (typeof countryCode !== "string" || !phoneRules[countryCode]) {
+           return res.status(400).json({ message: "Please choose a supported country code" });
+         }
+          if (submittedPhone && !/^[0-9 ().-]+$/.test(submittedPhone)) {
+           return res.status(400).json({ message: "Phone number can contain only digits and common formatting characters" });
+         }
+         const localDigits = submittedPhone.replace(/\D/g, "");
+         const rule = phoneRules[countryCode];
+         if (submittedPhone && !localDigits) {
+           return res.status(400).json({ message: "Phone number must contain digits only" });
+         }
+         if (localDigits && (localDigits.length < rule.min || localDigits.length > rule.max)) {
+           return res.status(400).json({ message: "Please enter a valid phone number for the selected country code" });
+         }
+         normalizedPhone = localDigits ? `${countryCode}${localDigits}` : null;
+       } else {
+         // Other existing sign-in forms do not yet submit a country code.
+         normalizedPhone = submittedPhone || null;
+       }
+       const normalizeMonthDay = (value: unknown, label: string): string | null => {
+         if (value == null || value === "") return null;
+         if (typeof value !== "string" || !/^\d{2}-\d{2}$/.test(value)) {
+           throw new Error(`${label} must include only a valid month and day`);
+         }
+         const [month, day] = value.split("-").map(Number);
+         const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+         if (month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1]) {
+           throw new Error(`${label} must include only a valid month and day`);
+         }
+         return value;
+       };
+       let normalizedBirthday: string | null;
+       let normalizedAnniversary: string | null;
+       try {
+         normalizedBirthday = normalizeMonthDay(birthdayMonthDay, "Birthday");
+         normalizedAnniversary = normalizeMonthDay(anniversaryMonthDay, "Anniversary");
+       } catch (dateError: any) {
+         return res.status(400).json({ message: dateError.message });
+       }
        let phoneRequired = true;
        try {
          const signupPopupConfig = await storage.getSiteConfig("signup-popup");
@@ -274,6 +323,8 @@ export function registerAuthRoutes(app: Express) {
             googleId,
             avatarUrl: picture,
             phone: normalizedPhone,
+            birthdayMonthDay: normalizedBirthday,
+            anniversaryMonthDay: normalizedAnniversary,
           });
         }
       }
@@ -282,9 +333,14 @@ export function registerAuthRoutes(app: Express) {
         return res.status(500).json({ message: "Failed to create account" });
       }
 
-      // Save phone on existing customer if not already set
-      if (normalizedPhone && !customer.phone) {
-        customer = await storage.updateCustomer(customer.id, { phone: normalizedPhone });
+      // Fill missing signup details without overwriting details a customer already saved.
+      const missingDetails = {
+        ...(normalizedPhone && !customer.phone ? { phone: normalizedPhone } : {}),
+        ...(normalizedBirthday && !customer.birthdayMonthDay ? { birthdayMonthDay: normalizedBirthday } : {}),
+        ...(normalizedAnniversary && !customer.anniversaryMonthDay ? { anniversaryMonthDay: normalizedAnniversary } : {}),
+      };
+      if (Object.keys(missingDetails).length > 0) {
+        customer = await storage.updateCustomer(customer.id, missingDetails);
       }
 
       // Record marketing consent
