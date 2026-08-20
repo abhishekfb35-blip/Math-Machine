@@ -456,7 +456,6 @@ export default function SignupPopup() {
                       onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
                       required={config?.phoneRequired !== false}
                       maxLength={15}
-                      autoFocus
                       className="min-w-0 flex-1"
                       data-testid="input-signup-phone"
                     />

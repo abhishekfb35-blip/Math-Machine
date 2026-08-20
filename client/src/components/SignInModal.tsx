@@ -227,7 +227,6 @@ export default function SignInModal() {
                     onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ""))}
                     required
                     maxLength={15}
-                    autoFocus
                     className="min-w-0 flex-1"
                     data-testid="signin-modal-phone-input"
                   />
