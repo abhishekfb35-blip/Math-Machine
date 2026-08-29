@@ -1048,31 +1048,31 @@ export function registerAdminHealthRoutes(app: Express) {
     try {
       const { pool } = await import("../../db");
       const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
-        pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
-        pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
+        pool.query(`SELECT id, name, slug, description, image_url, sort_order FROM categories ORDER BY sort_order, id`),
+        pool.query(`SELECT id, sku, name, slug, description, price, mrp, category_id, amazon_asin, color, material, gsm, dimensions, weight_grams, items_in_set, special_features, bullet_points, search_keywords, product_type, active, sort_order, variant_colors, variant_sizes, wholesale_price FROM products ORDER BY sort_order, id`),
         pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
-        pool.query(`SELECT id, name, description, tag_type_id AS "tagTypeId", sort_order AS "sortOrder" FROM tags ORDER BY sort_order, name`),
+        pool.query(`SELECT id, name, description, tag_type_id, sort_order FROM tags ORDER BY sort_order, name`),
         pool.query(`
           SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
           FROM product_tags pt
           LEFT JOIN products p ON pt.product_id = p.id
           LEFT JOIN tags t ON pt.tag_id = t.id
           ORDER BY p.slug, t.name`),
-        pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
-        pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+        pool.query(`SELECT id, product_id, image_url, sort_order, is_primary FROM product_images ORDER BY id`),
+        pool.query(`SELECT id, product_id, reviewer_name, rating, title, body, amz_review_date, verified_purchase FROM product_reviews ORDER BY id`),
         pool.query(`SELECT id, name, sort_order FROM audience ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
         pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
-        pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
+        pool.query(`SELECT id, name, slug, description, boost_tags, penalty_tags, preferred_styles, preferred_themes, active, sort_order FROM occasions ORDER BY sort_order, id`),
         pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS audience_name FROM product_audience pag JOIN products p ON p.id = pag.product_id JOIN audience ag ON ag.id = pag.audience_id ORDER BY p.slug, ag.name`),
         pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
         pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
         pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
         pool.query(`SELECT key, value FROM site_content ORDER BY key`),
         pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
-        pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
-        pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
+        pool.query(`SELECT id, name, config_id, description, description_font_size, price_add, mrp_add, is_default, blur_on_front, sort_order FROM variant_sizes ORDER BY sort_order, id`),
+        pool.query(`SELECT id, name, size_id, swatch_url, blur_on_front, sort_order FROM variant_colors ORDER BY sort_order, id`),
         pool.query(`SELECT id, selling_price, bulk_rate FROM bulk_price_rules ORDER BY selling_price`),
         pool.query(`SELECT id, name, swatch_url, sort_order FROM color_swatches ORDER BY sort_order`),
         pool.query(`SELECT id, category_id, name, description, sort_order FROM category_size_definitions ORDER BY sort_order`),
@@ -1119,31 +1119,31 @@ export function registerAdminHealthRoutes(app: Express) {
         (async () => {
           const { pool } = await import("../../db");
           const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
-            pool.query(`SELECT id, name, slug, sort_order FROM categories ORDER BY sort_order`),
-            pool.query(`SELECT id, sku, name, slug, price, mrp, active, category_id FROM products ORDER BY sort_order`),
+            pool.query(`SELECT id, name, slug, description, image_url, sort_order FROM categories ORDER BY sort_order, id`),
+            pool.query(`SELECT id, sku, name, slug, description, price, mrp, category_id, amazon_asin, color, material, gsm, dimensions, weight_grams, items_in_set, special_features, bullet_points, search_keywords, product_type, active, sort_order, variant_colors, variant_sizes, wholesale_price FROM products ORDER BY sort_order, id`),
             pool.query(`SELECT id, name, slug, description, sort_order FROM tag_types ORDER BY sort_order`),
-            pool.query(`SELECT id, name, description, tag_type_id AS "tagTypeId", sort_order AS "sortOrder" FROM tags ORDER BY sort_order, name`),
+            pool.query(`SELECT id, name, description, tag_type_id, sort_order FROM tags ORDER BY sort_order, name`),
             pool.query(`
               SELECT pt.product_id, p.slug AS product_slug, pt.tag_id, t.name AS tag_name
               FROM product_tags pt
               LEFT JOIN products p ON pt.product_id = p.id
               LEFT JOIN tags t ON pt.tag_id = t.id
               ORDER BY p.slug, t.name`),
-            pool.query(`SELECT id, product_id FROM product_images ORDER BY id`),
-            pool.query(`SELECT id, product_id FROM product_reviews ORDER BY id`),
+            pool.query(`SELECT id, product_id, image_url, sort_order, is_primary FROM product_images ORDER BY id`),
+            pool.query(`SELECT id, product_id, reviewer_name, rating, title, body, amz_review_date, verified_purchase FROM product_reviews ORDER BY id`),
             pool.query(`SELECT id, name, sort_order FROM audience ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM genders ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM themes ORDER BY sort_order`),
             pool.query(`SELECT id, name, sort_order FROM styles ORDER BY sort_order`),
-            pool.query(`SELECT id, name, slug, active, sort_order FROM occasions ORDER BY sort_order`),
+            pool.query(`SELECT id, name, slug, description, boost_tags, penalty_tags, preferred_styles, preferred_themes, active, sort_order FROM occasions ORDER BY sort_order, id`),
             pool.query(`SELECT pag.product_id, p.slug AS product_slug, ag.name AS audience_name FROM product_audience pag JOIN products p ON p.id = pag.product_id JOIN audience ag ON ag.id = pag.audience_id ORDER BY p.slug, ag.name`),
             pool.query(`SELECT pgr.product_id, p.slug AS product_slug, g.name AS gender_name FROM product_genders pgr JOIN products p ON p.id = pgr.product_id JOIN genders g ON g.id = pgr.gender_id ORDER BY p.slug, g.name`),
             pool.query(`SELECT pth.product_id, p.slug AS product_slug, t2.name AS theme_name FROM product_themes pth JOIN products p ON p.id = pth.product_id JOIN themes t2 ON t2.id = pth.theme_id ORDER BY p.slug, t2.name`),
             pool.query(`SELECT pst.product_id, p.slug AS product_slug, s.name AS style_name FROM product_styles pst JOIN products p ON p.id = pst.product_id JOIN styles s ON s.id = pst.style_id ORDER BY p.slug, s.name`),
             pool.query(`SELECT key, value FROM site_content ORDER BY key`),
             pool.query(`SELECT id, category_id, tag_id, audience_id, sort_order FROM category_tag_variant_configs ORDER BY sort_order, id`),
-            pool.query(`SELECT id, name, config_id, sort_order FROM variant_sizes ORDER BY sort_order, id`),
-            pool.query(`SELECT id, name, size_id, sort_order FROM variant_colors ORDER BY sort_order, id`),
+            pool.query(`SELECT id, name, config_id, description, description_font_size, price_add, mrp_add, is_default, blur_on_front, sort_order FROM variant_sizes ORDER BY sort_order, id`),
+            pool.query(`SELECT id, name, size_id, swatch_url, blur_on_front, sort_order FROM variant_colors ORDER BY sort_order, id`),
             pool.query(`SELECT id, selling_price, bulk_rate FROM bulk_price_rules ORDER BY selling_price`),
             pool.query(`SELECT id, name, swatch_url, sort_order FROM color_swatches ORDER BY sort_order`),
             pool.query(`SELECT id, category_id, name, description, sort_order FROM category_size_definitions ORDER BY sort_order`),
@@ -1183,8 +1183,8 @@ export function registerAdminHealthRoutes(app: Express) {
           const prodRow = prodMap.get(id);
           if (!prodRow) continue;
           for (const f of fields) {
-            const dv = String(devRow[f] ?? "");
-            const pv = String((prodRow as any)[f] ?? "");
+            const dv = JSON.stringify(devRow[f] ?? null);
+            const pv = JSON.stringify((prodRow as any)[f] ?? null);
             if (dv !== pv) fieldMismatches.push({ id, field: String(f), dev: devRow[f], prod: (prodRow as any)[f] });
           }
         }
@@ -1215,21 +1215,21 @@ export function registerAdminHealthRoutes(app: Express) {
       res.json({
         checkedAt: new Date().toISOString(),
         prodUrl,
-        categories:       diffById(localSnap.categories as any[], prodSnap.categories as any[], ["name", "slug", "sort_order"]),
-        products:         { ...diffById(devProds, prodProds, ["sku", "name", "slug", "price", "mrp", "active", "category_id"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
-        tagTypes:         diffById(localSnap.tagTypes as any[], (prodSnap as any).tagTypes as any[] ?? [], ["name", "slug", "sort_order"]),
-        tags:             diffById(localSnap.tags as any[], prodSnap.tags as any[], ["name", "sortOrder"]),
+        categories:       diffById(localSnap.categories as any[], prodSnap.categories as any[], ["name", "slug", "description", "image_url", "sort_order"]),
+        products:         { ...diffById(devProds, prodProds, ["sku", "name", "slug", "description", "price", "mrp", "category_id", "amazon_asin", "color", "material", "gsm", "dimensions", "weight_grams", "items_in_set", "special_features", "bullet_points", "search_keywords", "product_type", "active", "sort_order", "variant_colors", "variant_sizes", "wholesale_price"]), onlySkuInDev, onlySkuInProd, skuNameMismatches },
+        tagTypes:         diffById(localSnap.tagTypes as any[], (prodSnap as any).tagTypes as any[] ?? [], ["name", "slug", "description", "sort_order"]),
+        tags:             diffById(localSnap.tags as any[], prodSnap.tags as any[], ["name", "description", "tag_type_id", "sort_order"]),
         productTags:      diffByContent(
                             localSnap.productTags as any[], prodSnap.productTags as any[],
                             r => `${r.product_id}|${r.tag_id}`,
                             r => `${r.product_slug || r.product_id} → ${r.tag_name || r.tag_id}`),
-        productImages:    diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id"]),
-        productReviews:   diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id"]),
+        productImages:    diffById(localSnap.productImages  as any[], prodSnap.productImages  as any[], ["product_id", "image_url", "sort_order", "is_primary"]),
+        productReviews:   diffById(localSnap.productReviews as any[], prodSnap.productReviews as any[], ["product_id", "reviewer_name", "rating", "title", "body", "amz_review_date", "verified_purchase"]),
         audience:         diffById(localSnap.audience as any[], (prodSnap as any).audience as any[] ?? [], ["name", "sort_order"]),
         genders:          diffById(localSnap.genders as any[], (prodSnap as any).genders as any[] ?? [], ["name", "sort_order"]),
         themes:           diffById(localSnap.themes as any[], (prodSnap as any).themes as any[] ?? [], ["name", "sort_order"]),
         styles:           diffById(localSnap.styles as any[], (prodSnap as any).styles as any[] ?? [], ["name", "sort_order"]),
-        occasions:        diffById(localSnap.occasions as any[], (prodSnap as any).occasions as any[] ?? [], ["name", "slug", "active", "sort_order"]),
+        occasions:        diffById(localSnap.occasions as any[], (prodSnap as any).occasions as any[] ?? [], ["name", "slug", "description", "boost_tags", "penalty_tags", "preferred_styles", "preferred_themes", "active", "sort_order"]),
         productAudience:  diffByContent(
                             localSnap.productAudience as any[], (prodSnap as any).productAudience as any[] ?? [],
                             r => `${r.product_slug}|${r.audience_name}`,
@@ -1268,11 +1268,11 @@ export function registerAdminHealthRoutes(app: Express) {
         variantSizes:     diffById(
                             (localSnap as any).variantSizes as any[] ?? [],
                             (prodSnap as any).variantSizes as any[] ?? [],
-                            ["name", "config_id", "sort_order"]),
+                            ["name", "config_id", "description", "description_font_size", "price_add", "mrp_add", "is_default", "blur_on_front", "sort_order"]),
         variantColors:    diffById(
                             (localSnap as any).variantColors as any[] ?? [],
                             (prodSnap as any).variantColors as any[] ?? [],
-                            ["name", "size_id", "sort_order"]),
+                            ["name", "size_id", "swatch_url", "blur_on_front", "sort_order"]),
         bulkPriceRules:   diffById(
                             (localSnap as any).bulkPriceRules as any[] ?? [],
                             (prodSnap as any).bulkPriceRules as any[] ?? [],
@@ -1494,6 +1494,9 @@ export function registerAdminHealthRoutes(app: Express) {
                 p.bullet_points AS "bulletPoints",
                 p.search_keywords AS "searchKeywords",
                 p.product_type AS "productType",
+                 p.variant_colors AS "variantColors",
+                 p.variant_sizes AS "variantSizes",
+                 p.wholesale_price AS "wholesalePrice",
                 COALESCE((SELECT string_agg(ag.name,',') FROM product_audience pag JOIN audience ag ON ag.id=pag.audience_id WHERE pag.product_id=p.id),'') AS "audience",
                 COALESCE((SELECT string_agg(g.name,',')  FROM product_genders   pg  JOIN genders     g  ON g.id=pg.gender_id     WHERE pg.product_id=p.id),'')  AS "gender",
                 COALESCE((SELECT string_agg(t.name,',')  FROM product_themes    pt  JOIN themes      t  ON t.id=pt.theme_id      WHERE pt.product_id=p.id),'')  AS "themes",
@@ -1567,7 +1570,7 @@ export function registerAdminHealthRoutes(app: Express) {
       const vsResult = await pool.query(
         `SELECT id, config_id AS "configId", name, description,
                 description_font_size AS "descriptionFontSize",
-                price_add AS "priceAdd", is_default AS "isDefault",
+                 price_add AS "priceAdd", mrp_add AS "mrpAdd", is_default AS "isDefault",
                 blur_on_front AS "blurOnFront", sort_order AS "sortOrder"
          FROM variant_sizes ORDER BY sort_order, id`
       );

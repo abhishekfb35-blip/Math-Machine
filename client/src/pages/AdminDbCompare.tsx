@@ -74,6 +74,32 @@ function isProductClean(d: ProductDiff) {
   return isIdTableClean(d) && d.onlySkuInDev.length === 0 && d.onlySkuInProd.length === 0 && d.skuNameMismatches.length === 0;
 }
 
+export function isCompareResultClean(result: CompareResult) {
+  return isProductClean(result.products) &&
+    isIdTableClean(result.categories) &&
+    isIdTableClean(result.tagTypes) &&
+    isIdTableClean(result.tags) &&
+    isContentTableClean(result.productTags) &&
+    isIdTableClean(result.productImages) &&
+    isIdTableClean(result.productReviews) &&
+    isIdTableClean(result.audience) &&
+    isIdTableClean(result.genders) &&
+    isIdTableClean(result.themes) &&
+    isIdTableClean(result.styles) &&
+    isIdTableClean(result.occasions) &&
+    isContentTableClean(result.productAudience) &&
+    isContentTableClean(result.productGenders) &&
+    isContentTableClean(result.productThemes) &&
+    isContentTableClean(result.productStyles) &&
+    isContentTableClean(result.siteContent) &&
+    isIdTableClean(result.categoryTagVariantConfigs) &&
+    isIdTableClean(result.variantSizes) &&
+    isIdTableClean(result.variantColors) &&
+    isIdTableClean(result.bulkPriceRules) &&
+    isIdTableClean(result.colorSwatches) &&
+    isIdTableClean(result.categorySizeDefinitions);
+}
+
 function CollapsibleList({ label, items, color }: { label: string; items: string[]; color: string }) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
@@ -219,8 +245,8 @@ export default function AdminDbCompare() {
   const [reseedError, setReseedError] = useState<string | null>(null);
   const [reseedResult, setReseedResult] = useState<ReseedResult | null>(null);
 
-  async function runCompare(keepReseedBanner = false) {
-    if (!prodUrl.trim()) return;
+  async function runCompare(keepReseedBanner = false): Promise<CompareResult | null> {
+    if (!prodUrl.trim()) return null;
     setLoading(true);
     setError(null);
     setResult(null);
@@ -233,8 +259,10 @@ export default function AdminDbCompare() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Compare failed");
       setResult(data);
+      return data as CompareResult;
     } catch (e: any) {
       setError(e.message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -246,11 +274,20 @@ export default function AdminDbCompare() {
     setReseedError(null);
     setReseedResult(null);
     try {
+      const exportRes = await apiRequest("POST", "/api/admin/export/seed");
+      const exportData = await exportRes.json();
+      if (!exportRes.ok) throw new Error(exportData.message || "Could not capture current development data");
+
       const res = await apiRequest("POST", "/api/admin/catalog/force-reseed", { prodUrl: prodUrl.trim() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Re-seed failed");
-      setReseedResult(data);
-      await runCompare(true);
+
+      const verified = await runCompare(true);
+      if (!verified) throw new Error("Production was updated, but the verification compare failed");
+      if (!isCompareResultClean(verified)) {
+        throw new Error("Production was updated, but differences remain. Review the highlighted sections below.");
+      }
+      setReseedResult({ ...data, message: "Production synced and verified successfully" });
     } catch (e: any) {
       setReseedError(e.message);
     } finally {
@@ -258,31 +295,7 @@ export default function AdminDbCompare() {
     }
   }
 
-  const allClean = result
-    ? isProductClean(result.products) &&
-      isIdTableClean(result.categories) &&
-      isIdTableClean(result.tagTypes) &&
-      isIdTableClean(result.tags) &&
-      isContentTableClean(result.productTags) &&
-      isIdTableClean(result.productImages) &&
-      isIdTableClean(result.productReviews) &&
-      isIdTableClean(result.audience) &&
-      isIdTableClean(result.genders) &&
-      isIdTableClean(result.themes) &&
-      isIdTableClean(result.styles) &&
-      isIdTableClean(result.occasions) &&
-      isContentTableClean(result.productAudience) &&
-      isContentTableClean(result.productGenders) &&
-      isContentTableClean(result.productThemes) &&
-      isContentTableClean(result.productStyles) &&
-      isContentTableClean(result.siteContent) &&
-      isIdTableClean(result.categoryTagVariantConfigs) &&
-      isIdTableClean(result.variantSizes) &&
-      isIdTableClean(result.variantColors) &&
-      isIdTableClean(result.bulkPriceRules) &&
-      isIdTableClean(result.colorSwatches) &&
-      isIdTableClean(result.categorySizeDefinitions)
-    : null;
+  const allClean = result ? isCompareResultClean(result) : null;
 
   const canReseed = !!prodUrl.trim() && result !== null && allClean === false;
 

@@ -269,9 +269,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
         const allCats = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
         const catSlugToId: Record<string, string> = Object.fromEntries(allCats.map(c => [c.slug, c.id]));
 
-        const prodEntries = tableData.products
-          .filter((p) => catSlugToId[p.categorySlug])
-          .map((p) => ({
+        const unresolvedProducts = tableData.products.filter((p) => !catSlugToId[p.categorySlug]);
+        if (unresolvedProducts.length > 0) {
+          throw new Error(`[seed] products: ${unresolvedProducts.length} unresolved category reference(s): ${unresolvedProducts.slice(0, 5).map((p) => `${p.slug} → ${p.categorySlug}`).join(", ")}`);
+        }
+        const prodEntries = tableData.products.map((p) => ({
             id: p.id,
             sku: p.sku,
             name: p.name,
@@ -291,12 +293,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
             bulletPoints: p.bulletPoints ?? null,
             searchKeywords: p.searchKeywords ?? null,
             productType: p.productType ?? "towel",
+            variantColors: p.variantColors ?? "[]",
+            variantSizes: p.variantSizes ?? "[]",
+            wholesalePrice: p.wholesalePrice ?? null,
             active: p.active !== false,
             sortOrder: p.sortOrder ?? 0,
           }));
-
-        const skipped = tableData.products.length - prodEntries.length;
-        if (skipped > 0) console.warn(`[seed] products: ${skipped} skipped (unknown categorySlug)`);
 
         for (let i = 0; i < prodEntries.length; i += BATCH) {
           await db.insert(products).values(prodEntries.slice(i, i + BATCH));
@@ -311,9 +313,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
           const allProds = await db.select({ id: products.id, slug: products.slug }).from(products);
           const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
 
-          const imgEntries = tableData.productImages
-            .filter((img) => prodSlugToId[img.productSlug])
-            .map((img) => ({
+          const unresolvedImages = tableData.productImages.filter((img) => !prodSlugToId[img.productSlug]);
+          if (unresolvedImages.length > 0) {
+            throw new Error(`[seed] productImages: ${unresolvedImages.length} unresolved product reference(s): ${unresolvedImages.slice(0, 5).map((img) => img.productSlug).join(", ")}`);
+          }
+          const imgEntries = tableData.productImages.map((img) => ({
               id: img.id,
               productId: prodSlugToId[img.productSlug],
               imageUrl: img.imageUrl,
@@ -335,9 +339,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
           const allProds = await db.select({ id: products.id, slug: products.slug }).from(products);
           const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
 
-          const revEntries = tableData.productReviews
-            .filter((r) => prodSlugToId[r.productSlug])
-            .map((r) => ({
+          const unresolvedReviews = tableData.productReviews.filter((r) => !prodSlugToId[r.productSlug]);
+          if (unresolvedReviews.length > 0) {
+            throw new Error(`[seed] productReviews: ${unresolvedReviews.length} unresolved product reference(s): ${unresolvedReviews.slice(0, 5).map((r) => r.productSlug).join(", ")}`);
+          }
+          const revEntries = tableData.productReviews.map((r) => ({
               id: r.id,
               productId: prodSlugToId[r.productSlug],
               reviewerName: r.reviewerName,
@@ -347,9 +353,6 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
               amzReviewDate: r.amzReviewDate ?? null,
               verifiedPurchase: r.verifiedPurchase ?? false,
             }));
-
-          const skipped = tableData.productReviews.length - revEntries.length;
-          if (skipped > 0) console.warn(`[seed] productReviews: ${skipped} skipped (unknown productSlug)`);
 
           for (let i = 0; i < revEntries.length; i += BATCH) {
             await db.insert(productReviews).values(revEntries.slice(i, i + BATCH));
@@ -367,9 +370,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
           const prodSlugToId: Record<string, string> = Object.fromEntries(allProds.map(p => [p.slug, p.id]));
           const tagNameToId: Record<string, string> = Object.fromEntries(allTagsList.map(t => [t.name, t.id]));
 
-          const ptEntries = tableData.productTags
-            .filter((pt) => prodSlugToId[pt.productSlug] && tagNameToId[pt.tagName])
-            .map((pt) => ({
+          const unresolvedTags = tableData.productTags.filter((pt) => !prodSlugToId[pt.productSlug] || !tagNameToId[pt.tagName]);
+          if (unresolvedTags.length > 0) {
+            throw new Error(`[seed] productTags: ${unresolvedTags.length} unresolved reference(s): ${unresolvedTags.slice(0, 5).map((pt) => `${pt.productSlug} → ${pt.tagName}`).join(", ")}`);
+          }
+          const ptEntries = tableData.productTags.map((pt) => ({
               id: pt.id,
               productId: prodSlugToId[pt.productSlug],
               tagId: tagNameToId[pt.tagName],
@@ -491,7 +496,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     const seedConfigIdToDbId: Record<string, string> = {};
     for (const ctvc of ctvcEntries) {
       const catId = catSlugToIdV[ctvc.categorySlug];
-      if (!catId) { console.warn(`[seed] categoryTagVariantConfigs: unknown categorySlug "${ctvc.categorySlug}"`); continue; }
+      if (!catId) throw new Error(`[seed] categoryTagVariantConfigs: unresolved category "${ctvc.categorySlug}" for config "${ctvc.id}"`);
       const tagId = ctvc.tagId ?? null;
       const audienceId = ctvc.audienceId ?? null;
       const [existing] = await db.select().from(categoryTagVariantConfigs).where(eq(categoryTagVariantConfigs.id, ctvc.id));
@@ -514,7 +519,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     }
 
     // ── 7. variantSizes: upsert by (configId, name) ───────────────────────────
-    const vsEntries = (sd.variantSizes ?? []) as Array<{id: string; configId: string; name: string; description?: string; descriptionFontSize?: number; priceAdd?: number; isDefault?: boolean; blurOnFront?: boolean; sortOrder?: number}>;
+    const vsEntries = (sd.variantSizes ?? []) as Array<{id: string; configId: string; name: string; description?: string; descriptionFontSize?: number; priceAdd?: number; mrpAdd?: number; isDefault?: boolean; blurOnFront?: boolean; sortOrder?: number}>;
     let vsSynced = 0;
     // Map seed sizeId → actual DB sizeId (in case the DB has a different PK)
     const seedSizeIdToDbId: Record<string, string> = {};
@@ -527,7 +532,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
         await db.insert(variantSizes).values({
           id: vs.id, configId: actualConfigId, name: vs.name,
           description: vs.description ?? null, descriptionFontSize: vs.descriptionFontSize ?? 12,
-          priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
+          priceAdd: vs.priceAdd ?? 0, mrpAdd: vs.mrpAdd ?? 0, isDefault: vs.isDefault ?? false,
           blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
         });
         seedSizeIdToDbId[vs.id] = vs.id;
@@ -538,13 +543,14 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
           existing.description !== (vs.description ?? null) ||
           existing.descriptionFontSize !== (vs.descriptionFontSize ?? 12) ||
           existing.priceAdd !== (vs.priceAdd ?? 0) ||
+          existing.mrpAdd !== (vs.mrpAdd ?? 0) ||
           existing.isDefault !== (vs.isDefault ?? false) ||
           existing.blurOnFront !== (vs.blurOnFront ?? false) ||
           existing.sortOrder !== (vs.sortOrder ?? 0);
         if (changed) {
           await db.update(variantSizes).set({
             description: vs.description ?? null, descriptionFontSize: vs.descriptionFontSize ?? 12,
-            priceAdd: vs.priceAdd ?? 0, isDefault: vs.isDefault ?? false,
+            priceAdd: vs.priceAdd ?? 0, mrpAdd: vs.mrpAdd ?? 0, isDefault: vs.isDefault ?? false,
             blurOnFront: vs.blurOnFront ?? false, sortOrder: vs.sortOrder ?? 0,
           }).where(eq(variantSizes.id, existing.id));
           vsSynced++;
@@ -672,9 +678,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       const slugToId  = Object.fromEntries(dbProds.map(p => [p.slug, p.id]));
 
       if (effective.productAudience) {
+        const unresolved = tableData.productAudience.filter(r => !slugToId[r.productSlug] || !agByName[r.audienceName]);
+        if (unresolved.length > 0) {
+          throw new Error(`[seed] productAudience: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.audienceName}`).join(", ")}`);
+        }
         const rows = tableData.productAudience
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: agByName[r.audienceName] }))
-          .filter((r): r is { id: string; productId: string; audienceId: string } => !!(r.productId && r.audienceId));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: agByName[r.audienceName] }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productAudience).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productAudience: inserted ${rows.length}`);
@@ -682,9 +691,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productAudience: up to date`); }
 
       if (effective.productGenders) {
+        const unresolved = tableData.productGenders.filter(r => !slugToId[r.productSlug] || !genByName[r.genderName]);
+        if (unresolved.length > 0) {
+          throw new Error(`[seed] productGenders: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.genderName}`).join(", ")}`);
+        }
         const rows = tableData.productGenders
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], genderId: genByName[r.genderName] }))
-          .filter((r): r is { id: string; productId: string; genderId: string } => !!(r.productId && r.genderId));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], genderId: genByName[r.genderName] }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productGenders).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productGenders: inserted ${rows.length}`);
@@ -692,9 +704,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productGenders: up to date`); }
 
       if (effective.productThemes) {
+        const unresolved = tableData.productThemes.filter(r => !slugToId[r.productSlug] || !thByName[r.themeName]);
+        if (unresolved.length > 0) {
+          throw new Error(`[seed] productThemes: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.themeName}`).join(", ")}`);
+        }
         const rows = tableData.productThemes
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], themeId: thByName[r.themeName] }))
-          .filter((r): r is { id: string; productId: string; themeId: string } => !!(r.productId && r.themeId));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], themeId: thByName[r.themeName] }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productThemes).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productThemes: inserted ${rows.length}`);
@@ -702,9 +717,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productThemes: up to date`); }
 
       if (effective.productStyles) {
+        const unresolved = tableData.productStyles.filter(r => !slugToId[r.productSlug] || !stByName[r.styleName]);
+        if (unresolved.length > 0) {
+          throw new Error(`[seed] productStyles: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.styleName}`).join(", ")}`);
+        }
         const rows = tableData.productStyles
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], styleId: stByName[r.styleName] }))
-          .filter((r): r is { id: string; productId: string; styleId: string } => !!(r.productId && r.styleId));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], styleId: stByName[r.styleName] }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productStyles).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productStyles: inserted ${rows.length}`);
@@ -807,7 +825,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     const catSlugToIdCsd: Record<string, string> = Object.fromEntries(allCatsForCsd.map(c => [c.slug, c.id]));
     for (const csd of csdEntries) {
       const categoryId = catSlugToIdCsd[csd.categorySlug];
-      if (!categoryId) { console.warn(`[seed] categorySizeDefinitions: unknown categorySlug "${csd.categorySlug}"`); continue; }
+      if (!categoryId) throw new Error(`[seed] categorySizeDefinitions: unresolved category "${csd.categorySlug}" for definition "${csd.id}"`);
       const [existing] = await db.select().from(categorySizeDefinitions).where(eq(categorySizeDefinitions.id, csd.id));
       if (!existing) {
         await db.insert(categorySizeDefinitions).values({ id: csd.id, categoryId, name: csd.name, description: csd.description ?? null, sortOrder: csd.sortOrder ?? 0 });
@@ -846,5 +864,6 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
   } catch (error) {
     console.error("Error seeding database:", error);
+    throw error;
   }
 }
