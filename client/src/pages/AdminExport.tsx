@@ -144,7 +144,7 @@ export default function AdminExport() {
                 picks them up automatically.
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                Only static product images (<code className="text-xs">/images/products/</code>) are included — user-uploaded files are excluded.
+                All product image references are included so catalog synchronization can verify exact database parity.
               </p>
               {lastSeedResult && (
                 <div className="flex items-center gap-2 mt-3 text-sm text-green-700 dark:text-green-400">

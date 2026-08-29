@@ -203,7 +203,13 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       if (effective.themes)           await db.delete(themes);
       if (effective.styles)           await db.delete(styles);
       if (effective.productTags)      await db.delete(productTags);
-      if (changed.productImages)      await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
+      if (effective.productImages) {
+        if (overrideData !== undefined) {
+          await db.delete(productImages);
+        } else {
+          await db.delete(productImages).where(like(productImages.imageUrl, "/images/products/%"));
+        }
+      }
       if (effective.productReviews) await db.delete(productReviews);
       if (effective.products)       await db.delete(products);
       if (effective.categories)     await db.delete(categories);
@@ -410,6 +416,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // ── 4b. siteContent: row-level upsert (shared content, syncs dev → prod) ─
     const contentEntries = ((sd as any).siteContent ?? []) as Array<{key: string; value: string}>;
+    if (overrideData !== undefined) {
+      await db.delete(siteContent);
+    }
     let contentSynced = 0;
     for (const sc of contentEntries) {
       const [existing] = await db.select().from(siteContent).where(eq(siteContent.key, sc.key));
@@ -488,6 +497,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     }
 
     // ── 6. categoryTagVariantConfigs: upsert by id ────────────────────────────
+    if (overrideData !== undefined) {
+      await db.delete(variantColors);
+      await db.delete(variantSizes);
+      await db.delete(categoryTagVariantConfigs);
+    }
     const allCatsForVariants = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdV: Record<string, string> = Object.fromEntries(allCatsForVariants.map(c => [c.slug, c.id]));
     const ctvcEntries = (sd.categoryTagVariantConfigs ?? []) as Array<{id: string; categorySlug: string; tagId?: string; audienceId?: string; sortOrder?: number}>;
@@ -738,6 +752,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       active?: boolean; sortOrder?: number;
     };
     const occEntries = (sd.occasions as SeedOccasion[] | undefined) ?? [];
+    if (overrideData !== undefined) {
+      await db.delete(occasions);
+    }
     let occSynced = 0;
     for (const occ of occEntries) {
       const [existing] = await db.select().from(occasions).where(eq(occasions.slug, occ.slug));
@@ -785,6 +802,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // ── 11. bulkPriceRules: upsert by sellingPrice ────────────────────────────
     const bprEntries = (sd.bulkPriceRules ?? []) as Array<{id: string; sellingPrice: number; bulkRate: number}>;
+    if (overrideData !== undefined) {
+      await db.delete(bulkPriceRules);
+    }
     let bprSynced = 0;
     for (const bpr of bprEntries) {
       const [existing] = await db.select().from(bulkPriceRules).where(eq(bulkPriceRules.sellingPrice, bpr.sellingPrice));
@@ -801,6 +821,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // ── 12. colorSwatches: upsert by id ──────────────────────────────────────
     const swatchEntries = (sd.colorSwatches ?? []) as Array<{id: string; name: string; swatchUrl?: string; sortOrder?: number}>;
+    if (overrideData !== undefined) {
+      await db.delete(colorSwatches);
+    }
     let swatchSynced = 0;
     for (const sw of swatchEntries) {
       const [existing] = await db.select().from(colorSwatches).where(eq(colorSwatches.id, sw.id));
@@ -820,6 +843,9 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // ── 13. categorySizeDefinitions: upsert by id (categorySlug → categoryId) ─
     const csdEntries = (sd.categorySizeDefinitions ?? []) as Array<{id: string; categorySlug: string; name: string; description?: string; sortOrder?: number}>;
+    if (overrideData !== undefined) {
+      await db.delete(categorySizeDefinitions);
+    }
     let csdSynced = 0;
     const allCatsForCsd = await db.select({ id: categories.id, slug: categories.slug }).from(categories);
     const catSlugToIdCsd: Record<string, string> = Object.fromEntries(allCatsForCsd.map(c => [c.slug, c.id]));
@@ -846,7 +872,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       .select({ key: siteContent.key })
       .from(siteContent)
       .where(eq(siteContent.key, "shop-sections"));
-    if (!existingShopSections) {
+    if (!existingShopSections && overrideData === undefined) {
       const defaultSections = JSON.stringify([
         { label: "Kids Towels",      tag: "kids towels",      maxShown: 8, enabled: true },
         { label: "Adult Towels",     tag: "adult towels",     maxShown: 8, enabled: true },
@@ -858,8 +884,10 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       ]);
       await db.insert(siteContent).values({ key: "shop-sections", value: defaultSections });
       console.log("[seed] shop-sections: inserted default 7 sections");
-    } else {
+    } else if (existingShopSections) {
       console.log("[seed] shop-sections: already present, skipping");
+    } else {
+      console.log("[seed] shop-sections: omitted from incoming snapshot, leaving absent");
     }
 
   } catch (error) {

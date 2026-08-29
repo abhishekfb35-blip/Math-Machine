@@ -7,6 +7,7 @@ import { requireAdmin, requirePermission, requireSuperAdmin, requireSnapshotAcce
 import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { seedDatabase } from "../../seed";
+import { diffByContent, diffById, diffSiteContent } from "../../lib/dbCompare";
 import { getTableColumns } from "drizzle-orm";
 import {
   categories, products, productImages, productReviews, tags, productTags,
@@ -1172,34 +1173,6 @@ export function registerAdminHealthRoutes(app: Express) {
       }
       const prodSnap = await prodResp.json() as typeof localSnap;
 
-      // ID-based diff for tables where ID is the canonical identity
-      function diffById<T extends { id: string }>(devRows: T[], prodRows: T[], fields: (keyof T)[]) {
-        const devMap = new Map(devRows.map(r => [r.id, r]));
-        const prodMap = new Map(prodRows.map(r => [r.id, r]));
-        const onlyInDev = devRows.filter(r => !prodMap.has(r.id)).map(r => r.id);
-        const onlyInProd = prodRows.filter(r => !devMap.has(r.id)).map(r => r.id);
-        const fieldMismatches: { id: string; field: string; dev: unknown; prod: unknown }[] = [];
-        for (const [id, devRow] of devMap) {
-          const prodRow = prodMap.get(id);
-          if (!prodRow) continue;
-          for (const f of fields) {
-            const dv = JSON.stringify(devRow[f] ?? null);
-            const pv = JSON.stringify((prodRow as any)[f] ?? null);
-            if (dv !== pv) fieldMismatches.push({ id, field: String(f), dev: devRow[f], prod: (prodRow as any)[f] });
-          }
-        }
-        return { devCount: devRows.length, prodCount: prodRows.length, onlyInDev, onlyInProd, fieldMismatches };
-      }
-
-      // Content-based diff for junction/dependent tables where row ID is irrelevant
-      function diffByContent(devRows: any[], prodRows: any[], keyFn: (r: any) => string, labelFn: (r: any) => string) {
-        const devKeys  = new Map(devRows.map(r  => [keyFn(r),  labelFn(r)]));
-        const prodKeys = new Map(prodRows.map(r => [keyFn(r), labelFn(r)]));
-        const onlyInDev  = devRows.filter(r  => !prodKeys.has(keyFn(r))).map(r  => labelFn(r));
-        const onlyInProd = prodRows.filter(r => !devKeys.has(keyFn(r))).map(r => labelFn(r));
-        return { devCount: devRows.length, prodCount: prodRows.length, onlyInDev, onlyInProd };
-      }
-
       const devProds  = localSnap.products  as any[];
       const prodProds = prodSnap.products   as any[];
       const devSkuMap  = new Map(devProds.map(p  => [p.sku,  p]));
@@ -1207,9 +1180,9 @@ export function registerAdminHealthRoutes(app: Express) {
       const onlySkuInDev  = devProds.filter(p  => !prodSkuMap.has(p.sku)).map(p  => p.sku);
       const onlySkuInProd = prodProds.filter(p => !devSkuMap.has(p.sku)).map(p => p.sku);
       const skuNameMismatches: { sku: string; devName: string; prodName: string }[] = [];
-      for (const [sku, dp] of devSkuMap) {
-        const pp = prodSkuMap.get(sku);
-        if (pp && dp.name !== pp.name) skuNameMismatches.push({ sku, devName: dp.name, prodName: pp.name });
+      for (const dp of devProds) {
+        const pp = prodSkuMap.get(dp.sku);
+        if (pp && dp.name !== pp.name) skuNameMismatches.push({ sku: dp.sku, devName: dp.name, prodName: pp.name });
       }
 
       res.json({
@@ -1246,21 +1219,9 @@ export function registerAdminHealthRoutes(app: Express) {
                             localSnap.productStyles as any[], (prodSnap as any).productStyles as any[] ?? [],
                             r => `${r.product_slug}|${r.style_name}`,
                             r => `${r.product_slug} → ${r.style_name}`),
-        siteContent: (() => {
-                            const devSC: any[] = (localSnap as any).siteContent ?? [];
-                            const prodSC: any[] = (prodSnap as any).siteContent ?? [];
-                            const devMap  = new Map(devSC.map((r: any)  => [r.key, r.value]));
-                            const prodMap = new Map(prodSC.map((r: any) => [r.key, r.value]));
-                            return {
-                              devCount:     devSC.length,
-                              prodCount:    prodSC.length,
-                              onlyInDev:    devSC.filter((r: any)  => !prodMap.has(r.key)).map((r: any) => r.key),
-                              onlyInProd:   prodSC.filter((r: any) => !devMap.has(r.key)).map((r: any) => r.key),
-                              valueChanged: devSC
-                                .filter((r: any) => prodMap.has(r.key) && prodMap.get(r.key) !== r.value)
-                                .map((r: any) => r.key),
-                            };
-                          })(),
+        siteContent:      diffSiteContent(
+                            (localSnap as any).siteContent ?? [],
+                            (prodSnap as any).siteContent ?? []),
         categoryTagVariantConfigs: diffById(
                             (localSnap as any).categoryTagVariantConfigs as any[] ?? [],
                             (prodSnap as any).categoryTagVariantConfigs as any[] ?? [],
@@ -1402,7 +1363,7 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Query final counts for the response summary
       const { pool } = await import("../../db");
-      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
+      const [cats, prods, ttypes, tgs, ptags, imgs, revs, ags, gens, ths, sts, occs, pags, pgens, pths, psts, sc, ctvcs, vsizes, vcolors, bulk, swatches, csds] = await Promise.all([
         pool.query(`SELECT COUNT(*) FROM categories`),
         pool.query(`SELECT COUNT(*) FROM products`),
         pool.query(`SELECT COUNT(*) FROM tag_types`),
@@ -1419,6 +1380,7 @@ export function registerAdminHealthRoutes(app: Express) {
         pool.query(`SELECT COUNT(*) FROM product_genders`),
         pool.query(`SELECT COUNT(*) FROM product_themes`),
         pool.query(`SELECT COUNT(*) FROM product_styles`),
+        pool.query(`SELECT COUNT(*) FROM site_content`),
         pool.query(`SELECT COUNT(*) FROM category_tag_variant_configs`),
         pool.query(`SELECT COUNT(*) FROM variant_sizes`),
         pool.query(`SELECT COUNT(*) FROM variant_colors`),
@@ -1447,6 +1409,7 @@ export function registerAdminHealthRoutes(app: Express) {
           productGenders:            Number(pgens.rows[0].count),
           productThemes:             Number(pths.rows[0].count),
           productStyles:             Number(psts.rows[0].count),
+          siteContent:               Number(sc.rows[0].count),
           categoryTagVariantConfigs: Number(ctvcs.rows[0].count),
           variantSizes:              Number(vsizes.rows[0].count),
           variantColors:             Number(vcolors.rows[0].count),
@@ -1507,13 +1470,12 @@ export function registerAdminHealthRoutes(app: Express) {
          ORDER BY p.sort_order, p.id`
       );
 
-      // Export product_images — all images stored in /images/products/ (includes uploads)
+      // Export all product image references so DB Compare can reach exact parity.
       const imgsResult = await pool.query(
         `SELECT pi.id, p.slug AS "productSlug", pi.image_url AS "imageUrl",
                 pi.sort_order AS "sortOrder", pi.is_primary AS "isPrimary"
          FROM product_images pi
          JOIN products p ON p.id = pi.product_id
-         WHERE pi.image_url LIKE '/images/products/%'
          ORDER BY p.slug, pi.sort_order`
       );
 

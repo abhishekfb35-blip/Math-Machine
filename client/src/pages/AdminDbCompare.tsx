@@ -351,7 +351,7 @@ export default function AdminDbCompare() {
           className="font-mono text-sm"
           data-testid="input-prod-url"
         />
-        <Button onClick={runCompare} disabled={loading || reseeding || !prodUrl.trim()} data-testid="button-run-compare">
+        <Button onClick={() => void runCompare()} disabled={loading || reseeding || !prodUrl.trim()} data-testid="button-run-compare">
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Compare"}
         </Button>
       </div>
