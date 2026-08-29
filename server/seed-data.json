@@ -117,7 +117,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -227,7 +227,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "animals,florals",
+      "themes": "animals,florals,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 1
@@ -252,7 +252,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals,princess",
       "styles": "classic",
@@ -333,7 +333,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -387,7 +387,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 12 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -416,7 +416,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "florals,abstract",
+      "themes": "florals,abstract,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 2
@@ -441,7 +441,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -468,7 +468,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess,florals",
       "styles": "classic",
@@ -576,7 +576,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -605,7 +605,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 3
@@ -657,7 +657,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "dinosaurs",
       "styles": "classic",
@@ -738,7 +738,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -794,7 +794,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 4
@@ -873,7 +873,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -981,7 +981,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -1010,7 +1010,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "florals,Insects/bugs",
+      "themes": "florals,Insects/bugs,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 6
@@ -1116,7 +1116,7 @@
       "bulletPoints": "[\"WhatsApp on 9,9,9,0,0,7,9,7,2,2 to Share the \\\"Name\\\" to be Personalised on the Product!\",\"Size: 4ft 4 inches x 3ft 4 inches, For 0 to 5 yrs, Weight 450 grams each.\",\"Soft and Instantly absorbent.\",\"Purely embroidered. No patchwork. Built to look good for long.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1170,7 +1170,7 @@
       "bulletPoints": "[\"Premium Fleece blanket.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Perfect for AC rooms and travel.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -1197,7 +1197,7 @@
       "bulletPoints": "[\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\",\"The Ultimate Thoughtful Gift: Forget generic presents! This personalized blanket is a thoughtful and heartfelt gift for new parents, birthdays, baby showers, or any occasion that calls for something truly special and memorable.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -1305,7 +1305,7 @@
       "bulletPoints": "[\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\",\"The Ultimate Thoughtful Gift: Forget generic presents! This personalized blanket is a thoughtful and heartfelt gift for new parents, birthdays, baby showers, or any occasion that calls for something truly special and memorable.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1359,7 +1359,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1413,7 +1413,7 @@
       "bulletPoints": "[\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\",\"The Ultimate Thoughtful Gift: Forget generic presents! This personalized blanket is a thoughtful and heartfelt gift for new parents, birthdays, baby showers, or any occasion that calls for something truly special and memorable.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -1494,7 +1494,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1575,7 +1575,7 @@
       "bulletPoints": "[\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -1656,7 +1656,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1764,7 +1764,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -1791,7 +1791,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1872,7 +1872,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -1953,7 +1953,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -1980,7 +1980,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\\r\\nitem that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "animals",
       "styles": "classic",
@@ -2088,7 +2088,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess,florals",
       "styles": "classic",
@@ -2142,7 +2142,7 @@
       "bulletPoints": "[\"100% High Grade Cotton towel, 500 GSM.\",\"Purely embroidered design, no patchwork.\",\"Personalised with name embroidered beautifully.\",\"Double-stitched borders for enhanced durability.\"]",
       "searchKeywords": null,
       "productType": "towel",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -2169,7 +2169,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\\r\\nitem that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -2223,7 +2223,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\\r\\nitem that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -2250,7 +2250,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "superheroes",
       "styles": "bold",
@@ -2277,7 +2277,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -2304,7 +2304,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -2331,7 +2331,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -2358,7 +2358,7 @@
       "bulletPoints": "[\"Dimensions: 4ft x 6ft | Suitable for children aged 6 to 13 years | Weight: 600 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess,florals",
       "styles": "classic",
@@ -2385,7 +2385,7 @@
       "bulletPoints": "[\"Dimensions: 3.5ft x 6ft | Suitable for children aged 0 to 5 years | Weight: 530 grams each.\",\"Supreme Comfort & Luxury: Indulge your child with the sumptuously soft, velvety touch of our premium fleece. It's incredibly gentle, warm, and perfect for snuggles, naptime, or cozying up on the couch.\",\"Exceptional Embroidery: Unlike printed designs, our custom creations are machine-embroidered with precision and care. This ensures stunning detail, rich, fade-resistant colors, and a high-end finish that truly stands out.\",\"Personalized Just For Them: Elevate a simple blanket to a treasured keepsake! Add your child's name for a unique, bespoke item that celebrates their individuality and becomes a favorite comfort item.\",\"Built to Last: Our dedicated team uses only the best materials and state-of-the-art technology to create a durable product that withstands countless washes and adventures, maintaining its luxurious feel and vibrant design.\"]",
       "searchKeywords": null,
       "productType": "blanket",
-      "audience": "kids",
+      "audience": "kids,infant",
       "gender": "unisex",
       "themes": "princess",
       "styles": "classic",
@@ -3791,7 +3791,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 80
@@ -4196,7 +4196,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 95
@@ -4304,7 +4304,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 99
@@ -4493,7 +4493,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 101
@@ -4601,7 +4601,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 105
@@ -4790,7 +4790,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 112
@@ -4898,7 +4898,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "princess",
+      "themes": "princess,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 116
@@ -5195,7 +5195,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 127
@@ -5249,7 +5249,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 129
@@ -5330,7 +5330,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 132
@@ -5384,7 +5384,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 134
@@ -5411,7 +5411,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 135
@@ -5843,7 +5843,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "animals,florals",
+      "themes": "animals,florals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 151
@@ -5978,7 +5978,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 156
@@ -6167,7 +6167,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 163
@@ -6302,7 +6302,7 @@
       "productType": "towel",
       "audience": "adults,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 168
@@ -6329,7 +6329,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "animals,florals",
+      "themes": "animals,florals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 169
@@ -6356,7 +6356,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "florals,abstract",
+      "themes": "florals,abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 170
@@ -6383,7 +6383,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "florals,abstract",
+      "themes": "florals,abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 171
@@ -6626,7 +6626,7 @@
       "productType": "towel",
       "audience": "couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 245
@@ -6788,7 +6788,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 251
@@ -6815,7 +6815,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 252
@@ -6950,7 +6950,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 257
@@ -7004,7 +7004,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 259
@@ -7139,7 +7139,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 264
@@ -7247,7 +7247,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 268
@@ -7274,7 +7274,7 @@
       "productType": "towel",
       "audience": "adults,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 269
@@ -8300,7 +8300,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 307
@@ -8327,7 +8327,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 308
@@ -8462,7 +8462,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 313
@@ -8813,7 +8813,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "superheroes",
+      "themes": "superheroes,Mr Mrs Designs,His Her Designs",
       "styles": "bold,elegant",
       "active": true,
       "sortOrder": 326
@@ -8840,7 +8840,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 327
@@ -9110,7 +9110,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 337
@@ -9218,7 +9218,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "abstract",
+      "themes": "abstract,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 341
@@ -9974,7 +9974,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "elegant",
       "active": true,
       "sortOrder": 369
@@ -10028,7 +10028,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 371
@@ -10460,7 +10460,7 @@
       "productType": "towel",
       "audience": "kids,couples",
       "gender": "unisex",
-      "themes": "animals",
+      "themes": "animals,Mr Mrs Designs,His Her Designs",
       "styles": "initials,elegant",
       "active": true,
       "sortOrder": 387
@@ -39839,37 +39839,37 @@
     {
       "id": "areo97vgmhji0y6aooerlf0r",
       "currency": "AED",
-      "rateFromInr": "0.038525"
+      "rateFromInr": "0.038488"
     },
     {
       "id": "lkojlaycg2x7k4lv31kbn89j",
       "currency": "AUD",
-      "rateFromInr": "0.014830"
+      "rateFromInr": "0.014570"
     },
     {
       "id": "dly9xbqt8mx5iwew44n9gt1n",
       "currency": "CAD",
-      "rateFromInr": "0.014610"
+      "rateFromInr": "0.014520"
     },
     {
       "id": "fjchlp46qf0qmcy2qjoru08d",
       "currency": "EUR",
-      "rateFromInr": "0.009090"
+      "rateFromInr": "0.009000"
     },
     {
       "id": "lfhgv2bgfc6msxk19uex8e25",
       "currency": "GBP",
-      "rateFromInr": "0.007750"
+      "rateFromInr": "0.007720"
     },
     {
       "id": "lqbiu2aztljnowd9fosrlkkm",
       "currency": "SGD",
-      "rateFromInr": "0.013420"
+      "rateFromInr": "0.013330"
     },
     {
       "id": "vm31e274ch378a72nsi3uba9",
       "currency": "USD",
-      "rateFromInr": "0.010490"
+      "rateFromInr": "0.010480"
     }
   ],
   "pricingRules": [
@@ -40507,12 +40507,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "yuep5madugla61k20svtmuji",
+      "id": "o8jjo32xlszld9dstjp1xc7i",
+      "productSlug": "baby-princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "uqxr52j254xgfacktswwzmum",
       "productSlug": "baby-princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
       "audienceName": "kids"
     },
     {
-      "id": "w70glojov9ys8vmjgavxfxlw",
+      "id": "kvh30xnn5e4e8z60dlxs0j1r",
+      "productSlug": "baby-princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "hfgy46pa178jqdtiy0pof8lu",
       "productSlug": "baby-princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
       "audienceName": "kids"
     },
@@ -40972,7 +40982,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "qalhgl1z7zzs0znkh1o68sd1",
+      "id": "wfiypbcn8qc8nq56yb7fx6wp",
+      "productSlug": "dinosaur-0-to-5-yrs-baby-kids-blanket35-6-ft-blue",
+      "audienceName": "infant"
+    },
+    {
+      "id": "uleu0kz4slbbeknhko2jtpde",
       "productSlug": "dinosaur-0-to-5-yrs-baby-kids-blanket35-6-ft-blue",
       "audienceName": "kids"
     },
@@ -41037,7 +41052,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "hu97w0iahbl9fintgucyinx4",
+      "id": "j4ihf6kpt1d03f2a3dco2p5u",
+      "productSlug": "doraemon-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "kh9x9pvtnnbn9qd47parnh5v",
       "productSlug": "doraemon-blanket",
       "audienceName": "kids"
     },
@@ -41067,7 +41087,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "gepn2f5gqv2avdedq53shske",
+      "id": "iw5k3ho84lcfww8rverm4mp3",
+      "productSlug": "elsa-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "ez9gjb8zw2ytr2e88oulznec",
       "productSlug": "elsa-blanket",
       "audienceName": "kids"
     },
@@ -41472,12 +41497,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "s7qimbkl87t1qn9ivumcsm9l",
+      "id": "j50ibnyfn1a7wvh8y4plpebm",
+      "productSlug": "hulk-avengers-towel",
+      "audienceName": "infant"
+    },
+    {
+      "id": "eiqnx27w6x8ol3t7l5u1n9hj",
       "productSlug": "hulk-avengers-towel",
       "audienceName": "kids"
     },
     {
-      "id": "c4k70evxwn3e40bn9x8dyos4",
+      "id": "rvj69p437zacgtlsg4zdumst",
+      "productSlug": "hulk-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "myph7v6sgwboegp4co86b63w",
       "productSlug": "hulk-blanket",
       "audienceName": "kids"
     },
@@ -41747,22 +41782,42 @@
       "audienceName": "kids"
     },
     {
-      "id": "gla9g5ub9ocpnqs151mxeapa",
+      "id": "qsmgi7ps0ackvwe3e26id6vv",
+      "productSlug": "mermaid-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "mio58us5o3425alskka1w07m",
       "productSlug": "mermaid-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
       "audienceName": "kids"
     },
     {
-      "id": "dmtpevjy1sbunruw9su31di1",
+      "id": "g7gzfwy664sof574qpujo20h",
+      "productSlug": "mermaid-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "ra8heb4phyfxqkguh2vfv2dt",
       "productSlug": "mermaid-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
       "audienceName": "kids"
     },
     {
-      "id": "g7sih4hdkwvbjbn5asiyk8x4",
+      "id": "sl7rfg9sxzys8scdb5ct4ffx",
+      "productSlug": "mermaid-baby-ariel-in-dads-arms-0-to-5-yrs-baby-kids-blanket4-4x-3-4-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "jcs8gtlbravylhmanltx7z2q",
       "productSlug": "mermaid-baby-ariel-in-dads-arms-0-to-5-yrs-baby-kids-blanket4-4x-3-4-pink",
       "audienceName": "kids"
     },
     {
-      "id": "dedncl912lo19dz7pk596kmy",
+      "id": "rzgrxhxcrcbyhhewzcovimhc",
+      "productSlug": "mermaid-baby-ariel-in-dads-arms-pink-kids-blanket-6-to-12-yrs",
+      "audienceName": "infant"
+    },
+    {
+      "id": "gcvr6am5gzyjil2ag0amax10",
       "productSlug": "mermaid-baby-ariel-in-dads-arms-pink-kids-blanket-6-to-12-yrs",
       "audienceName": "kids"
     },
@@ -41807,7 +41862,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "wli0610rcbcldim99pw4v5kg",
+      "id": "y0tjc5cv3bhmpfa0np6u14jq",
+      "productSlug": "mickey-pluto-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "sct3lvtlx1u2zionr1q82n8d",
       "productSlug": "mickey-pluto-blanket",
       "audienceName": "kids"
     },
@@ -42192,27 +42252,52 @@
       "audienceName": "couples"
     },
     {
-      "id": "vzwrdrvotrmwp3ye9ng76u8m",
+      "id": "sy5yw6ctuihczt1crcitooih",
+      "productSlug": "princess-0-to-5-yrs-kids-ac-blanket-pink-35ft-by-6ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "dnuflyxxil7pujqoksfwuz0o",
       "productSlug": "princess-0-to-5-yrs-kids-ac-blanket-pink-35ft-by-6ft",
       "audienceName": "kids"
     },
     {
-      "id": "bw05aie7xsz1tvg575itifz7",
+      "id": "nw67c5bpy2605rd0li5gcmmh",
+      "productSlug": "princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "qh1j9mih5jfo5m1phmd3csgs",
       "productSlug": "princess-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
       "audienceName": "kids"
     },
     {
-      "id": "rvg4dw5g7v0u1ioeyjcw9818",
+      "id": "dhoba5tv28ik973ax897v7or",
+      "productSlug": "princess-6-to-12-yrs-kids-ac-blanket4-x-6-yellow",
+      "audienceName": "infant"
+    },
+    {
+      "id": "ubwswobmbrqazqabvp9ntd2a",
       "productSlug": "princess-6-to-12-yrs-kids-ac-blanket4-x-6-yellow",
       "audienceName": "kids"
     },
     {
-      "id": "xtrss3xln5ozp58r04hgg9ti",
+      "id": "lvv91mvmxj0dh6gyehavnk6b",
+      "productSlug": "princess-6-to-13-yrs-kids-ac-blanket-pink-4ft-by-6ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "yaj0kivrqpy4fawge7mzmofv",
       "productSlug": "princess-6-to-13-yrs-kids-ac-blanket-pink-4ft-by-6ft",
       "audienceName": "kids"
     },
     {
-      "id": "le00v2sbqjiwszns1f96bgzl",
+      "id": "enrfxoa8oy6vefxvb0kszvga",
+      "productSlug": "princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "h62usva0tx7wtb2ok8nv5glz",
       "productSlug": "princess-6-to-13-yrs-kids-ac-blanket4x-6-ft-pink",
       "audienceName": "kids"
     },
@@ -42237,7 +42322,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "z1786nw4glklalscxmx0a1l2",
+      "id": "jybypxbqblyydzmnf3z92bi2",
+      "productSlug": "princess-dorothy-6-to-12-yrs-kids-ac-blanket4-x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "rrgtcqbs6xlxqco8itub8335",
       "productSlug": "princess-dorothy-6-to-12-yrs-kids-ac-blanket4-x-6-ft-pink",
       "audienceName": "kids"
     },
@@ -42372,17 +42462,32 @@
       "audienceName": "kids"
     },
     {
-      "id": "c2iktqt4jc3pvuq1btxa13mi",
+      "id": "zytg5c733v5k16ce0vkjg8ym",
+      "productSlug": "princess-princess-with-magic-lamp-0-to-5-yrs-kids-ac-blanket-pink-35-by-6",
+      "audienceName": "infant"
+    },
+    {
+      "id": "ga36enbzfy1sa1pwuvpptu1k",
       "productSlug": "princess-princess-with-magic-lamp-0-to-5-yrs-kids-ac-blanket-pink-35-by-6",
       "audienceName": "kids"
     },
     {
-      "id": "paeaucxr431bm8mfh5ju6udq",
+      "id": "mznxwrhb2robukij7yjyfp7c",
+      "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6",
+      "audienceName": "infant"
+    },
+    {
+      "id": "qvvsfaxtrzh8jugz8t8q0g8f",
       "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6",
       "audienceName": "kids"
     },
     {
-      "id": "pb7bklqh3t6as9dxt9zi9t6m",
+      "id": "vl3o6k4mx57yf988o7on0l7h",
+      "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-2",
+      "audienceName": "infant"
+    },
+    {
+      "id": "lg9h6pifukq9tasibcwjfc4e",
       "productSlug": "princess-princess-with-magic-lamp-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-2",
       "audienceName": "kids"
     },
@@ -42397,7 +42502,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "n3rdx7642xva4b28bdneeyhe",
+      "id": "fes52bfr4zvznrjlf8pp4zyc",
+      "productSlug": "princess-sophia-0-to-5-yrs-baby-kids-blanket4-4-x-3-4-yellow",
+      "audienceName": "infant"
+    },
+    {
+      "id": "ny73b0o8fi2klo91xuwl1e3d",
       "productSlug": "princess-sophia-0-to-5-yrs-baby-kids-blanket4-4-x-3-4-yellow",
       "audienceName": "kids"
     },
@@ -42407,7 +42517,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "r20fmqcsu1b30ahvwsfvsmpy",
+      "id": "cgkt9o99ncpxp56k5savnblm",
+      "productSlug": "princess-with-a-rose-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "jkt43ofzvc2hg5ybvxn1lo45",
       "productSlug": "princess-with-a-rose-0-to-5-yrs-kids-ac-blanket35x-6-ft-pink",
       "audienceName": "kids"
     },
@@ -42422,12 +42537,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "dylsv7rs5vkybx5kl1u4icoi",
+      "id": "cjumdttniih830101rm0jul7",
+      "productSlug": "princess-with-butterflies-0-to-5-yrs-kids-ac-blanket-pink-35-x-6-ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "htrc1602s3arrk04aspxg79n",
       "productSlug": "princess-with-butterflies-0-to-5-yrs-kids-ac-blanket-pink-35-x-6-ft",
       "audienceName": "kids"
     },
     {
-      "id": "phyugwfmq25g4ya8bxlf5q4s",
+      "id": "t184lovpnpjlmoq6aag4pqzr",
+      "productSlug": "princess-with-butterflies-6-to-13-yrs-kids-ac-blanket-pink-4-x-6-ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "jv3wvqbzt5yp19hypce6c9uc",
       "productSlug": "princess-with-butterflies-6-to-13-yrs-kids-ac-blanket-pink-4-x-6-ft",
       "audienceName": "kids"
     },
@@ -42437,12 +42562,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "fy6cpaesdp5l4oxd1rs13zg6",
+      "id": "ta7wceh2h6woijz4mpnytyyt",
+      "productSlug": "princess-with-flowers-0-to-5-yrs-kids-blanket-pink-35-by-6-ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "sr1vpn1jzo80r2cf58rl59w7",
       "productSlug": "princess-with-flowers-0-to-5-yrs-kids-blanket-pink-35-by-6-ft",
       "audienceName": "kids"
     },
     {
-      "id": "mc9gfmx2oycb91zck5mi2qsm",
+      "id": "z2ekjnwrbhz57wj2qu7nnmq9",
+      "productSlug": "princess-with-flowers-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-ft",
+      "audienceName": "infant"
+    },
+    {
+      "id": "egrc6qtl1dtc88az4j4a5ftt",
       "productSlug": "princess-with-flowers-6-to-13-yrs-kids-ac-blanket-pink-4-by-6-ft",
       "audienceName": "kids"
     },
@@ -42722,7 +42857,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "r9uhjxnlxqfj7jzi4r6dzg4v",
+      "id": "fsk8etr6t5xyuk7mi0vkfm15",
+      "productSlug": "snowhite-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "k99d70apz1t3ql9i77zy3xgm",
       "productSlug": "snowhite-blanket",
       "audienceName": "kids"
     },
@@ -42807,7 +42947,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "lq79se2ay6f5l010pwhjjwk4",
+      "id": "hehf1w16mh3u2ix9qe7bnupx",
+      "productSlug": "spiderman-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "e3vfsysj7r8j6wl5tlp988uq",
       "productSlug": "spiderman-blanket",
       "audienceName": "kids"
     },
@@ -42847,12 +42992,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "oitlzp2tfax721eepy0f8a96",
+      "id": "aoavb66v83a8guur8i5fq1f2",
+      "productSlug": "superhero-0-to-5-yrs-baby-kids-ac-blanket-blue-3-5-by-6",
+      "audienceName": "infant"
+    },
+    {
+      "id": "j733y1c52gcpqy9sguueouce",
       "productSlug": "superhero-0-to-5-yrs-baby-kids-ac-blanket-blue-3-5-by-6",
       "audienceName": "kids"
     },
     {
-      "id": "qxphiwhxpka98cmnjz1psaba",
+      "id": "ll9xw4x9c41qwymgyxqanzfp",
+      "productSlug": "superhero-6-to-13-yrs-baby-kids-ac-blanket-blue-4-by-6",
+      "audienceName": "infant"
+    },
+    {
+      "id": "sr4zelh3ci3m2bkuiu3opggp",
       "productSlug": "superhero-6-to-13-yrs-baby-kids-ac-blanket-blue-4-by-6",
       "audienceName": "kids"
     },
@@ -42962,7 +43117,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "cgxt32vhwfxpigwc78jy381l",
+      "id": "dq0j4vpey9t36yl6csd6rn3c",
+      "productSlug": "superman-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "pdgg3oasezj9mr2qvhd7jyzp",
       "productSlug": "superman-blanket",
       "audienceName": "kids"
     },
@@ -43122,12 +43282,22 @@
       "audienceName": "kids"
     },
     {
-      "id": "ke1r00x6ki2vtwluifksz0q1",
+      "id": "pow8wahjdol83fvnxxb6vrz3",
+      "productSlug": "unicorn-pony-on-rainbow-0-to-5-yrs-pink-kids-ac-blanket35x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "fu235o16yuik80fagflrerv0",
       "productSlug": "unicorn-pony-on-rainbow-0-to-5-yrs-pink-kids-ac-blanket35x-6-ft-pink",
       "audienceName": "kids"
     },
     {
-      "id": "d9i50q1ov2pgnapk3ptl2exc",
+      "id": "if05govidnol90tdldbedp8f",
+      "productSlug": "unicorn-pony-on-rainbow-6-to-12-yrs-pink-kids-ac-blanket4x-6-ft-pink",
+      "audienceName": "infant"
+    },
+    {
+      "id": "pkf2e5uzpz6mhd0u0wdtmm9n",
       "productSlug": "unicorn-pony-on-rainbow-6-to-12-yrs-pink-kids-ac-blanket4x-6-ft-pink",
       "audienceName": "kids"
     },
@@ -43252,7 +43422,12 @@
       "audienceName": "kids"
     },
     {
-      "id": "reudvasi24a1o0uwl6w0783y",
+      "id": "hje3x10ddr75hn9w3o6fp1c2",
+      "productSlug": "wolverine-blanket",
+      "audienceName": "infant"
+    },
+    {
+      "id": "moljla091fwuo5kqwchfwpfo",
       "productSlug": "wolverine-blanket",
       "audienceName": "kids"
     },
@@ -45114,7 +45289,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "l4nz64rma9ipbebivw1r67my",
+      "id": "xsa01bsvmjj1yr3jm2gpmg7c",
       "productSlug": "snowhite-blanket",
       "genderName": "unisex"
     },
@@ -45304,7 +45479,7 @@
       "genderName": "unisex"
     },
     {
-      "id": "acy3izi9l5ghl02kt4bi0ifh",
+      "id": "rpx1jk2yecfif09jfb61y4lz",
       "productSlug": "superman-blanket",
       "genderName": "unisex"
     },
@@ -45841,7 +46016,17 @@
       "themeName": "animals"
     },
     {
-      "id": "ojcg714licq4nmisz9dbdi3v",
+      "id": "y7aym7deybodrillgu4iqn4l",
+      "productSlug": "boy-girl-owl-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "z1m2o79d4rmf30ffbv1srbzx",
+      "productSlug": "boy-girl-owl-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "czk62j0s9b5fuubahj3cxdif",
       "productSlug": "boy-girl-owl-couple-towel-set",
       "themeName": "animals"
     },
@@ -45876,7 +46061,17 @@
       "themeName": "superheroes"
     },
     {
-      "id": "t9jsv5apslmlhwi4gvk1dp6k",
+      "id": "urvs19t535y4jzhgom79rvuk",
+      "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "sdh1mw1uczsfysrnisg88l78",
+      "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "chnyb9sa32ku3sqx1urq0lsu",
       "productSlug": "burning-hearts-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
@@ -45896,7 +46091,17 @@
       "themeName": "animals"
     },
     {
-      "id": "qu3igewj53bmpovnafg600u6",
+      "id": "orf78otwww13txkgpw2yh9i1",
+      "productSlug": "butterfly-twine-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "e2x962gkdt1ev4rrdsc8bpvf",
+      "productSlug": "butterfly-twine-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "foz7ozht1l5el31z632wub8f",
       "productSlug": "butterfly-twine-couple-towel-set",
       "themeName": "animals"
     },
@@ -46131,7 +46336,17 @@
       "themeName": "animals"
     },
     {
-      "id": "w71o8on1u1trufda4vq1e0k8",
+      "id": "sxrd0h2nr8osjwgv7cc1lqj4",
+      "productSlug": "dragonfly-initials-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "zlhrvyk78njgizjbmjhafu8t",
+      "productSlug": "dragonfly-initials-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "unephvms7mczrp3rhmeapjtv",
       "productSlug": "dragonfly-initials-couple-towel-set",
       "themeName": "animals"
     },
@@ -46156,7 +46371,17 @@
       "themeName": "abstract"
     },
     {
-      "id": "wsfki06tdos6opwsexl0sze9",
+      "id": "et636gwgdm43wdgnpwt68awj",
+      "productSlug": "fabric-handsome-and-gorgeous-valentines-couple-bath-towels-multicolour-5-by-25ft",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ecgs0vydhut1ovthm48dym23",
+      "productSlug": "fabric-handsome-and-gorgeous-valentines-couple-bath-towels-multicolour-5-by-25ft",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "drntfu5x4m3cgq0w74a9hnni",
       "productSlug": "fabric-handsome-and-gorgeous-valentines-couple-bath-towels-multicolour-5-by-25ft",
       "themeName": "abstract"
     },
@@ -46166,12 +46391,22 @@
       "themeName": "abstract"
     },
     {
-      "id": "edckkk4xl7r4cy25f32tb6a2",
+      "id": "oods4ne8a3nbhgj3i8u9svdj",
+      "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "rhtydr8bueg6ozwhd3hump05",
+      "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "bejjxr4sxp4e5e7vsdtkbwga",
       "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
       "themeName": "animals"
     },
     {
-      "id": "j1hf8rswkonsm5vm7mcfv8rr",
+      "id": "k78osirjk9ys68w8vmscxb90",
       "productSlug": "floral-bale-with-bee-valentines-couple-bath-towel-set",
       "themeName": "florals"
     },
@@ -46196,52 +46431,102 @@
       "themeName": "florals"
     },
     {
-      "id": "n08eqhelupu4gg7ht5vrslwc",
+      "id": "tsjbg0sn400le3zmlevcn6f0",
+      "productSlug": "floral-emblem-couple",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ith9s5vj2zx589eu10pfj0bw",
+      "productSlug": "floral-emblem-couple",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "z28h7wl2ddc02phdoa5vgasg",
       "productSlug": "floral-emblem-couple",
       "themeName": "abstract"
     },
     {
-      "id": "klbw62mwdvg1fa6lbisrtghv",
+      "id": "vh6wrom5i9bivwgcfdton9e3",
       "productSlug": "floral-emblem-couple",
       "themeName": "florals"
     },
     {
-      "id": "y1cjv29lr57qg70ou8s20c5q",
+      "id": "xe7h888rrbso4yg7hgqd559z",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ohq3axeafhlmmmfcctwfl5za",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "svdbctrvl6d9vtxuv6hxdt3u",
       "productSlug": "floral-emblem-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
     {
-      "id": "uxchdacd82epem7ajuxwiqqs",
+      "id": "ptzpbzad6zrfypfm5pbm9lrj",
       "productSlug": "floral-emblem-valentines-couple-bath-towels",
       "themeName": "florals"
     },
     {
-      "id": "r36y1jxyyj5igo3l6x2ugt6f",
+      "id": "gkz7q1o643zoldyx1vuzt4ad",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "cmttzil1vat2cp2m2218vwtw",
+      "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ywh2brrc0eeyl69omsusxv10",
       "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
       "themeName": "abstract"
     },
     {
-      "id": "s9sxwt3vpspopnc1spgrbrsq",
+      "id": "nrv9xuthjarcfbqwdu2qbrlr",
       "productSlug": "floral-emblem-valentines-couple-bath-towels-2",
       "themeName": "florals"
     },
     {
-      "id": "urakjmjthclsj2beotrowxfb",
+      "id": "ujh4bzchprpuhkb3r8ms613n",
+      "productSlug": "floral-heart-ladybird-couple",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "frkcq7zfnfz8leje1akeijmz",
+      "productSlug": "floral-heart-ladybird-couple",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "mj7lt28mh9ykwhhdclyyg34m",
       "productSlug": "floral-heart-ladybird-couple",
       "themeName": "animals"
     },
     {
-      "id": "y5i7zstvz3gd5ea8le9lv494",
+      "id": "yp5kbdvt5gphx75pvkdzzsym",
       "productSlug": "floral-heart-ladybird-couple",
       "themeName": "florals"
     },
     {
-      "id": "ijrv98w4x2zaj0xx9sz1mglf",
+      "id": "oes3dj34h68curqdbo6ggq5n",
+      "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "kaec8nfxp4v1d6s9foagmqt0",
+      "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ne2tpy28ohivsoanan95fp45",
       "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
       "themeName": "animals"
     },
     {
-      "id": "v2zzyb83qj9zuxxawbq414os",
+      "id": "czz78mk2o2tuf0m4awxwpmiy",
       "productSlug": "floral-with-a-bee-valentines-couple-bath-towels",
       "themeName": "florals"
     },
@@ -46261,12 +46546,22 @@
       "themeName": "florals"
     },
     {
-      "id": "sydreuip96f1aie8z6d0s7kn",
+      "id": "fbww9jy3qkl6dijwpvzlms3j",
+      "productSlug": "flowers-bee-couple",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "kjsha4lz7ljttphddym0bdj7",
       "productSlug": "flowers-bee-couple",
       "themeName": "Insects/bugs"
     },
     {
-      "id": "ems7woo57vvc76ilp6z33ko4",
+      "id": "li59q22tq8bgqqceal86lhah",
+      "productSlug": "flowers-bee-couple",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "gzqj9qr2bepy292fjy4q522k",
       "productSlug": "flowers-bee-couple",
       "themeName": "florals"
     },
@@ -46361,7 +46656,17 @@
       "themeName": "superheroes"
     },
     {
-      "id": "kcvhu4qa04wgg6m0vv3kg6db",
+      "id": "h9uf0hhl8odu19s6kqwkd5w8",
+      "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "eycklpef2x927be1cekt40fy",
+      "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ga8qhl0raupojv60jqpetup8",
       "productSlug": "gold-initials-emblem-valentines-couple-bath-towel",
       "themeName": "abstract"
     },
@@ -46381,7 +46686,17 @@
       "themeName": "abstract"
     },
     {
-      "id": "yhttozqmm0avbgy19i9ba965",
+      "id": "zik6jy5p4zoon4cztc2kekfe",
+      "productSlug": "golden-emblem-with-initials-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "qv7wp81bza7n63c9h8al7wy8",
+      "productSlug": "golden-emblem-with-initials-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "znqbgx9l7tg58vafz29bfu2k",
       "productSlug": "golden-emblem-with-initials-couple-towel-set",
       "themeName": "abstract"
     },
@@ -46411,7 +46726,17 @@
       "themeName": "animals"
     },
     {
-      "id": "td28v3f2jkciubj7zjy2dixc",
+      "id": "cdl10pvu0jd0h0t1q9lf20j3",
+      "productSlug": "he-and-she-devil-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "xamids6m85dbxiz18p2me9v5",
+      "productSlug": "he-and-she-devil-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "an0xqogkp666jsls26jvg3ju",
       "productSlug": "he-and-she-devil-couple-towel-set",
       "themeName": "abstract"
     },
@@ -46446,7 +46771,17 @@
       "themeName": "abstract"
     },
     {
-      "id": "tlnb2ap2inmgq4xrbzpwfcbu",
+      "id": "uzu0wb9uvv82dag7ib0vz0nb",
+      "productSlug": "hearts-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "uboquf2jti4u57fwxrsqchty",
+      "productSlug": "hearts-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ak6zaouo2b06cm25rhywv0tz",
       "productSlug": "hearts-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
@@ -46461,17 +46796,47 @@
       "themeName": "Hello Kitty"
     },
     {
-      "id": "tggnbjuahutv8e7owysjnr82",
+      "id": "ynnoytsb3qdpuulreir6jrvo",
+      "productSlug": "his-and-her-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "hjg4c8s01j40662qqf2krn3a",
+      "productSlug": "his-and-her-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "bm4o99mvsmazhwfhr5nx6hur",
       "productSlug": "his-and-her-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "uk5odeb9v8tcapc96e3liul1",
+      "id": "wdrp0i19mbtobqwu00bbjqr3",
+      "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "fcq3jh0i2aoji2wk17w4fe9d",
+      "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "znz75su940v2rrc366grl07y",
       "productSlug": "his-her-king-queen-crown-valentine-couple-bath-towels",
       "themeName": "abstract"
     },
     {
-      "id": "xjszft01pxgloychpraedyyy",
+      "id": "ppyxusk79frz7cjj9funu20a",
+      "productSlug": "his-her-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "pgt8yi79eps3dk5263dmja9u",
+      "productSlug": "his-her-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ppue8qsavuks4na2tzib5m6b",
       "productSlug": "his-her-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
@@ -46541,7 +46906,17 @@
       "themeName": "superheroes"
     },
     {
-      "id": "hc1gdkg7x9n002umtdfgn4vq",
+      "id": "eo6ssyd4f57tsg75pw3rdg5i",
+      "productSlug": "initials-with-butterfly-design-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "mqir305jobhj2e2z9pp4opfn",
+      "productSlug": "initials-with-butterfly-design-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "u4hhl5ojlkkw0b65ryywccv3",
       "productSlug": "initials-with-butterfly-design-couple-towel-set",
       "themeName": "animals"
     },
@@ -46566,7 +46941,17 @@
       "themeName": "superheroes"
     },
     {
-      "id": "q2iwshicja9to4f4ri5ls7s1",
+      "id": "pab1mwc6jnv5k8s8jo8yw1y1",
+      "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "skh3qi6aninmg9jswwi43tgh",
+      "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "iu45uyaw301cluku94ml4we7",
       "productSlug": "k-q-of-hearts-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
@@ -46611,17 +46996,47 @@
       "themeName": "abstract"
     },
     {
-      "id": "nevwz4nz3t4et03nook8xrnj",
+      "id": "b67q2mndanoi8orto84a5pgc",
+      "productSlug": "king-and-queen-crown-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "bcf4f36uwauhphd0t3f3ipw8",
+      "productSlug": "king-and-queen-crown-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "oueonp7bikmaqdphwwba5hmn",
       "productSlug": "king-and-queen-crown-couple-bath-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "y5ky8un17vv9u4z1zdsdq6sc",
+      "id": "qiukow3dga52xbeq69ah1z9n",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "fgjh236wqtuv0c4q4uoxjz6e",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "jpawzyvt53dc8bbtzfhxirc7",
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "ka2vx5k5v2u679qt9y1uexlg",
+      "id": "xtfn6zd5ut397mgu19b0xvra",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ay116nvzjerx7ahz8p1j37ur",
+      "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "wj7tph3d8nqek9inu6b9laa2",
       "productSlug": "king-and-queen-of-hearts-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
@@ -46631,17 +47046,47 @@
       "themeName": "abstract"
     },
     {
-      "id": "n1o78wjpcj3xaxjbon41qdx4",
+      "id": "arow21i3c6b86eb0zhby97mb",
+      "productSlug": "king-queen-crown-couple",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "qdstlap2g3f0iixk98wr6c8f",
+      "productSlug": "king-queen-crown-couple",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "nh7321pa0lfhvv0tdmfh6wze",
       "productSlug": "king-queen-crown-couple",
       "themeName": "abstract"
     },
     {
-      "id": "k5qr7slcfz1gaml8qvhtstae",
+      "id": "m850430io9breg9q0nv1rtl4",
+      "productSlug": "king-queen-crown-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "grrxdpszhag0zem3nmb3wqjh",
+      "productSlug": "king-queen-crown-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "zu2rgjza8rn5y1awswen1iov",
       "productSlug": "king-queen-crown-couple-bath-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "a3wa56z2n6klyrt5okp3ebod",
+      "id": "bz11q3kiqhkhe9gm7vm60iyh",
+      "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "lb4m179w8m0aa1kejbl7y09e",
+      "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "p6166dg27t7qs3zz1tnh5jtl",
       "productSlug": "king-queen-crown-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
@@ -46666,12 +47111,32 @@
       "themeName": "abstract"
     },
     {
-      "id": "fwmmowwpuf2dor8mm2nabsse",
+      "id": "foax9ihx4km8btwict72frav",
+      "productSlug": "laurel-with-initials-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "krfa7f9o2o85j2z9owuglw6m",
+      "productSlug": "laurel-with-initials-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "j9h5vqwnickv9pukdsfnmomg",
       "productSlug": "laurel-with-initials-couple-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "fyymghe1p3xxj9nkwfer4swl",
+      "id": "ar12uj7lp0q0iepe3k97kfr1",
+      "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "z4hnd73j15ymtxmxovruw6e4",
+      "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "qr733ollquzlxch8lv7fysfl",
       "productSlug": "laurel-with-initials-name-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
@@ -46711,7 +47176,17 @@
       "themeName": "animals"
     },
     {
-      "id": "i8irfpxjkksbpi5ewyj0a820",
+      "id": "wk912yhtb1enjtt5m4rgoee0",
+      "productSlug": "love-turtles-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "phpch3498blk3j1f8zmift4g",
+      "productSlug": "love-turtles-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "aa5ci60n4s94hfmx7pposfd2",
       "productSlug": "love-turtles-valentines-couple-bath-towel-set",
       "themeName": "animals"
     },
@@ -46811,17 +47286,47 @@
       "themeName": "vehicles"
     },
     {
-      "id": "rzv4yh0lbbzco4ahprq3jybs",
+      "id": "bum2ggq418zyfdpkboon26y2",
+      "productSlug": "mr-and-mrs-mush-lips-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "mdz7oo0tu70jf8r9x9l1ebdu",
+      "productSlug": "mr-and-mrs-mush-lips-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "u29gicxha25mu54891pgcvpe",
       "productSlug": "mr-and-mrs-mush-lips-couple-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "b4mgs6zayl4jco4s5kdbunby",
+      "id": "yyzoztldtjv9unr66zq9n0dx",
+      "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "fvzwkuyoiue9i92r28fqcws3",
+      "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "sjv273mvw8kil568hdeeh02x",
       "productSlug": "mr-and-mrs-right-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "cocecl8zyqhx9y1u70quwx41",
+      "id": "d0qqpdn5naruf2vya3hh0ho8",
+      "productSlug": "mr-mrs-mush-lips-couple",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "uqme4hu2wqy08g62pd3xv98r",
+      "productSlug": "mr-mrs-mush-lips-couple",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "f1fe52njiavddpplugxm4g9z",
       "productSlug": "mr-mrs-mush-lips-couple",
       "themeName": "abstract"
     },
@@ -46841,12 +47346,32 @@
       "themeName": "abstract"
     },
     {
-      "id": "jt8tp32cg8xs0369hlm3axuu",
+      "id": "xnb0g2nmfx4oksd0twdv58ak",
+      "productSlug": "mr-right-mrs-always-right-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "f8w826eaexessqqehukkz87o",
+      "productSlug": "mr-right-mrs-always-right-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "wjrvs10k39xt6oydylo80l33",
       "productSlug": "mr-right-mrs-always-right-couple-towel-set",
       "themeName": "abstract"
     },
     {
-      "id": "s4o8fg2r221otq48tltmh3xg",
+      "id": "k6km0pl863daebybxghzw31b",
+      "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "b2xcikgzl6196elsreo7vdi8",
+      "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "o99gvv6lays3y3i3nb851qm9",
       "productSlug": "mr-right-mrs-always-right-valentines-couple-bath-towel-set",
       "themeName": "abstract"
     },
@@ -46891,7 +47416,17 @@
       "themeName": "animals"
     },
     {
-      "id": "m8bsrhqbaqalyza4wpqs3t01",
+      "id": "ihly6xhhsn0fpfsb56z0pia3",
+      "productSlug": "owls-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ty12snq4gy2gxkcmgeoswbo0",
+      "productSlug": "owls-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "lbisxsu83a1n9ljt7gohoj57",
       "productSlug": "owls-valentines-couple-bath-towels",
       "themeName": "animals"
     },
@@ -47041,7 +47576,17 @@
       "themeName": "Unicorn"
     },
     {
-      "id": "z3zr2kxx8h1cs0lrynrz2om0",
+      "id": "x8kp5gngl8mzj4qa4vmjon4i",
+      "productSlug": "prince-and-princess-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "t7hppg8uie4mtd6mkimsj3ec",
+      "productSlug": "prince-and-princess-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "vorptiyo270k4brrhli67yqy",
       "productSlug": "prince-and-princess-valentines-couple-bath-towels",
       "themeName": "princess"
     },
@@ -47511,7 +48056,17 @@
       "themeName": "superheroes"
     },
     {
-      "id": "ef0r9aiz6413n1gyiub1khnj",
+      "id": "oq7jehzalvhqw48ee9zuk5es",
+      "productSlug": "shorts-frock-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "yhum9l2puymi9nkw1ii58ii5",
+      "productSlug": "shorts-frock-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "eif4l9aa31jycad1f5xbulst",
       "productSlug": "shorts-frock-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
@@ -47536,12 +48091,12 @@
       "themeName": "abstract"
     },
     {
-      "id": "aj2hqb0mp6v7no6hw3pjip1g",
+      "id": "s5kui1cuiku8iwebsshbgpk8",
       "productSlug": "snowhite-blanket",
       "themeName": "animals"
     },
     {
-      "id": "f738ez08nhc9shxqxqixqix3",
+      "id": "j9ul2q5eer6nwpeyv9tkl82l",
       "productSlug": "snowhite-blanket",
       "themeName": "princess"
     },
@@ -47736,12 +48291,22 @@
       "themeName": "superheroes"
     },
     {
-      "id": "t1pb7ot7wkbza80hwqmhahtc",
+      "id": "iltmciizhi3s3ibbmpc5pgwd",
+      "productSlug": "superhero-logo-couple-towel-set",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "ptbf59dvdyjagfnk1l0c8rc6",
+      "productSlug": "superhero-logo-couple-towel-set",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "cfarmzgbgcl85m6nkub8oszf",
       "productSlug": "superhero-logo-couple-towel-set",
       "themeName": "superheroes"
     },
     {
-      "id": "t6l1qnvzc8f121j55pwsshux",
+      "id": "l55squqq5n0wmdyd6293h8nm",
       "productSlug": "superman-blanket",
       "themeName": "superheroes"
     },
@@ -47911,7 +48476,17 @@
       "themeName": "princess"
     },
     {
-      "id": "m73hf0lx9zve7gye6iyhb91q",
+      "id": "hobiegros441eo3hc7su1peb",
+      "productSlug": "valentines-hearts-valentines-couple-bath-towel",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "u5vim3ihl85uiepcv9ztew8i",
+      "productSlug": "valentines-hearts-valentines-couple-bath-towel",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ldireronyggrrwqkcchgmxt6",
       "productSlug": "valentines-hearts-valentines-couple-bath-towel",
       "themeName": "abstract"
     },
@@ -47956,12 +48531,32 @@
       "themeName": "animals"
     },
     {
-      "id": "hk92rhoxt30aopmfmoqku9c0",
+      "id": "hsrz8ppvhroupnjtda2y53db",
+      "productSlug": "wings-emblem-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "c6z6yxfap39qq6x3ehej1oj2",
+      "productSlug": "wings-emblem-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "ibjqv1x2syfknmwz202jkx9z",
       "productSlug": "wings-emblem-couple-bath-towels",
       "themeName": "abstract"
     },
     {
-      "id": "r03xk69hrv99u6apahxwellt",
+      "id": "iviiyxn3xxm386vhz4dnpq2j",
+      "productSlug": "wings-emblem-valentines-couple-bath-towels",
+      "themeName": "His Her Designs"
+    },
+    {
+      "id": "vcmojiu1bnocmoienc7hojno",
+      "productSlug": "wings-emblem-valentines-couple-bath-towels",
+      "themeName": "Mr Mrs Designs"
+    },
+    {
+      "id": "unjucfgohrtwxdxmcyzk6zlx",
       "productSlug": "wings-emblem-valentines-couple-bath-towels",
       "themeName": "abstract"
     },
@@ -50073,7 +50668,7 @@
       "styleName": "classic"
     },
     {
-      "id": "bgq92znzyb749i7b24as8iy1",
+      "id": "qovx345jxygc63wiey7h4yir",
       "productSlug": "snowhite-blanket",
       "styleName": "classic"
     },
@@ -50278,7 +50873,7 @@
       "styleName": "elegant"
     },
     {
-      "id": "agrj4v8jhf31frfoa3acqqt8",
+      "id": "erwyehsmpbu2jewyouzomfbc",
       "productSlug": "superman-blanket",
       "styleName": "bold"
     },
@@ -50708,7 +51303,7 @@
     },
     {
       "key": "wishlist-signup-prompt",
-      "value": "{\"enabled\":true,\"delaySeconds\":5,\"headline\":\"Love these? Let’s keep them safe.\",\"bodyText\":\"Join the TurtleLittle community to save your wishlist and pick up exactly where you left off.\",\"ctaText\":\"Save My Wishlist\"}"
+      "value": "{\"enabled\":true,\"delaySeconds\":5,\"sessionDelaySeconds\":20,\"headline\":\"Love these? Let’s keep them safe.\",\"bodyText\":\"Join the TurtleLittle community to save your wishlist and pick up exactly where you left off.\",\"ctaText\":\"Save My Wishlist\"}"
     }
   ],
   "bulkPriceRules": [
