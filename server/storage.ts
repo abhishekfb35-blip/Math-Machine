@@ -71,6 +71,7 @@ export interface IStorage {
   getProductById(id: string): Promise<Product | undefined>;
   getProductsByIds(ids: string[]): Promise<Product[]>;
   createProduct(prod: InsertProduct): Promise<Product>;
+  copyProduct(productId: string): Promise<Product | undefined>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
   bulkUpdateProductFields(updates: Array<{ id: string } & Partial<InsertProduct>>): Promise<number>;
   deleteProduct(id: string): Promise<void>;
@@ -509,6 +510,122 @@ export class DatabaseStorage implements IStorage {
     }
     const [enriched] = await this.withEnriched([created]);
     return enriched;
+  }
+
+  async copyProduct(productId: string): Promise<Product | undefined> {
+    const copiedProductId = await db.transaction(async (tx) => {
+      const [source] = await tx.select().from(products).where(eq(products.id, productId));
+      if (!source) return undefined;
+
+      const [sourceImages, sourceTags, sourceAudiences, sourceGenders, sourceThemes, sourceStyles, sourceVariants] =
+        await Promise.all([
+          tx.select().from(productImages).where(eq(productImages.productId, productId)).orderBy(productImages.sortOrder),
+          tx.select({ tagId: productTags.tagId }).from(productTags).where(eq(productTags.productId, productId)),
+          tx.select({ audienceId: productAudience.audienceId }).from(productAudience).where(eq(productAudience.productId, productId)),
+          tx.select({ genderId: productGenders.genderId }).from(productGenders).where(eq(productGenders.productId, productId)),
+          tx.select({ themeId: productThemes.themeId }).from(productThemes).where(eq(productThemes.productId, productId)),
+          tx.select({ styleId: productStyles.styleId }).from(productStyles).where(eq(productStyles.productId, productId)),
+          tx.select().from(productVariants).where(eq(productVariants.productId, productId)),
+        ]);
+
+      const baseSlug = `${source.slug}-copy`;
+      let slug = baseSlug;
+      let slugAvailable = false;
+      for (let suffix = 1; suffix <= 1000; suffix++) {
+        slug = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
+        const [existing] = await tx.select({ id: products.id }).from(products).where(eq(products.slug, slug)).limit(1);
+        if (!existing) {
+          slugAvailable = true;
+          break;
+        }
+      }
+      if (!slugAvailable) {
+        throw new Error("Unable to generate a unique product slug");
+      }
+
+      let sku = generateSku();
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const [existing] = await tx.select({ id: products.id }).from(products).where(eq(products.sku, sku)).limit(1);
+        if (!existing) break;
+        sku = generateSku();
+        if (attempt === 9) throw new Error("Unable to generate a unique product SKU");
+      }
+
+      const newId = createId();
+      const {
+        id: _sourceId,
+        sku: _sourceSku,
+        createdAt: _sourceCreatedAt,
+        updatedAt: _sourceUpdatedAt,
+        ...productData
+      } = source;
+      const [created] = await tx.insert(products).values({
+        ...productData,
+        id: newId,
+        name: `${source.name} (Copy)`,
+        slug,
+        sku,
+      }).returning();
+
+      if (sourceImages.length > 0) {
+        await tx.insert(productImages).values(sourceImages.map(image => ({
+          id: createId(),
+          productId: newId,
+          imageUrl: image.imageUrl,
+          sortOrder: image.sortOrder,
+          isPrimary: image.isPrimary,
+        })));
+      }
+      if (sourceTags.length > 0) {
+        await tx.insert(productTags).values(sourceTags.map(({ tagId }) => ({
+          id: createId(),
+          productId: newId,
+          tagId,
+        })));
+      }
+      if (sourceAudiences.length > 0) {
+        await tx.insert(productAudience).values(sourceAudiences.map(({ audienceId }) => ({
+          id: createId(),
+          productId: newId,
+          audienceId,
+        })));
+      }
+      if (sourceGenders.length > 0) {
+        await tx.insert(productGenders).values(sourceGenders.map(({ genderId }) => ({
+          id: createId(),
+          productId: newId,
+          genderId,
+        })));
+      }
+      if (sourceThemes.length > 0) {
+        await tx.insert(productThemes).values(sourceThemes.map(({ themeId }) => ({
+          id: createId(),
+          productId: newId,
+          themeId,
+        })));
+      }
+      if (sourceStyles.length > 0) {
+        await tx.insert(productStyles).values(sourceStyles.map(({ styleId }) => ({
+          id: createId(),
+          productId: newId,
+          styleId,
+        })));
+      }
+      if (sourceVariants.length > 0) {
+        await tx.insert(productVariants).values(sourceVariants.map(variant => ({
+          id: createId(),
+          productId: newId,
+          color: variant.color,
+          size: variant.size,
+          available: variant.available,
+        })));
+      }
+
+      return created.id;
+    });
+
+    if (!copiedProductId) return undefined;
+    return this.getProductById(copiedProductId);
   }
 
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {

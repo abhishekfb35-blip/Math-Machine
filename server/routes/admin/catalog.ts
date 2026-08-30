@@ -156,6 +156,29 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  app.post("/api/admin/products/:id/copy", requirePermission("catalog"), async (req, res) => {
+    const sourceProductId = req.params.id as string;
+    if (!sourceProductId) return res.status(400).json({ message: "Invalid product ID" });
+    try {
+      const copied = await storage.copyProduct(sourceProductId);
+      if (!copied) return res.status(404).json({ message: "Product not found" });
+      await storage.createAuditLog({
+        entityType: "product",
+        entityId: copied.id,
+        entityName: copied.name,
+        action: "copied",
+        changes: JSON.stringify({ sourceProductId, name: copied.name, slug: copied.slug, sku: copied.sku }),
+        username: getAdminUsername(req),
+      });
+      broadcastProductUpdate(copied);
+      res.status(201).json(copied);
+    } catch (err: any) {
+      if (err.code === "23505") return res.status(409).json({ message: "A copied product conflicts with an existing slug or SKU" });
+      console.error("Copy product error:", err);
+      res.status(500).json({ message: "Failed to copy product" });
+    }
+  });
+
   app.get("/api/admin/products/:id", requirePermission("catalog"), async (req, res) => {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });

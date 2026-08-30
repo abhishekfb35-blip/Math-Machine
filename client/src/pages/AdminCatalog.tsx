@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Link } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
-  Plus, Pencil, Trash2, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Package, FolderOpen,
+  Plus, Pencil, Copy, Trash2, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
   Loader2, Undo2, Save, Palette, ExternalLink, Ruler, IndianRupee
 } from "lucide-react";
@@ -1710,6 +1710,24 @@ export default function AdminCatalog() {
     },
   });
 
+  const copyProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/admin/products/${id}/copy`);
+      return res.json() as Promise<Product>;
+    },
+    onSuccess: (copied) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product copied", description: `"${copied.name}" is ready to edit.` });
+      setIsNew(false);
+      setEditingProduct(copied);
+      setView("edit-product");
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to copy product", variant: "destructive" });
+    },
+  });
+
   const moveProductMutation = useMutation({
     mutationFn: async ({ productId, categoryId }: { productId: string; categoryId: string; categoryName: string }) => {
       await apiRequest("PUT", `/api/admin/products/${productId}`, { categoryId });
@@ -2474,6 +2492,7 @@ export default function AdminCatalog() {
               const effectiveWholesalePrice = pc.wholesalePrice !== undefined ? pc.wholesalePrice : prod.wholesalePrice;
               const effectiveActive = pc.active !== undefined ? pc.active : prod.active;
               const effectiveSortOrder = pc.sortOrder !== undefined ? pc.sortOrder : (prod.sortOrder ?? 0);
+              const hasUnsavedCopySource = isDirty || dirtyImageProductIds.has(prod.id);
               const setChange = (field: keyof Product, value: any) =>
                 setPendingChanges(prev => ({ ...prev, [prod.id]: { ...prev[prod.id], [field]: value } }));
               return (
@@ -2627,8 +2646,27 @@ export default function AdminCatalog() {
                       variant="ghost"
                       onClick={() => { window.open(`/admin/catalog/product/${prod.id}`, '_blank'); window.focus(); }}
                       data-testid={`button-edit-product-${prod.id}`}
+                      title="Edit product"
                     >
                       <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        if (copyProductMutation.isPending || hasUnsavedCopySource) return;
+                        if (confirm(`Copy "${prod.name}"? A new product will be created with the same catalog details.`)) {
+                          copyProductMutation.mutate(prod.id);
+                        }
+                      }}
+                      disabled={copyProductMutation.isPending || hasUnsavedCopySource}
+                      data-testid={`button-copy-product-${prod.id}`}
+                      title={hasUnsavedCopySource ? "Save this product before copying" : "Copy product"}
+                      aria-label={hasUnsavedCopySource ? `Save ${prod.name} before copying` : `Copy ${prod.name}`}
+                    >
+                      {copyProductMutation.isPending && copyProductMutation.variables === prod.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Copy className="w-4 h-4" />}
                     </Button>
                     <Button
                       size="icon"
