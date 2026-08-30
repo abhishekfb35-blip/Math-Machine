@@ -579,7 +579,7 @@ export default function SignupPopup() {
                 />
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-nudge"
                 >
@@ -625,7 +625,7 @@ export default function SignupPopup() {
                 </div>
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-phone-form"
                 >
