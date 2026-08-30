@@ -30,6 +30,8 @@ describe("catalog sync environment guard", () => {
     for (const rawUrl of [
       "http://localhost:5000",
       "http://127.0.0.1:5000",
+      "http://[::1]:5000",
+      "http://0.0.0.0:5000",
       "https://my-app.replit.dev",
       "https://production.example.com",
     ]) {
