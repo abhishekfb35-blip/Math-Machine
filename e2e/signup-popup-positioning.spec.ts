@@ -99,6 +99,44 @@ async function openPhoneForm(page: Page) {
   await expect(page.getByTestId("btn-signup-phone-submit")).toBeEnabled();
 }
 
+async function installUnderlyingClickProbe(page: Page) {
+  await page.evaluate(() => {
+    const target = document.createElement("button");
+    target.id = "signup-popup-underlying-click-probe";
+    target.type = "button";
+    target.textContent = "Underlying page target";
+    target.style.cssText = [
+      "position: fixed",
+      "z-index: 0",
+      "top: 8px",
+      "left: 8px",
+      "width: 120px",
+      "height: 32px",
+    ].join(";");
+    (window as unknown as { signupPopupUnderlyingClicks: number }).signupPopupUnderlyingClicks = 0;
+    target.addEventListener("click", () => {
+      const state = window as unknown as { signupPopupUnderlyingClicks: number };
+      state.signupPopupUnderlyingClicks += 1;
+    });
+    document.body.append(target);
+  });
+}
+
+async function expectBackdropToBlockUnderlyingPage(page: Page, useTouch = false) {
+  await installUnderlyingClickProbe(page);
+  if (useTouch) {
+    await page.touchscreen.tap(16, 16);
+  } else {
+    await page.mouse.click(16, 16);
+  }
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { signupPopupUnderlyingClicks: number }).signupPopupUnderlyingClicks,
+    ),
+  ).toBe(0);
+  await expect(page.getByTestId("signup-popup-backdrop")).toBeVisible();
+}
+
 async function expectCentered(
   popup: ReturnType<Page["getByTestId"]>,
   viewport: { width: number; height: number },
@@ -109,16 +147,6 @@ async function expectCentered(
   expect(box!.y + box!.height / 2).toBeCloseTo(viewport.height / 2, 0);
 }
 
-async function expectTopRight(
-  popup: ReturnType<Page["getByTestId"]>,
-  viewportWidth: number,
-) {
-  const box = await popup.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.x + box!.width).toBeCloseTo(viewportWidth - 16, 0);
-  expect(box!.y).toBeCloseTo(104, 0);
-}
-
 test.describe("Signup popup positioning", () => {
   test("stays centered on desktop and keeps the phone flow interactive", async ({ page }) => {
     const viewport = { width: 1280, height: 800 };
@@ -126,7 +154,7 @@ test.describe("Signup popup positioning", () => {
     const popup = await openPopup(page);
 
     await expectCentered(popup, viewport);
-    await page.getByTestId("signup-popup-backdrop").click({ position: { x: 4, y: 4 } });
+    await expectBackdropToBlockUnderlyingPage(page);
     await expect(popup).toBeVisible();
 
     await openPhoneForm(page);
@@ -140,15 +168,16 @@ test.describe("Signup popup positioning", () => {
     await expect(popup).toBeHidden();
   });
 
-  test("stays top-right on mobile and keeps dismissal interactive", async ({ page }) => {
+  test("stays centered on mobile and keeps dismissal interactive", async ({ page }) => {
     const viewport = { width: 400, height: 720 };
     await page.setViewportSize(viewport);
     const popup = await openPopup(page);
 
-    await expectTopRight(popup, viewport.width);
+    await expectCentered(popup, viewport);
+    await expectBackdropToBlockUnderlyingPage(page, true);
 
     await openPhoneForm(page);
-    await expectTopRight(popup, viewport.width);
+    await expectCentered(popup, viewport);
     await page.getByTestId("input-signup-phone").fill("9876543210");
     await page.getByTestId("btn-dismiss-phone-form").click();
     await expect(popup).toBeHidden();
