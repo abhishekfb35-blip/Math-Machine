@@ -5,6 +5,9 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
+# Disposable Playwright reports, traces, and failure artifacts
+.playwright/
+
 # Generated PWA icons (auto-generated from brand assets on startup)
 client/public/icon-192.png
 client/public/icon-512.png
