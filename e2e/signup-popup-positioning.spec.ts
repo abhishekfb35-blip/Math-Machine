@@ -1,5 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
 
+const CONSENT_SCROLL_PROMPT = "Review all configured terms before agreeing.";
+const CONSENT_AGREEMENT_LABEL = "I accept the configured signup terms.";
+const LONG_CONSENT_TEXT = Array.from(
+  { length: 24 },
+  (_, index) => `Configured term ${index + 1} must be read before signup can continue.`,
+).join(" ");
+
 const popupConfig = {
   enabled: true,
   delaySeconds: 0,
@@ -9,14 +16,21 @@ const popupConfig = {
   subtitleText: "Save your wishlist, track orders, and check out faster.",
   phoneSubtitleText: "Add your phone number to complete sign-up.",
   phoneRequired: true,
-  consentText: "",
-  consentScrollPrompt: "Scroll to the bottom to enable agreement.",
-  consentAgreementLabel: "I agree to the consent text above.",
+  consentText: LONG_CONSENT_TEXT,
+  consentScrollPrompt: CONSENT_SCROLL_PROMPT,
+  consentAgreementLabel: CONSENT_AGREEMENT_LABEL,
+};
+
+type PopupTestOptions = {
+  delaySeconds?: number;
+  cartAddDelaySeconds?: number;
+  consentText?: string;
+  focusTrigger?: boolean;
 };
 
 async function mockSignupFlow(
   page: Page,
-  options: { delaySeconds?: number; cartAddDelaySeconds?: number } = {},
+  options: PopupTestOptions = {},
 ) {
   const delaySeconds = options.delaySeconds ?? popupConfig.delaySeconds;
   const cartAddDelaySeconds = options.cartAddDelaySeconds ?? popupConfig.cartAddDelaySeconds;
@@ -29,7 +43,12 @@ async function mockSignupFlow(
       contentType: "application/json",
       body: JSON.stringify({
         key: "signup-popup",
-        value: { ...popupConfig, delaySeconds, cartAddDelaySeconds },
+        value: {
+          ...popupConfig,
+          delaySeconds,
+          cartAddDelaySeconds,
+          consentText: options.consentText ?? popupConfig.consentText,
+        },
       }),
     }),
   );
@@ -86,12 +105,6 @@ async function mockSignupFlow(
   });
 }
 
-type PopupTestOptions = {
-  delaySeconds?: number;
-  cartAddDelaySeconds?: number;
-  focusTrigger?: boolean;
-};
-
 async function loadSignupPage(page: Page, options: PopupTestOptions = {}) {
   await mockSignupFlow(page, options);
   const signupConfigResponse = page.waitForResponse("**/api/site-config/signup-popup");
@@ -134,7 +147,29 @@ async function navigateWithinApp(page: Page, pathname: string) {
 async function openPhoneForm(page: Page) {
   await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page.getByTestId("input-signup-phone")).toBeVisible();
-  await expect(page.getByTestId("btn-signup-phone-submit")).toBeEnabled();
+  await expect(page.getByTestId("btn-signup-phone-submit")).toBeVisible();
+}
+
+async function completeConsentGate(page: Page) {
+  const consentRegion = page.getByTestId("signup-consent-text");
+  const checkbox = page.getByTestId("signup-consent-checkbox");
+  const label = page.getByTestId("signup-consent-label");
+  const submitButton = page.getByTestId("btn-signup-phone-submit");
+
+  await expect(checkbox).toBeDisabled();
+  await expect(label).toContainText(CONSENT_SCROLL_PROMPT);
+  await expect(submitButton).toBeDisabled();
+
+  await consentRegion.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+    element.dispatchEvent(new Event("scroll", { bubbles: true }));
+  });
+
+  await expect(checkbox).toBeEnabled();
+  await expect(label).toContainText(CONSENT_AGREEMENT_LABEL);
+  await expect(submitButton).toBeDisabled();
+  await checkbox.check();
+  await expect(submitButton).toBeEnabled();
 }
 
 async function installUnderlyingClickProbe(page: Page) {
@@ -207,6 +242,9 @@ test.describe("Signup popup positioning", () => {
     await expect(page.getByRole("dialog", { name: "Welcome, Popup Tester!" })).toBeVisible();
     await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
     await page.keyboard.press("Shift+Tab");
+    await expect(page.getByTestId("signup-consent-text")).toBeFocused();
+    await completeConsentGate(page);
+    await page.keyboard.press("Tab");
     await expect(page.getByTestId("btn-signup-phone-submit")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
@@ -235,10 +273,27 @@ test.describe("Signup popup positioning", () => {
     await expect(page.getByRole("dialog", { name: "Welcome, Popup Tester!" })).toBeVisible();
     await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
     await expectCentered(popup, viewport);
+    await completeConsentGate(page);
     await page.getByTestId("input-signup-phone").fill("9876543210");
     await page.getByTestId("btn-dismiss-phone-form").click();
     await expect(popup).toBeHidden();
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
+
+    await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
+    await expect(popup).toBeVisible();
+    await openPhoneForm(page);
+    await expect(page.getByTestId("signup-consent-checkbox")).toBeDisabled();
+    await expect(page.getByTestId("signup-consent-label")).toContainText(CONSENT_SCROLL_PROMPT);
+    await page.getByTestId("btn-dismiss-phone-form").click();
+  });
+
+  test("enables consent immediately when the configured terms fit without scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 400, height: 720 });
+    await openPopup(page, { consentText: "A short configured consent statement." });
+    await openPhoneForm(page);
+
+    await expect(page.getByTestId("signup-consent-checkbox")).toBeEnabled();
+    await expect(page.getByTestId("signup-consent-label")).toContainText(CONSENT_AGREEMENT_LABEL);
   });
 
   test("dismisses with Escape and restores focus to the opening element", async ({ page }) => {

@@ -21,13 +21,15 @@ export function ConsentScrollGate({
   testIdPrefix,
 }: ConsentScrollGateProps) {
   const scrollRegionRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const hasReachedBottomRef = useRef(false);
   const [readToBottom, setReadToBottom] = useState(false);
 
   const updateReadState = useCallback(() => {
     const region = scrollRegionRef.current;
     if (!region || hasReachedBottomRef.current) return;
-    if (region.scrollTop + region.clientHeight >= region.scrollHeight - 1) {
+    const remainingScroll = region.scrollHeight - region.clientHeight - region.scrollTop;
+    if (remainingScroll <= 2) {
       hasReachedBottomRef.current = true;
       setReadToBottom(true);
       onReadToBottomChange(true);
@@ -38,22 +40,39 @@ export function ConsentScrollGate({
     hasReachedBottomRef.current = false;
     setReadToBottom(false);
     onReadToBottomChange(false);
-    const animationFrame = requestAnimationFrame(updateReadState);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [consentText, updateReadState]);
+    onCheckedChange(false);
+
+    const animationFrame = requestAnimationFrame(() => {
+      requestAnimationFrame(updateReadState);
+    });
+    const resizeObserver = new ResizeObserver(updateReadState);
+    if (scrollRegionRef.current) resizeObserver.observe(scrollRegionRef.current);
+    if (contentRef.current) resizeObserver.observe(contentRef.current);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
+    };
+  }, [consentText, onCheckedChange, onReadToBottomChange, updateReadState]);
 
   return (
     <div className="space-y-2" data-testid={`${testIdPrefix}-consent-gate`}>
       <div
         ref={scrollRegionRef}
         onScroll={updateReadState}
+        onTouchEnd={updateReadState}
+        onPointerUp={updateReadState}
         tabIndex={0}
         role="region"
         aria-label="Consent text"
         className="h-28 overflow-y-auto rounded-md border border-input bg-muted/20 px-3 py-2 text-xs leading-relaxed text-muted-foreground"
         data-testid={`${testIdPrefix}-consent-text`}
-        dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(consentText) }}
-      />
+      >
+        <div
+          ref={contentRef}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(consentText) }}
+        />
+      </div>
       <label className={`flex items-start gap-2 ${readToBottom ? "cursor-pointer" : ""}`} data-testid={`${testIdPrefix}-consent-label`}>
         <input
           type="checkbox"
