@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type SyntheticEvent } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -8,6 +8,10 @@ import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/sign
 import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 
 export const SIGNIN_MODAL_EVENT = "show:signin-modal";
+
+function stopSignInBackdropPropagation(event: SyntheticEvent<HTMLDivElement>) {
+  event.stopPropagation();
+}
 
 export function showSignInModal() {
   window.dispatchEvent(new CustomEvent(SIGNIN_MODAL_EVENT));
@@ -190,7 +194,13 @@ export default function SignInModal() {
       className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center"
       data-testid="signin-modal-overlay"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
+      <div
+        className="absolute inset-0 touch-none sm:touch-auto bg-black/40"
+        onPointerDown={stopSignInBackdropPropagation}
+        onTouchStart={stopSignInBackdropPropagation}
+        onTouchMove={stopSignInBackdropPropagation}
+        onClick={handleClose}
+      />
 
       <div
         className="relative bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-sm mx-auto p-6 shadow-xl animate-in slide-in-from-bottom duration-300"

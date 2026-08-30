@@ -21,7 +21,7 @@
  *   - reshowIntervalSeconds = 0 means "never reshow after dismiss".
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type SyntheticEvent } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -35,6 +35,11 @@ import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
+
+function blockSignupBackdropInteraction(event: SyntheticEvent<HTMLDivElement>) {
+  event.preventDefault();
+  event.stopPropagation();
+}
 
 interface SignupPopupConfig {
   enabled: boolean;
@@ -362,7 +367,11 @@ export default function SignupPopup() {
       `}</style>
 
       <div
-        className="fixed inset-0 z-[998] bg-black/20 backdrop-blur-[1px]"
+        className="fixed inset-0 z-[998] touch-none sm:touch-auto bg-black/20 backdrop-blur-[1px]"
+        onPointerDown={blockSignupBackdropInteraction}
+        onTouchStart={blockSignupBackdropInteraction}
+        onTouchMove={blockSignupBackdropInteraction}
+        onClick={blockSignupBackdropInteraction}
         aria-hidden="true"
         data-testid="signup-popup-backdrop"
       />
