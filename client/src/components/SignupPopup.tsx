@@ -360,8 +360,8 @@ export default function SignupPopup() {
     <>
       <style>{`
         @keyframes tl-popup-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; translate: 0 -10px; }
+          to   { opacity: 1; translate: 0 0; }
         }
         .tl-popup-card { animation: tl-popup-in 220ms ease-out forwards; }
       `}</style>
