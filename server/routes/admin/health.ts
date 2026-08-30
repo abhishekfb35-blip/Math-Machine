@@ -8,6 +8,7 @@ import { currentDir, upload } from "../helpers";
 import { fileStorage } from "../../providers/fileStorage";
 import { seedDatabase } from "../../seed";
 import { diffByContent, diffById, diffSiteContent } from "../../lib/dbCompare";
+import { validateProductionDestination } from "../../lib/catalogSyncGuard";
 import { getTableColumns } from "drizzle-orm";
 import {
   categories, products, productImages, productReviews, tags, productTags,
@@ -1300,6 +1301,16 @@ export function registerAdminHealthRoutes(app: Express) {
       const { prodUrl } = (req.body || {}) as { prodUrl?: string };
 
       if (prodUrl) {
+        if (process.env.NODE_ENV === "production") {
+          return res.status(400).json({ message: "Production cannot proxy catalog sync; send the snapshot from development." });
+        }
+        let destination: URL;
+        try {
+          destination = validateProductionDestination(prodUrl, req.get("host"));
+        } catch (error: any) {
+          return res.status(400).json({ message: error.message });
+        }
+
         // Proxy mode: read current seed-data.json from disk and send it to prod
         // so prod uses the just-exported data rather than its compiled-in snapshot.
         const seedFilePath = path.join(process.cwd(), "server/seed-data.json");
@@ -1317,7 +1328,7 @@ export function registerAdminHealthRoutes(app: Express) {
         }
 
         const adminPassword = process.env.ADMIN_PASSWORD || "";
-        const prodResp = await fetch(`${prodUrl.replace(/\/$/, "")}/api/admin/catalog/force-reseed`, {
+        const prodResp = await fetch(`${destination.toString().replace(/\/$/, "")}/api/admin/catalog/force-reseed`, {
           method: "POST",
           headers: {
             "x-admin-password": adminPassword,
@@ -1336,7 +1347,11 @@ export function registerAdminHealthRoutes(app: Express) {
         return res.json(data);
       }
 
-      // Local mode: clear catalog hashes so seedDatabase() re-runs all tables
+      if (process.env.NODE_ENV !== "production") {
+        return res.status(400).json({ message: "Catalog seed writes are disabled in development. Provide a verified production URL." });
+      }
+
+      // Production-only mode: clear catalog hashes so seedDatabase() re-runs all tables
       // If seedData was provided in the request body (sent by the dev proxy), use it
       // directly so prod applies the freshly-exported data without needing a redeploy.
       const rawIncoming = (req.body || {}).seedData;

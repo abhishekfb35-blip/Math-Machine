@@ -11,6 +11,7 @@ import {
 
 import { and, eq, like, sql } from "drizzle-orm";
 import seedData from "./seed-data.json";
+import { assertSeedTargetIsWritable } from "./lib/catalogSyncGuard";
 
 const BATCH = 100;
 
@@ -46,6 +47,7 @@ async function storeHashFor(database: DatabaseExecutor, tableName: string, hash:
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function seedDatabase(overrideData?: Record<string, unknown>) {
+  assertSeedTargetIsWritable();
   try {
     // ── 0a. Restore bundled swatch images ─────────────────────────────────────
     // Use process.cwd() (always the project root) so paths work in both dev
