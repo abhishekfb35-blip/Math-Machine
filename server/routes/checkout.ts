@@ -14,6 +14,42 @@ import { sanitizeRichText } from "../utils/sanitizeRichText";
 const orderService = new OrderService(storage, codProvider, notificationService);
 const cartService = new CartService(storage);
 
+async function validateThemeGroups(value: unknown): Promise<string | null> {
+  if (!Array.isArray(value) || value.length === 0) return "Theme groups must be a non-empty array";
+
+  const themes = await storage.getThemes();
+  const knownThemeIds = new Set(themes.map(theme => theme.id));
+  const groupIds = new Set<string>();
+  const assignedThemeIds = new Set<string>();
+
+  for (const group of value) {
+    if (!group || typeof group !== "object") return "Each theme group must be an object";
+    const candidate = group as Record<string, unknown>;
+    if (typeof candidate.id !== "string" || !candidate.id.trim()) return "Each theme group needs a stable ID";
+    if (groupIds.has(candidate.id)) return `Duplicate theme group ID: ${candidate.id}`;
+    groupIds.add(candidate.id);
+    if (typeof candidate.name !== "string" || !candidate.name.trim()) return `Theme group ${candidate.id} needs a name`;
+    if (typeof candidate.enabled !== "boolean") return `Theme group ${candidate.id} needs an enabled flag`;
+    if (typeof candidate.sortOrder !== "number" || !Number.isFinite(candidate.sortOrder)) {
+      return `Theme group ${candidate.id} needs a numeric sort order`;
+    }
+    if (!Array.isArray(candidate.themeIds) || candidate.themeIds.some(id => typeof id !== "string" || !id.trim())) {
+      return `Theme group ${candidate.id} needs a list of theme IDs`;
+    }
+    for (const themeId of candidate.themeIds as string[]) {
+      if (!knownThemeIds.has(themeId)) return `Unknown theme ID in group ${candidate.id}: ${themeId}`;
+      if (assignedThemeIds.has(themeId)) return `Theme ID assigned to more than one group: ${themeId}`;
+      assignedThemeIds.add(themeId);
+    }
+  }
+
+  if (assignedThemeIds.size !== knownThemeIds.size) {
+    const missing = themes.filter(theme => !assignedThemeIds.has(theme.id)).map(theme => theme.name);
+    return `Every theme must have one group. Missing: ${missing.join(", ")}`;
+  }
+  return null;
+}
+
 export function registerCheckoutRoutes(app: Express) {
 
   app.get("/api/razorpay/key", (_req, res) => {
@@ -245,7 +281,7 @@ export function registerCheckoutRoutes(app: Express) {
     "consent-popup", "pwa-install", "wishlist-signup-prompt",
     "terms", "privacy", "refund", "shipping", "about",
     "page-terms", "page-privacy", "page-refund", "page-shipping", "page-about",
-    "product-page-config",
+     "product-page-config", "theme-groups",
   ]);
 
   app.get("/api/site-config", async (_req, res) => {
@@ -291,6 +327,7 @@ export function registerCheckoutRoutes(app: Express) {
     "cart-banners": "offers",
     "payment-methods": "offers",
     "product-page-config": "builder",
+     "theme-groups": "catalog",
   };
 
   app.post("/api/site-config/:key", requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
@@ -304,6 +341,10 @@ export function registerCheckoutRoutes(app: Express) {
     try {
       const key = req.params.key as string;
       const configValue = req.body.value;
+      if (key === "theme-groups") {
+        const validationError = await validateThemeGroups(configValue);
+        if (validationError) return res.status(400).json({ message: validationError });
+      }
       if (key === "signup-popup" && configValue && typeof configValue === "object") {
         for (const field of ["incentiveText", "subtitleText", "phoneSubtitleText", "consentText", "consentScrollPrompt", "consentAgreementLabel"]) {
           if (field in configValue) configValue[field] = sanitizeRichText(configValue[field]);

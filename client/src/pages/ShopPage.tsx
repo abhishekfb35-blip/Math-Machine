@@ -9,9 +9,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product, Attributes, Category } from "@shared/types";
+import { buildDefaultThemeGroups, type ThemeGroupsConfig } from "@shared/themeGroups";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
 
 function GridSkeleton() {
@@ -383,6 +385,236 @@ function MultiSelectDropdown({ label, options, selected, onToggle, onClear, coun
   );
 }
 
+interface GroupedThemeFilterProps {
+  options: { label: string; value: string }[];
+  groups: ThemeGroupsConfig;
+  selected: string[];
+  onChange: (values: string[]) => void;
+  counts?: Record<string, number>;
+}
+
+function GroupedThemeFilter({ options, groups, selected, onChange, counts }: GroupedThemeFilterProps) {
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [mobileSelected, setMobileSelected] = useState<string[]>(selected);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const optionMap = useMemo(() => new Map(options.map(option => [option.value, option])), [options]);
+
+  const visibleGroups = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    const configuredIds = new Set<string>();
+    groups.forEach(group => group.themeIds.forEach(id => configuredIds.add(id)));
+    const result = groups
+      .filter(group => group.enabled)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(group => {
+        const groupOptions = group.themeIds
+          .map(id => {
+            return optionMap.get(id);
+          })
+          .filter((option): option is { label: string; value: string } => Boolean(option))
+          .filter(option => !normalizedSearch || option.label.toLowerCase().includes(normalizedSearch));
+        return { group, options: groupOptions };
+      })
+      .filter(({ group, options: groupOptions }) => {
+        return !normalizedSearch
+          ? groupOptions.length > 0
+          : group.name.toLowerCase().includes(normalizedSearch) || groupOptions.length > 0;
+      });
+
+    const unassigned = options
+      .filter(option => !configuredIds.has(option.value))
+      .filter(option => !normalizedSearch || option.label.toLowerCase().includes(normalizedSearch));
+    if (unassigned.length > 0) {
+      result.push({
+        group: {
+          id: "other-themes",
+          name: "Other themes",
+          description: "Themes waiting to be assigned to a group",
+          enabled: true,
+          sortOrder: Number.MAX_SAFE_INTEGER,
+          themeIds: unassigned.map(option => option.value),
+        },
+        options: unassigned,
+      });
+    }
+    return result;
+  }, [groups, optionMap, options, search]);
+
+  const toggle = (values: string[], value: string) => {
+    onChange(values.includes(value) ? values.filter(item => item !== value) : [...values, value]);
+  };
+
+  const themeLabel = selected.length === 0 ? "Themes" : `Themes (${selected.length})`;
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups(previous => ({ ...previous, [id]: !(previous[id] ?? true) }));
+  };
+
+  const groupContents = (useMobileSelection: boolean) => {
+    const activeSelection = useMobileSelection ? mobileSelected : selected;
+    return visibleGroups.map(({ group, options: groupOptions }) => {
+      const expanded = expandedGroups[group.id] ?? true;
+      return (
+        <div key={group.id} className="rounded-lg border bg-background overflow-hidden">
+          <button
+            type="button"
+            onClick={() => toggleGroup(group.id)}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+            aria-expanded={expanded}
+            data-testid={`theme-group-${group.id}`}
+          >
+            <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`} />
+            <span className="font-medium text-sm flex-1">{group.name}</span>
+            <span className="text-xs text-muted-foreground">{groupOptions.length}</span>
+          </button>
+          {expanded && (
+            <div className="border-t px-2 py-1.5 grid grid-cols-1 sm:grid-cols-2 gap-0.5">
+              {groupOptions.map(option => {
+                const checked = activeSelection.includes(option.value);
+                const count = counts?.[option.value];
+                return (
+                  <button
+                    type="button"
+                    key={option.value}
+                    onClick={() => useMobileSelection
+                      ? setMobileSelected(previous => previous.includes(option.value)
+                        ? previous.filter(item => item !== option.value)
+                        : [...previous, option.value])
+                      : toggle(selected, option.value)}
+                    className={`flex items-center gap-2 min-h-10 px-2 rounded-md text-left text-sm hover:bg-muted transition-colors ${checked ? "text-primary font-medium" : ""}`}
+                    aria-pressed={checked}
+                    data-testid={`theme-option-${option.value}`}
+                  >
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${checked ? "bg-primary border-primary" : "border-input"}`}>
+                      {checked && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </span>
+                    <span className="flex-1 capitalize">{option.label}</span>
+                    {count !== undefined && <span className="text-xs text-muted-foreground">{count}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
+  const openMobile = (open: boolean) => {
+    if (open) {
+      setMobileSelected(selected);
+      setSearch("");
+    }
+    setMobileOpen(open);
+  };
+
+  return (
+    <>
+      <div className="hidden sm:flex items-center gap-2">
+        <span className="text-xs text-muted-foreground shrink-0 font-medium w-12">Theme</span>
+        <Popover open={desktopOpen} onOpenChange={setDesktopOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant={selected.length > 0 ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-3 text-xs gap-1.5 rounded-full shrink-0"
+              data-testid="dropdown-filter-theme"
+            >
+              {themeLabel}
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[min(42rem,calc(100vw-2rem))] p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+              <Input
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Search themes..."
+                className="h-8 text-sm"
+                data-testid="input-search-themes"
+              />
+              {selected.length > 0 && (
+                <button type="button" onClick={() => onChange([])} className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap">
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="max-h-[25rem] overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+              {groupContents(false)}
+            </div>
+            {visibleGroups.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">No themes found.</p>}
+          </PopoverContent>
+        </Popover>
+        {selected.map(value => (
+          <button
+            type="button"
+            key={value}
+            onClick={() => onChange(selected.filter(item => item !== value))}
+            className="shrink-0 flex items-center gap-1 h-7 px-2 rounded-full bg-primary/10 text-primary text-xs font-medium"
+            data-testid={`selected-theme-${value}`}
+          >
+            {optionMap.get(value)?.label ?? value}
+            <X className="w-3 h-3" />
+          </button>
+        ))}
+      </div>
+
+      <div className="sm:hidden">
+        <Sheet open={mobileOpen} onOpenChange={openMobile}>
+          <button
+            type="button"
+            onClick={() => openMobile(true)}
+            className={`h-8 px-3 rounded-full border text-xs font-medium flex items-center gap-1.5 whitespace-nowrap ${selected.length > 0 ? "bg-primary text-primary-foreground border-primary" : "bg-background border-input"}`}
+            data-testid="filter-theme-mobile"
+          >
+            {themeLabel}
+            <ChevronDown className="w-3 h-3 opacity-70" />
+          </button>
+          <SheetContent side="bottom" className="h-[min(92svh,760px)] rounded-t-2xl p-0 flex flex-col gap-0">
+            <SheetHeader className="px-5 pt-5 pb-4 pr-12 border-b shrink-0 text-left">
+              <SheetTitle className="text-left">Choose themes</SheetTitle>
+              <SheetDescription className="text-left">Browse themes by group and select one or more.</SheetDescription>
+              {mobileSelected.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setMobileSelected([])}
+                  className="absolute left-5 top-5 text-xs text-muted-foreground underline underline-offset-2"
+                >
+                  Clear
+                </button>
+              )}
+            </SheetHeader>
+            <div className="px-5 py-3 border-b shrink-0">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder="Search themes..."
+                  className="pl-9 h-10"
+                  data-testid="input-search-themes-mobile"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+              {groupContents(true)}
+              {visibleGroups.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No themes found.</p>}
+            </div>
+            <SheetFooter className="px-5 py-4 border-t shrink-0 flex-row gap-2">
+              <Button type="button" className="flex-1" onClick={() => { onChange(mobileSelected); setMobileOpen(false); }} data-testid="button-apply-themes">
+                Apply {mobileSelected.length > 0 ? `(${mobileSelected.length})` : ""}
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
+  );
+}
+
 export default function ShopPage() {
   const searchString = useSearch();
   const [, navigate] = useLocation();
@@ -398,6 +630,11 @@ export default function ShopPage() {
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: themeGroupsConfig } = useQuery<{ value: ThemeGroupsConfig }>({
+    queryKey: ["/api/site-config", "theme-groups"],
+    queryFn: () => fetch("/api/site-config/theme-groups").then(response => response.ok ? response.json() : null),
+    staleTime: 0,
+  });
 
   const categoryOptions = useMemo(() => {
     return categories ?? [];
@@ -437,6 +674,12 @@ export default function ShopPage() {
       value: s.id,
     }));
   }, [attributes]);
+
+  const themeGroups = useMemo<ThemeGroupsConfig>(() => {
+    const persisted = themeGroupsConfig?.value;
+    if (Array.isArray(persisted)) return persisted;
+    return buildDefaultThemeGroups(attributes?.themes ?? []);
+  }, [attributes, themeGroupsConfig]);
 
   // Read URL → state
   useEffect(() => {
@@ -484,9 +727,12 @@ export default function ShopPage() {
     const next = activeGenders.includes(g) ? activeGenders.filter(x => x !== g) : [...activeGenders, g];
     pushURL(activeCategory, activeFilter, next, activeThemes, activeStyles, "", searchQuery);
   };
+  const setThemes = (next: string[]) => {
+    pushURL(activeCategory, activeFilter, activeGenders, next, activeStyles, "", searchQuery);
+  };
   const toggleTheme = (t: string) => {
     const next = activeThemes.includes(t) ? activeThemes.filter(x => x !== t) : [...activeThemes, t];
-    pushURL(activeCategory, activeFilter, activeGenders, next, activeStyles, "", searchQuery);
+    setThemes(next);
   };
   const toggleStyle = (s: string) => {
     const next = activeStyles.includes(s) ? activeStyles.filter(x => x !== s) : [...activeStyles, s];
@@ -798,14 +1044,12 @@ export default function ShopPage() {
                 counts={genderCounts}
                 testIdPrefix="filter-gender"
               />
-              <MultiSelectDropdown
-                label="Theme"
+              <GroupedThemeFilter
                 options={themeOptions}
+                groups={themeGroups}
                 selected={activeThemes}
-                onToggle={toggleTheme}
-                onClear={() => pushURL(activeCategory, activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
+                onChange={setThemes}
                 counts={themeCounts}
-                testIdPrefix="filter-theme"
               />
               <MultiSelectDropdown
                 label="Style"
@@ -830,7 +1074,13 @@ export default function ShopPage() {
             {/* DESKTOP ONLY: scrollable discovery rails */}
             <div className="hidden sm:block space-y-1.5">
               <DesktopFilterRow label="Gender" options={genderOptions} selected={activeGenders} onToggle={toggleGender} counts={genderCounts} draggable={false} />
-              <DesktopFilterRow label="Theme"  options={themeOptions}  selected={activeThemes}  onToggle={toggleTheme}  counts={themeCounts}  showTrack />
+              <GroupedThemeFilter
+                options={themeOptions}
+                groups={themeGroups}
+                selected={activeThemes}
+                onChange={setThemes}
+                counts={themeCounts}
+              />
               <DesktopFilterRow label="Style"  options={styleOptions}  selected={activeStyles}  onToggle={toggleStyle}  counts={styleCounts} />
               {hasAttributeFilters && (
                 <button
@@ -842,10 +1092,27 @@ export default function ShopPage() {
                 </button>
               )}
             </div>
+
+            {activeThemes.length > 0 && (
+              <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto scrollbar-none mt-2 pb-0.5" data-testid="active-theme-chips">
+                {activeThemes.map(themeId => (
+                  <button
+                    type="button"
+                    key={themeId}
+                    onClick={() => setThemes(activeThemes.filter(id => id !== themeId))}
+                    className="shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-full bg-primary text-primary-foreground text-xs font-medium"
+                    data-testid={`active-theme-chip-${themeId}`}
+                  >
+                    {themeOptions.find(option => option.value === themeId)?.label ?? themeId}
+                    <X className="w-3 h-3" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Compact active-filter summary — appears when scrolled + filters active */}
-          <div className={`overflow-hidden transition-all duration-200 ease-in-out ${isScrolled && hasAttributeFilters ? "max-h-10 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}`}>
+          <div className={`hidden sm:block overflow-hidden transition-all duration-200 ease-in-out ${isScrolled && hasAttributeFilters ? "max-h-10 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}`}>
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
               {activeFilter !== "all" && (

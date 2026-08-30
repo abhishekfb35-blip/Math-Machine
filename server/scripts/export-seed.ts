@@ -4,6 +4,7 @@ import {
   categoryTagVariantConfigs, variantSizes, variantColors, currencyRates, pricingRules,
   audience, genders, themes, styles,
   productAudience, productGenders, productThemes, productStyles,
+  siteContent,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import * as fs from "fs";
@@ -111,6 +112,7 @@ async function exportSeed() {
     .leftJoin(tags, eq(productTags.tagId, tags.id));
 
   const config = await db.select().from(siteConfig).orderBy(siteConfig.key);
+  const contents = await db.select().from(siteContent).orderBy(siteContent.key);
 
   const ctvcList = await db.select({
     id: categoryTagVariantConfigs.id,
@@ -248,6 +250,10 @@ async function exportSeed() {
       key: sc.key,
       value: sc.value,
     })),
+     siteContent: contents.map(sc => ({
+       key: sc.key,
+       value: sc.value,
+     })),
     categoryTagVariantConfigs: ctvcList.map(c => ({
       id: c.id,
       categorySlug: c.categorySlug,
