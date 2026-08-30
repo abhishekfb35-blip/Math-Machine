@@ -126,8 +126,9 @@ export default function SignupPopup() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const gsiInitialized = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const phoneValidationRef = useRef<HTMLDivElement>(null);
+  const phoneValidationDialogRef = useRef<HTMLDivElement>(null);
   const phoneValidationIdRef = useRef(0);
+  const touchGestureRef = useRef<"dialog" | "consent" | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const openPopupRef = useRef<(nextView?: "nudge" | "phone") => void>(() => {});
 
@@ -168,9 +169,68 @@ export default function SignupPopup() {
 
   useEffect(() => {
     if (!phoneValidation || !visible || view !== "phone") return;
-    const frame = requestAnimationFrame(() => phoneValidationRef.current?.focus());
+    const frame = requestAnimationFrame(() => phoneValidationDialogRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [phoneValidation, visible, view]);
+
+  const dismissPhoneValidation = useCallback(() => {
+    if (!phoneValidation) return;
+    const targetSelector = PHONE_VALIDATION_TARGETS[phoneValidation.field];
+    setPhoneValidation(null);
+    requestAnimationFrame(() => {
+      dialogRef.current?.querySelector<HTMLElement>(targetSelector)?.focus();
+    });
+  }, [phoneValidation]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const isConsentScrollTarget = (target: EventTarget | null) => {
+      const consentRegion = dialog.querySelector<HTMLElement>(
+        '[data-testid="signup-consent-text"]',
+      );
+      return Boolean(
+        consentRegion &&
+        target instanceof Node &&
+        consentRegion.contains(target),
+      );
+    };
+    const handleTouchStart = (event: TouchEvent) => {
+      touchGestureRef.current = isConsentScrollTarget(event.target)
+        ? "consent"
+        : "dialog";
+    };
+    const handleTouchMove = (event: TouchEvent) => {
+      if (touchGestureRef.current !== "consent") {
+        event.preventDefault();
+      }
+    };
+    const handleTouchEnd = () => {
+      touchGestureRef.current = null;
+    };
+    const handleWheel = (event: WheelEvent) => {
+      if (!isConsentScrollTarget(event.target)) {
+        event.preventDefault();
+      }
+    };
+
+    dialog.addEventListener("touchstart", handleTouchStart, { passive: true });
+    dialog.addEventListener("touchmove", handleTouchMove, { passive: false });
+    dialog.addEventListener("touchend", handleTouchEnd);
+    dialog.addEventListener("touchcancel", handleTouchEnd);
+    dialog.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      dialog.removeEventListener("touchstart", handleTouchStart);
+      dialog.removeEventListener("touchmove", handleTouchMove);
+      dialog.removeEventListener("touchend", handleTouchEnd);
+      dialog.removeEventListener("touchcancel", handleTouchEnd);
+      dialog.removeEventListener("wheel", handleWheel);
+      touchGestureRef.current = null;
+    };
+  }, [visible]);
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -358,12 +418,16 @@ export default function SignupPopup() {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        handleDismiss();
+        if (phoneValidation) {
+          dismissPhoneValidation();
+        } else {
+          handleDismiss();
+        }
         return;
       }
       if (event.key !== "Tab") return;
 
-      const dialog = dialogRef.current;
+      const dialog = phoneValidationDialogRef.current ?? dialogRef.current;
       if (!dialog) return;
 
       const focusableElements = getFocusableElements(dialog);
@@ -387,7 +451,7 @@ export default function SignupPopup() {
         focusableElements[nextIndex].focus();
       }
     },
-    [handleDismiss],
+    [dismissPhoneValidation, handleDismiss, phoneValidation],
   );
 
   useEffect(() => {
@@ -633,45 +697,6 @@ export default function SignupPopup() {
                 </button>
               </div>
 
-              {phoneValidation && (
-                <div
-                  id="signup-phone-validation-message"
-                  ref={phoneValidationRef}
-                  role="alert"
-                  aria-live="assertive"
-                  aria-atomic="true"
-                  tabIndex={0}
-                  onClick={() => phoneValidationRef.current?.focus()}
-                  className="relative z-10 mb-3 flex cursor-pointer items-start gap-2 rounded-lg border border-destructive/40 bg-destructive px-3 py-2 text-destructive-foreground shadow-lg outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
-                  data-testid="signup-phone-validation-message"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">{phoneValidation.title}</p>
-                    {phoneValidation.description && (
-                      <p className="mt-0.5 break-words text-xs opacity-90">
-                        {phoneValidation.description}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Dismiss validation message"
-                    className="shrink-0 rounded p-1 text-destructive-foreground/80 hover:bg-white/15 hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-white"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      const targetSelector = PHONE_VALIDATION_TARGETS[phoneValidation.field];
-                      setPhoneValidation(null);
-                      requestAnimationFrame(() => {
-                        dialogRef.current?.querySelector<HTMLElement>(targetSelector)?.focus();
-                      });
-                    }}
-                    data-testid="btn-dismiss-signup-phone-validation"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-
               <form onSubmit={handlePhoneSubmit} noValidate className="space-y-3">
                 <div>
                   <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
@@ -798,6 +823,7 @@ export default function SignupPopup() {
                     onCheckedChange={handleConsentCheckedChange}
                     onReadToBottomChange={handleConsentReadToBottomChange}
                     testIdPrefix="signup"
+                    scrollRegionClassName="touch-pan-y overscroll-contain"
                   />
                 )}
 
@@ -818,6 +844,58 @@ export default function SignupPopup() {
           )}
         </div>
       </div>
+
+      {phoneValidation && view === "phone" && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/25 p-4 backdrop-blur-[1px]"
+          data-testid="signup-phone-validation-overlay"
+        >
+          <div
+            ref={phoneValidationDialogRef}
+            id="signup-phone-validation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-live="assertive"
+            aria-atomic="true"
+            aria-labelledby="signup-phone-validation-title"
+            aria-describedby={
+              phoneValidation.description
+                ? "signup-phone-validation-description"
+                : undefined
+            }
+            tabIndex={0}
+            onClick={() => phoneValidationDialogRef.current?.focus()}
+            className="flex w-full max-w-xs cursor-pointer items-start gap-3 rounded-xl border border-destructive/40 bg-destructive px-4 py-3 text-destructive-foreground shadow-2xl outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+            data-testid="signup-phone-validation-message"
+          >
+            <div className="min-w-0 flex-1">
+              <p id="signup-phone-validation-title" className="text-sm font-semibold">
+                {phoneValidation.title}
+              </p>
+              {phoneValidation.description && (
+                <p
+                  id="signup-phone-validation-description"
+                  className="mt-0.5 break-words text-xs opacity-90"
+                >
+                  {phoneValidation.description}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-label="Dismiss validation message"
+              className="shrink-0 rounded p-1 text-destructive-foreground/80 hover:bg-white/15 hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-white"
+              onClick={(event) => {
+                event.stopPropagation();
+                dismissPhoneValidation();
+              }}
+              data-testid="btn-dismiss-signup-phone-validation"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

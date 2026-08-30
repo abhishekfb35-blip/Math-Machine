@@ -228,6 +228,17 @@ async function expectCentered(
   expect(box!.y + box!.height / 2).toBeCloseTo(viewport.height / 2, 0);
 }
 
+async function installScrollablePage(page: Page) {
+  await page.evaluate(() => {
+    const spacer = document.createElement("div");
+    spacer.id = "signup-popup-scroll-spacer";
+    spacer.style.height = "3000px";
+    spacer.setAttribute("aria-hidden", "true");
+    document.body.append(spacer);
+    window.scrollTo(0, 0);
+  });
+}
+
 test.describe("Signup popup positioning", () => {
   test("stays centered on desktop and keeps the phone flow interactive", async ({ page }) => {
     const viewport = { width: 1280, height: 800 };
@@ -310,32 +321,46 @@ test.describe("Signup popup positioning", () => {
     await openPhoneForm(page);
     await completeConsentGate(page);
 
+    const popup = page.getByTestId("signup-popup");
     const validationMessage = page.getByTestId("signup-phone-validation-message");
     const phoneInput = page.getByTestId("input-signup-phone");
     const submitButton = page.getByTestId("btn-signup-phone-submit");
+    const popupBeforeError = await popup.boundingBox();
+    expect(popupBeforeError).not.toBeNull();
 
     await submitButton.click();
     await expect(validationMessage).toBeVisible();
+    await expect(validationMessage).toHaveAttribute("role", "alertdialog");
+    await expect(validationMessage).toHaveAttribute("aria-modal", "true");
     await expect(validationMessage).toContainText("Phone number is required");
     await expect(validationMessage).toBeFocused();
     await expect(phoneInput).toHaveAttribute("aria-invalid", "true");
 
     const validationLayer = await validationMessage.evaluate((element) => {
       const popup = element.closest<HTMLElement>('[data-testid="signup-popup"]');
+      const signupPopup = document.querySelector<HTMLElement>('[data-testid="signup-popup"]');
+      const overlay = element.closest<HTMLElement>('[data-testid="signup-phone-validation-overlay"]');
       const backdrop = document.querySelector<HTMLElement>('[data-testid="signup-popup-backdrop"]');
       return {
         insidePopup: Boolean(popup),
         pointerEvents: getComputedStyle(element).pointerEvents,
-        popupZIndex: Number(getComputedStyle(popup!).zIndex),
+        overlayZIndex: Number(getComputedStyle(overlay!).zIndex),
+        popupZIndex: Number(getComputedStyle(signupPopup!).zIndex),
         backdropZIndex: Number(getComputedStyle(backdrop!).zIndex),
       };
     });
-    expect(validationLayer.insidePopup).toBe(true);
+    expect(validationLayer.insidePopup).toBe(false);
     expect(validationLayer.pointerEvents).not.toBe("none");
+    expect(validationLayer.overlayZIndex).toBeGreaterThan(validationLayer.popupZIndex);
     expect(validationLayer.popupZIndex).toBeGreaterThan(validationLayer.backdropZIndex);
+
+    const popupAfterError = await popup.boundingBox();
+    expect(popupAfterError).toEqual(popupBeforeError);
 
     await validationMessage.click();
     await expect(validationMessage).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("btn-dismiss-signup-phone-validation")).toBeFocused();
     await page.getByTestId("btn-dismiss-signup-phone-validation").click();
     await expect(validationMessage).toBeHidden();
     await expect(phoneInput).toBeFocused();
@@ -361,6 +386,74 @@ test.describe("Signup popup positioning", () => {
 
     await phoneInput.fill("9123456789");
     await expect(validationMessage).toBeHidden();
+  });
+
+  test("keeps card gestures from scrolling the page while backdrop gestures can scroll it", async ({ page }) => {
+    await page.setViewportSize({ width: 400, height: 720 });
+    const popup = await openPopup(page);
+    await installScrollablePage(page);
+
+    const nudgeTouchCancellation = await popup.evaluate((element) => {
+      const target = element.querySelector<HTMLElement>('[data-testid="btn-dismiss-nudge"]')!;
+      target.dispatchEvent(new Event("touchstart", { bubbles: true, cancelable: true }));
+      const move = new Event("touchmove", { bubbles: true, cancelable: true });
+      return target.dispatchEvent(move);
+    });
+    expect(nudgeTouchCancellation).toBe(false);
+
+    const backdropAllowsTouchPan = await page.getByTestId("signup-popup-backdrop").evaluate((element) => {
+      const move = new Event("touchmove", { bubbles: true, cancelable: true });
+      return element.dispatchEvent(move);
+    });
+    expect(backdropAllowsTouchPan).toBe(true);
+
+    const nudgeBox = await popup.boundingBox();
+    expect(nudgeBox).not.toBeNull();
+    await page.mouse.move(
+      nudgeBox!.x + nudgeBox!.width / 2,
+      nudgeBox!.y + nudgeBox!.height / 2,
+    );
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.mouse.move(12, 12);
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+    await openPhoneForm(page);
+    await page.evaluate(() => window.scrollTo(0, 0));
+
+    const phoneTouchCancellation = await popup.evaluate((element) => {
+      const target = element.querySelector<HTMLElement>('[data-testid="btn-dismiss-phone-form"]')!;
+      target.dispatchEvent(new Event("touchstart", { bubbles: true, cancelable: true }));
+      const move = new Event("touchmove", { bubbles: true, cancelable: true });
+      return target.dispatchEvent(move);
+    });
+    expect(phoneTouchCancellation).toBe(false);
+
+    const consentTouchAllowed = await page.getByTestId("signup-consent-text").evaluate((element) => {
+      element.dispatchEvent(new Event("touchstart", { bubbles: true, cancelable: true }));
+      const move = new Event("touchmove", { bubbles: true, cancelable: true });
+      return element.dispatchEvent(move);
+    });
+    expect(consentTouchAllowed).toBe(true);
+    await expect(page.getByTestId("signup-consent-text")).toHaveCSS(
+      "overscroll-behavior",
+      "contain",
+    );
+
+    const phoneBox = await popup.boundingBox();
+    expect(phoneBox).not.toBeNull();
+    await page.mouse.move(
+      phoneBox!.x + phoneBox!.width / 2,
+      phoneBox!.y + 40,
+    );
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.mouse.move(12, 12);
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   });
 
   test("dismisses with Escape and restores focus to the opening element", async ({ page }) => {

@@ -9,6 +9,7 @@ interface ConsentScrollGateProps {
   onCheckedChange: (checked: boolean) => void;
   onReadToBottomChange: (readToBottom: boolean) => void;
   testIdPrefix: string;
+  scrollRegionClassName?: string;
 }
 
 export function ConsentScrollGate({
@@ -19,6 +20,7 @@ export function ConsentScrollGate({
   onCheckedChange,
   onReadToBottomChange,
   testIdPrefix,
+  scrollRegionClassName,
 }: ConsentScrollGateProps) {
   const scrollRegionRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,7 @@ export function ConsentScrollGate({
         tabIndex={0}
         role="region"
         aria-label="Consent text"
-        className="h-28 overflow-y-auto rounded-md border border-input bg-muted/20 px-3 py-2 text-xs leading-relaxed text-muted-foreground"
+        className={`h-28 overflow-y-auto rounded-md border border-input bg-muted/20 px-3 py-2 text-xs leading-relaxed text-muted-foreground ${scrollRegionClassName ?? ""}`}
         data-testid={`${testIdPrefix}-consent-text`}
       >
         <div
