@@ -41,6 +41,24 @@ function blockSignupBackdropInteraction(event: SyntheticEvent<HTMLDivElement>) {
   event.stopPropagation();
 }
 
+const FOCUSABLE_SELECTOR = [
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "a[href]",
+  "iframe:not([tabindex='-1'])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(", ");
+
+function getFocusableElements(container: HTMLElement) {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) =>
+      !element.hasAttribute("hidden") &&
+      element.getAttribute("aria-hidden") !== "true",
+  );
+}
+
 interface SignupPopupConfig {
   enabled: boolean;
   delaySeconds: number;
@@ -90,6 +108,9 @@ export default function SignupPopup() {
   const isAuthRef = useRef(isAuthenticated);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const gsiInitialized = useRef(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const openPopupRef = useRef<(nextView?: "nudge" | "phone") => void>(() => {});
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -148,12 +169,20 @@ export default function SignupPopup() {
   }, [location, config]);
 
   // ── forceShow (used by CartGate hard gate) ────────────────────────────────
-  const forceShow = useCallback(() => {
+  const openPopup = useCallback((nextView: "nudge" | "phone" = "nudge") => {
     if (!canShow()) return;
+    const activeElement = document.activeElement;
+    restoreFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
     gsiInitialized.current = false; // allow re-render of button on next open
-    setView("nudge");
+    setView(nextView);
     setVisible(true);
   }, [canShow]);
+
+  useEffect(() => {
+    openPopupRef.current = openPopup;
+  }, [openPopup]);
+
+  const forceShow = useCallback(() => openPopup("nudge"), [openPopup]);
 
   useEffect(() => {
     _registerOpen(forceShow);
@@ -169,11 +198,7 @@ export default function SignupPopup() {
     const delay = Math.max(0, config.delaySeconds ?? 15) * 1000;
 
     const timer = setTimeout(() => {
-      if (!isAuthRef.current && canShow()) {
-        gsiInitialized.current = false;
-        setView("nudge");
-        setVisible(true);
-      }
+      if (!isAuthRef.current) openPopupRef.current("nudge");
     }, delay);
 
     return () => clearTimeout(timer);
@@ -187,11 +212,7 @@ export default function SignupPopup() {
       cartTriggered.current = true;
       const delay = Math.max(0, config.cartAddDelaySeconds ?? 2) * 1000;
       cartTimerRef.current = setTimeout(() => {
-        if (!isAuthRef.current && canShow()) {
-          gsiInitialized.current = false;
-          setView("nudge");
-          setVisible(true);
-        }
+        if (!isAuthRef.current) openPopupRef.current("nudge");
       }, delay);
     };
 
@@ -200,7 +221,7 @@ export default function SignupPopup() {
       window.removeEventListener("cart:item-added-for-popup", handler);
       if (cartTimerRef.current) clearTimeout(cartTimerRef.current);
     };
-  }, [config, canShow]);
+  }, [config]);
 
   // ── Dismiss ───────────────────────────────────────────────────────────────
   const handleDismiss = useCallback(() => {
@@ -233,6 +254,87 @@ export default function SignupPopup() {
       }, interval * 1000);
     }
   }, [_onDismissed, config, canShow]);
+
+  // Move focus into the active view and return it to the element that opened
+  // the popup when it closes.
+  useEffect(() => {
+    if (visible) return;
+    const element = restoreFocusRef.current;
+    if (!element) return;
+
+    restoreFocusRef.current = null;
+    const frame = requestAnimationFrame(() => {
+      if (element.isConnected && !element.hasAttribute("disabled")) {
+        element.focus();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const frame = requestAnimationFrame(() => {
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusableElements = getFocusableElements(dialog);
+      if (!dialog.contains(document.activeElement)) {
+        (focusableElements[0] ?? dialog).focus();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [visible, view]);
+
+  const handleFocusTrap = useCallback(
+    (event: {
+      key: string;
+      shiftKey: boolean;
+      preventDefault: () => void;
+      stopPropagation: () => void;
+    }) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        handleDismiss();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusableElements = getFocusableElements(dialog);
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      const currentIndex = focusableElements.indexOf(activeElement as HTMLElement);
+      if (
+        currentIndex === -1 ||
+        (event.shiftKey && currentIndex === 0) ||
+        (!event.shiftKey && currentIndex === focusableElements.length - 1)
+      ) {
+        event.preventDefault();
+        const nextIndex = event.shiftKey
+          ? focusableElements.length - 1
+          : 0;
+        focusableElements[nextIndex].focus();
+      }
+    },
+    [handleDismiss],
+  );
+
+  useEffect(() => {
+    if (!visible) return;
+    const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      handleFocusTrap(event);
+    };
+    document.addEventListener("keydown", handleDocumentKeyDown, true);
+    return () => document.removeEventListener("keydown", handleDocumentKeyDown, true);
+  }, [visible, handleFocusTrap]);
 
   // ── Google credential callback ────────────────────────────────────────────
   const handleCredential = useCallback(
@@ -379,6 +481,20 @@ export default function SignupPopup() {
       <div
         className="tl-popup-card fixed top-1/2 left-1/2 right-auto -translate-x-1/2 -translate-y-1/2 z-[999] w-72 max-w-[calc(100vw-2rem)] bg-background border border-primary/20 border-t-4 border-t-primary rounded-2xl overflow-hidden"
         style={{ boxShadow: "0 8px 28px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent), 0 2px 8px 0 rgba(0,0,0,0.08)" }}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signup-popup-title"
+        aria-describedby={
+          view === "nudge"
+            ? config?.subtitleText
+              ? "signup-popup-description"
+              : undefined
+            : config?.phoneSubtitleText
+              ? "signup-popup-description"
+              : undefined
+        }
+        tabIndex={-1}
         data-testid="signup-popup"
       >
         <div className="p-5">
@@ -387,6 +503,7 @@ export default function SignupPopup() {
             <>
               <div className="flex items-start justify-between mb-3">
                 <div
+                  id="signup-popup-title"
                   className="text-sm font-semibold text-foreground leading-snug"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config?.incentiveText || "Sign in to TurtleLittle") }}
                 />
@@ -403,6 +520,7 @@ export default function SignupPopup() {
               {config?.subtitleText && (
                 <div
                   className="text-xs text-muted-foreground mb-4 leading-relaxed"
+                  id="signup-popup-description"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.subtitleText) }}
                 />
               )}
@@ -424,12 +542,13 @@ export default function SignupPopup() {
             <>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-sm font-bold text-foreground leading-snug">
+                   <p id="signup-popup-title" className="text-sm font-bold text-foreground leading-snug">
                     {name ? `Welcome, ${name}!` : "One last step"}
                   </p>
                   {config?.phoneSubtitleText && (
                     <p
-                      className="text-xs text-muted-foreground mt-1"
+                       id="signup-popup-description"
+                       className="text-xs text-muted-foreground mt-1"
                       dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.phoneSubtitleText) }}
                     />
                   )}

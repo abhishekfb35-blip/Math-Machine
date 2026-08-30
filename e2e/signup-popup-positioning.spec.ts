@@ -14,7 +14,12 @@ const popupConfig = {
   consentAgreementLabel: "I agree to the consent text above.",
 };
 
-async function mockSignupFlow(page: Page) {
+async function mockSignupFlow(
+  page: Page,
+  options: { delaySeconds?: number; cartAddDelaySeconds?: number } = {},
+) {
+  const delaySeconds = options.delaySeconds ?? popupConfig.delaySeconds;
+  const cartAddDelaySeconds = options.cartAddDelaySeconds ?? popupConfig.cartAddDelaySeconds;
   await page.route("https://accounts.google.com/gsi/client", route => route.abort());
   await page.route("**/api/auth/me", route =>
     route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
@@ -22,7 +27,10 @@ async function mockSignupFlow(page: Page) {
   await page.route("**/api/site-config/signup-popup", route =>
     route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ key: "signup-popup", value: popupConfig }),
+      body: JSON.stringify({
+        key: "signup-popup",
+        value: { ...popupConfig, delaySeconds, cartAddDelaySeconds },
+      }),
     }),
   );
   await page.route("**/api/auth/google-client-id", route =>
@@ -78,9 +86,32 @@ async function mockSignupFlow(page: Page) {
   });
 }
 
-async function openPopup(page: Page) {
-  await mockSignupFlow(page);
+type PopupTestOptions = {
+  delaySeconds?: number;
+  cartAddDelaySeconds?: number;
+  focusTrigger?: boolean;
+};
+
+async function loadSignupPage(page: Page, options: PopupTestOptions = {}) {
+  await mockSignupFlow(page, options);
+  const signupConfigResponse = page.waitForResponse("**/api/site-config/signup-popup");
   await page.goto("/");
+  await signupConfigResponse;
+
+  if (options.focusTrigger) {
+    await page.evaluate(() => {
+      const trigger = document.createElement("button");
+      trigger.id = "signup-popup-focus-trigger";
+      trigger.type = "button";
+      trigger.textContent = "Open signup";
+      document.body.append(trigger);
+      trigger.focus();
+    });
+  }
+}
+
+async function openPopup(page: Page, options: PopupTestOptions = {}) {
+  await loadSignupPage(page, options);
 
   const popup = page.getByTestId("signup-popup");
   await expect(popup).toBeVisible({ timeout: 10_000 });
@@ -91,6 +122,13 @@ async function openPopup(page: Page) {
     element.getAnimations().map(animation => animation.finish()),
   );
   return popup;
+}
+
+async function navigateWithinApp(page: Page, pathname: string) {
+  await page.evaluate((nextPath) => {
+    window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, pathname);
 }
 
 async function openPhoneForm(page: Page) {
@@ -154,10 +192,24 @@ test.describe("Signup popup positioning", () => {
     const popup = await openPopup(page);
 
     await expectCentered(popup, viewport);
+    await expect(popup).toHaveAttribute("role", "dialog");
+    await expect(popup).toHaveAttribute("aria-modal", "true");
+    await expect(popup).toHaveAttribute("aria-labelledby", "signup-popup-title");
+    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Continue with Google" })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
     await expectBackdropToBlockUnderlyingPage(page);
     await expect(popup).toBeVisible();
 
     await openPhoneForm(page);
+    await expect(page.getByRole("dialog", { name: "Welcome, Popup Tester!" })).toBeVisible();
+    await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.getByTestId("btn-signup-phone-submit")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
     await expectCentered(popup, viewport);
     await page.getByTestId("select-signup-phone-country-code").selectOption("+91");
     await page.getByTestId("input-signup-phone").fill("9876543210");
@@ -174,13 +226,47 @@ test.describe("Signup popup positioning", () => {
     const popup = await openPopup(page);
 
     await expectCentered(popup, viewport);
+    await expect(page.getByRole("dialog", { name: "Sign in to TurtleLittle" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
     await expectBackdropToBlockUnderlyingPage(page, true);
 
     await openPhoneForm(page);
+    await expect(page.getByRole("dialog", { name: "Welcome, Popup Tester!" })).toBeVisible();
+    await expect(page.getByTestId("btn-dismiss-phone-form")).toBeFocused();
     await expectCentered(popup, viewport);
     await page.getByTestId("input-signup-phone").fill("9876543210");
     await page.getByTestId("btn-dismiss-phone-form").click();
     await expect(popup).toBeHidden();
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
+  });
+
+  test("dismisses with Escape and restores focus to the opening element", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const popup = await openPopup(page, { delaySeconds: 1, focusTrigger: true });
+
+    await expect(page.getByRole("dialog", { name: "Sign in to TurtleLittle" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(popup).toBeHidden();
+    await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
+    await expect(page.locator("#signup-popup-focus-trigger")).toBeFocused();
+  });
+
+  test("keeps the session signup timer alive across navigation", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await loadSignupPage(page, { delaySeconds: 1, cartAddDelaySeconds: 60 });
+
+    await navigateWithinApp(page, "/shop");
+    await expect(page.getByTestId("signup-popup")).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("keeps the cart signup timer alive across navigation", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await loadSignupPage(page, { delaySeconds: 60, cartAddDelaySeconds: 1 });
+    await page.waitForTimeout(50);
+
+    await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
+    await navigateWithinApp(page, "/shop");
+    await expect(page.getByTestId("signup-popup")).toBeVisible({ timeout: 5_000 });
   });
 });
