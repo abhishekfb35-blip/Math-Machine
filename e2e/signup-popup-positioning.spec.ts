@@ -228,6 +228,7 @@ test.describe("Signup popup positioning", () => {
     await expectCentered(popup, viewport);
     await expect(page.getByRole("dialog", { name: "Sign in to TurtleLittle" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
+    await expect(page.getByTestId("signup-popup-backdrop")).toHaveCSS("touch-action", "pan-y");
     await expectBackdropToBlockUnderlyingPage(page, true);
 
     await openPhoneForm(page);

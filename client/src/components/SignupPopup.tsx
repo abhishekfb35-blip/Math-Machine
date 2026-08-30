@@ -37,7 +37,6 @@ import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/sign
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 
 function blockSignupBackdropInteraction(event: SyntheticEvent<HTMLDivElement>) {
-  event.preventDefault();
   event.stopPropagation();
 }
 
@@ -469,7 +468,7 @@ export default function SignupPopup() {
       `}</style>
 
       <div
-        className="fixed inset-0 z-[998] touch-none sm:touch-auto bg-black/20 backdrop-blur-[1px]"
+        className="fixed inset-0 z-[998] touch-pan-y sm:touch-auto bg-black/20 backdrop-blur-[1px]"
         onPointerDown={blockSignupBackdropInteraction}
         onTouchStart={blockSignupBackdropInteraction}
         onTouchMove={blockSignupBackdropInteraction}
