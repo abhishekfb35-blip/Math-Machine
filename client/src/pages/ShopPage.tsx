@@ -413,28 +413,28 @@ export default function ShopPage() {
     if (ags.length === 0) return [];
     return [
       { label: "All", value: "all" },
-      ...ags.map(ag => ({ label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1), value: ag.name })),
+      ...ags.map(ag => ({ label: ag.name.charAt(0).toUpperCase() + ag.name.slice(1), value: ag.id })),
     ];
   }, [attributes]);
 
   const genderOptions = useMemo(() => {
     return (attributes?.genders ?? []).map(g => ({
       label: g.name.charAt(0).toUpperCase() + g.name.slice(1),
-      value: g.name,
+      value: g.id,
     }));
   }, [attributes]);
 
   const themeOptions = useMemo(() => {
     return (attributes?.themes ?? []).map(t => ({
       label: t.name.charAt(0).toUpperCase() + t.name.slice(1),
-      value: t.name,
+      value: t.id,
     }));
   }, [attributes]);
 
   const styleOptions = useMemo(() => {
     return (attributes?.styles ?? []).map(s => ({
       label: s.name.charAt(0).toUpperCase() + s.name.slice(1),
-      value: s.name,
+      value: s.id,
     }));
   }, [attributes]);
 
@@ -530,10 +530,10 @@ export default function ShopPage() {
     if (!products) return [];
     let result = products;
     if (activeCategoryObj) result = result.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") result = result.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
-    if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
-    if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
+    if (activeFilter !== "all") result = result.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
+    if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
+    if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return result;
   }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes, activeStyles]);
 
@@ -543,9 +543,9 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj) r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeGenders.length) r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
-    if (activeThemes.length)  r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
-    if (activeStyles.length)  r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
+    if (activeGenders.length) r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
+    if (activeThemes.length)  r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
+    if (activeStyles.length)  r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
   }, [products, activeCategoryObj, activeGenders, activeThemes, activeStyles]);
 
@@ -553,9 +553,9 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
-    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
+    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
   }, [products, activeCategoryObj, activeFilter, activeThemes, activeStyles]);
 
@@ -563,9 +563,9 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
-    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
+    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
   }, [products, activeCategoryObj, activeFilter, activeGenders, activeStyles]);
 
@@ -573,9 +573,9 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
-    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
+    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     return r;
   }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes]);
 
@@ -583,10 +583,10 @@ export default function ShopPage() {
   const countBaseCategory = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === activeFilter.toLowerCase()));
-    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g.toLowerCase())));
-    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t.toLowerCase())));
-    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s.toLowerCase())));
+    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
+    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
+    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
   }, [products, activeFilter, activeGenders, activeThemes, activeStyles]);
 
@@ -602,7 +602,7 @@ export default function ShopPage() {
     const map: Record<string, number> = { all: countBaseAudience.length };
     for (const f of audienceFilters) {
       if (f.value === "all") continue;
-      map[f.value] = countBaseAudience.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === f.value)).length;
+      map[f.value] = countBaseAudience.filter(p => (p.audience ?? []).includes(f.value)).length;
     }
     return map;
   }, [countBaseAudience, audienceFilters]);
@@ -610,7 +610,7 @@ export default function ShopPage() {
   const genderCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const f of genderOptions) {
-      map[f.value] = countBaseGender.filter(p => (p.genders ?? []).some(g => g.toLowerCase() === f.value)).length;
+      map[f.value] = countBaseGender.filter(p => (p.genders ?? []).includes(f.value)).length;
     }
     return map;
   }, [countBaseGender, genderOptions]);
@@ -618,7 +618,7 @@ export default function ShopPage() {
   const themeCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const f of themeOptions) {
-      map[f.value] = countBaseTheme.filter(p => (p.themes ?? []).some(t => t.toLowerCase() === f.value)).length;
+      map[f.value] = countBaseTheme.filter(p => (p.themes ?? []).includes(f.value)).length;
     }
     return map;
   }, [countBaseTheme, themeOptions]);
@@ -626,7 +626,7 @@ export default function ShopPage() {
   const styleCounts = useMemo(() => {
     const map: Record<string, number> = {};
     for (const f of styleOptions) {
-      map[f.value] = countBaseStyle.filter(p => (p.styles ?? []).some(s => s.toLowerCase() === f.value)).length;
+      map[f.value] = countBaseStyle.filter(p => (p.styles ?? []).includes(f.value)).length;
     }
     return map;
   }, [countBaseStyle, styleOptions]);

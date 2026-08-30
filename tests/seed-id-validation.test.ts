@@ -5,7 +5,18 @@ import { ID_BEARING_SEED_TABLES, validateSeedSnapshotIds } from "../server/lib/s
 describe("seed snapshot ID validation", () => {
   it("accepts existing IDs for every ID-bearing seed section", () => {
     const snapshot = Object.fromEntries(
-      ID_BEARING_SEED_TABLES.map((table) => [table, [{ id: `${table}-existing` }]]),
+      ID_BEARING_SEED_TABLES.map((table) => {
+        const relationField = {
+          productAudience: "audienceId",
+          productGenders: "genderId",
+          productThemes: "themeId",
+          productStyles: "styleId",
+        }[table];
+        return [table, [{
+          id: `${table}-existing`,
+          ...(relationField ? { [relationField]: `${table}-attribute` } : {}),
+        }]];
+      }),
     );
     assert.doesNotThrow(() => validateSeedSnapshotIds(snapshot));
   });

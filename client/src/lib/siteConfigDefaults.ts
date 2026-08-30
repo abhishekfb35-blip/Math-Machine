@@ -424,6 +424,7 @@ export interface ShopSection {
   categories?: string[];  // category slug filter
   maxShown: number;
   enabled: boolean;
+  /** Attribute IDs only; labels are resolved from /api/attributes for display. */
   audience?: string[];
   genders?: string[];
   themes?: string[];
@@ -431,13 +432,13 @@ export interface ShopSection {
 }
 
 export const defaultShopSections: ShopSection[] = [
-  { label: "Kids Towels",      tag: "kids-towels",      tags: [], maxShown: 15, enabled: true, audience: ["kids", "infant"], genders: ["male", "female", "unisex"] },
-  { label: "Adult Towels",     tag: "adult-towels",     tags: [], maxShown: 8,  enabled: true, audience: ["adults"],          genders: ["male", "female", "unisex"] },
-  { label: "Couple Towels",    tag: "couple-towels",    tags: [], maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
-  { label: "Kids Blankets",    tag: "kids-blankets",    tags: [], maxShown: 8,  enabled: true, audience: ["kids"] },
-  { label: "Kids Bathrobes",   tag: "kids-bathrobes",   tags: [], maxShown: 8,  enabled: true, audience: ["kids"] },
-  { label: "Adult Bathrobes",  tag: "adult-bathrobes",  tags: [], maxShown: 8,  enabled: true, audience: ["adults"] },
-  { label: "Couple Bathrobes", tag: "couple-bathrobes", tags: [], maxShown: 8,  enabled: true, audience: ["adults", "couples"] },
+  { label: "Kids Towels",      tag: "kids-towels",      tags: [], maxShown: 15, enabled: true, audience: [], genders: [] },
+  { label: "Adult Towels",     tag: "adult-towels",     tags: [], maxShown: 8,  enabled: true, audience: [], genders: [] },
+  { label: "Couple Towels",    tag: "couple-towels",    tags: [], maxShown: 8,  enabled: true, audience: [] },
+  { label: "Kids Blankets",    tag: "kids-blankets",    tags: [], maxShown: 8,  enabled: true, audience: [] },
+  { label: "Kids Bathrobes",   tag: "kids-bathrobes",   tags: [], maxShown: 8,  enabled: true, audience: [] },
+  { label: "Adult Bathrobes",  tag: "adult-bathrobes",  tags: [], maxShown: 8,  enabled: true, audience: [] },
+  { label: "Couple Bathrobes", tag: "couple-bathrobes", tags: [], maxShown: 8,  enabled: true, audience: [] },
 ];
 
 const EMPTY_SECTION_FILTERS = {

@@ -87,42 +87,38 @@ export async function getProductIdsByFilters(filters: SectionFilters): Promise<s
   }
 
   if (filters.audienceFilters.length > 0) {
-    const names = sql.join(filters.audienceFilters.map(n => sql`${n}`), sql`, `);
+    const ids = sql.join(filters.audienceFilters.map(id => sql`${id}`), sql`, `);
     conditions.push(sql`EXISTS (
       SELECT 1 FROM product_audience pag
-      JOIN audience ag ON ag.id = pag.audience_id
       WHERE pag.product_id = ${products.id}
-      AND ag.name = ANY(ARRAY[${names}])
+      AND pag.audience_id = ANY(ARRAY[${ids}])
     )`);
   }
 
   if (filters.genderFilters.length > 0) {
-    const names = sql.join(filters.genderFilters.map(n => sql`${n}`), sql`, `);
+    const ids = sql.join(filters.genderFilters.map(id => sql`${id}`), sql`, `);
     conditions.push(sql`EXISTS (
       SELECT 1 FROM product_genders pg2
-      JOIN genders g ON g.id = pg2.gender_id
       WHERE pg2.product_id = ${products.id}
-      AND g.name = ANY(ARRAY[${names}])
+      AND pg2.gender_id = ANY(ARRAY[${ids}])
     )`);
   }
 
   if (filters.themeFilters.length > 0) {
-    const names = sql.join(filters.themeFilters.map(n => sql`${n}`), sql`, `);
+    const ids = sql.join(filters.themeFilters.map(id => sql`${id}`), sql`, `);
     conditions.push(sql`EXISTS (
       SELECT 1 FROM product_themes pt
-      JOIN themes t ON t.id = pt.theme_id
       WHERE pt.product_id = ${products.id}
-      AND t.name = ANY(ARRAY[${names}])
+      AND pt.theme_id = ANY(ARRAY[${ids}])
     )`);
   }
 
   if (filters.styleFilters.length > 0) {
-    const names = sql.join(filters.styleFilters.map(n => sql`${n}`), sql`, `);
+    const ids = sql.join(filters.styleFilters.map(id => sql`${id}`), sql`, `);
     conditions.push(sql`EXISTS (
       SELECT 1 FROM product_styles ps
-      JOIN styles s ON s.id = ps.style_id
       WHERE ps.product_id = ${products.id}
-      AND s.name = ANY(ARRAY[${names}])
+      AND ps.style_id = ANY(ARRAY[${ids}])
     )`);
   }
 

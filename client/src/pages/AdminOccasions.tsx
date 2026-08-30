@@ -149,8 +149,8 @@ function OccasionForm({
   const { data: attributes } = useQuery<{ themes: { id: string; name: string }[]; styles: { id: string; name: string }[] }>({
     queryKey: ["/api/attributes"],
   });
-  const themeOptions = attributes?.themes?.map(t => t.name) ?? [];
-  const styleOptions = attributes?.styles?.map(s => s.name) ?? [];
+  const themeOptions = attributes?.themes ?? [];
+  const styleOptions = attributes?.styles ?? [];
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -227,13 +227,13 @@ function OccasionForm({
         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferred Themes</Label>
         <div className="flex flex-wrap gap-3">
           {themeOptions.map(opt => (
-            <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+            <label key={opt.id} className="flex items-center gap-1.5 cursor-pointer">
               <Checkbox
-                checked={parseCsv(form.preferredThemes).includes(opt)}
-                onCheckedChange={() => set("preferredThemes", toggleCsvValue(form.preferredThemes, opt))}
-                data-testid={`checkbox-theme-${opt}`}
+                checked={parseCsv(form.preferredThemes).includes(opt.id)}
+                onCheckedChange={() => set("preferredThemes", toggleCsvValue(form.preferredThemes, opt.id))}
+                data-testid={`checkbox-theme-${opt.id}`}
               />
-              <span className="text-sm capitalize">{opt}</span>
+              <span className="text-sm capitalize">{opt.name}</span>
             </label>
           ))}
         </div>
@@ -243,13 +243,13 @@ function OccasionForm({
         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferred Styles</Label>
         <div className="flex flex-wrap gap-3">
           {styleOptions.map(opt => (
-            <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+            <label key={opt.id} className="flex items-center gap-1.5 cursor-pointer">
               <Checkbox
-                checked={parseCsv(form.preferredStyles).includes(opt)}
-                onCheckedChange={() => set("preferredStyles", toggleCsvValue(form.preferredStyles, opt))}
-                data-testid={`checkbox-style-${opt}`}
+                checked={parseCsv(form.preferredStyles).includes(opt.id)}
+                onCheckedChange={() => set("preferredStyles", toggleCsvValue(form.preferredStyles, opt.id))}
+                data-testid={`checkbox-style-${opt.id}`}
               />
-              <span className="text-sm capitalize">{opt}</span>
+              <span className="text-sm capitalize">{opt.name}</span>
             </label>
           ))}
         </div>
@@ -281,6 +281,12 @@ export default function AdminOccasions() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { data: attributes } = useQuery<{
+    themes: { id: string; name: string }[];
+    styles: { id: string; name: string }[];
+  }>({ queryKey: ["/api/attributes"] });
+  const themeNameById = new Map((attributes?.themes ?? []).map(t => [t.id, t.name]));
+  const styleNameById = new Map((attributes?.styles ?? []).map(s => [s.id, s.name]));
 
   const { data: occasions = [], isLoading } = useQuery<Occasion[]>({
     queryKey: ["/api/admin/occasions"],
@@ -422,10 +428,10 @@ export default function AdminOccasions() {
                           )}
                           <div className="flex flex-wrap gap-1 mt-1">
                             {parseCsv(occ.preferredThemes).map(t => (
-                              <Badge key={t} variant="outline" className="text-[9px] capitalize no-default-hover-elevate no-default-active-elevate">{t}</Badge>
+                              <Badge key={t} variant="outline" className="text-[9px] capitalize no-default-hover-elevate no-default-active-elevate">{themeNameById.get(t) ?? t}</Badge>
                             ))}
                             {parseCsv(occ.preferredStyles).map(s => (
-                              <Badge key={s} variant="secondary" className="text-[9px] capitalize no-default-hover-elevate no-default-active-elevate">{s}</Badge>
+                              <Badge key={s} variant="secondary" className="text-[9px] capitalize no-default-hover-elevate no-default-active-elevate">{styleNameById.get(s) ?? s}</Badge>
                             ))}
                           </div>
                         </div>

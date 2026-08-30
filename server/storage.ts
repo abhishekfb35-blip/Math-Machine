@@ -46,10 +46,10 @@ import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "
 
 // Intermediate type: a DB product row before image and attribute enrichment.
 // The products table does not contain imageUrl or the normalized attribute arrays.
-type RawProductRow = Omit<Product, "imageUrl" | "audience" | "genders" | "themes" | "styles"> & {
+type RawProductRow = Omit<Product, "imageUrl" | "audience" | "genders" | "themes" | "styles" | "audienceNames" | "genderNames" | "themeNames" | "styleNames"> & {
   imageUrl?: string | null;
 };
-type EnrichedRawProductRow = Omit<Product, "audience" | "genders" | "themes" | "styles"> & {
+type EnrichedRawProductRow = Omit<Product, "audience" | "genders" | "themes" | "styles" | "audienceNames" | "genderNames" | "themeNames" | "styleNames"> & {
   imageUrl: string;
 };
 
@@ -334,36 +334,64 @@ export class DatabaseStorage implements IStorage {
     const ids = prods.map(p => p.id);
 
     const [agRows, genRows, themeRows, styleRows] = await Promise.all([
-      db.select({ productId: productAudience.productId, name: audience.name })
+      db.select({ productId: productAudience.productId, attributeId: productAudience.audienceId, name: audience.name })
         .from(productAudience).innerJoin(audience, eq(productAudience.audienceId, audience.id))
         .where(inArray(productAudience.productId, ids)),
-      db.select({ productId: productGenders.productId, name: genders.name })
+      db.select({ productId: productGenders.productId, attributeId: productGenders.genderId, name: genders.name })
         .from(productGenders).innerJoin(genders, eq(productGenders.genderId, genders.id))
         .where(inArray(productGenders.productId, ids)),
-      db.select({ productId: productThemes.productId, name: themes.name })
+      db.select({ productId: productThemes.productId, attributeId: productThemes.themeId, name: themes.name })
         .from(productThemes).innerJoin(themes, eq(productThemes.themeId, themes.id))
         .where(inArray(productThemes.productId, ids)),
-      db.select({ productId: productStyles.productId, name: styles.name })
+      db.select({ productId: productStyles.productId, attributeId: productStyles.styleId, name: styles.name })
         .from(productStyles).innerJoin(styles, eq(productStyles.styleId, styles.id))
         .where(inArray(productStyles.productId, ids)),
     ]);
 
-    const agMap = new Map<string, string[]>();
-    const genMap = new Map<string, string[]>();
-    const themeMap = new Map<string, string[]>();
-    const styleMap = new Map<string, string[]>();
+    const agIdMap = new Map<string, string[]>();
+    const genIdMap = new Map<string, string[]>();
+    const themeIdMap = new Map<string, string[]>();
+    const styleIdMap = new Map<string, string[]>();
+    const agNameMap = new Map<string, string[]>();
+    const genNameMap = new Map<string, string[]>();
+    const themeNameMap = new Map<string, string[]>();
+    const styleNameMap = new Map<string, string[]>();
 
-    for (const r of agRows) { if (!agMap.has(r.productId)) agMap.set(r.productId, []); agMap.get(r.productId)!.push(r.name); }
-    for (const r of genRows) { if (!genMap.has(r.productId)) genMap.set(r.productId, []); genMap.get(r.productId)!.push(r.name); }
-    for (const r of themeRows) { if (!themeMap.has(r.productId)) themeMap.set(r.productId, []); themeMap.get(r.productId)!.push(r.name); }
-    for (const r of styleRows) { if (!styleMap.has(r.productId)) styleMap.set(r.productId, []); styleMap.get(r.productId)!.push(r.name); }
+    for (const r of agRows) {
+      if (!agIdMap.has(r.productId)) agIdMap.set(r.productId, []);
+      if (!agNameMap.has(r.productId)) agNameMap.set(r.productId, []);
+      agIdMap.get(r.productId)!.push(r.attributeId);
+      agNameMap.get(r.productId)!.push(r.name);
+    }
+    for (const r of genRows) {
+      if (!genIdMap.has(r.productId)) genIdMap.set(r.productId, []);
+      if (!genNameMap.has(r.productId)) genNameMap.set(r.productId, []);
+      genIdMap.get(r.productId)!.push(r.attributeId);
+      genNameMap.get(r.productId)!.push(r.name);
+    }
+    for (const r of themeRows) {
+      if (!themeIdMap.has(r.productId)) themeIdMap.set(r.productId, []);
+      if (!themeNameMap.has(r.productId)) themeNameMap.set(r.productId, []);
+      themeIdMap.get(r.productId)!.push(r.attributeId);
+      themeNameMap.get(r.productId)!.push(r.name);
+    }
+    for (const r of styleRows) {
+      if (!styleIdMap.has(r.productId)) styleIdMap.set(r.productId, []);
+      if (!styleNameMap.has(r.productId)) styleNameMap.set(r.productId, []);
+      styleIdMap.get(r.productId)!.push(r.attributeId);
+      styleNameMap.get(r.productId)!.push(r.name);
+    }
 
     return prods.map(p => ({
       ...p,
-      audience: agMap.get(p.id) ?? [],
-      genders:   genMap.get(p.id) ?? [],
-      themes:    themeMap.get(p.id) ?? [],
-      styles:    styleMap.get(p.id) ?? [],
+      audience:      agIdMap.get(p.id) ?? [],
+      genders:       genIdMap.get(p.id) ?? [],
+      themes:        themeIdMap.get(p.id) ?? [],
+      styles:        styleIdMap.get(p.id) ?? [],
+      audienceNames: agNameMap.get(p.id) ?? [],
+      genderNames:   genNameMap.get(p.id) ?? [],
+      themeNames:    themeNameMap.get(p.id) ?? [],
+      styleNames:    styleNameMap.get(p.id) ?? [],
     }));
   }
 

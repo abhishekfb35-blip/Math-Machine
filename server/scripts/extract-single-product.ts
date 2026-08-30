@@ -2,6 +2,7 @@ import pg from "pg";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import { createId } from "@paralleldrive/cuid2";
 
 const { Pool } = pg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -12,6 +13,21 @@ const SIZES: Record<string, number> = {
   medium: 400,
   large: 800,
 };
+
+async function replaceProductAudience(productId: string, name: string): Promise<void> {
+  const result = await pool.query(
+    "SELECT id FROM audience WHERE LOWER(name) = LOWER($1)",
+    [name],
+  );
+  if (result.rows.length === 0) {
+    throw new Error(`Audience attribute not found: ${name}`);
+  }
+  await pool.query("DELETE FROM product_audience WHERE product_id = $1", [productId]);
+  await pool.query(
+    "INSERT INTO product_audience (id, product_id, audience_id) VALUES ($1, $2, $3)",
+    [createId(), productId, result.rows[0].id],
+  );
+}
 
 async function downloadImage(imageId: string): Promise<Buffer | null> {
   const suffixes = ["._SL1500_.jpg", "._SL1200_.jpg", "._SL800_.jpg", ".jpg"];
@@ -161,9 +177,8 @@ async function main() {
       items_in_set = $8,
       special_features = $9,
       bullet_points = $10,
-      product_type = $11,
-      audience = $12
-    WHERE id = $13`,
+      product_type = $11
+    WHERE id = $12`,
     [
       productData.mrp,
       productData.asin,
@@ -176,11 +191,11 @@ async function main() {
       JSON.stringify(productData.specialFeatures),
       JSON.stringify(productData.bulletPoints),
       productData.productType,
-      productData.audience,
       product.id,
     ]
   );
-  console.log("  Updated: mrp, asin, color, material, gsm, dimensions, weight, items_in_set, features, bullets, type, audience");
+  await replaceProductAudience(product.id, productData.audience);
+  console.log("  Updated: mrp, asin, color, material, gsm, dimensions, weight, items_in_set, features, bullets, type, audience relation");
 
   console.log("\n--- Step 2: Download and resize product images ---");
   await pool.query("DELETE FROM product_images WHERE product_id = $1", [product.id]);
@@ -255,7 +270,6 @@ async function main() {
   console.log(`  Weight: ${p.weight_grams}g`);
   console.log(`  Items in set: ${p.items_in_set}`);
   console.log(`  Type: ${p.product_type}`);
-  console.log(`  Audience: ${p.audience}`);
   console.log(`  Image URL: ${p.image_url}`);
   console.log(`  Special Features: ${p.special_features}`);
   console.log(`  Bullet Points: ${p.bullet_points}`);

@@ -115,18 +115,18 @@ export default function AdminProductPageConfig() {
         )}
 
         {audiences.map(aud => {
-          const slug = aud.name.toLowerCase();
-          const cfg = config[slug];
+          const audienceId = aud.id;
+          const cfg = config[audienceId];
 
           return (
-            <Card key={aud.id} className="p-4 space-y-4" data-testid={`card-audience-${slug}`}>
+            <Card key={aud.id} className="p-4 space-y-4" data-testid={`card-audience-${audienceId}`}>
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold capitalize">{aud.name}</h2>
                 <Select
                   value={cfg?.type ?? "none"}
-                  onValueChange={v => setAudienceType(slug, v as "none" | "single" | "couples")}
+                   onValueChange={v => setAudienceType(audienceId, v as "none" | "single" | "couples")}
                 >
-                  <SelectTrigger className="w-48" data-testid={`select-type-${slug}`}>
+                   <SelectTrigger className="w-48" data-testid={`select-type-${audienceId}`}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -144,9 +144,9 @@ export default function AdminProductPageConfig() {
                       <Label className="text-xs text-muted-foreground">Section heading</Label>
                       <Input
                         value={cfg.heading}
-                        onChange={e => updateField(slug, "heading", e.target.value)}
+                         onChange={e => updateField(audienceId, "heading", e.target.value)}
                         placeholder="e.g. Personalise with a Name"
-                        data-testid={`input-heading-${slug}`}
+                         data-testid={`input-heading-${audienceId}`}
                       />
                     </div>
                   )}
@@ -160,9 +160,9 @@ export default function AdminProductPageConfig() {
                         max={10}
                         step={1}
                         value={cfg.nameMin ?? 3}
-                        onChange={e => updateNumericField(slug, "nameMin", Math.max(1, Math.min(10, Number(e.target.value) || 3)))}
+                         onChange={e => updateNumericField(audienceId, "nameMin", Math.max(1, Math.min(10, Number(e.target.value) || 3)))}
                         className="w-24"
-                        data-testid={`input-namemin-${slug}`}
+                         data-testid={`input-namemin-${audienceId}`}
                       />
                     </div>
                     <div className="space-y-1">
@@ -173,9 +173,9 @@ export default function AdminProductPageConfig() {
                         max={30}
                         step={1}
                         value={cfg.nameMax ?? 11}
-                        onChange={e => updateNumericField(slug, "nameMax", Math.max(1, Math.min(30, Number(e.target.value) || 11)))}
+                         onChange={e => updateNumericField(audienceId, "nameMax", Math.max(1, Math.min(30, Number(e.target.value) || 11)))}
                         className="w-24"
-                        data-testid={`input-namemax-${slug}`}
+                         data-testid={`input-namemax-${audienceId}`}
                       />
                     </div>
                   </div>
@@ -185,9 +185,9 @@ export default function AdminProductPageConfig() {
                       <Label className="text-xs text-muted-foreground">Name field placeholder</Label>
                       <Input
                         value={cfg.nameLabel}
-                        onChange={e => updateField(slug, "nameLabel", e.target.value)}
+                         onChange={e => updateField(audienceId, "nameLabel", e.target.value)}
                         placeholder="e.g. Enter name to embroider"
-                        data-testid={`input-namelabel-${slug}`}
+                         data-testid={`input-namelabel-${audienceId}`}
                       />
                     </div>
                   )}
@@ -198,36 +198,36 @@ export default function AdminProductPageConfig() {
                         <Label className="text-xs text-muted-foreground">Person 1 field title</Label>
                         <Input
                           value={cfg.person1Prefix}
-                          onChange={e => updateField(slug, "person1Prefix", e.target.value)}
+                           onChange={e => updateField(audienceId, "person1Prefix", e.target.value)}
                           placeholder="e.g. His Name"
-                          data-testid={`input-p1prefix-${slug}`}
+                           data-testid={`input-p1prefix-${audienceId}`}
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Person 2 field title</Label>
                         <Input
                           value={cfg.person2Prefix}
-                          onChange={e => updateField(slug, "person2Prefix", e.target.value)}
+                           onChange={e => updateField(audienceId, "person2Prefix", e.target.value)}
                           placeholder="e.g. Her Name"
-                          data-testid={`input-p2prefix-${slug}`}
+                           data-testid={`input-p2prefix-${audienceId}`}
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Person 1 placeholder text</Label>
                         <Input
                           value={cfg.person1Label}
-                          onChange={e => updateField(slug, "person1Label", e.target.value)}
+                           onChange={e => updateField(audienceId, "person1Label", e.target.value)}
                           placeholder="e.g. Enter his name"
-                          data-testid={`input-p1label-${slug}`}
+                           data-testid={`input-p1label-${audienceId}`}
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Person 2 placeholder text</Label>
                         <Input
                           value={cfg.person2Label}
-                          onChange={e => updateField(slug, "person2Label", e.target.value)}
+                           onChange={e => updateField(audienceId, "person2Label", e.target.value)}
                           placeholder="e.g. Enter her name"
-                          data-testid={`input-p2label-${slug}`}
+                           data-testid={`input-p2label-${audienceId}`}
                         />
                       </div>
                     </div>

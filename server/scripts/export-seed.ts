@@ -24,42 +24,32 @@ async function exportSeed() {
 
   // Fetch junction attribute assignments (used for both product enrichment and separate junction export)
   const pagList = await db.select({
-    id: productAudience.id, productSlug: products.slug, audienceName: audience.name,
+    id: productAudience.id, productSlug: products.slug, audienceId: productAudience.audienceId,
   }).from(productAudience)
     .innerJoin(products,   eq(productAudience.productId,  products.id))
     .innerJoin(audience,   eq(productAudience.audienceId, audience.id))
     .orderBy(products.slug, audience.name);
 
   const pgenList = await db.select({
-    id: productGenders.id, productSlug: products.slug, genderName: genders.name,
+    id: productGenders.id, productSlug: products.slug, genderId: productGenders.genderId,
   }).from(productGenders)
     .innerJoin(products, eq(productGenders.productId, products.id))
     .innerJoin(genders,  eq(productGenders.genderId,  genders.id))
     .orderBy(products.slug, genders.name);
 
   const pthList = await db.select({
-    id: productThemes.id, productSlug: products.slug, themeName: themes.name,
+    id: productThemes.id, productSlug: products.slug, themeId: productThemes.themeId,
   }).from(productThemes)
     .innerJoin(products, eq(productThemes.productId, products.id))
     .innerJoin(themes,   eq(productThemes.themeId,   themes.id))
     .orderBy(products.slug, themes.name);
 
   const pstList = await db.select({
-    id: productStyles.id, productSlug: products.slug, styleName: styles.name,
+    id: productStyles.id, productSlug: products.slug, styleId: productStyles.styleId,
   }).from(productStyles)
     .innerJoin(products, eq(productStyles.productId, products.id))
     .innerJoin(styles,   eq(productStyles.styleId,   styles.id))
     .orderBy(products.slug, styles.name);
-
-  // Build productId → attribute-name[] maps for product row enrichment
-  const agMap  = new Map<string, string[]>();
-  const genMap = new Map<string, string[]>();
-  const thMap  = new Map<string, string[]>();
-  const stMap  = new Map<string, string[]>();
-  for (const r of pagList)  agMap.set(r.productSlug,  [...(agMap.get(r.productSlug)   ?? []), r.audienceName]);
-  for (const r of pgenList) genMap.set(r.productSlug, [...(genMap.get(r.productSlug)  ?? []), r.genderName]);
-  for (const r of pthList)  thMap.set(r.productSlug,  [...(thMap.get(r.productSlug)   ?? []), r.themeName]);
-  for (const r of pstList)  stMap.set(r.productSlug,  [...(stMap.get(r.productSlug)   ?? []), r.styleName]);
 
   const prods = await db.select({
     id: products.id,
@@ -222,10 +212,6 @@ async function exportSeed() {
       bulletPoints: p.bulletPoints,
       searchKeywords: p.searchKeywords,
       productType: p.productType,
-      audience: (agMap.get(p.slug)  ?? []).join(","),
-      gender:   (genMap.get(p.slug) ?? []).join(","),
-      themes:   (thMap.get(p.slug)  ?? []).join(","),
-      styles:   (stMap.get(p.slug)  ?? []).join(","),
       active: p.active,
       sortOrder: p.sortOrder,
     })),
@@ -305,10 +291,10 @@ async function exportSeed() {
     genders:   genList.map(r => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
     themes:    thList.map(r  => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
     styles:    stList.map(r  => ({ id: r.id, name: r.name, sortOrder: r.sortOrder ?? 0 })),
-    productAudience: pagList.map(r  => ({ id: r.id, productSlug: r.productSlug, audienceName: r.audienceName })),
-    productGenders:   pgenList.map(r => ({ id: r.id, productSlug: r.productSlug, genderName:   r.genderName   })),
-    productThemes:    pthList.map(r  => ({ id: r.id, productSlug: r.productSlug, themeName:    r.themeName    })),
-    productStyles:    pstList.map(r  => ({ id: r.id, productSlug: r.productSlug, styleName:    r.styleName    })),
+     productAudience: pagList.map(r  => ({ id: r.id, productSlug: r.productSlug, audienceId: r.audienceId })),
+     productGenders:   pgenList.map(r => ({ id: r.id, productSlug: r.productSlug, genderId:   r.genderId   })),
+     productThemes:    pthList.map(r  => ({ id: r.id, productSlug: r.productSlug, themeId:    r.themeId    })),
+     productStyles:    pstList.map(r  => ({ id: r.id, productSlug: r.productSlug, styleId:    r.styleId    })),
   };
 
   const outputPath = path.join(process.cwd(), "server/seed-data.json");

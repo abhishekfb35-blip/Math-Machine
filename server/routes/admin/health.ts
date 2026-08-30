@@ -1595,32 +1595,28 @@ export function registerAdminHealthRoutes(app: Express) {
 
       // Export attribute junction tables
       const pagResult = await pool.query(
-        `SELECT pag.id, p.slug AS "productSlug", ag.name AS "audienceName"
+        `SELECT pag.id, p.slug AS "productSlug", pag.audience_id AS "audienceId"
          FROM product_audience pag
          JOIN products p ON p.id = pag.product_id
-         JOIN audience ag ON ag.id = pag.audience_id
-         ORDER BY p.slug, ag.name`
+          ORDER BY p.slug, pag.audience_id`
       );
       const pgenResult = await pool.query(
-        `SELECT pg.id, p.slug AS "productSlug", g.name AS "genderName"
+        `SELECT pg.id, p.slug AS "productSlug", pg.gender_id AS "genderId"
          FROM product_genders pg
          JOIN products p ON p.id = pg.product_id
-         JOIN genders g ON g.id = pg.gender_id
-         ORDER BY p.slug, g.name`
+          ORDER BY p.slug, pg.gender_id`
       );
       const pthResult = await pool.query(
-        `SELECT pt.id, p.slug AS "productSlug", t.name AS "themeName"
+        `SELECT pt.id, p.slug AS "productSlug", pt.theme_id AS "themeId"
          FROM product_themes pt
          JOIN products p ON p.id = pt.product_id
-         JOIN themes t ON t.id = pt.theme_id
-         ORDER BY p.slug, t.name`
+          ORDER BY p.slug, pt.theme_id`
       );
       const pstResult = await pool.query(
-        `SELECT ps.id, p.slug AS "productSlug", s.name AS "styleName"
+        `SELECT ps.id, p.slug AS "productSlug", ps.style_id AS "styleId"
          FROM product_styles ps
          JOIN products p ON p.id = ps.product_id
-         JOIN styles s ON s.id = ps.style_id
-         ORDER BY p.slug, s.name`
+          ORDER BY p.slug, ps.style_id`
       );
 
       // Export bulk_price_rules

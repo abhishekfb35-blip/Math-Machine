@@ -45,12 +45,58 @@ async function storeHashFor(database: DatabaseExecutor, tableName: string, hash:
   }
 }
 
+/**
+ * The checked-in snapshot predates the ID-only junction format. Keep that
+ * bundled snapshot readable once, but normalize it before validation and
+ * before any seed write. Exported/override snapshots never take this path.
+ */
+function normalizeBundledAttributeJunctions(
+  input: Record<string, unknown>,
+): Record<string, unknown> {
+  const attrRows = [
+    input.audience,
+    input.genders,
+    input.themes,
+    input.styles,
+  ].map(rows => Array.isArray(rows) ? rows as Array<{ id?: unknown; name?: unknown }> : []);
+  const resolvers = [
+    ["productAudience", "audienceId", "audienceName", attrRows[0]],
+    ["productGenders", "genderId", "genderName", attrRows[1]],
+    ["productThemes", "themeId", "themeName", attrRows[2]],
+    ["productStyles", "styleId", "styleName", attrRows[3]],
+  ] as const;
+  const output = { ...input };
+
+  for (const [table, idField, legacyNameField, rows] of resolvers) {
+    const entries = output[table];
+    if (!Array.isArray(entries)) continue;
+    const byName = new Map(rows
+      .filter(row => typeof row.id === "string" && typeof row.name === "string")
+      .map(row => [String(row.name).trim().toLowerCase(), row.id as string]));
+    output[table] = entries.map((entry: any) => {
+      if (typeof entry?.[idField] === "string" && entry[idField].trim() !== "") return entry;
+      const legacyName = entry?.[legacyNameField];
+      const relationId = typeof legacyName === "string"
+        ? byName.get(legacyName.trim().toLowerCase())
+        : undefined;
+      if (!relationId) {
+        throw new Error(`[seed] bundled ${table} row is missing ${idField}`);
+      }
+      const { [legacyNameField]: _legacyName, ...withoutLegacyName } = entry;
+      return { ...withoutLegacyName, [idField]: relationId };
+    });
+  }
+  return output;
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function seedDatabase(overrideData?: Record<string, unknown>) {
   assertSeedTargetIsWritable();
   try {
-    const snapshot = (overrideData ?? seedData) as Record<string, unknown>;
+    const snapshot = (overrideData !== undefined
+      ? overrideData
+      : await normalizeBundledAttributeJunctions(seedData as unknown as Record<string, unknown>)) as Record<string, unknown>;
 
     // Validate the complete snapshot before copying assets, opening a
     // transaction, clearing hashes, or touching any database row.
@@ -106,10 +152,10 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     };
     type SeedProductTag  = { id: string; productSlug: string; tagName: string };
     type SeedAttr        = { id: string; name: string; sortOrder?: number };
-    type SeedJunctionAg  = { id: string; productSlug: string; audienceName: string };
-    type SeedJunctionGen = { id: string; productSlug: string; genderName: string };
-    type SeedJunctionTh  = { id: string; productSlug: string; themeName: string };
-    type SeedJunctionSt  = { id: string; productSlug: string; styleName: string };
+    type SeedJunctionAg  = { id: string; productSlug: string; audienceId: string };
+    type SeedJunctionGen = { id: string; productSlug: string; genderId: string };
+    type SeedJunctionTh  = { id: string; productSlug: string; themeId: string };
+    type SeedJunctionSt  = { id: string; productSlug: string; styleId: string };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sd: any = snapshot;
@@ -704,24 +750,24 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     // ── 9c. Product attribute junction tables (pre-baked IDs from seed-data.json)
     // Rows were wiped (if needed) in step 2; re-insert using pre-baked IDs.
     {
-      const allAg  = await db.select({ id: audience.id, name: audience.name }).from(audience);
-      const allGen = await db.select({ id: genders.id,   name: genders.name   }).from(genders);
-      const allTh  = await db.select({ id: themes.id,    name: themes.name    }).from(themes);
-      const allSt  = await db.select({ id: styles.id,    name: styles.name    }).from(styles);
-      const agByName  = Object.fromEntries(allAg.map(r  => [r.name, r.id]));
-      const genByName = Object.fromEntries(allGen.map(r => [r.name, r.id]));
-      const thByName  = Object.fromEntries(allTh.map(r  => [r.name, r.id]));
-      const stByName  = Object.fromEntries(allSt.map(r  => [r.name, r.id]));
+      const allAg  = await db.select({ id: audience.id }).from(audience);
+      const allGen = await db.select({ id: genders.id }).from(genders);
+      const allTh  = await db.select({ id: themes.id }).from(themes);
+      const allSt  = await db.select({ id: styles.id }).from(styles);
+      const agIds  = new Set(allAg.map(r => r.id));
+      const genIds = new Set(allGen.map(r => r.id));
+      const thIds  = new Set(allTh.map(r => r.id));
+      const stIds  = new Set(allSt.map(r => r.id));
       const dbProds   = await db.select({ id: products.id, slug: products.slug }).from(products);
       const slugToId  = Object.fromEntries(dbProds.map(p => [p.slug, p.id]));
 
       if (effective.productAudience) {
-        const unresolved = tableData.productAudience.filter(r => !slugToId[r.productSlug] || !agByName[r.audienceName]);
+        const unresolved = tableData.productAudience.filter(r => !slugToId[r.productSlug] || !agIds.has(r.audienceId));
         if (unresolved.length > 0) {
-          throw new Error(`[seed] productAudience: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.audienceName}`).join(", ")}`);
+          throw new Error(`[seed] productAudience: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.audienceId}`).join(", ")}`);
         }
         const rows = tableData.productAudience
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: agByName[r.audienceName] }));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], audienceId: r.audienceId }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productAudience).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productAudience: inserted ${rows.length}`);
@@ -729,12 +775,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productAudience: up to date`); }
 
       if (effective.productGenders) {
-        const unresolved = tableData.productGenders.filter(r => !slugToId[r.productSlug] || !genByName[r.genderName]);
+        const unresolved = tableData.productGenders.filter(r => !slugToId[r.productSlug] || !genIds.has(r.genderId));
         if (unresolved.length > 0) {
-          throw new Error(`[seed] productGenders: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.genderName}`).join(", ")}`);
+          throw new Error(`[seed] productGenders: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.genderId}`).join(", ")}`);
         }
         const rows = tableData.productGenders
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], genderId: genByName[r.genderName] }));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], genderId: r.genderId }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productGenders).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productGenders: inserted ${rows.length}`);
@@ -742,12 +788,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productGenders: up to date`); }
 
       if (effective.productThemes) {
-        const unresolved = tableData.productThemes.filter(r => !slugToId[r.productSlug] || !thByName[r.themeName]);
+        const unresolved = tableData.productThemes.filter(r => !slugToId[r.productSlug] || !thIds.has(r.themeId));
         if (unresolved.length > 0) {
-          throw new Error(`[seed] productThemes: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.themeName}`).join(", ")}`);
+          throw new Error(`[seed] productThemes: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.themeId}`).join(", ")}`);
         }
         const rows = tableData.productThemes
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], themeId: thByName[r.themeName] }));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], themeId: r.themeId }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productThemes).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productThemes: inserted ${rows.length}`);
@@ -755,12 +801,12 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       } else { console.log(`[seed] productThemes: up to date`); }
 
       if (effective.productStyles) {
-        const unresolved = tableData.productStyles.filter(r => !slugToId[r.productSlug] || !stByName[r.styleName]);
+        const unresolved = tableData.productStyles.filter(r => !slugToId[r.productSlug] || !stIds.has(r.styleId));
         if (unresolved.length > 0) {
-          throw new Error(`[seed] productStyles: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.styleName}`).join(", ")}`);
+          throw new Error(`[seed] productStyles: ${unresolved.length} unresolved reference(s): ${unresolved.slice(0, 5).map(r => `${r.productSlug} → ${r.styleId}`).join(", ")}`);
         }
         const rows = tableData.productStyles
-          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], styleId: stByName[r.styleName] }));
+          .map(r => ({ id: r.id, productId: slugToId[r.productSlug], styleId: r.styleId }));
         for (let i = 0; i < rows.length; i += BATCH)
           await db.insert(productStyles).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
         console.log(`[seed] productStyles: inserted ${rows.length}`);

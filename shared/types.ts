@@ -88,10 +88,15 @@ export interface Product {
   bulletPoints: string | null;
   searchKeywords: string | null;
   productType: string | null;
+  /** Canonical relation IDs; attribute names are display-only metadata. */
   audience: string[];
   genders: string[];
   themes: string[];
   styles: string[];
+  audienceNames: string[];
+  genderNames: string[];
+  themeNames: string[];
+  styleNames: string[];
   active: boolean | null;
   sortOrder: number | null;
   createdAt: Date | null;

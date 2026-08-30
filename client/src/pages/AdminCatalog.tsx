@@ -36,9 +36,6 @@ function ProductAttributeSelector({
 }) {
   const { toast } = useToast();
 
-  const toIds = (names: string[], lookup: { id: string; name: string }[]) =>
-    lookup.filter(item => names.includes(item.name)).map(item => item.id);
-
   const [audienceIds, setAudienceIds] = useState<string[]>([]);
   const [genderIds, setGenderIds] = useState<string[]>([]);
   const [themeIds, setThemeIds] = useState<string[]>([]);
@@ -60,10 +57,10 @@ function ProductAttributeSelector({
 
   useEffect(() => {
     if (!attributes || openPopoverCountRef.current > 0) return;
-    const newAudienceIds = toIds(product.audience ?? [], attributes.audience);
-    const newGenderIds = toIds(product.genders ?? [], attributes.genders);
-    const newThemeIds = toIds(product.themes ?? [], attributes.themes);
-    const newStyleIds = toIds(product.styles ?? [], attributes.styles);
+    const newAudienceIds = [...(product.audience ?? [])];
+    const newGenderIds = [...(product.genders ?? [])];
+    const newThemeIds = [...(product.themes ?? [])];
+    const newStyleIds = [...(product.styles ?? [])];
     setAudienceIds(newAudienceIds);
     setGenderIds(newGenderIds);
     setThemeIds(newThemeIds);

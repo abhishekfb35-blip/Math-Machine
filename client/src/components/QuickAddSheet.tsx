@@ -56,12 +56,12 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const audienceConfig = useMemo((): AudiencePageConfig | null => {
     const cfg = productPageConfigData?.value ?? null;
     if (!cfg || !product?.audience?.length) return null;
-    for (const a of product.audience) {
-      const c = cfg[a.toLowerCase()];
+    for (const audienceId of product.audience) {
+      const c = cfg[audienceId];
       if (c?.type === "couples") return c;
     }
-    for (const a of product.audience) {
-      const c = cfg[a.toLowerCase()];
+    for (const audienceId of product.audience) {
+      const c = cfg[audienceId];
       if (c?.type === "single") return c;
     }
     return null;

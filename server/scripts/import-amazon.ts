@@ -2,6 +2,7 @@ import pg from "pg";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import { createId } from "@paralleldrive/cuid2";
 
 const { Pool } = pg;
 
@@ -32,7 +33,7 @@ interface AmazonProduct {
 }
 
 interface DbProduct {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   price: number;
@@ -263,6 +264,26 @@ async function getCategoryId(
   return insertResult.rows[0].id;
 }
 
+async function getAudienceId(name: string): Promise<string> {
+  const result = await pool.query(
+    "SELECT id FROM audience WHERE LOWER(name) = LOWER($1)",
+    [name],
+  );
+  if (result.rows.length === 0) {
+    throw new Error(`Audience attribute not found: ${name}`);
+  }
+  return result.rows[0].id;
+}
+
+async function replaceProductAudience(productId: string, name: string): Promise<void> {
+  const audienceId = await getAudienceId(name);
+  await pool.query("DELETE FROM product_audience WHERE product_id = $1", [productId]);
+  await pool.query(
+    "INSERT INTO product_audience (id, product_id, audience_id) VALUES ($1, $2, $3)",
+    [createId(), productId, audienceId],
+  );
+}
+
 async function main() {
   console.log("=== TurtleLittle Amazon Import ===\n");
 
@@ -307,7 +328,7 @@ async function main() {
 
     const existingProduct = await findMatchingProduct(amzProduct, dbProducts);
 
-    let productId: number;
+    let productId: string;
     let productSlug: string;
 
     if (existingProduct) {
@@ -320,8 +341,8 @@ async function main() {
           mrp = $1, amazon_asin = $2, color = $3, material = $4, gsm = $5,
           dimensions = $6, weight_grams = $7, items_in_set = $8,
           special_features = $9, bullet_points = $10,
-          product_type = $11, audience = $12
-        WHERE id = $13`,
+          product_type = $11
+        WHERE id = $12`,
         [
           amzProduct.mrp,
           amzProduct.asin,
@@ -334,7 +355,6 @@ async function main() {
           JSON.stringify(amzProduct.specialFeatures),
           JSON.stringify(amzProduct.bulletPoints),
           amzProduct.productType,
-          amzProduct.audience,
           productId,
         ]
       );
@@ -359,8 +379,8 @@ async function main() {
       const result = await pool.query(
         `INSERT INTO products (name, slug, description, price, mrp, image_url, category_id,
           amazon_asin, color, material, gsm, dimensions, weight_grams, items_in_set,
-          special_features, bullet_points, product_type, audience, active, sort_order)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+          special_features, bullet_points, product_type, active, sort_order)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id`,
         [
           amzProduct.title.replace(/TurtleLittle,?\s*/i, "").trim(),
@@ -380,7 +400,6 @@ async function main() {
           JSON.stringify(amzProduct.specialFeatures),
           JSON.stringify(amzProduct.bulletPoints),
           amzProduct.productType,
-          amzProduct.audience,
           true,
           100,
         ]
@@ -388,6 +407,8 @@ async function main() {
       productId = result.rows[0].id;
       created++;
     }
+
+    await replaceProductAudience(productId, amzProduct.audience);
 
     if (imageIds.length > 0) {
       console.log(`  Downloading ${imageIds.length} images...`);
@@ -451,7 +472,7 @@ async function updateNonAmazonProducts() {
     if (!cat) continue;
 
     let productType = "towel";
-    let audience = "kids";
+    let audienceName = "kids";
     let gsm = 500;
     let material = "Cotton";
     let dimensions = "120 x 60 cm";
@@ -473,15 +494,15 @@ async function updateNonAmazonProducts() {
       weightGrams = null as any;
       mrp = Math.round(p.price * 1.15);
     } else if (cat.slug?.includes("couple")) {
-      audience = "couples";
+      audienceName = "couples";
       gsm = 600;
       dimensions = "150 x 75 cm";
       weightGrams = 675;
       itemsInSet = 2;
     }
 
-    if (cat.slug?.includes("girl")) audience = "kids";
-    else if (cat.slug?.includes("boy")) audience = "kids";
+    if (cat.slug?.includes("girl")) audienceName = "kids";
+    else if (cat.slug?.includes("boy")) audienceName = "kids";
 
     const specialFeatures =
       productType === "towel"
@@ -505,7 +526,6 @@ async function updateNonAmazonProducts() {
       `UPDATE products SET
         mrp = COALESCE(mrp, $1),
         product_type = COALESCE(product_type, $2),
-        audience = COALESCE(audience, $3),
         gsm = COALESCE(gsm, $4),
         material = COALESCE(material, $5),
         dimensions = COALESCE(dimensions, $6),
@@ -517,7 +537,6 @@ async function updateNonAmazonProducts() {
       [
         mrp,
         productType,
-        audience,
         gsm,
         material,
         dimensions,
@@ -528,6 +547,7 @@ async function updateNonAmazonProducts() {
         p.id,
       ]
     );
+    await replaceProductAudience(p.id, audienceName);
   }
 
   console.log(`  Updated ${products.rows.length} non-Amazon products with defaults`);

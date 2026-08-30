@@ -45,6 +45,22 @@ export function validateSeedSnapshotIds(snapshot: Record<string, unknown>): void
       if (typeof id !== "string" || id.trim() === "") {
         errors.push(`${table}[${index}] is missing a non-empty string "id"`);
       }
+
+      const relationIdField: Record<string, string> = {
+        productAudience: "audienceId",
+        productGenders: "genderId",
+        productThemes: "themeId",
+        productStyles: "styleId",
+      };
+      const field = relationIdField[table];
+      if (field) {
+        const relationId = row && typeof row === "object" && !Array.isArray(row)
+          ? (row as Record<string, unknown>)[field]
+          : undefined;
+        if (typeof relationId !== "string" || relationId.trim() === "") {
+          errors.push(`${table}[${index}] is missing a non-empty string "${field}"`);
+        }
+      }
     });
   }
 

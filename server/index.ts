@@ -34,6 +34,7 @@ import { addWholesalePriceColumn } from "./migrations/add-wholesale-price";
 import { purgeStaleConfigKeys } from "./migrations/purge-stale-site-config";
 import { purgeCartBannersKey } from "./migrations/purge-cart-banners";
 import { ensureCustomerProfileDateColumns } from "./migrations/customer-profile-dates";
+import { ensureAttributeIdConfig } from "./migrations/attribute-id-config";
 import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
@@ -333,6 +334,7 @@ function startRateLimitStatsScheduler() {
             { id: "consolidate-product-images",       run: consolidateProductImages },
             { id: "drop-product-image-url",           run: dropProductImageUrl },
             { id: "ensure-site-content-table",        run: ensureSiteContentTable },
+            { id: "attribute-id-config",                run: ensureAttributeIdConfig },
             { id: "color-size-repos",                  run: runColorSizeReposMigration },
             { id: "audience-variant-config",            run: ensureAudienceVariantConfig },
             { id: "request-logs-tables",                run: ensureRequestLogsTables },

@@ -3,7 +3,8 @@ import type { Express } from "express";
 import type { Request } from "express";
 import { storage } from "../storage";
 import { getAuthenticatedCustomer } from "./helpers";
-import type { Product, Attributes } from "@shared/types";
+import type { Product } from "@shared/types";
+import { filterProductsByAttributeIds } from "@shared/attributeFilters";
 
 const submitReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -18,74 +19,30 @@ function qs(val: unknown): string {
   return "";
 }
 
-/**
- * Parse attribute filter query params that accept either a name or an ID.
- * Returns a resolved lowercase name, or undefined if no filter specified.
- *
- * Accepted query param pairs (for each type):
- *   audience / audienceId
- *   gender   / genderId
- *   theme    / themeId
- *   style    / styleId
- */
+/** Parse only ID-based attribute filter query params. */
 async function resolveAttributeFilters(
   req: Request,
 ): Promise<{
-  audienceName?: string;
-  genderName?: string;
-  themeName?: string;
-  styleName?: string;
+  audienceId?: string;
+  genderId?: string;
+  themeId?: string;
+  styleId?: string;
 }> {
-  const audienceRaw = qs(req.query.audience);
   const audienceId  = qs(req.query.audienceId);
-  const genderRaw   = qs(req.query.gender);
   const genderId    = qs(req.query.genderId);
-  const themeRaw    = qs(req.query.theme);
   const themeId     = qs(req.query.themeId);
-  const styleRaw    = qs(req.query.style);
   const styleId     = qs(req.query.styleId);
 
-  const needsLookup = audienceId || genderId || themeId || styleId;
-
-  let attrs: Attributes | undefined;
-  if (needsLookup) {
-    attrs = await storage.getAttributes();
+  const legacyParams = [
+    ["audience", audienceId], ["gender", genderId],
+    ["theme", themeId], ["style", styleId],
+  ].filter(([name, id]) => qs(req.query[name as string]) && !id)
+    .map(([name]) => name);
+  if (legacyParams.length > 0) {
+    throw new Error(`Attribute filters must use IDs: ${legacyParams.join(", ")}`);
   }
 
-  const resolveId = (
-    id: string,
-    list: { id: string; name: string }[],
-  ): string | undefined => list.find(a => a.id === id)?.name.toLowerCase();
-
-  const audienceName = audienceId
-    ? resolveId(audienceId, attrs?.audience ?? [])
-    : (audienceRaw ? audienceRaw.toLowerCase() : undefined);
-
-  const genderName = genderId
-    ? resolveId(genderId, attrs?.genders ?? [])
-    : (genderRaw ? genderRaw.toLowerCase() : undefined);
-
-  const themeName = themeId
-    ? resolveId(themeId, attrs?.themes ?? [])
-    : (themeRaw ? themeRaw.toLowerCase() : undefined);
-
-  const styleName = styleId
-    ? resolveId(styleId, attrs?.styles ?? [])
-    : (styleRaw ? styleRaw.toLowerCase() : undefined);
-
-  return { audienceName, genderName, themeName, styleName };
-}
-
-function applyAttributeFilters(
-  prods: Product[],
-  filters: { audienceName?: string; genderName?: string; themeName?: string; styleName?: string },
-): Product[] {
-  let result = prods;
-  if (filters.audienceName) result = result.filter(p => (p.audience ?? []).some(a => a.toLowerCase() === filters.audienceName));
-  if (filters.genderName)   result = result.filter(p => (p.genders   ?? []).some(g => g.toLowerCase() === filters.genderName));
-  if (filters.themeName)    result = result.filter(p => (p.themes    ?? []).some(t => t.toLowerCase() === filters.themeName));
-  if (filters.styleName)    result = result.filter(p => (p.styles    ?? []).some(s => s.toLowerCase() === filters.styleName));
-  return result;
+  return { audienceId, genderId, themeId, styleId };
 }
 
 export function registerProductRoutes(app: Express) {
@@ -101,10 +58,14 @@ export function registerProductRoutes(app: Express) {
   });
 
   app.get("/api/products", async (req, res) => {
-    const filters = await resolveAttributeFilters(req);
-    let prods = await storage.getProducts();
-    prods = applyAttributeFilters(prods, filters);
-    res.json(prods);
+    try {
+      const filters = await resolveAttributeFilters(req);
+      let prods = await storage.getProducts();
+      prods = filterProductsByAttributeIds(prods, filters);
+      res.json(prods);
+    } catch (err) {
+      res.status(400).json({ message: err instanceof Error ? err.message : "Invalid attribute filters" });
+    }
   });
 
   app.get("/api/occasions", async (_req, res) => {
@@ -141,12 +102,16 @@ export function registerProductRoutes(app: Express) {
   });
 
   app.get("/api/products/category/:categoryId", async (req, res) => {
-    const categoryId = req.params.categoryId as string;
-    if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
-    const filters = await resolveAttributeFilters(req);
-    let prods = await storage.getProductsByCategory(categoryId);
-    prods = applyAttributeFilters(prods, filters);
-    res.json(prods);
+    try {
+      const categoryId = req.params.categoryId as string;
+      if (!categoryId) return res.status(400).json({ message: "Invalid category ID" });
+      const filters = await resolveAttributeFilters(req);
+      let prods = await storage.getProductsByCategory(categoryId);
+      prods = filterProductsByAttributeIds(prods, filters);
+      res.json(prods);
+    } catch (err) {
+      res.status(400).json({ message: err instanceof Error ? err.message : "Invalid attribute filters" });
+    }
   });
 
   app.get("/api/products/:slug", async (req, res) => {

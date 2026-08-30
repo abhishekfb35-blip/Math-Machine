@@ -1,5 +1,9 @@
 /**
- * Script to derive themes and styles from product names and update seed-data.json.
+ * Legacy report for deriving themes and styles from product names.
+ *
+ * Attribute assignments are now stored in product_themes/product_styles by ID.
+ * This script intentionally does not write flattened product fields or mutate
+ * seed-data.json; use the admin catalog tools or the normalized import path.
  * Run: node server/scripts/derive-themes-styles.cjs
  */
 
@@ -187,9 +191,6 @@ for (const product of products) {
   const themes = deriveThemes(product.name);
   const styles = deriveStyles(product.name);
 
-  product.themes = themes || null;
-  product.styles = styles || null;
-
   if (themes) {
     themesSet++;
     themes.split(",").forEach((t) => {
@@ -204,16 +205,9 @@ for (const product of products) {
   }
 }
 
-fs.writeFileSync(SEED_DATA_PATH, JSON.stringify(seedData, null, 2), "utf8");
-
-console.log(`\nDone! Updated ${products.length} products in seed-data.json`);
+console.log(`\nDerived a report for ${products.length} products (seed-data.json was not changed)`);
 console.log(`  Products with themes: ${themesSet} / ${products.length}`);
 console.log(`  Products with styles: ${stylesSet} / ${products.length}`);
-
-const noTheme = products.filter(p => !p.themes);
-const noStyle = products.filter(p => !p.styles);
-if (noTheme.length > 0) console.log(`  WARNING: ${noTheme.length} products still without theme!`);
-if (noStyle.length > 0) console.log(`  WARNING: ${noStyle.length} products still without style!`);
 
 console.log("\nTheme distribution:");
 Object.entries(themeDistribution)

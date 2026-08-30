@@ -1063,10 +1063,10 @@ function FeaturedSectionsEditor({ data }: { data: FeaturedSectionsConfig }) {
   };
 
   const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
-  const audienceOptions  = (attributes?.audience ?? []).map(a => ({ value: a.name, label: a.name }));
-  const genderOptions    = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
-  const themeOptions     = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
-  const styleOptions     = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
+  const audienceOptions  = (attributes?.audience ?? []).map(a => ({ value: a.id, label: a.name }));
+  const genderOptions    = (attributes?.genders   ?? []).map(g => ({ value: g.id, label: g.name }));
+  const themeOptions     = (attributes?.themes    ?? []).map(t => ({ value: t.id, label: t.name }));
+  const styleOptions     = (attributes?.styles    ?? []).map(s => ({ value: s.id, label: s.name }));
   const tagTypeOptions   = (allTagTypes ?? []).map(tt => ({ value: tt.id, label: tt.name }));
   const allTagsFlat      = allTags ?? [];
 
@@ -1343,10 +1343,10 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   };
 
   const categoryOptions = (categories ?? []).map(c => ({ value: c.slug, label: c.name }));
-  const audienceOptions = (attributes?.audience ?? []).map(a => ({ value: a.name, label: a.name }));
-  const genderOptions   = (attributes?.genders   ?? []).map(g => ({ value: g.name, label: g.name }));
-  const themeOptions    = (attributes?.themes    ?? []).map(t => ({ value: t.name, label: t.name }));
-  const styleOptions    = (attributes?.styles    ?? []).map(s => ({ value: s.name, label: s.name }));
+  const audienceOptions = (attributes?.audience ?? []).map(a => ({ value: a.id, label: a.name }));
+  const genderOptions   = (attributes?.genders   ?? []).map(g => ({ value: g.id, label: g.name }));
+  const themeOptions    = (attributes?.themes    ?? []).map(t => ({ value: t.id, label: t.name }));
+  const styleOptions    = (attributes?.styles    ?? []).map(s => ({ value: s.id, label: s.name }));
   const tagTypeOptions  = (allTagTypes ?? []).map(tt => ({ value: tt.id, label: tt.name }));
   const allTagsFlat     = allTags ?? [];
 
