@@ -25,7 +25,7 @@ export function registerWishlistRoutes(app: Express) {
   app.delete("/api/wishlist/:productId", async (req: Request, res: Response) => {
     const customer = await getAuthenticatedCustomer(req);
     if (!customer) return res.status(401).json({ message: "Not authenticated" });
-    await storage.removeFromWishlist(customer.id, req.params.productId);
+    await storage.removeFromWishlist(customer.id, req.params.productId as string);
     res.json({ success: true });
   });
 

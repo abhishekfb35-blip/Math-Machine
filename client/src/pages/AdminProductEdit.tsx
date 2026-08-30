@@ -190,7 +190,7 @@ export default function AdminProductEdit() {
 
   const [localImages, setLocalImages] = useState<ProductImage[]>([]);
   useEffect(() => {
-    if (productImages) setLocalImages([...productImages].sort((a, b) => a.sortOrder - b.sortOrder));
+    if (productImages) setLocalImages([...productImages].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
   }, [productImages]);
 
   const moveGalleryImage = (idx: number, direction: -1 | 1) => {
@@ -456,23 +456,7 @@ export default function AdminProductEdit() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="prod-quantity">Quantity in Stock</Label>
-            <Input
-              id="prod-quantity"
-              type="number"
-              min="0"
-              value={product.quantity ?? 1}
-              onChange={(e) => {
-                const val = parseInt(e.target.value);
-                if (!isNaN(val) && val >= 0) {
-                  setProduct(prev => ({ ...prev!, quantity: val }));
-                }
-              }}
-              data-testid="input-product-quantity"
-            />
-          </div>
+      <div className="grid grid-cols-1 gap-3">
           <div>
             <Label htmlFor="prod-type">Product Type</Label>
             <Select

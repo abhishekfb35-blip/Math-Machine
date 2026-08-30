@@ -4,3 +4,4 @@
 - [Shared Google completion compatibility](signup-phone-completion-compatibility.md) — new signup payload fields must remain opt-in because legacy sign-in surfaces share the completion endpoint.
 - [International phone validation](international-phone-validation.md) — use libphonenumber metadata for all-country selectors and validation; avoid hand-maintained dialing rules.
 - [Consent completion gate](consent-completion-gate.md) — configured consent must be read-and-agreed across every Google completion surface, with server enforcement.
+- [Strict storage boundaries](strict-storage-boundaries.md) — convert nullable and JSON database shapes into API contracts at the storage layer.

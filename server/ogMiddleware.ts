@@ -128,7 +128,7 @@ export function setupOgMiddleware(app: Express, storage: IStorage) {
     if (!isCrawler(ua)) return next();
 
     try {
-      const product = await storage.getProductBySlug(req.params.slug);
+      const product = await storage.getProductBySlug(req.params.slug as string);
       if (!product) return next();
 
       const siteUrl = "https://turtlelittle.com";

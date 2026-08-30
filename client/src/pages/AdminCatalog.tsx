@@ -1013,7 +1013,7 @@ function VariantConfigModal({ open, onClose, categoryId, categoryName }: {
                   {[
                     ...selectedSizeIds.map(id => sizeDefinitions.find(d => d.id === id)).filter(Boolean),
                     ...sizeDefinitions.filter(d => !selectedSizeIds.includes(d.id)),
-                  ].map(def => {
+                  ].filter((def): def is CategorySizeDefinition => Boolean(def)).map(def => {
                 const selected = selectedSizeIds.includes(def!.id);
                 const sizeIdx = selectedSizeIds.indexOf(def!.id);
                 const thisSizeSwatchIds = sizeSwatchIds[def!.id] ?? [];
@@ -1765,7 +1765,7 @@ export default function AdminCatalog() {
   const [localImages, setLocalImages] = useState<ProductImage[]>([]);
 
   useEffect(() => {
-    if (productImages) setLocalImages([...productImages].sort((a, b) => a.sortOrder - b.sortOrder));
+    if (productImages) setLocalImages([...productImages].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
   }, [productImages]);
 
   const moveGalleryImage = (idx: number, direction: -1 | 1) => {
@@ -2572,7 +2572,7 @@ export default function AdminCatalog() {
                         <span className="opacity-50">#</span>
                         <input
                           type="number"
-                          value={effectiveSortOrder}
+                          value={effectiveSortOrder ?? ""}
                           onChange={(e) => { const v = Number(e.target.value); if (!isNaN(v)) setChange("sortOrder", v); }}
                           onClick={(e) => e.stopPropagation()}
                           className="w-10 bg-transparent border-b border-dashed border-muted-foreground/30 outline-none focus:border-amber-500 text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -3716,23 +3716,7 @@ export default function AdminCatalog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="prod-quantity">Quantity in Stock</Label>
-              <Input
-                id="prod-quantity"
-                type="number"
-                min="0"
-                value={editingProduct.quantity ?? 1}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  if (!isNaN(val) && val >= 0) {
-                    setEditingProduct(prev => ({ ...prev!, quantity: val }));
-                  }
-                }}
-                data-testid="input-product-quantity"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-3">
             <div>
               <Label htmlFor="prod-type">Product Type</Label>
               <Select

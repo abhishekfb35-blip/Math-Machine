@@ -319,7 +319,7 @@ export default function AdminDashboard() {
   const sendTestBcc = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/admin/email/test-bcc");
-      return res as { success: boolean; message: string };
+      return await res.json() as { success: boolean; message: string };
     },
     onSuccess: (data) => {
       setBccTestResult({ ok: true, message: data.message });

@@ -104,8 +104,14 @@ export function registerConsentRoutes(app: Express) {
         let discountPercent = 10;
         try {
           const config = await storage.getSiteContent("consent-popup");
-          if (config?.value?.discountPercent) {
-            discountPercent = config.value.discountPercent;
+          if (config) {
+            const parsedConfig: unknown = JSON.parse(config.value);
+            if (parsedConfig && typeof parsedConfig === "object" && "discountPercent" in parsedConfig) {
+              const configuredPercent = (parsedConfig as { discountPercent?: unknown }).discountPercent;
+              if (typeof configuredPercent === "number" && Number.isFinite(configuredPercent)) {
+                discountPercent = configuredPercent;
+              }
+            }
           }
         } catch {}
         const name = (firstName?.trim()) || customer?.name?.split(" ")[0] || "";
@@ -137,12 +143,7 @@ export function registerConsentRoutes(app: Express) {
       }
 
       if (consent.discountUsed) {
-        const orderWithCode = await storage.getOrderByDiscountCode(consent.discountCode!);
-        if (!orderWithCode || (orderWithCode.paymentStatus !== "paid" && orderWithCode.status === "cancelled")) {
-          await storage.resetConsentDiscountUsed(consent.id);
-        } else {
-          return res.json({ valid: false, message: "This discount code has already been used" });
-        }
+        return res.json({ valid: false, message: "This discount code has already been used" });
       }
 
       return res.json({ valid: true, discountPercent: 10, code: consent.discountCode });

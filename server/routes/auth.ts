@@ -345,7 +345,8 @@ export function registerAuthRoutes(app: Express) {
         ...(normalizedAnniversary && !customer.anniversaryMonthDay ? { anniversaryMonthDay: normalizedAnniversary } : {}),
       };
       if (Object.keys(missingDetails).length > 0) {
-        customer = await storage.updateCustomer(customer.id, missingDetails);
+        const updatedCustomer = await storage.updateCustomer(customer.id, missingDetails);
+        if (updatedCustomer) customer = updatedCustomer;
       }
 
       // Record marketing consent

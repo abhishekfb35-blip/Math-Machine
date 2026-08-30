@@ -101,7 +101,7 @@ export function registerAdminPricingRoutes(app: Express) {
 
   app.put("/api/admin/pricing-rules/:currency", requirePermission("pricing"), async (req, res) => {
     try {
-      const { currency } = req.params;
+      const currency = req.params.currency as string;
       const { markupPercent, roundingRule, enabled, symbol, displayName } = req.body;
       const updated = await storage.updatePricingRule(currency, {
         ...(markupPercent !== undefined && { markupPercent: parseFloat(markupPercent) }),

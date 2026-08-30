@@ -698,7 +698,7 @@ export function registerAdminHealthRoutes(app: Express) {
         severity: "error" | "warning" | "info";
         message: string;
         entity?: string;
-        entitySku?: string;
+        entitySku?: string | null;
       }
 
       interface AuditCategory {

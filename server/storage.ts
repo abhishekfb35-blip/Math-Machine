@@ -41,11 +41,17 @@ import type {
   PaymentAttempt, InsertPaymentAttempt,
 } from "@shared/types";
 import { db } from "./db";
+import { generateSku } from "./utils/sku";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 
-// Intermediate type: a DB product row before attribute junction enrichment.
-// After withAttributes() runs, audience/genders/themes/styles are filled in → Product.
-type RawProductRow = Omit<Product, 'audience' | 'genders' | 'themes' | 'styles'>;
+// Intermediate type: a DB product row before image and attribute enrichment.
+// The products table does not contain imageUrl or the normalized attribute arrays.
+type RawProductRow = Omit<Product, "imageUrl" | "audience" | "genders" | "themes" | "styles"> & {
+  imageUrl?: string | null;
+};
+type EnrichedRawProductRow = Omit<Product, "audience" | "genders" | "themes" | "styles"> & {
+  imageUrl: string;
+};
 
 export interface IStorage {
   getCategories(): Promise<Category[]>;
@@ -172,8 +178,6 @@ export interface IStorage {
   getCustomerConsentsCount(): Promise<number>;
   markConsentDiscountUsed(id: string): Promise<void>;
   resetConsentDiscountUsed(id: string): Promise<void>;
-  getOrderByDiscountCode(code: string): Promise<Order | undefined>;
-
   getProductVariantOptions(productId: string): Promise<ProductVariantOptions>;
   upsertProductVariantOptions(productId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void>;
   getProductVariants(productId: string): Promise<ProductVariant[]>;
@@ -291,7 +295,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  private async withReviewStats(prods: RawProductRow[]): Promise<RawProductRow[]> {
+  private async withReviewStats(prods: EnrichedRawProductRow[]): Promise<EnrichedRawProductRow[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const stats = await db.select({
@@ -308,7 +312,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  private async withTagNames(prods: RawProductRow[]): Promise<RawProductRow[]> {
+  private async withTagNames(prods: EnrichedRawProductRow[]): Promise<EnrichedRawProductRow[]> {
     if (prods.length === 0) return prods;
     const ids = prods.map(p => p.id);
     const tagRows = await db.select({
@@ -325,7 +329,7 @@ export class DatabaseStorage implements IStorage {
     return prods.map(p => ({ ...p, tagNames: tagMap.get(p.id) ?? [] }));
   }
 
-  private async withAttributes(prods: RawProductRow[]): Promise<Product[]> {
+  private async withAttributes(prods: EnrichedRawProductRow[]): Promise<Product[]> {
     if (prods.length === 0) return [];
     const ids = prods.map(p => p.id);
 
@@ -363,8 +367,8 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  private async withPrimaryImage(prods: RawProductRow[]): Promise<RawProductRow[]> {
-    if (prods.length === 0) return prods;
+  private async withPrimaryImage(prods: RawProductRow[]): Promise<EnrichedRawProductRow[]> {
+    if (prods.length === 0) return [];
     const ids = prods.map(p => p.id);
     const rows = await db.select({
       productId: productImages.productId,
@@ -374,7 +378,7 @@ export class DatabaseStorage implements IStorage {
     const imageMap = new Map<string, string>(rows.map(r => [r.productId, r.imageUrl]));
     return prods.map(p => {
       const primary = imageMap.get(p.id);
-      return primary ? { ...p, imageUrl: primary } : p;
+      return { ...p, imageUrl: primary ?? p.imageUrl ?? "" };
     });
   }
 
@@ -459,9 +463,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(prod: InsertProduct): Promise<Product> {
-    const { imageUrl, ...productData } = prod;
+    const { imageUrl, sku, ...productData } = prod;
     const id = createId();
-    const [created] = await db.insert(products).values({ id, ...productData }).returning();
+    const [created] = await db.insert(products).values({
+      id,
+      ...productData,
+      sku: sku ?? generateSku(),
+    }).returning();
     if (imageUrl) {
       await db.insert(productImages).values({
         id: createId(),
@@ -476,8 +484,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined> {
-    const { imageUrl, ...productData } = data;
-    const [updated] = await db.update(products).set({ ...productData, updatedAt: new Date() }).where(eq(products.id, id)).returning();
+    const { imageUrl, sku, ...productData } = data;
+    const dbData = sku === undefined || sku === null ? productData : { ...productData, sku };
+    const [updated] = await db.update(products).set({ ...dbData, updatedAt: new Date() }).where(eq(products.id, id)).returning();
     if (!updated) return undefined;
     if (imageUrl !== undefined && imageUrl) {
       const [existing] = await db.select({ id: productImages.id })
@@ -505,9 +514,10 @@ export class DatabaseStorage implements IStorage {
     if (updates.length === 0) return 0;
     let count = 0;
     await db.transaction(async (tx) => {
-      for (const { id, imageUrl, ...fields } of updates) {
+      for (const { id, imageUrl, sku, ...fields } of updates) {
         if (Object.keys(fields).length === 0) continue;
-        await tx.update(products).set({ ...fields, updatedAt: new Date() }).where(eq(products.id, id));
+        const dbFields = sku === undefined || sku === null ? fields : { ...fields, sku };
+        await tx.update(products).set({ ...dbFields, updatedAt: new Date() }).where(eq(products.id, id));
         count++;
       }
     });
@@ -1230,11 +1240,26 @@ export class DatabaseStorage implements IStorage {
     await db.delete(tags).where(eq(tags.id, id));
   }
 
+  private coerceOccasion(row: typeof occasions.$inferSelect): Occasion {
+    const coerceWeights = (value: unknown): Record<string, number> | null => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      const entries = Object.entries(value).filter(([, weight]) => typeof weight === "number" && Number.isFinite(weight));
+      return Object.fromEntries(entries) as Record<string, number>;
+    };
+    return {
+      ...row,
+      boostTags: coerceWeights(row.boostTags),
+      penaltyTags: coerceWeights(row.penaltyTags),
+    };
+  }
+
   async getOccasions(activeOnly = false): Promise<Occasion[]> {
     if (activeOnly) {
-      return await db.select().from(occasions).where(eq(occasions.active, true)).orderBy(occasions.sortOrder, occasions.name);
+      const rows = await db.select().from(occasions).where(eq(occasions.active, true)).orderBy(occasions.sortOrder, occasions.name);
+      return rows.map(row => this.coerceOccasion(row));
     }
-    return await db.select().from(occasions).orderBy(occasions.sortOrder, occasions.name);
+    const rows = await db.select().from(occasions).orderBy(occasions.sortOrder, occasions.name);
+    return rows.map(row => this.coerceOccasion(row));
   }
 
   async getOccasionBySlug(slug: string): Promise<Occasion | undefined> {
@@ -1560,11 +1585,6 @@ export class DatabaseStorage implements IStorage {
 
   async resetConsentDiscountUsed(id: string): Promise<void> {
     await db.update(customerConsents).set({ discountUsed: false }).where(eq(customerConsents.id, id));
-  }
-
-  async getOrderByDiscountCode(code: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.discountCode, code));
-    return order;
   }
 
   async getProductVariantOptions(productId: string): Promise<ProductVariantOptions> {
@@ -1940,7 +1960,7 @@ export class DatabaseStorage implements IStorage {
   async updatePricingRule(currency: string, data: Partial<InsertPricingRule>): Promise<PricingRule | undefined> {
     const dbData: Partial<typeof pricingRules.$inferInsert> = {
       ...data,
-      ...(data.markupPercent !== undefined && { markupPercent: String(data.markupPercent) }),
+      markupPercent: data.markupPercent !== undefined ? String(data.markupPercent) : undefined,
     };
     const [updated] = await db.update(pricingRules).set(dbData).where(eq(pricingRules.currency, currency)).returning();
     return updated ? this.coercePricingRule(updated) : undefined;

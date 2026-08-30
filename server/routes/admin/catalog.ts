@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "../../storage";
-import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema, insertOccasionSchema } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
 import { z } from "zod";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
@@ -15,6 +15,18 @@ import {
 } from "../../services/catalogService";
 
 const sseClients = new Set<Response>();
+
+const occasionInputSchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().nullable().optional(),
+  boostTags: z.record(z.number()).nullable().optional(),
+  penaltyTags: z.record(z.number()).nullable().optional(),
+  preferredStyles: z.string().nullable().optional(),
+  preferredThemes: z.string().nullable().optional(),
+  active: z.boolean().nullable().optional(),
+  sortOrder: z.number().int().nullable().optional(),
+});
 
 function broadcastProductUpdate(product: object) {
   const data = `event: product-updated\ndata: ${JSON.stringify(product)}\n\n`;
@@ -524,6 +536,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         description: z.string().optional(),
         descriptionFontSize: z.number().int().min(8).max(72).optional().default(12),
         priceAdd: z.number().int().default(0),
+        mrpAdd: z.number().int().default(0),
         isDefault: z.boolean().default(false),
         blurOnFront: z.boolean().default(false),
         sortOrder: z.number().int().default(0),
@@ -639,7 +652,7 @@ export function registerAdminCatalogRoutes(app: Express) {
 
   app.post("/api/admin/occasions", requirePermission("catalog"), async (req, res) => {
     try {
-      const data = insertOccasionSchema.parse(req.body);
+      const data = occasionInputSchema.parse(req.body);
       const occ = await storage.createOccasion(data);
       await storage.createAuditLog({
         entityType: "occasion", entityId: occ.id, entityName: occ.name,
@@ -658,7 +671,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     const id = req.params.id as string;
     if (!id) return res.status(400).json({ message: "Invalid ID" });
     try {
-      const data = insertOccasionSchema.partial().parse(req.body);
+      const data = occasionInputSchema.partial().parse(req.body);
       const updated = await storage.updateOccasion(id, data);
       if (!updated) return res.status(404).json({ message: "Occasion not found" });
       await storage.createAuditLog({
@@ -720,7 +733,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         sortOrder: z.number().int().optional(),
       });
       const data = bodySchema.parse(req.body);
-      const swatch = await storage.updateColorSwatch(id, data);
+      const swatch = await storage.updateColorSwatch(id as string, data);
       if (!swatch) return res.status(404).json({ message: "Swatch not found" });
       res.json(swatch);
     } catch (err) {
@@ -730,13 +743,13 @@ export function registerAdminCatalogRoutes(app: Express) {
   });
 
   app.delete("/api/admin/color-swatches/:id", requirePermission("catalog"), async (req, res) => {
-    await storage.deleteColorSwatch(req.params.id);
+    await storage.deleteColorSwatch(req.params.id as string);
     res.json({ success: true });
   });
 
   // ── Category Size Definitions ──
   app.get("/api/admin/categories/:id/size-definitions", requirePermission("catalog"), async (req, res) => {
-    res.json(await storage.listCategorySizeDefinitions(req.params.id));
+    res.json(await storage.listCategorySizeDefinitions(req.params.id as string));
   });
 
   app.post("/api/admin/categories/:id/size-definitions", requirePermission("catalog"), async (req, res) => {
@@ -747,7 +760,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         sortOrder: z.number().int().default(0),
       });
       const data = bodySchema.parse(req.body);
-      const def = await storage.createCategorySizeDefinition({ categoryId: req.params.id, ...data });
+      const def = await storage.createCategorySizeDefinition({ categoryId: req.params.id as string, ...data });
       res.status(201).json(def);
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
@@ -763,7 +776,7 @@ export function registerAdminCatalogRoutes(app: Express) {
         sortOrder: z.number().int().optional(),
       });
       const data = bodySchema.parse(req.body);
-      const def = await storage.updateCategorySizeDefinition(req.params.id, data);
+      const def = await storage.updateCategorySizeDefinition(req.params.id as string, data);
       if (!def) return res.status(404).json({ message: "Size definition not found" });
       res.json(def);
     } catch (err) {
@@ -773,7 +786,7 @@ export function registerAdminCatalogRoutes(app: Express) {
   });
 
   app.delete("/api/admin/categories/:categoryId/size-definitions/:id", requirePermission("catalog"), async (req, res) => {
-    await storage.deleteCategorySizeDefinition(req.params.id);
+    await storage.deleteCategorySizeDefinition(req.params.id as string);
     res.json({ success: true });
   });
 
@@ -808,7 +821,7 @@ export function registerAdminCatalogRoutes(app: Express) {
 
   app.delete("/api/admin/bulk-price-rules/:id", requirePermission("catalog"), async (req, res) => {
     try {
-      await storage.deleteBulkPriceRule(req.params.id);
+      await storage.deleteBulkPriceRule(req.params.id as string);
       res.json({ success: true });
     } catch {
       res.status(500).json({ message: "Failed to delete bulk price rule" });

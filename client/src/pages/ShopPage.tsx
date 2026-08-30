@@ -650,7 +650,7 @@ export default function ShopPage() {
     if (!activeTag) return [];
     const tagLower = activeTag.toLowerCase();
     // Look up section by its `tag` identifier (URL key), never by product-tag values
-    const section = shopSections.find(s => s.tag.toLowerCase() === tagLower);
+    const section = shopSections.find(s => (s.tag ?? s.label).toLowerCase() === tagLower);
     if (section) {
       let all = attributeFilteredProducts;
       if (section.categories?.length) {
@@ -698,7 +698,7 @@ export default function ShopPage() {
   const isAllView = !activeTag && !searchQuery.trim() && !hasAttributeFilters && !activeCategory;
   const isTagView = !!activeTag && !searchQuery.trim();
 
-  const tagLabel = shopSections.find(s => s.tag.toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
+  const tagLabel = shopSections.find(s => (s.tag ?? s.label).toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
   const handleClearFilters = () => pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
 
@@ -794,7 +794,7 @@ export default function ShopPage() {
                 options={genderOptions}
                 selected={activeGenders}
                 onToggle={toggleGender}
-                onClear={() => pushURL(activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
+                onClear={() => pushURL(activeCategory, activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
                 counts={genderCounts}
                 testIdPrefix="filter-gender"
               />
@@ -803,7 +803,7 @@ export default function ShopPage() {
                 options={themeOptions}
                 selected={activeThemes}
                 onToggle={toggleTheme}
-                onClear={() => pushURL(activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
+                onClear={() => pushURL(activeCategory, activeFilter, activeGenders, [], activeStyles, activeTag, searchQuery)}
                 counts={themeCounts}
                 testIdPrefix="filter-theme"
               />
@@ -812,7 +812,7 @@ export default function ShopPage() {
                 options={styleOptions}
                 selected={activeStyles}
                 onToggle={toggleStyle}
-                onClear={() => pushURL(activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
+                onClear={() => pushURL(activeCategory, activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
                 counts={styleCounts}
                 testIdPrefix="filter-style"
               />
@@ -915,15 +915,15 @@ export default function ShopPage() {
               </div>
             ) : tagSections.map(section => (
               <section
-                key={section.tag}
-                data-testid={`section-${section.tag.replace(/\s+/g, "-")}`}
+                key={section.tag ?? section.label}
+                data-testid={`section-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
                 className={section.all.length === 0 ? "hidden" : undefined}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <h2
                       className="text-base font-semibold"
-                      data-testid={`text-section-${section.tag.replace(/\s+/g, "-")}`}
+                      data-testid={`text-section-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
                     >
                       {section.label}
                     </h2>
@@ -936,9 +936,9 @@ export default function ShopPage() {
                   </div>
                   {section.all.length > section.maxShown && (
                     <button
-                      onClick={() => handleTagDrillDown(section.tag)}
+                      onClick={() => handleTagDrillDown(section.tag ?? section.label)}
                       className="flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
-                      data-testid={`link-see-all-${section.tag.replace(/\s+/g, "-")}`}
+                      data-testid={`link-see-all-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
                     >
                       View all {section.all.length}
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -956,9 +956,9 @@ export default function ShopPage() {
                   {section.all.length > section.maxShown && (
                     <div className="shrink-0 w-28 flex items-center justify-center">
                       <button
-                        onClick={() => handleTagDrillDown(section.tag)}
+                        onClick={() => handleTagDrillDown(section.tag ?? section.label)}
                         className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                        data-testid={`card-see-more-${section.tag.replace(/\s+/g, "-")}`}
+                        data-testid={`card-see-more-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
                       >
                         <div className="w-11 h-11 rounded-full border-2 border-current flex items-center justify-center">
                           <ChevronRight className="w-4.5 h-4.5" />

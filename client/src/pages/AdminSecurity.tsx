@@ -432,7 +432,7 @@ export default function AdminSecurity() {
                               <tr key={row.date} className="border-b border-border/50 hover:bg-muted/30">
                                 <td className="py-1.5 pr-3 text-muted-foreground">{row.date}</td>
                                 {allTiers.map(t => (
-                                  <td key={t} className={`py-1.5 px-2 text-right ${(row[t as keyof typeof row] ?? 0) > 0 ? tierColors[t] ?? "" : "text-muted-foreground"}`}>
+                                  <td key={t} className={`py-1.5 px-2 text-right ${Number(row[t as keyof typeof row] ?? 0) > 0 ? tierColors[t] ?? "" : "text-muted-foreground"}`}>
                                     {(row[t as keyof typeof row] as number ?? 0) || "—"}
                                   </td>
                                 ))}

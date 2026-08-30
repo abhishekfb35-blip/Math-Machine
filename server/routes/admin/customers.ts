@@ -24,7 +24,7 @@ export function registerAdminCustomerRoutes(app: Express) {
 
   app.get("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const [customer, orders] = await Promise.all([
         storage.getCustomerById(id),
         storage.getOrdersByCustomerId(id),
@@ -50,7 +50,7 @@ export function registerAdminCustomerRoutes(app: Express) {
 
   app.patch("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { name, phone, shippingAddress, shippingCity, shippingState, shippingPincode } = req.body;
 
       const existing = await storage.getCustomerById(id);
@@ -77,7 +77,7 @@ export function registerAdminCustomerRoutes(app: Express) {
 
   app.delete("/api/admin/customers/:id", requirePermission("customers"), async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const existing = await storage.getCustomerById(id);
       if (!existing) {
         res.status(404).json({ message: "Customer not found" });
