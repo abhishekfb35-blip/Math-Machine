@@ -25,6 +25,7 @@ type PopupTestOptions = {
   delaySeconds?: number;
   cartAddDelaySeconds?: number;
   consentText?: string;
+  completionError?: string;
   focusTrigger?: boolean;
 };
 
@@ -71,14 +72,21 @@ async function mockSignupFlow(
       }),
     }),
   );
-  await page.route("**/api/auth/google/complete", route =>
-    route.fulfill({
+  await page.route("**/api/auth/google/complete", route => {
+    if (options.completionError) {
+      return route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ message: options.completionError }),
+      });
+    }
+    return route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
         customer: { id: "customer-1", firstName: "Popup" },
       }),
-    }),
-  );
+    });
+  });
 
   await page.addInitScript(() => {
     const accounts = {
@@ -294,6 +302,65 @@ test.describe("Signup popup positioning", () => {
 
     await expect(page.getByTestId("signup-consent-checkbox")).toBeEnabled();
     await expect(page.getByTestId("signup-consent-label")).toContainText(CONSENT_AGREEMENT_LABEL);
+  });
+
+  test("keeps phone validation above the backdrop, focusable, and actionable", async ({ page }) => {
+    await page.setViewportSize({ width: 400, height: 720 });
+    await openPopup(page, { completionError: "That phone number is already registered." });
+    await openPhoneForm(page);
+    await completeConsentGate(page);
+
+    const validationMessage = page.getByTestId("signup-phone-validation-message");
+    const phoneInput = page.getByTestId("input-signup-phone");
+    const submitButton = page.getByTestId("btn-signup-phone-submit");
+
+    await submitButton.click();
+    await expect(validationMessage).toBeVisible();
+    await expect(validationMessage).toContainText("Phone number is required");
+    await expect(validationMessage).toBeFocused();
+    await expect(phoneInput).toHaveAttribute("aria-invalid", "true");
+
+    const validationLayer = await validationMessage.evaluate((element) => {
+      const popup = element.closest<HTMLElement>('[data-testid="signup-popup"]');
+      const backdrop = document.querySelector<HTMLElement>('[data-testid="signup-popup-backdrop"]');
+      return {
+        insidePopup: Boolean(popup),
+        pointerEvents: getComputedStyle(element).pointerEvents,
+        popupZIndex: Number(getComputedStyle(popup!).zIndex),
+        backdropZIndex: Number(getComputedStyle(backdrop!).zIndex),
+      };
+    });
+    expect(validationLayer.insidePopup).toBe(true);
+    expect(validationLayer.pointerEvents).not.toBe("none");
+    expect(validationLayer.popupZIndex).toBeGreaterThan(validationLayer.backdropZIndex);
+
+    await validationMessage.click();
+    await expect(validationMessage).toBeFocused();
+    await page.getByTestId("btn-dismiss-signup-phone-validation").click();
+    await expect(validationMessage).toBeHidden();
+    await expect(phoneInput).toBeFocused();
+
+    await phoneInput.fill("9876543210");
+    await page.getByTestId("select-signup-birthday-month").selectOption("1");
+    await submitButton.click();
+    await expect(validationMessage).toContainText("Please choose both a month and day for birthday.");
+    await expect(validationMessage).toBeFocused();
+
+    await page.getByLabel("Birthday day").selectOption("1");
+    await expect(validationMessage).toBeHidden();
+
+    const completionRequest = page.waitForRequest("**/api/auth/google/complete");
+    await submitButton.click();
+    await completionRequest;
+    await expect(validationMessage).toContainText("Unable to create your account");
+    await expect(validationMessage).toContainText("That phone number is already registered.");
+    await expect(validationMessage).toBeFocused();
+
+    await page.getByTestId("select-signup-anniversary-month").selectOption("1");
+    await expect(validationMessage).toContainText("That phone number is already registered.");
+
+    await phoneInput.fill("9123456789");
+    await expect(validationMessage).toBeHidden();
   });
 
   test("dismisses with Escape and restores focus to the opening element", async ({ page }) => {

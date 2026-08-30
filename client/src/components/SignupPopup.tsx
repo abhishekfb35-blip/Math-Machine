@@ -78,6 +78,23 @@ interface GoogleUserData {
   email: string;
 }
 
+type PhoneValidationField = "phone" | "birthday" | "anniversary" | "consent" | "completion";
+
+interface PhoneValidationMessage {
+  id: number;
+  field: PhoneValidationField;
+  title: string;
+  description?: string;
+}
+
+const PHONE_VALIDATION_TARGETS: Record<PhoneValidationField, string> = {
+  phone: '[data-testid="input-signup-phone"]',
+  birthday: '[data-testid="select-signup-birthday-month"]',
+  anniversary: '[data-testid="select-signup-anniversary-month"]',
+  consent: '[data-testid="signup-consent-text"]',
+  completion: '[data-testid="input-signup-phone"]',
+};
+
 export default function SignupPopup() {
   const [location] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -98,6 +115,7 @@ export default function SignupPopup() {
   const [googleUserData, setGoogleUserData] = useState<GoogleUserData | null>(null);
   const [config, setConfig] = useState<SignupPopupConfig | null>(null);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const [phoneValidation, setPhoneValidation] = useState<PhoneValidationMessage | null>(null);
 
   const pendingCredential = useRef<string | null>(null);
   const sessionTimerSet = useRef(false);
@@ -108,8 +126,51 @@ export default function SignupPopup() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const gsiInitialized = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const phoneValidationRef = useRef<HTMLDivElement>(null);
+  const phoneValidationIdRef = useRef(0);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const openPopupRef = useRef<(nextView?: "nudge" | "phone") => void>(() => {});
+
+  const showPhoneValidation = useCallback((
+    field: PhoneValidationField,
+    title: string,
+    description?: string,
+  ) => {
+    phoneValidationIdRef.current += 1;
+    setPhoneValidation({
+      id: phoneValidationIdRef.current,
+      field,
+      title,
+      description,
+    });
+  }, []);
+
+  const clearPhoneValidationFor = useCallback((field: PhoneValidationField) => {
+    setPhoneValidation((current) =>
+      current && (
+        current.field === field ||
+        (current.field === "completion" && field === "phone")
+      )
+        ? null
+        : current,
+    );
+  }, []);
+
+  const handleConsentCheckedChange = useCallback((checked: boolean) => {
+    setConsentChecked(checked);
+    clearPhoneValidationFor("consent");
+  }, [clearPhoneValidationFor]);
+
+  const handleConsentReadToBottomChange = useCallback((readToBottom: boolean) => {
+    setConsentReadToBottom(readToBottom);
+    if (readToBottom) clearPhoneValidationFor("consent");
+  }, [clearPhoneValidationFor]);
+
+  useEffect(() => {
+    if (!phoneValidation || !visible || view !== "phone") return;
+    const frame = requestAnimationFrame(() => phoneValidationRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [phoneValidation, visible, view]);
 
   // ── Config fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -151,6 +212,7 @@ export default function SignupPopup() {
       setPhoneInput("");
       setConsentChecked(false);
       setConsentReadToBottom(false);
+      setPhoneValidation(null);
       pendingCredential.current = null;
       setGoogleUserData(null);
       gsiInitialized.current = false;
@@ -173,6 +235,7 @@ export default function SignupPopup() {
     const activeElement = document.activeElement;
     restoreFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
     gsiInitialized.current = false; // allow re-render of button on next open
+    setPhoneValidation(null);
     setView(nextView);
     setVisible(true);
   }, [canShow]);
@@ -234,6 +297,7 @@ export default function SignupPopup() {
     setPhoneInput("");
     setConsentChecked(false);
     setConsentReadToBottom(false);
+    setPhoneValidation(null);
     pendingCredential.current = null;
     setGoogleUserData(null);
     gsiInitialized.current = false;
@@ -348,6 +412,7 @@ export default function SignupPopup() {
         if (data.needsPhone) {
           pendingCredential.current = response.credential;
           setGoogleUserData(data.googleData);
+          setPhoneValidation(null);
           setView("phone");
         } else {
           queryClient.setQueryData(["/api/auth/me"], data.customer);
@@ -405,20 +470,25 @@ export default function SignupPopup() {
     e.preventDefault();
     const birthday = getMonthDayValue(birthdayMonth, birthdayDay, "Birthday");
     if (birthday.error) {
-      toast({ title: birthday.error, variant: "destructive" });
+      showPhoneValidation("birthday", birthday.error);
       return;
     }
     const anniversary = getMonthDayValue(anniversaryMonth, anniversaryDay, "Anniversary");
     if (anniversary.error) {
-      toast({ title: anniversary.error, variant: "destructive" });
+      showPhoneValidation("anniversary", anniversary.error);
       return;
     }
     if (config?.phoneRequired !== false && !phoneInput.trim()) {
-      toast({ title: "Phone number is required", variant: "destructive" });
+      showPhoneValidation("phone", "Phone number is required");
       return;
     }
     if (config?.consentText && (!consentReadToBottom || !consentChecked)) {
-      toast({ title: consentReadToBottom ? "Please agree to the terms to continue" : "Please read the entire consent text to continue", variant: "destructive" });
+      showPhoneValidation(
+        "consent",
+        consentReadToBottom
+          ? "Please agree to the terms to continue"
+          : "Please read the entire consent text to continue",
+      );
       return;
     }
     if (!pendingCredential.current) return;
@@ -437,14 +507,15 @@ export default function SignupPopup() {
       });
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
+      setPhoneValidation(null);
       setVisible(false);
       toast({ title: "Welcome!", description: "Your account has been created." });
     } catch (err: any) {
-      toast({
-        title: "Something went wrong",
-        description: err.message,
-        variant: "destructive",
-      });
+      showPhoneValidation(
+        "completion",
+        "Unable to create your account",
+        err.message || "Please review your details and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -562,14 +633,56 @@ export default function SignupPopup() {
                 </button>
               </div>
 
-              <form onSubmit={handlePhoneSubmit} className="space-y-3">
+              {phoneValidation && (
+                <div
+                  id="signup-phone-validation-message"
+                  ref={phoneValidationRef}
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  tabIndex={0}
+                  onClick={() => phoneValidationRef.current?.focus()}
+                  className="relative z-10 mb-3 flex cursor-pointer items-start gap-2 rounded-lg border border-destructive/40 bg-destructive px-3 py-2 text-destructive-foreground shadow-lg outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+                  data-testid="signup-phone-validation-message"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{phoneValidation.title}</p>
+                    {phoneValidation.description && (
+                      <p className="mt-0.5 break-words text-xs opacity-90">
+                        {phoneValidation.description}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Dismiss validation message"
+                    className="shrink-0 rounded p-1 text-destructive-foreground/80 hover:bg-white/15 hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-white"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const targetSelector = PHONE_VALIDATION_TARGETS[phoneValidation.field];
+                      setPhoneValidation(null);
+                      requestAnimationFrame(() => {
+                        dialogRef.current?.querySelector<HTMLElement>(targetSelector)?.focus();
+                      });
+                    }}
+                    data-testid="btn-dismiss-signup-phone-validation"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handlePhoneSubmit} noValidate className="space-y-3">
                 <div>
                   <label className="mb-1 block text-xs font-medium" htmlFor="signup-phone-country-code">Phone number</label>
                   <div className="grid grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] gap-2">
                     <select
                       id="signup-phone-country-code"
                       value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
+                      onChange={(e) => {
+                        setCountryCode(e.target.value);
+                        clearPhoneValidationFor("phone");
+                      }}
                       className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm"
                       data-testid="select-signup-phone-country-code"
                     >
@@ -580,10 +693,19 @@ export default function SignupPopup() {
                       inputMode="numeric"
                       placeholder="Phone number"
                       value={phoneInput}
-                      onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                      onChange={(e) => {
+                        setPhoneInput(e.target.value.replace(/\D/g, ""));
+                        clearPhoneValidationFor("phone");
+                      }}
                       required={config?.phoneRequired !== false}
                       maxLength={15}
                       className="min-w-0 flex-1"
+                      aria-invalid={phoneValidation?.field === "phone" || phoneValidation?.field === "completion"}
+                      aria-describedby={
+                        phoneValidation?.field === "phone" || phoneValidation?.field === "completion"
+                          ? "signup-phone-validation-message"
+                          : undefined
+                      }
                       data-testid="input-signup-phone"
                     />
                   </div>
@@ -598,8 +720,13 @@ export default function SignupPopup() {
                     <select
                       id="signup-birthday-month"
                       value={birthdayMonth}
-                      onChange={(e) => setBirthdayMonth(e.target.value)}
+                      onChange={(e) => {
+                        setBirthdayMonth(e.target.value);
+                        clearPhoneValidationFor("birthday");
+                      }}
                       className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-invalid={phoneValidation?.field === "birthday"}
+                      aria-describedby={phoneValidation?.field === "birthday" ? "signup-phone-validation-message" : undefined}
                       data-testid="select-signup-birthday-month"
                     >
                       <option value="">Month</option>
@@ -608,8 +735,13 @@ export default function SignupPopup() {
                     <select
                       aria-label="Birthday day"
                       value={birthdayDay}
-                      onChange={(e) => setBirthdayDay(e.target.value)}
+                      onChange={(e) => {
+                        setBirthdayDay(e.target.value);
+                        clearPhoneValidationFor("birthday");
+                      }}
                       className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-invalid={phoneValidation?.field === "birthday"}
+                      aria-describedby={phoneValidation?.field === "birthday" ? "signup-phone-validation-message" : undefined}
                       data-testid="select-signup-birthday-day"
                     >
                       <option value="">Day</option>
@@ -627,8 +759,13 @@ export default function SignupPopup() {
                     <select
                       id="signup-anniversary-month"
                       value={anniversaryMonth}
-                      onChange={(e) => setAnniversaryMonth(e.target.value)}
+                      onChange={(e) => {
+                        setAnniversaryMonth(e.target.value);
+                        clearPhoneValidationFor("anniversary");
+                      }}
                       className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-invalid={phoneValidation?.field === "anniversary"}
+                      aria-describedby={phoneValidation?.field === "anniversary" ? "signup-phone-validation-message" : undefined}
                       data-testid="select-signup-anniversary-month"
                     >
                       <option value="">Month</option>
@@ -637,8 +774,13 @@ export default function SignupPopup() {
                     <select
                       aria-label="Anniversary day"
                       value={anniversaryDay}
-                      onChange={(e) => setAnniversaryDay(e.target.value)}
+                      onChange={(e) => {
+                        setAnniversaryDay(e.target.value);
+                        clearPhoneValidationFor("anniversary");
+                      }}
                       className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-invalid={phoneValidation?.field === "anniversary"}
+                      aria-describedby={phoneValidation?.field === "anniversary" ? "signup-phone-validation-message" : undefined}
                       data-testid="select-signup-anniversary-day"
                     >
                       <option value="">Day</option>
@@ -653,8 +795,8 @@ export default function SignupPopup() {
                     scrollPrompt={config.consentScrollPrompt}
                     agreementLabel={config.consentAgreementLabel}
                     checked={consentChecked}
-                    onCheckedChange={setConsentChecked}
-                    onReadToBottomChange={setConsentReadToBottom}
+                    onCheckedChange={handleConsentCheckedChange}
+                    onReadToBottomChange={handleConsentReadToBottomChange}
                     testIdPrefix="signup"
                   />
                 )}
