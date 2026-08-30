@@ -949,13 +949,26 @@ export default function ShopPage() {
   const handleClearFilters = () => pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
 
   const [isScrolled, setIsScrolled] = useState(false);
+  const scrollStateRef = useRef(false);
+  const scrollHandoffLockUntilRef = useRef(0);
   useEffect(() => {
     const onScroll = () => {
       // Use hysteresis so the sticky bar cannot toggle back and forth while
       // its own height is changing during the filter handoff.
-      setIsScrolled(previous => previous
+      const now = performance.now();
+      if (now < scrollHandoffLockUntilRef.current) return;
+
+      const nextIsScrolled = scrollStateRef.current
         ? window.scrollY > 32
-        : window.scrollY > 72);
+        : window.scrollY > 72;
+      if (nextIsScrolled === scrollStateRef.current) return;
+
+      scrollStateRef.current = nextIsScrolled;
+      // Collapsing the sticky content can briefly change scrollY because of
+      // browser scroll anchoring. Ignore those layout-only events until the
+      // CSS handoff has finished.
+      scrollHandoffLockUntilRef.current = now + 300;
+      setIsScrolled(nextIsScrolled);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -999,7 +1012,10 @@ export default function ShopPage() {
               ? "max-h-10 opacity-100"
               : "max-h-0 opacity-0 pointer-events-none"
             : "max-h-[32rem] opacity-100"}`}>
-          <div className={`space-y-2 ${isScrolled ? "hidden" : ""}`}>
+          <div
+            className={`space-y-2 ${isScrolled ? "hidden" : ""}`}
+            data-testid="shop-filter-controls"
+          >
 
             {/* Category chips — always one selected, no All option */}
             {categoryOptions.length > 0 && (
@@ -1123,7 +1139,10 @@ export default function ShopPage() {
           </div>
 
           {/* Compact active-filter summary — appears when scrolled + filters active */}
-          <div className={isScrolled && hasAttributeFilters ? "hidden sm:block" : "hidden"}>
+          <div
+            className={isScrolled && hasAttributeFilters ? "hidden sm:block" : "hidden"}
+            data-testid="shop-active-filter-summary"
+          >
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
               {activeFilter !== "all" && (

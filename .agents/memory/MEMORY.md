@@ -6,3 +6,4 @@
 - [Consent completion gate](consent-completion-gate.md) — configured consent must be read-and-agreed across every Google completion surface, with server enforcement.
 - [Strict storage boundaries](strict-storage-boundaries.md) — convert nullable and JSON database shapes into API contracts at the storage layer.
 - [Attribute ID contract](attribute-id-contract.md) — use stable lookup-table IDs for relations and keep names display-only.
+- [Sticky filter scroll anchoring](sticky-filter-scroll-anchoring.md) — sticky filter collapse can change scrollY; lock state through the CSS handoff to prevent desktop flicker.
