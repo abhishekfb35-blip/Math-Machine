@@ -12,6 +12,7 @@ import {
 import { and, eq, like, sql } from "drizzle-orm";
 import seedData from "./seed-data.json";
 import { assertSeedTargetIsWritable } from "./lib/catalogSyncGuard";
+import { validateSeedSnapshotIds } from "./lib/seedValidation";
 
 const BATCH = 100;
 
@@ -49,6 +50,19 @@ async function storeHashFor(database: DatabaseExecutor, tableName: string, hash:
 export async function seedDatabase(overrideData?: Record<string, unknown>) {
   assertSeedTargetIsWritable();
   try {
+    const snapshot = (overrideData ?? seedData) as Record<string, unknown>;
+
+    // Validate the complete snapshot before copying assets, opening a
+    // transaction, clearing hashes, or touching any database row.
+    if (overrideData !== undefined) {
+      const hasProducts   = Array.isArray(snapshot.products)   && (snapshot.products as unknown[]).length > 0;
+      const hasCategories = Array.isArray(snapshot.categories) && (snapshot.categories as unknown[]).length > 0;
+      if (!hasProducts && !hasCategories) {
+        throw new Error("[seed] Refusing to apply override data: both products and categories arrays are missing or empty. Re-run Export to Seed.");
+      }
+    }
+    validateSeedSnapshotIds(snapshot);
+
     // ── 0a. Restore bundled swatch images ─────────────────────────────────────
     // Use process.cwd() (always the project root) so paths work in both dev
     // (tsx) and production (compiled dist) environments.
@@ -97,18 +111,8 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
     type SeedJunctionTh  = { id: string; productSlug: string; themeName: string };
     type SeedJunctionSt  = { id: string; productSlug: string; styleName: string };
 
-    // If override data was provided, validate it has at least the core catalogue arrays
-    // before trusting it — an empty or malformed payload would wipe tables via cleared hashes.
-    if (overrideData !== undefined) {
-      const hasProducts   = Array.isArray(overrideData.products)   && (overrideData.products   as unknown[]).length > 0;
-      const hasCategories = Array.isArray(overrideData.categories) && (overrideData.categories as unknown[]).length > 0;
-      if (!hasProducts && !hasCategories) {
-        throw new Error("[seed] Refusing to apply override data: both products and categories arrays are missing or empty. Re-run Export to Seed.");
-      }
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sd: any = overrideData ?? seedData;
+    const sd: any = snapshot;
     const tableData: {
       tagTypes: SeedTagType[];
       categories: SeedCategory[];
@@ -151,32 +155,11 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       const getStoredHash = (tableName: string) => getStoredHashFor(db, tableName);
       const storeHash = (tableName: string, hash: string) => storeHashFor(db, tableName, hash);
 
-    // ── 0. Validate all IDs are present — abort immediately if any are missing ─
-    const catalogTableNames = [
-      "tagTypes", "categories", "tags", "products", "productImages", "productReviews", "productTags",
-      "audience", "genders", "themes", "styles",
-      "productAudience", "productGenders", "productThemes", "productStyles",
-    ] as const;
-    let idErrors = 0;
-    for (const table of catalogTableNames) {
-      const rows = tableData[table];
-      rows.forEach((row, i) => {
-        if (!row.id) {
-          const r = row as { name?: string; slug?: string; productSlug?: string };
-          console.error(`[seed] ERROR: seed-data.json → ${table}[${i}] is missing an "id" field (name/slug: ${r.name || r.slug || r.productSlug || "?"})`);
-          idErrors++;
-        }
-      });
-    }
     tableData.products.forEach((p, i: number) => {
       if (!p.sku) {
-        console.error(`[seed] ERROR: seed-data.json → products[${i}] slug="${p.slug || "?"}" is missing a "sku" field`);
-        idErrors++;
+        throw new Error(`[seed] Aborting: products[${i}] slug="${p.slug || "?"}" is missing a "sku" field. Re-run the export script to fix.`);
       }
     });
-    if (idErrors > 0) {
-      throw new Error(`[seed] Aborting: ${idErrors} row(s) in seed-data.json are missing "id" or "sku". Re-run the export script to fix.`);
-    }
 
     // ── 1. Check per-table hashes ─────────────────────────────────────────────
     const changed = {

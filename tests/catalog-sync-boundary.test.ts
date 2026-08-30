@@ -310,5 +310,25 @@ if (!testDatabaseUrl) {
         await cleanupTransactionalRows();
       }
     });
+
+    it("rejects a missing ID before changing the database", async () => {
+      try {
+        await seedDatabase(initialSnapshot);
+        const before = await readCatalogAndSharedContent();
+        const invalidSnapshot = {
+          ...initialSnapshot,
+          productTags: [{ productSlug: `${prefix}old-product`, tagName: "initial_tag" }],
+        };
+
+        await assert.rejects(
+          () => seedDatabase(invalidSnapshot),
+          /productTags\[0\].*id/,
+        );
+
+        assert.deepEqual(await readCatalogAndSharedContent(), before);
+      } finally {
+        await cleanupTransactionalRows();
+      }
+    });
   });
 }
