@@ -77,6 +77,17 @@ if (!testDatabaseUrl) {
     siteContent: [{ key: "hero", value: "Updated hero copy" }],
   };
 
+  const invalidIncomingSnapshot = {
+    ...incomingSnapshot,
+    // This fails after the catalog and shared-content sync steps have run,
+    // making sure the transaction covers the whole replacement.
+    categorySizeDefinitions: [{
+      id: `${prefix}invalid-size-definition`,
+      categorySlug: `${prefix}missing-category`,
+      name: "Invalid size definition",
+    }],
+  };
+
   const transactionalQueries: Record<string, string> = {
     customers: `SELECT * FROM customers WHERE id LIKE '${prefix}%' ORDER BY id`,
     customer_consents: `SELECT * FROM customer_consents WHERE id LIKE '${prefix}%' ORDER BY id`,
@@ -92,6 +103,24 @@ if (!testDatabaseUrl) {
   async function readTransactionalRows(): Promise<Record<string, unknown[]>> {
     const entries = await Promise.all(
       Object.entries(transactionalQueries).map(async ([table, query]) => [
+        table,
+        (await pool.query(query)).rows,
+      ] as const),
+    );
+    return Object.fromEntries(entries);
+  }
+
+  async function readCatalogAndSharedContent(): Promise<Record<string, unknown[]>> {
+    const queries: Record<string, string> = {
+      categories: "SELECT * FROM categories ORDER BY id",
+      products: "SELECT * FROM products ORDER BY id",
+      tagTypes: "SELECT * FROM tag_types ORDER BY id",
+      tags: "SELECT * FROM tags ORDER BY id",
+      productTags: "SELECT * FROM product_tags ORDER BY id",
+      siteContent: "SELECT * FROM site_content ORDER BY key",
+    };
+    const entries = await Promise.all(
+      Object.entries(queries).map(async ([table, query]) => [
         table,
         (await pool.query(query)).rows,
       ] as const),
@@ -261,6 +290,22 @@ if (!testDatabaseUrl) {
 
         await assertIncomingCatalog();
         assert.deepEqual(await readTransactionalRows(), before);
+      } finally {
+        await cleanupTransactionalRows();
+      }
+    });
+
+    it("rolls back the catalog and shared content when an import fails", async () => {
+      try {
+        await seedDatabase(initialSnapshot);
+        const before = await readCatalogAndSharedContent();
+
+        await assert.rejects(
+          () => seedDatabase(invalidIncomingSnapshot),
+          /categorySizeDefinitions: unresolved category/,
+        );
+
+        assert.deepEqual(await readCatalogAndSharedContent(), before);
       } finally {
         await cleanupTransactionalRows();
       }

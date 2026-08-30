@@ -20,24 +20,26 @@ function computeHash(data: unknown[]): string {
   return crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
 }
 
-async function getStoredHash(tableName: string): Promise<string | null> {
-  const [row] = await db
+type DatabaseExecutor = Pick<typeof db, "select" | "update" | "insert">;
+
+async function getStoredHashFor(database: DatabaseExecutor, tableName: string): Promise<string | null> {
+  const [row] = await database
     .select({ value: siteConfig.value })
     .from(siteConfig)
     .where(eq(siteConfig.key, `seed-hash-${tableName}`));
   return row?.value ?? null;
 }
 
-async function storeHash(tableName: string, hash: string): Promise<void> {
+async function storeHashFor(database: DatabaseExecutor, tableName: string, hash: string): Promise<void> {
   const key = `seed-hash-${tableName}`;
-  const [existing] = await db
+  const [existing] = await database
     .select({ key: siteConfig.key })
     .from(siteConfig)
     .where(eq(siteConfig.key, key));
   if (existing) {
-    await db.update(siteConfig).set({ value: hash }).where(eq(siteConfig.key, key));
+    await database.update(siteConfig).set({ value: hash }).where(eq(siteConfig.key, key));
   } else {
-    await db.insert(siteConfig).values({ key, value: hash });
+    await database.insert(siteConfig).values({ key, value: hash });
   }
 }
 
@@ -73,6 +75,19 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       console.log(`[seed] swatches: seed-assets/swatches not found, skipping`);
     }
 
+    type SeedIdRow       = { id: string; name?: string; slug?: string; productSlug?: string };
+    type SeedTagType     = SeedIdRow & { name: string; slug: string; description?: string | null; sortOrder?: number };
+    type SeedCategory    = SeedIdRow & { name: string; slug: string; description?: string | null; imageUrl?: string | null; sortOrder?: number };
+    type SeedTag         = SeedIdRow & { name: string; description?: string | null; tagTypeId?: string | null; sortOrder?: number };
+    type SeedProduct     = SeedIdRow & {
+      sku: string; name: string; slug: string; categorySlug: string; price: number; mrp?: number | null;
+      description?: string | null; [key: string]: any;
+    };
+    type SeedProductImage = SeedIdRow & { productSlug: string; imageUrl: string; sortOrder?: number; isPrimary?: boolean };
+    type SeedProductReview = SeedIdRow & {
+      productSlug: string; reviewerName: string; rating: number; title?: string | null; body: string;
+      amzReviewDate?: string | null; verifiedPurchase?: boolean;
+    };
     type SeedProductTag  = { id: string; productSlug: string; tagName: string };
     type SeedAttr        = { id: string; name: string; sortOrder?: number };
     type SeedJunctionAg  = { id: string; productSlug: string; audienceName: string };
@@ -92,7 +107,23 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sd: any = overrideData ?? seedData;
-    const tableData = {
+    const tableData: {
+      tagTypes: SeedTagType[];
+      categories: SeedCategory[];
+      tags: SeedTag[];
+      products: SeedProduct[];
+      productImages: SeedProductImage[];
+      productReviews: SeedProductReview[];
+      productTags: SeedProductTag[];
+      audience: SeedAttr[];
+      genders: SeedAttr[];
+      themes: SeedAttr[];
+      styles: SeedAttr[];
+      productAudience: SeedJunctionAg[];
+      productGenders: SeedJunctionGen[];
+      productThemes: SeedJunctionTh[];
+      productStyles: SeedJunctionSt[];
+    } = {
       tagTypes:         sd.tagTypes         ?? [],
       categories:       sd.categories       ?? [],
       tags:             sd.tags             ?? [],
@@ -109,6 +140,14 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       productThemes:    ((sd.productThemes         ?? []) as SeedJunctionTh[]),
       productStyles:    ((sd.productStyles         ?? []) as SeedJunctionSt[]),
     };
+
+    await db.transaction(async (tx) => {
+      // Keep the existing sync logic on the transaction client so every
+      // catalog/content change, including seed hashes, commits or rolls back
+      // together.
+      const db = tx;
+      const getStoredHash = (tableName: string) => getStoredHashFor(db, tableName);
+      const storeHash = (tableName: string, hash: string) => storeHashFor(db, tableName, hash);
 
     // ── 0. Validate all IDs are present — abort immediately if any are missing ─
     const catalogTableNames = [
@@ -355,7 +394,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
               reviewerName: r.reviewerName,
               rating: r.rating,
               title: r.title ?? null,
-              body: r.body ?? null,
+              body: (r.body ?? null) as string,
               amzReviewDate: r.amzReviewDate ?? null,
               verifiedPurchase: r.verifiedPurchase ?? false,
             }));
@@ -890,6 +929,7 @@ export async function seedDatabase(overrideData?: Record<string, unknown>) {
       console.log("[seed] shop-sections: omitted from incoming snapshot, leaving absent");
     }
 
+    });
   } catch (error) {
     console.error("Error seeding database:", error);
     throw error;
