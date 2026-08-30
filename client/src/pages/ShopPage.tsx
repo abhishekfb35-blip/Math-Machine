@@ -950,7 +950,13 @@ export default function ShopPage() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 60);
+    const onScroll = () => {
+      // Use hysteresis so the sticky bar cannot toggle back and forth while
+      // its own height is changing during the filter handoff.
+      setIsScrolled(previous => previous
+        ? window.scrollY > 32
+        : window.scrollY > 72);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -987,8 +993,13 @@ export default function ShopPage() {
             )}
           </div>
 
-          {/* Collapsible section: category + audience + all filter rows — hides on scroll */}
-          <div className={`overflow-hidden transition-all duration-200 ease-in-out space-y-2 ${isScrolled ? "max-h-0 opacity-0 pointer-events-none" : "max-h-96 opacity-100"}`}>
+          {/* One animated handoff keeps the sticky bar height stable while scrolling. */}
+          <div className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-in-out ${isScrolled
+            ? hasAttributeFilters
+              ? "max-h-10 opacity-100"
+              : "max-h-0 opacity-0 pointer-events-none"
+            : "max-h-[32rem] opacity-100"}`}>
+          <div className={`space-y-2 ${isScrolled ? "hidden" : ""}`}>
 
             {/* Category chips — always one selected, no All option */}
             {categoryOptions.length > 0 && (
@@ -1112,7 +1123,7 @@ export default function ShopPage() {
           </div>
 
           {/* Compact active-filter summary — appears when scrolled + filters active */}
-          <div className={`hidden sm:block overflow-hidden transition-all duration-200 ease-in-out ${isScrolled && hasAttributeFilters ? "max-h-10 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}`}>
+          <div className={isScrolled && hasAttributeFilters ? "hidden sm:block" : "hidden"}>
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
               {activeFilter !== "all" && (
@@ -1169,6 +1180,7 @@ export default function ShopPage() {
           </div>
 
         </div>
+      </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-4">
