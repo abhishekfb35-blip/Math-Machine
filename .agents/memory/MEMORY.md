@@ -8,3 +8,4 @@
 - [Attribute ID contract](attribute-id-contract.md) — use stable lookup-table IDs for relations and keep names display-only.
 - [Sticky filter scroll anchoring](sticky-filter-scroll-anchoring.md) — sticky filter collapse can change scrollY; lock state through the CSS handoff to prevent desktop flicker.
 - [Signup popup scroll isolation](signup-popup-scroll-isolation.md) — use non-passive native touch listeners to stop card-origin page scrolling while preserving backdrop and consent scrolling.
+- [Playwright textarea newlines](playwright-textarea-newlines.md) — normalize API CRLF text to LF when asserting browser textarea values.

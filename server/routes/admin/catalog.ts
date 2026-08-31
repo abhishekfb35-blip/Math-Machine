@@ -159,7 +159,9 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.post("/api/admin/products/from-draft", requirePermission("catalog"), async (req, res) => {
     try {
       const draftSchema = z.object({
-        product: insertProductSchema,
+        // Drafts omit identity fields; the storage layer assigns a fresh SKU
+        // when the copied product is saved.
+        product: insertProductSchema.omit({ sku: true }),
         tagIds: z.array(z.string()),
         audienceIds: z.array(z.string()),
         genderIds: z.array(z.string()),

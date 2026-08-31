@@ -521,7 +521,7 @@ export class DatabaseStorage implements IStorage {
     return enriched;
   }
 
-  async createProductFromDraft(data: InsertProduct, relations: {
+  async createProductFromDraft(data: Omit<InsertProduct, "sku">, relations: {
     tagIds: string[];
     audienceIds: string[];
     genderIds: string[];
@@ -531,7 +531,7 @@ export class DatabaseStorage implements IStorage {
     variants: Array<{ color: string; size: string; available: boolean }>;
   }): Promise<Product> {
     const productId = await db.transaction(async (tx) => {
-      const { id: _id, imageUrl: _imageUrl, sku: _sku, ...productData } = data as InsertProduct & { id?: string };
+      const { id: _id, imageUrl: _imageUrl, ...productData } = data as Omit<InsertProduct, "sku"> & { id?: string };
       const id = createId();
 
       let sku = generateSku();
