@@ -156,6 +156,46 @@ export function registerAdminCatalogRoutes(app: Express) {
     }
   });
 
+  app.post("/api/admin/products/from-draft", requirePermission("catalog"), async (req, res) => {
+    try {
+      const draftSchema = z.object({
+        product: insertProductSchema,
+        tagIds: z.array(z.string()),
+        audienceIds: z.array(z.string()),
+        genderIds: z.array(z.string()),
+        themeIds: z.array(z.string()),
+        styleIds: z.array(z.string()),
+        images: z.array(z.object({
+          imageUrl: z.string().min(1),
+          sortOrder: z.number().int().min(0),
+          isPrimary: z.boolean(),
+        })),
+        variants: z.array(z.object({
+          color: z.string(),
+          size: z.string(),
+          available: z.boolean(),
+        })),
+      });
+      const draft = draftSchema.parse(req.body);
+      const product = await storage.createProductFromDraft(draft.product, draft);
+      await storage.createAuditLog({
+        entityType: "product",
+        entityId: product.id,
+        entityName: product.name,
+        action: "created",
+        changes: JSON.stringify({ name: product.name, slug: product.slug, price: product.price, categoryId: product.categoryId, source: "copy-draft" }),
+        username: getAdminUsername(req),
+      });
+      broadcastProductUpdate(product);
+      res.status(201).json(product);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: "Invalid input", errors: err.errors });
+      if (err.code === "23505") return res.status(409).json({ message: "A product with that slug or SKU already exists" });
+      console.error("Create product from draft error:", err);
+      res.status(500).json({ message: "Failed to create product draft" });
+    }
+  });
+
   app.post("/api/admin/products/:id/copy", requirePermission("catalog"), async (req, res) => {
     const sourceProductId = req.params.id as string;
     if (!sourceProductId) return res.status(400).json({ message: "Invalid product ID" });

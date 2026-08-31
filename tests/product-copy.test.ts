@@ -162,5 +162,57 @@ if (!testDatabaseUrl) {
       assert.ok(secondCopy);
       assert.equal(secondCopy.slug, `${prefix}product-copy-2`);
     });
+
+    it("creates a staged draft only when the explicit save operation is called", async () => {
+      const saved = await storage.createProductFromDraft(
+        {
+          name: "Saved Draft Product",
+          slug: `${prefix}saved-draft`,
+          description: "Draft description",
+          price: 1499,
+          mrp: 1799,
+          categoryId,
+          active: false,
+        },
+        {
+          tagIds: [tagId],
+          audienceIds: [audienceId],
+          genderIds: [genderId],
+          themeIds: [themeId],
+          styleIds: [styleId],
+          images: [
+            { imageUrl: "/images/draft-1.jpg", sortOrder: 0, isPrimary: true },
+            { imageUrl: "/images/draft-2.jpg", sortOrder: 1, isPrimary: false },
+          ],
+          variants: [{ color: "Blue", size: "Large", available: false }],
+        },
+      );
+
+      assert.notEqual(saved.id, sourceId);
+      assert.equal(saved.name, "Saved Draft Product");
+      assert.equal(saved.sku?.startsWith("TL"), true);
+
+      const [images, tags, attributes, variants] = await Promise.all([
+        pool.query("SELECT image_url, sort_order, is_primary FROM product_images WHERE product_id = $1 ORDER BY sort_order", [saved.id]),
+        pool.query("SELECT tag_id FROM product_tags WHERE product_id = $1", [saved.id]),
+        pool.query(
+          `SELECT
+             (SELECT count(*) FROM product_audience WHERE product_id = $1) AS audience_count,
+             (SELECT count(*) FROM product_genders WHERE product_id = $1) AS gender_count,
+             (SELECT count(*) FROM product_themes WHERE product_id = $1) AS theme_count,
+             (SELECT count(*) FROM product_styles WHERE product_id = $1) AS style_count`,
+          [saved.id],
+        ),
+        pool.query("SELECT color, size, available FROM product_variants WHERE product_id = $1", [saved.id]),
+      ]);
+
+      assert.deepEqual(images.rows, [
+        { image_url: "/images/draft-1.jpg", sort_order: 0, is_primary: true },
+        { image_url: "/images/draft-2.jpg", sort_order: 1, is_primary: false },
+      ]);
+      assert.deepEqual(tags.rows, [{ tag_id: tagId }]);
+      assert.deepEqual(attributes.rows, [{ audience_count: "1", gender_count: "1", theme_count: "1", style_count: "1" }]);
+      assert.deepEqual(variants.rows, [{ color: "Blue", size: "Large", available: false }]);
+    });
   });
 }

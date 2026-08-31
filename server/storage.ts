@@ -71,6 +71,15 @@ export interface IStorage {
   getProductById(id: string): Promise<Product | undefined>;
   getProductsByIds(ids: string[]): Promise<Product[]>;
   createProduct(prod: InsertProduct): Promise<Product>;
+  createProductFromDraft(data: InsertProduct, relations: {
+    tagIds: string[];
+    audienceIds: string[];
+    genderIds: string[];
+    themeIds: string[];
+    styleIds: string[];
+    images: Array<{ imageUrl: string; sortOrder: number; isPrimary: boolean }>;
+    variants: Array<{ color: string; size: string; available: boolean }>;
+  }): Promise<Product>;
   copyProduct(productId: string): Promise<Product | undefined>;
   updateProduct(id: string, data: Partial<InsertProduct>): Promise<Product | undefined>;
   bulkUpdateProductFields(updates: Array<{ id: string } & Partial<InsertProduct>>): Promise<number>;
@@ -510,6 +519,95 @@ export class DatabaseStorage implements IStorage {
     }
     const [enriched] = await this.withEnriched([created]);
     return enriched;
+  }
+
+  async createProductFromDraft(data: InsertProduct, relations: {
+    tagIds: string[];
+    audienceIds: string[];
+    genderIds: string[];
+    themeIds: string[];
+    styleIds: string[];
+    images: Array<{ imageUrl: string; sortOrder: number; isPrimary: boolean }>;
+    variants: Array<{ color: string; size: string; available: boolean }>;
+  }): Promise<Product> {
+    const productId = await db.transaction(async (tx) => {
+      const { id: _id, imageUrl: _imageUrl, sku: _sku, ...productData } = data as InsertProduct & { id?: string };
+      const id = createId();
+
+      let sku = generateSku();
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const [existing] = await tx.select({ id: products.id }).from(products).where(eq(products.sku, sku)).limit(1);
+        if (!existing) break;
+        sku = generateSku();
+        if (attempt === 9) throw new Error("Unable to generate a unique product SKU");
+      }
+
+      const [created] = await tx.insert(products).values({
+        id,
+        ...productData,
+        sku,
+      }).returning();
+
+      if (relations.images.length > 0) {
+        await tx.insert(productImages).values(relations.images.map(image => ({
+          id: createId(),
+          productId: id,
+          imageUrl: image.imageUrl,
+          sortOrder: image.sortOrder,
+          isPrimary: image.isPrimary,
+        })));
+      }
+      if (relations.tagIds.length > 0) {
+        await tx.insert(productTags).values(relations.tagIds.map(tagId => ({
+          id: createId(),
+          productId: id,
+          tagId,
+        })));
+      }
+      if (relations.audienceIds.length > 0) {
+        await tx.insert(productAudience).values(relations.audienceIds.map(audienceId => ({
+          id: createId(),
+          productId: id,
+          audienceId,
+        })));
+      }
+      if (relations.genderIds.length > 0) {
+        await tx.insert(productGenders).values(relations.genderIds.map(genderId => ({
+          id: createId(),
+          productId: id,
+          genderId,
+        })));
+      }
+      if (relations.themeIds.length > 0) {
+        await tx.insert(productThemes).values(relations.themeIds.map(themeId => ({
+          id: createId(),
+          productId: id,
+          themeId,
+        })));
+      }
+      if (relations.styleIds.length > 0) {
+        await tx.insert(productStyles).values(relations.styleIds.map(styleId => ({
+          id: createId(),
+          productId: id,
+          styleId,
+        })));
+      }
+      if (relations.variants.length > 0) {
+        await tx.insert(productVariants).values(relations.variants.map(variant => ({
+          id: createId(),
+          productId: id,
+          color: variant.color,
+          size: variant.size,
+          available: variant.available,
+        })));
+      }
+
+      return created.id;
+    });
+
+    const created = await this.getProductById(productId);
+    if (!created) throw new Error("Created product could not be loaded");
+    return created;
   }
 
   async copyProduct(productId: string): Promise<Product | undefined> {

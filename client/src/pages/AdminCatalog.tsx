@@ -1710,23 +1710,16 @@ export default function AdminCatalog() {
     },
   });
 
-  const copyProductMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiRequest("POST", `/api/admin/products/${id}/copy`);
-      return res.json() as Promise<Product>;
-    },
-    onSuccess: (copied) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog/category", selectedCategory?.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({ title: "Product copied", description: `"${copied.name}" is ready to edit.` });
-      setIsNew(false);
-      setEditingProduct(copied);
-      setView("edit-product");
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message || "Failed to copy product", variant: "destructive" });
-    },
-  });
+  const openCopyProductDraft = (productId: string, productName: string) => {
+    if (!confirm(`Open an unsaved copy of "${productName}" in a new tab?`)) return;
+
+    const draftWindow = window.open(`/admin/catalog/product/new?copyFrom=${encodeURIComponent(productId)}`, "_blank");
+    if (!draftWindow) {
+      toast({ title: "Unable to open product draft", description: "Allow pop-ups for this site and try again.", variant: "destructive" });
+      return;
+    }
+    draftWindow.focus();
+  };
 
   const moveProductMutation = useMutation({
     mutationFn: async ({ productId, categoryId }: { productId: string; categoryId: string; categoryName: string }) => {
@@ -2654,19 +2647,14 @@ export default function AdminCatalog() {
                       size="icon"
                       variant="ghost"
                       onClick={() => {
-                        if (copyProductMutation.isPending || hasUnsavedCopySource) return;
-                        if (confirm(`Copy "${prod.name}"? A new product will be created with the same catalog details.`)) {
-                          copyProductMutation.mutate(prod.id);
-                        }
+                        openCopyProductDraft(prod.id, prod.name);
                       }}
-                      disabled={copyProductMutation.isPending || hasUnsavedCopySource}
+                      disabled={hasUnsavedCopySource}
                       data-testid={`button-copy-product-${prod.id}`}
                       title={hasUnsavedCopySource ? "Save this product before copying" : "Copy product"}
                       aria-label={hasUnsavedCopySource ? `Save ${prod.name} before copying` : `Copy ${prod.name}`}
                     >
-                      {copyProductMutation.isPending && copyProductMutation.variables === prod.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <Copy className="w-4 h-4" />}
+                      <Copy className="w-4 h-4" />
                     </Button>
                     <Button
                       size="icon"

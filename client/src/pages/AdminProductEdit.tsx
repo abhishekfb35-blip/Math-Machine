@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, useSearch } from "wouter";
 import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   ChevronLeft, ChevronRight, Image as ImageIcon, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, Plus, Trash2,
@@ -18,13 +18,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
-import type { Product, ProductImage, ProductReview, Tag, TagType, ProductVariantOptions, Attributes } from "@shared/types";
+import type { Product, ProductImage, ProductReview, Tag, TagType, ProductVariant, Attributes } from "@shared/types";
 
 export default function AdminProductEdit() {
   const { toast } = useToast();
   const [, params] = useRoute("/admin/catalog/product/:id");
   const [, navigate] = useLocation();
+  const search = useSearch();
   const productId = params?.id;
+  const copyFromId = new URLSearchParams(search).get("copyFrom");
+  const isCopyDraft = productId === "new" && !!copyFromId;
+  const sourceProductId = isCopyDraft ? copyFromId : productId;
 
   const [product, setProduct] = useState<Partial<Product> | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
@@ -32,49 +36,75 @@ export default function AdminProductEdit() {
   const [selectedGenderIds, setSelectedGenderIds] = useState<string[]>([]);
   const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([]);
   const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
+  const [draftVariants, setDraftVariants] = useState<Array<{ color: string; size: string; available: boolean }>>([]);
+  const initializedProductRef = useRef<string | null>(null);
+  const initializedVariantsRef = useRef<string | null>(null);
   const closeAfterSaveRef = useRef(false);
 
+  const { data: allProducts } = useQuery<Product[]>({
+    queryKey: ["/api/admin/products"],
+  });
+
   const { data: fetchedProduct, isLoading } = useQuery<Product>({
-    queryKey: ["/api/admin/products", productId],
+    queryKey: ["/api/admin/products", sourceProductId],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}`);
+      const res = await fetch(`/api/admin/products/${sourceProductId}`);
       if (!res.ok) throw new Error("Product not found");
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId,
   });
 
   useEffect(() => {
-    if (fetchedProduct && !product) {
+    if (!fetchedProduct || (isCopyDraft && !allProducts)) return;
+    const initializationKey = isCopyDraft ? `copy:${copyFromId}` : `edit:${productId}`;
+    if (initializedProductRef.current === initializationKey) return;
+
+    if (isCopyDraft) {
+      const existingSlugs = new Set((allProducts ?? []).map(p => p.slug));
+      const baseSlug = `${fetchedProduct.slug}-copy`;
+      let slug = baseSlug;
+      for (let suffix = 2; existingSlugs.has(slug); suffix++) {
+        slug = `${baseSlug}-${suffix}`;
+      }
+      setProduct({
+        ...fetchedProduct,
+        id: undefined,
+        sku: null,
+        name: `${fetchedProduct.name} (Copy)`,
+        slug,
+      });
+    } else {
       setProduct({ ...fetchedProduct });
     }
-  }, [fetchedProduct]);
+    initializedProductRef.current = initializationKey;
+  }, [fetchedProduct, isCopyDraft, copyFromId, productId, allProducts]);
 
   const { data: productImages } = useQuery<ProductImage[]>({
-    queryKey: ["/api/products", productId, "images"],
+    queryKey: ["/api/products", sourceProductId, "images"],
     queryFn: async () => {
-      const res = await fetch(`/api/products/${productId}/images`);
+      const res = await fetch(`/api/products/${sourceProductId}/images`);
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId,
   });
 
   const { data: productReviews } = useQuery<ProductReview[]>({
-    queryKey: ["/api/products", productId, "reviews"],
+    queryKey: ["/api/products", sourceProductId, "reviews"],
     queryFn: async () => {
-      const res = await fetch(`/api/products/${productId}/reviews`);
+      const res = await fetch(`/api/products/${sourceProductId}/reviews`);
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId && !isCopyDraft,
   });
 
   const { data: productTagsList } = useQuery<Tag[]>({
-    queryKey: ["/api/admin/products", productId, "tags"],
+    queryKey: ["/api/admin/products", sourceProductId, "tags"],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}/tags`);
+      const res = await fetch(`/api/admin/products/${sourceProductId}/tags`);
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId,
   });
 
   const { data: allTags } = useQuery<Tag[]>({
@@ -91,13 +121,13 @@ export default function AdminProductEdit() {
     }
   }, [productTagsList]);
 
-  const { data: variantOptions } = useQuery<ProductVariantOptions>({
-    queryKey: ["/api/admin/products", productId, "variant-options"],
+  const { data: productVariants } = useQuery<ProductVariant[]>({
+    queryKey: ["/api/admin/products", sourceProductId, "variants"],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}/variant-options`);
+      const res = await fetch(`/api/admin/products/${sourceProductId}/variants`);
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId,
   });
 
   const { data: attributes, isLoading: isAttributesLoading } = useQuery<Attributes>({
@@ -105,12 +135,12 @@ export default function AdminProductEdit() {
   });
 
   const { data: productAttrIds } = useQuery<{ audienceIds: string[]; genderIds: string[]; themeIds: string[]; styleIds: string[] }>({
-    queryKey: ["/api/admin/products", productId, "attributes"],
+    queryKey: ["/api/admin/products", sourceProductId, "attributes"],
     queryFn: async () => {
-      const res = await fetch(`/api/admin/products/${productId}/attributes`);
+      const res = await fetch(`/api/admin/products/${sourceProductId}/attributes`);
       return res.json();
     },
-    enabled: !!productId,
+    enabled: !!sourceProductId,
   });
 
   useEffect(() => {
@@ -122,9 +152,35 @@ export default function AdminProductEdit() {
     }
   }, [productAttrIds]);
 
+  useEffect(() => {
+    if (!productVariants || !sourceProductId || initializedVariantsRef.current === sourceProductId) return;
+    setDraftVariants(productVariants.map(({ color, size, available }) => ({ color, size, available })));
+    initializedVariantsRef.current = sourceProductId;
+  }, [productVariants, sourceProductId]);
+
 
   const saveProductMutation = useMutation({
     mutationFn: async (data: Partial<Product>) => {
+      if (isCopyDraft) {
+        const { id: _id, sku: _sku, imageUrl: _imageUrl, ...productData } = data;
+        const images = localImages.map((image, sortOrder) => ({
+          imageUrl: image.imageUrl,
+          sortOrder,
+          isPrimary: sortOrder === 0,
+        }));
+        const res = await apiRequest("POST", "/api/admin/products/from-draft", {
+          product: productData,
+          tagIds: selectedTagIds,
+          audienceIds: selectedAudienceIds,
+          genderIds: selectedGenderIds,
+          themeIds: selectedThemeIds,
+          styleIds: selectedStyleIds,
+          images,
+          variants: draftVariants,
+        });
+        return res.json();
+      }
+
       const res = await apiRequest("PUT", `/api/admin/products/${data.id}`, data);
       const updated = await res.json();
       await Promise.all([
@@ -138,13 +194,17 @@ export default function AdminProductEdit() {
       ]);
       return updated;
     },
-    onSuccess: () => {
+    onSuccess: (savedProduct: Product) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products", productId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({ title: "Product updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/catalog"] });
+      toast({ title: isCopyDraft ? "Product created" : "Product updated", description: isCopyDraft ? "The copied product was saved." : undefined });
       if (closeAfterSaveRef.current) {
         window.close();
         navigate("/admin/catalog");
+      } else if (isCopyDraft) {
+        navigate(`/admin/catalog/product/${savedProduct.id}`);
       }
       closeAfterSaveRef.current = false;
     },
@@ -164,7 +224,7 @@ export default function AdminProductEdit() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", sourceProductId, "images"] });
       toast({ title: "Image added" });
     },
   });
@@ -174,7 +234,7 @@ export default function AdminProductEdit() {
       await apiRequest("DELETE", `/api/admin/products/${productId}/images/${imageId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", sourceProductId, "images"] });
       toast({ title: "Image removed" });
     },
   });
@@ -184,14 +244,16 @@ export default function AdminProductEdit() {
       await apiRequest("PUT", `/api/admin/products/${productId}/images/reorder`, { imageIds });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", productId, "images"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", sourceProductId, "images"] });
     },
   });
 
   const [localImages, setLocalImages] = useState<ProductImage[]>([]);
   useEffect(() => {
-    if (productImages) setLocalImages([...productImages].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
-  }, [productImages]);
+    if (productImages && (!isCopyDraft || localImages.length === 0)) {
+      setLocalImages([...productImages].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+    }
+  }, [productImages, isCopyDraft]);
 
   const moveGalleryImage = (idx: number, direction: -1 | 1) => {
     const targetIdx = idx + direction;
@@ -199,7 +261,9 @@ export default function AdminProductEdit() {
     const updated = [...localImages];
     [updated[idx], updated[targetIdx]] = [updated[targetIdx], updated[idx]];
     setLocalImages(updated);
-    reorderImagesMutation.mutate(updated.map(i => i.id));
+    if (!isCopyDraft) {
+      reorderImagesMutation.mutate(updated.map(i => i.id));
+    }
   };
 
   const addReviewMutation = useMutation({
@@ -232,7 +296,19 @@ export default function AdminProductEdit() {
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
-          addImageMutation.mutate({ imageUrl: data.url });
+          if (isCopyDraft) {
+            setLocalImages(prev => [...prev, {
+              id: `draft-image-${Date.now()}-${i}`,
+              productId: "draft",
+              imageUrl: data.url,
+              sortOrder: prev.length,
+              isPrimary: prev.length === 0,
+              createdAt: null,
+              updatedAt: null,
+            }]);
+          } else {
+            addImageMutation.mutate({ imageUrl: data.url });
+          }
           uploaded++;
         }
       } catch {
@@ -262,11 +338,18 @@ export default function AdminProductEdit() {
         <Button variant="ghost" size="sm" onClick={() => { window.close(); navigate("/admin/catalog"); }} data-testid="button-close-tab">
           <ChevronLeft className="w-4 h-4 mr-1" /> Close
         </Button>
-        <span className="text-xs text-muted-foreground">({product.sku || product.id})</span>
+        <span className="text-xs text-muted-foreground">
+          ({product.sku || (isCopyDraft ? "SKU assigned on save" : product.id)})
+        </span>
       </div>
       <h1 className="text-xl font-bold mb-4" data-testid="text-edit-product-title">
-        Edit: {product.name}
+        {isCopyDraft ? "New product draft" : "Edit"}: {product.name}
       </h1>
+      {isCopyDraft && (
+        <div className="mb-4 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-900" data-testid="badge-unsaved-product-draft">
+          Unsaved copy draft — nothing is saved until you click Create.
+        </div>
+      )}
 
       <div className="space-y-4">
         <div>
@@ -365,7 +448,15 @@ export default function AdminProductEdit() {
                 </div>
                 {/* delete button — above arrow overlay */}
                 <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteImageMutation.mutate({ imageId: img.id }); }}
+                   onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     if (isCopyDraft) {
+                       setLocalImages(prev => prev.filter(image => image.id !== img.id));
+                     } else {
+                       deleteImageMutation.mutate({ imageId: img.id });
+                     }
+                   }}
                   className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
                   data-testid={`button-delete-image-${img.id}`}
                 >
@@ -701,6 +792,33 @@ export default function AdminProductEdit() {
           </div>
         )}
 
+        {isCopyDraft && (
+          <div className="rounded-md border p-3" data-testid="section-product-variants">
+            <Label className="mb-2 block">Product Variants</Label>
+            {draftVariants.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No product variants</p>
+            ) : (
+              <div className="space-y-2">
+                {draftVariants.map((variant, index) => (
+                  <div key={`${variant.color}-${variant.size}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                    <span>{variant.color} · {variant.size}</span>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Checkbox
+                        checked={variant.available}
+                        onCheckedChange={(checked) => setDraftVariants(prev => prev.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, available: checked === true } : item
+                        ))}
+                        data-testid={`checkbox-variant-available-${index}`}
+                      />
+                      Available
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Button
             className="flex-1"
@@ -712,7 +830,7 @@ export default function AdminProductEdit() {
             disabled={saveProductMutation.isPending || !product.name || !product.slug || !product.price}
             data-testid="button-save-product"
           >
-            {saveProductMutation.isPending && !closeAfterSaveRef.current ? "Saving..." : "Save"}
+            {saveProductMutation.isPending && !closeAfterSaveRef.current ? "Saving..." : isCopyDraft ? "Create" : "Save"}
           </Button>
           <Button
             className="flex-1"
@@ -723,11 +841,11 @@ export default function AdminProductEdit() {
             disabled={saveProductMutation.isPending || !product.name || !product.slug || !product.price}
             data-testid="button-save-close-product"
           >
-            {saveProductMutation.isPending && closeAfterSaveRef.current ? "Saving..." : "Save & Close"}
+            {saveProductMutation.isPending && closeAfterSaveRef.current ? "Saving..." : isCopyDraft ? "Create & Close" : "Save & Close"}
           </Button>
         </div>
 
-        {productId && (
+        {productId && !isCopyDraft && (
           <div className="border-t pt-4 mt-4">
             <div className="flex items-center justify-between gap-2 mb-3">
               <h2 className="text-sm font-semibold flex items-center gap-1">
