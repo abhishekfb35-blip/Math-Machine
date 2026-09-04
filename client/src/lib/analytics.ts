@@ -18,8 +18,27 @@ export interface GA4Product {
   quantity?: number;
 }
 
-const trackedGtmPurchaseIds = new Set<string>();
-const GTM_PURCHASE_STORAGE_PREFIX = "turtlelittle:gtm-purchase:";
+const trackedPurchaseIds = new Set<string>();
+// Keep this key stable so orders already recorded by the GTM-only guard remain protected.
+const PURCHASE_TRACKED_STORAGE_PREFIX = "turtlelittle:gtm-purchase:";
+
+function claimPurchase(orderId: string): boolean {
+  if (typeof window === "undefined" || trackedPurchaseIds.has(orderId)) return false;
+
+  const storageKey = `${PURCHASE_TRACKED_STORAGE_PREFIX}${orderId}`;
+  try {
+    if (window.localStorage.getItem(storageKey)) {
+      trackedPurchaseIds.add(orderId);
+      return false;
+    }
+    window.localStorage.setItem(storageKey, "1");
+  } catch {
+    // The in-memory set still prevents duplicates during this page lifecycle.
+  }
+
+  trackedPurchaseIds.add(orderId);
+  return true;
+}
 
 function pushGtmPurchase(
   orderId: string,
@@ -27,20 +46,7 @@ function pushGtmPurchase(
   currency: string,
   items: GA4Product[],
 ) {
-  if (typeof window === "undefined" || trackedGtmPurchaseIds.has(orderId)) return;
-
-  const storageKey = `${GTM_PURCHASE_STORAGE_PREFIX}${orderId}`;
-  try {
-    if (window.localStorage.getItem(storageKey)) {
-      trackedGtmPurchaseIds.add(orderId);
-      return;
-    }
-    window.localStorage.setItem(storageKey, "1");
-  } catch {
-    // The in-memory set still prevents duplicates during this page lifecycle.
-  }
-
-  trackedGtmPurchaseIds.add(orderId);
+  if (typeof window === "undefined") return;
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event: "purchase",
@@ -111,6 +117,8 @@ export function trackPurchase(
   items: GA4Product[],
   currency = "INR",
 ) {
+  if (!claimPurchase(orderId)) return;
+
   gtag("event", "purchase", {
     transaction_id: orderId,
     currency,
