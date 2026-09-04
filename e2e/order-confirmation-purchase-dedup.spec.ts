@@ -63,6 +63,19 @@ async function objectPurchaseEvents(page: Page) {
   );
 }
 
+async function gtagPurchaseEvents(page: Page) {
+  return page.evaluate(() =>
+    (window.dataLayer ?? [])
+      .filter(
+        entry =>
+          typeof entry === "object" &&
+          entry?.[0] === "event" &&
+          entry?.[1] === "purchase",
+      )
+      .map(entry => entry[2]),
+  );
+}
+
 async function expectOnePurchase(page: Page) {
   await expect.poll(async () => (await objectPurchaseEvents(page)).length).toBe(1);
   const [purchase] = await objectPurchaseEvents(page);
@@ -82,6 +95,23 @@ async function expectOnePurchase(page: Page) {
         },
       ],
     },
+  });
+
+  await expect.poll(async () => (await gtagPurchaseEvents(page)).length).toBe(1);
+  const [gtagPurchase] = await gtagPurchaseEvents(page);
+  expect(gtagPurchase).toMatchObject({
+    transaction_id: ORDER_ID,
+    value: 799,
+    currency: "INR",
+    items: [
+      {
+        item_id: "product-1",
+        item_name: "Test T-shirt",
+        item_category: "",
+        price: 799,
+        quantity: 1,
+      },
+    ],
   });
 }
 
@@ -114,11 +144,13 @@ test.describe("order confirmation purchase analytics", () => {
     await page.reload();
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     expect(await objectPurchaseEvents(page)).toHaveLength(0);
+    expect(await gtagPurchaseEvents(page)).toHaveLength(0);
 
     await page.goto("/privacy");
     await page.goto(ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     expect(await objectPurchaseEvents(page)).toHaveLength(0);
+    expect(await gtagPurchaseEvents(page)).toHaveLength(0);
   });
 
   test("uses the page-lifecycle fallback when browser storage is unavailable", async ({ page }) => {
