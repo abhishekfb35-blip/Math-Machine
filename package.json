@@ -8,6 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test:purchase-analytics": "playwright test e2e/order-confirmation-purchase-dedup.spec.ts",
     "test:catalog-sync": "NODE_ENV=test node --import tsx/esm --test tests/catalog-sync-boundary.test.ts",
     "db:push": "drizzle-kit push",
     "test": "node --import tsx/esm --test tests/notification-email.test.ts"
