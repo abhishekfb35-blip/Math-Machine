@@ -83,6 +83,8 @@ export default function AdminPaymentMethods() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/site-config", "payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config/payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config"] });
       setEverSaved(true);
       toast({ title: "Payment methods saved" });
     },

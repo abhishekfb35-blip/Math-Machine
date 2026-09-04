@@ -148,7 +148,9 @@ export default function CheckoutPage() {
   const { data: paymentMethodsConfig } = useQuery<{ value: { codEnabled?: boolean } } | null>({
     queryKey: ["/api/site-config/payment-methods"],
     queryFn: () => fetch("/api/site-config/payment-methods").then(r => r.ok ? r.json() : null),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
   });
   const codEnabled = paymentMethodsConfig?.value?.codEnabled !== false;
 

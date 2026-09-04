@@ -26,6 +26,8 @@ function useSaveConfig(key: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/site-config"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/site-config/${key}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/site-config", key] });
       toast({ title: "Saved", description: "Configuration updated." });
     },
     onError: () => {
