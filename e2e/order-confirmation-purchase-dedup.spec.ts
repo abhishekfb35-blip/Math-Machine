@@ -52,7 +52,18 @@ async function mockOrder(page: Page) {
   });
 }
 
-async function objectPurchaseEvents(page: Page) {
+async function googleAdsPurchaseEvents(page: Page) {
+  return page.evaluate(() =>
+    (window.dataLayer ?? []).filter(
+      entry =>
+        typeof entry === "object" &&
+        !Array.isArray(entry) &&
+        entry?.event === "google_ads_purchase",
+    ),
+  );
+}
+
+async function gtmCustomEventsNamedPurchase(page: Page) {
   return page.evaluate(() =>
     (window.dataLayer ?? []).filter(
       entry =>
@@ -77,10 +88,10 @@ async function gtagPurchaseEvents(page: Page) {
 }
 
 async function expectOnePurchase(page: Page) {
-  await expect.poll(async () => (await objectPurchaseEvents(page)).length).toBe(1);
-  const [purchase] = await objectPurchaseEvents(page);
+  await expect.poll(async () => (await googleAdsPurchaseEvents(page)).length).toBe(1);
+  const [purchase] = await googleAdsPurchaseEvents(page);
   expect(purchase).toMatchObject({
-    event: "purchase",
+    event: "google_ads_purchase",
     ecommerce: {
       transaction_id: ORDER_ID,
       value: 799,
@@ -96,6 +107,7 @@ async function expectOnePurchase(page: Page) {
       ],
     },
   });
+  expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
 
   await expect.poll(async () => (await gtagPurchaseEvents(page)).length).toBe(1);
   const [gtagPurchase] = await gtagPurchaseEvents(page);
@@ -123,7 +135,7 @@ test.describe("order confirmation purchase analytics", () => {
     await mockOrder(page);
   });
 
-  test("emits one object purchase and suppresses remounts and reloads", async ({ page }) => {
+  test("emits one Google Ads purchase and suppresses remounts and reloads", async ({ page }) => {
     await page.goto(ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
@@ -143,13 +155,15 @@ test.describe("order confirmation purchase analytics", () => {
 
     await page.reload();
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
-    expect(await objectPurchaseEvents(page)).toHaveLength(0);
+    expect(await googleAdsPurchaseEvents(page)).toHaveLength(0);
+    expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
 
     await page.goto("/privacy");
     await page.goto(ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
-    expect(await objectPurchaseEvents(page)).toHaveLength(0);
+    expect(await googleAdsPurchaseEvents(page)).toHaveLength(0);
+    expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
   });
 

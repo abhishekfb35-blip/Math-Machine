@@ -5,6 +5,8 @@ declare global {
   }
 }
 
+const GOOGLE_ADS_PURCHASE_EVENT = "google_ads_purchase";
+
 function gtag(...args: any[]) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
   window.gtag(...args);
@@ -49,7 +51,7 @@ function pushGtmPurchase(
   if (typeof window === "undefined") return;
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
-    event: "purchase",
+    event: GOOGLE_ADS_PURCHASE_EVENT,
     ecommerce: {
       transaction_id: orderId,
       value: total,
