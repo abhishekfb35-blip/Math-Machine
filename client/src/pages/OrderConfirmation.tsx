@@ -35,6 +35,7 @@ export default function OrderConfirmation() {
         price: item.productPrice,
         quantity: item.quantity,
       })),
+      order.currency ?? "INR",
     );
   }, [order]);
 
