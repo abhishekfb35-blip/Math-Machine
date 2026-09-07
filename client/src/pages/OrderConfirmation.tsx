@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { useRef, useEffect } from "react";
-import { trackPurchase } from "@/lib/analytics";
+import { trackEvent, trackPurchase } from "@/lib/analytics";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,7 +26,7 @@ export default function OrderConfirmation() {
   useEffect(() => {
     if (!order || purchaseTrackedRef.current) return;
     purchaseTrackedRef.current = true;
-    trackPurchase(
+    const purchaseTracked = trackPurchase(
       order.id,
       order.total,
       order.items.map((item) => ({
@@ -37,6 +37,20 @@ export default function OrderConfirmation() {
       })),
       order.currency ?? "INR",
     );
+    if (purchaseTracked) {
+      const paymentMethod =
+        order.paymentStatus === "cod"
+          ? "cod"
+          : order.paymentStatus === "paid" || order.paymentId || order.razorpayOrderId
+            ? "online"
+            : "other";
+      trackEvent("order_completed", {
+        value: order.total,
+        currency: order.currency ?? "INR",
+        item_count: order.items.reduce((count, item) => count + item.quantity, 0),
+        payment_method: paymentMethod,
+      });
+    }
   }, [order]);
 
   if (isLoading) {

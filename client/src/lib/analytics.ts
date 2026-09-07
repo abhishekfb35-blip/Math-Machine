@@ -2,10 +2,25 @@ declare global {
   interface Window {
     gtag: (...args: any[]) => void;
     dataLayer: any[];
+    umami?: {
+      track(name: string, data?: AnalyticsData): void;
+    };
   }
 }
 
 const GOOGLE_ADS_PURCHASE_EVENT = "google_ads_purchase";
+
+export type AnalyticsData = Record<string, string | number | boolean>;
+
+export function trackEvent(name: string, data?: AnalyticsData): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.umami?.track(name, data);
+  } catch {
+    // Analytics must never interrupt the storefront.
+  }
+}
 
 function gtag(...args: any[]) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
@@ -118,8 +133,8 @@ export function trackPurchase(
   total: number,
   items: GA4Product[],
   currency = "INR",
-) {
-  if (!claimPurchase(orderId)) return;
+): boolean {
+  if (!claimPurchase(orderId)) return false;
 
   gtag("event", "purchase", {
     transaction_id: orderId,
@@ -134,4 +149,5 @@ export function trackPurchase(
     })),
   });
   pushGtmPurchase(orderId, total, currency, items);
+  return true;
 }

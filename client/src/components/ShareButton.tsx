@@ -3,6 +3,7 @@ import { Share2, Copy, Check, MessageCircle, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 interface ShareButtonProps {
   url: string;
@@ -16,13 +17,19 @@ export default function ShareButton({ url, title, text, className, variant = "ic
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const surface = variant === "row" ? "site" : "product";
 
   const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+
+  const trackShare = (method: "native" | "copy" | "whatsapp" | "facebook") => {
+    trackEvent("share_completed", { surface, method });
+  };
 
   const handleShare = async () => {
     if (canNativeShare) {
       try {
         await navigator.share({ url, title, text });
+        trackShare("native");
         return;
       } catch {
       }
@@ -33,6 +40,7 @@ export default function ShareButton({ url, title, text, className, variant = "ic
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(url);
+      trackShare("copy");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({ title: "Link copied!", description: url });
@@ -59,7 +67,7 @@ export default function ShareButton({ url, title, text, className, variant = "ic
         </PopoverTrigger>
         {!canNativeShare && (
           <PopoverContent side="right" align="start" className="w-52 p-1">
-            <ShareOptions copyLink={copyLink} copied={copied} waUrl={waUrl} fbUrl={fbUrl} onClose={() => setOpen(false)} />
+            <ShareOptions copyLink={copyLink} copied={copied} waUrl={waUrl} fbUrl={fbUrl} onClose={() => setOpen(false)} onShare={trackShare} />
           </PopoverContent>
         )}
       </Popover>
@@ -82,19 +90,20 @@ export default function ShareButton({ url, title, text, className, variant = "ic
       </PopoverTrigger>
       {!canNativeShare && (
         <PopoverContent side="bottom" align="end" className="w-48 p-1">
-          <ShareOptions copyLink={copyLink} copied={copied} waUrl={waUrl} fbUrl={fbUrl} onClose={() => setOpen(false)} />
+          <ShareOptions copyLink={copyLink} copied={copied} waUrl={waUrl} fbUrl={fbUrl} onClose={() => setOpen(false)} onShare={trackShare} />
         </PopoverContent>
       )}
     </Popover>
   );
 }
 
-function ShareOptions({ copyLink, copied, waUrl, fbUrl, onClose }: {
+function ShareOptions({ copyLink, copied, waUrl, fbUrl, onClose, onShare }: {
   copyLink: () => void;
   copied: boolean;
   waUrl: string;
   fbUrl: string;
   onClose: () => void;
+  onShare: (method: "whatsapp" | "facebook") => void;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -110,7 +119,7 @@ function ShareOptions({ copyLink, copied, waUrl, fbUrl, onClose }: {
         href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={onClose}
+        onClick={() => { onShare("whatsapp"); onClose(); }}
         className="flex items-center gap-2.5 w-full px-3 py-2 text-sm rounded-sm hover:bg-accent transition-colors"
         data-testid="share-option-whatsapp"
       >
@@ -121,7 +130,7 @@ function ShareOptions({ copyLink, copied, waUrl, fbUrl, onClose }: {
         href={fbUrl}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={onClose}
+        onClick={() => { onShare("facebook"); onClose(); }}
         className="flex items-center gap-2.5 w-full px-3 py-2 text-sm rounded-sm hover:bg-accent transition-colors"
         data-testid="share-option-facebook"
       >

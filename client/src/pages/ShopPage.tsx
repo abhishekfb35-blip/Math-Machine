@@ -15,6 +15,7 @@ import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product, Attributes, Category } from "@shared/types";
 import { buildDefaultThemeGroups, type ThemeGroupsConfig } from "@shared/themeGroups";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
+import { trackEvent } from "@/lib/analytics";
 
 function GridSkeleton() {
   return (
@@ -627,6 +628,8 @@ export default function ShopPage() {
   const [activeTag,     setActiveTag]     = useState<string>("");
   const [searchQuery,   setSearchQuery]   = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
+  const lastTrackedSearchRef = useRef<string>("");
+  const searchHydratedRef = useRef(false);
 
   const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
   const { data: categories }  = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -695,7 +698,12 @@ export default function ShopPage() {
     const s = p.get("style");
     setActiveStyles(s ? s.split(",").filter(Boolean) : []);
     setActiveTag(p.get("tag") || "");
-    setSearchQuery(p.get("q") || "");
+    const query = p.get("q") || "";
+    setSearchQuery(query);
+    if (!searchHydratedRef.current) {
+      lastTrackedSearchRef.current = query.trim();
+      searchHydratedRef.current = true;
+    }
   }, [searchString, audienceFilters]);
 
   // Write state → URL
@@ -720,14 +728,139 @@ export default function ShopPage() {
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
   }, [navigate]);
 
-  const handleCategoryChange = (cat: string) => pushURL(cat, activeFilter, activeGenders, activeThemes, activeStyles, "", searchQuery);
-  const handleFilterChange   = (f: string)   => pushURL(activeCategory, f, activeGenders, activeThemes, activeStyles, "", searchQuery);
+  type FilterState = {
+    category: string;
+    audience: string;
+    genders: string[];
+    themes: string[];
+    styles: string[];
+    query: string;
+    tag?: string;
+  };
+
+  const getFilterResultCount = (state: FilterState): number | undefined => {
+    if (!products) return undefined;
+    const category = categoryOptions.find(c => c.name.toLowerCase() === state.category);
+    const query = state.query.trim().toLowerCase();
+    let filtered = products.filter(product => {
+      if (category && product.categoryId !== category.id) return false;
+      if (state.audience !== "all" && !(product.audience ?? []).includes(state.audience)) return false;
+      if (state.genders.length && !(product.genders ?? []).some(value => state.genders.includes(value))) return false;
+      if (state.themes.length && !(product.themes ?? []).some(value => state.themes.includes(value))) return false;
+      if (state.styles.length && !(product.styles ?? []).some(value => state.styles.includes(value))) return false;
+      if (query && !(
+        product.name.toLowerCase().includes(query) ||
+        product.sku?.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query)
+      )) return false;
+      return true;
+    });
+
+    if (state.tag) {
+      const tagLower = state.tag.toLowerCase();
+      const section = shopSections.find(
+        entry => (entry.tag ?? entry.label).toLowerCase() === tagLower,
+      );
+      if (!section) return 0;
+      if (section.categories?.length) {
+        const categoryIds = categoryOptions
+          .filter(entry => section.categories!.includes(entry.slug))
+          .map(entry => entry.id);
+        if (categoryIds.length) {
+          filtered = filtered.filter(product => categoryIds.includes(product.categoryId));
+        }
+      }
+      if (section.audience?.length) {
+        filtered = filtered.filter(product =>
+          (product.audience ?? []).some(value => section.audience!.includes(value)),
+        );
+      }
+      if (section.genders?.length) {
+        filtered = filtered.filter(product =>
+          (product.genders ?? []).some(value => section.genders!.includes(value)),
+        );
+      }
+      if (section.themes?.length) {
+        filtered = filtered.filter(product =>
+          (product.themes ?? []).some(value => section.themes!.includes(value)),
+        );
+      }
+      if (section.styles?.length) {
+        filtered = filtered.filter(product =>
+          (product.styles ?? []).some(value => section.styles!.includes(value)),
+        );
+      }
+      if (section.tags?.length) {
+        filtered = filtered.filter(product =>
+          (product.tagNames ?? []).some(productTag =>
+            section.tags!.some(sectionTag =>
+              sectionTag.toLowerCase() === productTag.toLowerCase(),
+            ),
+          ),
+        );
+      }
+    }
+
+    return filtered.length;
+  };
+
+  const trackFilterApplied = (
+    filterType: "category" | "audience" | "gender" | "theme" | "style" | "search" | "section",
+    state: FilterState,
+  ) => {
+    const resultCount = getFilterResultCount(state);
+    const data = {
+      filter_type: filterType,
+      active_filter_count:
+        (state.category ? 1 : 0) +
+        (state.audience !== "all" ? 1 : 0) +
+        state.genders.length +
+        state.themes.length +
+        state.styles.length +
+        (state.tag ? 1 : 0) +
+        (state.query.trim() ? 1 : 0),
+      ...(resultCount !== undefined ? { result_count: resultCount } : {}),
+      ...(filterType === "search"
+        ? { has_search: state.query.trim().length > 0, query_length: state.query.trim().length }
+        : {}),
+      ...(filterType === "section" ? { has_section: Boolean(state.tag) } : {}),
+    };
+    trackEvent("filter_applied", data);
+  };
+
+  const handleCategoryChange = (cat: string) => {
+    if (cat !== activeCategory) {
+      trackFilterApplied("category", {
+        category: cat, audience: activeFilter, genders: activeGenders,
+        themes: activeThemes, styles: activeStyles, query: searchQuery,
+      });
+    }
+    pushURL(cat, activeFilter, activeGenders, activeThemes, activeStyles, "", searchQuery);
+  };
+  const handleFilterChange = (f: string) => {
+    if (f !== activeFilter) {
+      trackFilterApplied("audience", {
+        category: activeCategory, audience: f, genders: activeGenders,
+        themes: activeThemes, styles: activeStyles, query: searchQuery,
+      });
+    }
+    pushURL(activeCategory, f, activeGenders, activeThemes, activeStyles, "", searchQuery);
+  };
 
   const toggleGender = (g: string) => {
     const next = activeGenders.includes(g) ? activeGenders.filter(x => x !== g) : [...activeGenders, g];
+    trackFilterApplied("gender", {
+      category: activeCategory, audience: activeFilter, genders: next,
+      themes: activeThemes, styles: activeStyles, query: searchQuery,
+    });
     pushURL(activeCategory, activeFilter, next, activeThemes, activeStyles, "", searchQuery);
   };
   const setThemes = (next: string[]) => {
+    if (next.length === activeThemes.length && next.every(value => activeThemes.includes(value))) return;
+    trackFilterApplied("theme", {
+      category: activeCategory, audience: activeFilter, genders: activeGenders,
+      themes: next, styles: activeStyles, query: searchQuery,
+    });
     pushURL(activeCategory, activeFilter, activeGenders, next, activeStyles, "", searchQuery);
   };
   const toggleTheme = (t: string) => {
@@ -736,13 +869,63 @@ export default function ShopPage() {
   };
   const toggleStyle = (s: string) => {
     const next = activeStyles.includes(s) ? activeStyles.filter(x => x !== s) : [...activeStyles, s];
+    trackFilterApplied("style", {
+      category: activeCategory, audience: activeFilter, genders: activeGenders,
+      themes: activeThemes, styles: next, query: searchQuery,
+    });
     pushURL(activeCategory, activeFilter, activeGenders, activeThemes, next, "", searchQuery);
   };
 
-  const handleTagDrillDown  = (tag: string) => pushURL(activeCategory, "all", [], [], [], tag, "");
-  const handleBackToAll     = () => pushURL(activeCategory, "all", [], [], [], "", "");
+  const handleTagDrillDown = (tag: string) => {
+    trackFilterApplied("section", {
+      category: activeCategory,
+      audience: "all",
+      genders: [],
+      themes: [],
+      styles: [],
+      query: "",
+      tag,
+    });
+    pushURL(activeCategory, "all", [], [], [], tag, "");
+  };
+  const handleBackToAll = () => {
+    if (activeTag) {
+      trackFilterApplied("section", {
+        category: activeCategory,
+        audience: "all",
+        genders: [],
+        themes: [],
+        styles: [],
+        query: "",
+        tag: "",
+      });
+    }
+    pushURL(activeCategory, "all", [], [], [], "", "");
+  };
   const handleSearchChange  = (q: string) => {
+    if (q === searchQuery) return;
     pushURL(activeCategory, activeFilter, activeGenders, activeThemes, activeStyles, q ? "" : activeTag, q);
+  };
+  const trackCurrentSearch = () => {
+    const normalizedQuery = searchQuery.trim();
+    if (normalizedQuery === lastTrackedSearchRef.current) return;
+    lastTrackedSearchRef.current = normalizedQuery;
+    trackFilterApplied("search", {
+      category: activeCategory, audience: activeFilter, genders: activeGenders,
+      themes: activeThemes, styles: activeStyles, query: normalizedQuery,
+      tag: normalizedQuery ? "" : activeTag,
+    });
+  };
+  const clearSearch = () => {
+    if (!searchQuery) return;
+    handleSearchChange("");
+    if (lastTrackedSearchRef.current !== "") {
+      lastTrackedSearchRef.current = "";
+      trackFilterApplied("search", {
+        category: activeCategory, audience: activeFilter, genders: activeGenders,
+        themes: activeThemes, styles: activeStyles, query: "", tag: activeTag,
+      });
+    }
   };
 
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -946,7 +1129,40 @@ export default function ShopPage() {
 
   const tagLabel = shopSections.find(s => (s.tag ?? s.label).toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
 
-  const handleClearFilters = () => pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
+  const handleClearGenders = () => {
+    if (!activeGenders.length) return;
+    trackFilterApplied("gender", {
+      category: activeCategory, audience: activeFilter, genders: [],
+      themes: activeThemes, styles: activeStyles, query: searchQuery,
+    });
+    pushURL(activeCategory, activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery);
+  };
+
+  const handleClearStyles = () => {
+    if (!activeStyles.length) return;
+    trackFilterApplied("style", {
+      category: activeCategory, audience: activeFilter, genders: activeGenders,
+      themes: activeThemes, styles: [], query: searchQuery,
+    });
+    pushURL(activeCategory, activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery);
+  };
+
+  const handleClearFilters = () => {
+    const state = {
+      category: activeCategory,
+      audience: "all",
+      genders: [],
+      themes: [],
+      styles: [],
+      query: searchQuery,
+      tag: activeTag,
+    };
+    if (activeFilter !== "all") trackFilterApplied("audience", state);
+    if (activeGenders.length) trackFilterApplied("gender", state);
+    if (activeThemes.length) trackFilterApplied("theme", state);
+    if (activeStyles.length) trackFilterApplied("style", state);
+    pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
+  };
 
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollStateRef = useRef(false);
@@ -992,12 +1208,20 @@ export default function ShopPage() {
               placeholder="Search products by name, SKU..."
               value={searchQuery}
               onChange={e => handleSearchChange(e.target.value)}
+              onBlur={trackCurrentSearch}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  trackCurrentSearch();
+                  e.currentTarget.blur();
+                }
+              }}
               className="pl-9 pr-9"
               data-testid="input-search-products"
             />
             {searchQuery && (
               <button
-                onClick={() => handleSearchChange("")}
+                onClick={clearSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 data-testid="button-clear-search"
               >
@@ -1067,7 +1291,7 @@ export default function ShopPage() {
                 options={genderOptions}
                 selected={activeGenders}
                 onToggle={toggleGender}
-                onClear={() => pushURL(activeCategory, activeFilter, [], activeThemes, activeStyles, activeTag, searchQuery)}
+                onClear={handleClearGenders}
                 counts={genderCounts}
                 testIdPrefix="filter-gender"
               />
@@ -1083,7 +1307,7 @@ export default function ShopPage() {
                 options={styleOptions}
                 selected={activeStyles}
                 onToggle={toggleStyle}
-                onClear={() => pushURL(activeCategory, activeFilter, activeGenders, activeThemes, [], activeTag, searchQuery)}
+                onClear={handleClearStyles}
                 counts={styleCounts}
                 testIdPrefix="filter-style"
               />

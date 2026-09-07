@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { showSignInModal } from "@/components/SignInModal";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { trackBeginCheckout } from "@/lib/analytics";
+import { trackBeginCheckout, trackEvent } from "@/lib/analytics";
 
 interface CartData {
   id: string;
@@ -186,9 +186,15 @@ export default function CheckoutPage() {
         })),
       cart.total,
     );
+    trackEvent("checkout_started", {
+      item_count: cart.itemCount,
+      value: cart.total,
+      currency,
+      has_discount: cart.discount > 0,
+    });
     // Log checkout started to DB (fire-and-forget)
     apiRequest("POST", "/api/cart/checkout-started").catch(() => {});
-  }, [cart]);
+  }, [cart, currency]);
 
   const handleEmailBlur = useCallback((email: string) => {
     const trimmed = email.trim();

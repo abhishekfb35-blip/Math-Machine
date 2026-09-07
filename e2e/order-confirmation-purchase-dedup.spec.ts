@@ -87,6 +87,16 @@ async function gtagPurchaseEvents(page: Page) {
   );
 }
 
+async function customAnalyticsEvents(page: Page, name: string) {
+  return page.evaluate(
+    eventName =>
+      ((window as any).__customAnalyticsEvents ?? []).filter(
+        (entry: { name?: string }) => entry.name === eventName,
+      ),
+    name,
+  );
+}
+
 async function expectOnePurchase(page: Page) {
   await expect.poll(async () => (await googleAdsPurchaseEvents(page)).length).toBe(1);
   const [purchase] = await googleAdsPurchaseEvents(page);
@@ -127,10 +137,32 @@ async function expectOnePurchase(page: Page) {
   });
 }
 
+async function expectOneOrderCompleted(page: Page) {
+  await expect.poll(async () => (await customAnalyticsEvents(page, "order_completed")).length).toBe(1);
+  const [event] = await customAnalyticsEvents(page, "order_completed");
+  expect(event).toEqual({
+    name: "order_completed",
+    data: {
+      value: 799,
+      currency: "INR",
+      item_count: 1,
+      payment_method: "cod",
+    },
+  });
+  expect(JSON.stringify(event)).not.toContain(ORDER_ID);
+  expect(JSON.stringify(event)).not.toContain(order.customerEmail);
+}
+
 test.describe("order confirmation purchase analytics", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.dataLayer = [];
+      (window as any).__customAnalyticsEvents = [];
+      (window as any).umami = {
+        track(name: string, data?: Record<string, string | number | boolean>) {
+          (window as any).__customAnalyticsEvents.push({ name, data });
+        },
+      };
     });
     await mockOrder(page);
   });
@@ -139,6 +171,7 @@ test.describe("order confirmation purchase analytics", () => {
     await page.goto(ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
+    await expectOneOrderCompleted(page);
     await expect(page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).resolves.toBe("1");
 
     await page.evaluate(() => {
@@ -152,12 +185,14 @@ test.describe("order confirmation purchase analytics", () => {
     }, ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
+    await expectOneOrderCompleted(page);
 
     await page.reload();
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     expect(await googleAdsPurchaseEvents(page)).toHaveLength(0);
     expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
+    expect(await customAnalyticsEvents(page, "order_completed")).toHaveLength(0);
 
     await page.goto("/privacy");
     await page.goto(ORDER_PATH);
@@ -165,6 +200,7 @@ test.describe("order confirmation purchase analytics", () => {
     expect(await googleAdsPurchaseEvents(page)).toHaveLength(0);
     expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
+    expect(await customAnalyticsEvents(page, "order_completed")).toHaveLength(0);
   });
 
   test("uses the page-lifecycle fallback when browser storage is unavailable", async ({ page }) => {
@@ -188,6 +224,7 @@ test.describe("order confirmation purchase analytics", () => {
     await page.goto(ORDER_PATH);
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
+    await expectOneOrderCompleted(page);
 
     await page.evaluate(() => {
       history.pushState({}, "", "/privacy");
@@ -198,6 +235,25 @@ test.describe("order confirmation purchase analytics", () => {
       history.pushState({}, "", path);
       window.dispatchEvent(new PopStateEvent("popstate"));
     }, ORDER_PATH);
+    await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
+    await expectOnePurchase(page);
+    await expectOneOrderCompleted(page);
+  });
+
+  test("analytics failures never interrupt order confirmation", async ({ page }) => {
+    await page.goto("/privacy");
+    await page.evaluate(() => {
+      (window as any).umami = {
+        track() {
+          throw new Error("Analytics unavailable");
+        },
+      };
+    });
+    await page.evaluate(path => {
+      history.pushState({}, "", path);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }, ORDER_PATH);
+
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
   });

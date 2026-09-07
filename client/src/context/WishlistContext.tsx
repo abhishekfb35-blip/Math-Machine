@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/analytics";
 
 const LS_KEY = "tl_wishlist";
 
@@ -15,10 +16,20 @@ function getLocalIds(): string[] {
   }
 }
 
-function setLocalIds(ids: string[]) {
+function setLocalIds(ids: string[]): boolean {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(ids));
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getWishlistSource(): "product_page" | "wishlist_page" | "product_card" {
+  const pathname = window.location.pathname;
+  if (pathname.includes("/wishlist")) return "wishlist_page";
+  if (pathname.includes("/product/")) return "product_page";
+  return "product_card";
 }
 
 interface WishlistContextValue {
@@ -79,15 +90,20 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const currently = wishlistIds.has(productId);
 
     if (!isAuthenticated) {
-      setWishlistIds(prev => {
-        const next = new Set(prev);
-        if (currently) next.delete(productId);
-        else next.add(productId);
-        setLocalIds([...next]);
-        return next;
-      });
+      const next = new Set(wishlistIds);
+      if (currently) next.delete(productId);
+      else next.add(productId);
+      const localUpdateSucceeded = setLocalIds([...next]);
+      setWishlistIds(next);
       if (!currently) {
         window.dispatchEvent(new CustomEvent("wishlist:item-added"));
+      }
+      if (localUpdateSucceeded) {
+        trackEvent(currently ? "wishlist_item_removed" : "wishlist_item_added", {
+          product_id: productId,
+          authenticated: false,
+          source: getWishlistSource(),
+        });
       }
       return;
     }
@@ -105,6 +121,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       } else {
         await apiRequest("POST", "/api/wishlist", { productId });
       }
+      trackEvent(currently ? "wishlist_item_removed" : "wishlist_item_added", {
+        product_id: productId,
+        authenticated: true,
+        source: getWishlistSource(),
+      });
     } catch {
       setWishlistIds(prev => {
         const next = new Set(prev);

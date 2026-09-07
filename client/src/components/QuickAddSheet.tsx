@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { trackAddToCart } from "@/lib/analytics";
+import { trackAddToCart, trackEvent } from "@/lib/analytics";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
 import NudgeCard from "@/components/NudgeCard";
@@ -92,7 +92,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const hasVariantConfig = (variantOptions?.sizes?.length ?? 0) > 0;
   const showVariantSelectors = hasVariantConfig;
 
-  const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes.find(s => s.name === selectedSizeName);
+  const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes?.find(s => s.name === selectedSizeName);
 
   const isSizeAvailable = (_sizeName: string): boolean => true;
 
@@ -180,6 +180,17 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         },
         quantity,
       );
+       trackEvent("cart_item_added", {
+         product_id: product!.id,
+         quantity,
+         has_personalization: audienceConfig?.type === "couples"
+           ? Boolean(gentlemanName.trim() || ladyName.trim())
+           : audienceConfig?.type === "single"
+             ? Boolean(personalizationName.trim())
+             : false,
+         has_variant: Boolean(selectedSizeName || Object.values(sizeColorMap).some(Boolean)),
+         source: "quick_add",
+       });
       toast({
         title: "Added to cart",
         description: `${product!.name} has been added to your cart.`,

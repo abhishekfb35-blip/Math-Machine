@@ -7,7 +7,22 @@ import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
+import { trackEvent } from "@/lib/analytics";
 import type { Product } from "@shared/types";
+
+type ProductPlacement = "home" | "shop" | "collection" | "category" | "related" | "wishlist" | "unknown";
+
+function getProductPlacement(): ProductPlacement {
+  if (typeof window === "undefined") return "unknown";
+  const pathname = window.location.pathname;
+  if (pathname === "/") return "home";
+  if (pathname === "/shop" || pathname.startsWith("/shop/")) return "shop";
+  if (pathname === "/collection" || pathname.startsWith("/collection/")) return "collection";
+  if (pathname === "/category" || pathname.startsWith("/category/")) return "category";
+  if (pathname === "/wishlist" || pathname.startsWith("/wishlist/")) return "wishlist";
+  if (pathname === "/product" || pathname.startsWith("/product/")) return "related";
+  return "unknown";
+}
 
 interface ProductCardNewProps {
   product: Product;
@@ -25,7 +40,13 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
       className="group overflow-visible relative"
       data-testid={`card-product-${product.id}`}
     >
-      <Link href={`/product/${product.slug}`}>
+      <Link
+        href={`/product/${product.slug}`}
+        onClick={() => trackEvent("product_selected", {
+          product_id: product.id,
+          placement: getProductPlacement(),
+        })}
+      >
         <div className="aspect-square overflow-hidden rounded-t-md cursor-pointer relative bg-muted">
           <img
             src={getProductImageUrl(product.imageUrl, "medium")}
@@ -57,7 +78,13 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
         />
       </button>
       <div className="p-3 space-y-1.5">
-        <Link href={`/product/${product.slug}`}>
+        <Link
+          href={`/product/${product.slug}`}
+          onClick={() => trackEvent("product_selected", {
+            product_id: product.id,
+            placement: getProductPlacement(),
+          })}
+        >
           <h3
             className="text-xs md:text-sm font-medium leading-tight line-clamp-2 cursor-pointer hover:text-primary transition-colors"
             data-testid={`text-product-name-${product.id}`}
@@ -92,6 +119,10 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+               trackEvent("quick_add_opened", {
+                 product_id: product.id,
+                 placement: getProductPlacement(),
+               });
               onQuickAdd(product);
             }}
             data-testid={`button-quickadd-${product.id}`}

@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCartGate } from "@/context/CartGateContext";
-import { trackProductView, trackAddToCart } from "@/lib/analytics";
+import { trackProductView, trackAddToCart, trackEvent } from "@/lib/analytics";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -300,6 +300,17 @@ export default function ProductPage() {
         price: effectiveSellingPrice,
         category: category?.name,
       });
+       trackEvent("cart_item_added", {
+         product_id: product!.id,
+         quantity: 1,
+         has_personalization: audienceConfig?.type === "couples"
+           ? Boolean(gentlemanName.trim() || ladyName.trim())
+           : audienceConfig?.type === "single"
+             ? Boolean(personalizationName.trim())
+             : false,
+         has_variant: Boolean(selectedSize || Object.values(sizeColorMap).some(Boolean)),
+         source: "product_page",
+       });
       toast({
         title: "Added to cart",
         description: `${product!.name} has been added to your cart.`,
