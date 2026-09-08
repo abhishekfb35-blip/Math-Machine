@@ -7,6 +7,7 @@ import { registerCartRoutes } from "./cart";
 import { registerCheckoutRoutes } from "./checkout";
 import { registerAuthRoutes } from "./auth";
 import { registerSeoRoutes } from "./seo";
+import { registerMerchantRoutes } from "./merchant";
 import { registerConsentRoutes } from "./consent";
 import { registerAdminCatalogRoutes } from "./admin/catalog";
 import { registerAdminOrderRoutes } from "./admin/orders";
@@ -49,6 +50,7 @@ export async function registerRoutes(
   ], strictLimiter);
 
   registerSeoRoutes(app);
+  registerMerchantRoutes(app);
   registerHomeRoutes(app);
   registerProductRoutes(app);
   registerCartRoutes(app);
