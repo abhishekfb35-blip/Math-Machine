@@ -1,0 +1,36 @@
+For an e-commerce platform like turtlelittle.com, Razorpay and major Indian banks enforce very strict automated compliance checks. If any required policy pages or structural details are missing or incorrectly formatted, Razorpay will automatically restrict major banking options (like HDFC and ICICI Net Banking) on your live account. [1] 
+Based on a compliance review of turtlelittle.com, here is the status of your website's compliance against the mandatory requirements set by the Reserve Bank of India (RBI), Razorpay, and card networks: [1, 2, 3] 
+------------------------------
+## ⚠️ Critical Gaps Found (High Risk of Rejection)
+To avoid payment gateway restrictions, your website must display four standalone, easily accessible legal pages in the footer menu. Currently, your site has a few major gaps: [1] 
+
+* 
+* Missing Terms & Conditions / Terms of Service Page: This page is mandatory for all Indian payment gateways to define user guidelines, intellectual property rules, and transaction jurisdictions.
+* Missing Privacy Policy Page: Under the Information Technology Act and RBI's merchant guidelines, you must explicitly state how you store, protect, and use your customer's data. [3] 
+* Incomplete Contact Details: Razorpay and banks require a transparent "Contact Us" section. While your brand relies on a phone number and WhatsApp for inquiries on social platforms, your website checkout/footer must prominently display your legal corporate entity name, registered email address, and a physical office address. [3, 4] 
+* 
+
+------------------------------
+## ➡️ Compliance Status Checklist
+
+| Requirement | Status | What Razorpay & Banks Look For |
+|---|---|---|
+| Business Model & Product Legality | ✅ Compliant | Personalised luxury towels, blankets, and bathrobes are standard, physical D2C consumer goods. Your industry does not fall under banned or high-risk sectors (like gambling, crypto, or unregulated supplements). |
+| Shipping Policy | ✅ Compliant | Your site has a visible Shipping Policy Page[](https://turtlelittle.com/shipping). Ensure it clearly states estimated delivery timelines across India and international regions. |
+| Cancellation & Refund Policy | ⚠️ Needs Review | Because you sell highly customized/embroidered goods, your cancellation policy must clearly state whether custom items can be returned. If custom items are non-refundable, you must explicitly write: "Due to the personalized nature of our products, orders cannot be cancelled or returned once production begins, except in cases of manufacturing defects." |
+| Corporate Identity (KYC) | ⚠️ Needs Review | Ensure the legal business name associated with your website (e.g., Pandora Innovations, as registered on Amazon/corporate directories) perfectly matches the name on your GSTIN/PAN and the Bank Account connected to your Razorpay dashboard. Mismatched legal names trigger immediate banking holds. |
+
+------------------------------
+## 💡 Proactive Resolution Plan
+If Razorpay’s automated risk engine has disabled HDFC and ICICI on your dashboard due to policy checks, you can resolve this within 24 to 48 hours: [1] 
+
+   1. Generate Missing Pages: Use the automated policy page generator inside your Razorpay Dashboard under Account & Settings → Business Website Details to create accurate Privacy Policy and Terms of Service documents instantly. [1] 
+   2. Add a Complete Footer: Link all four pages (Terms, Privacy, Shipping, Refund) along with your business email and physical registered address in the footer of turtlelittle.com. [1] 
+   3. Trigger a Re-verification: Once the links are live, go to your [Razorpay Business Website Details Documentation](https://razorpay.com/docs/payments/dashboard/account-settings/business-website-details) area, update your URL, and submit it for an automated scan. [1] 
+
+Would you like me to help you draft the exact legal text for your customized product Refund Policy or your missing Terms & Conditions page to get your gateway fully active?
+
+[1] [https://razorpay.com](https://razorpay.com/docs/payments/dashboard/account-settings/business-website-details)
+[2] https://turtlelittle.com
+[3] [https://razorpay.com](https://razorpay.com/blog/payment-gateway-compliance/)
+[4] [https://www.linkedin.com](https://www.linkedin.com/company/turtle-little-high-street-fashion)
