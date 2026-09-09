@@ -11,3 +11,4 @@
 - [Playwright textarea newlines](playwright-textarea-newlines.md) — normalize API CRLF text to LF when asserting browser textarea values.
 - [GA4 and GTM event separation](ga4-gtm-event-separation.md) — Ads-only GTM events need distinct names because direct gtag commands also enter GTM's data layer.
 - [Test rate-limit isolation](browser-test-api-throttling.md) — browser automation needs test-only limiter isolation while production request protections remain unchanged.
+- [Service worker safe takeover](service-worker-safe-takeover.md) — warm and validate a build-specific app shell before activation; never replace the known-good offline cache early.

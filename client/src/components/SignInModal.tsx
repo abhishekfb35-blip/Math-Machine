@@ -209,9 +209,9 @@ export default function SignInModal() {
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="absolute z-10 top-3 right-3 inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
           data-testid="signin-modal-close"
-          aria-label="Close"
+          aria-label="Close sign-in"
         >
           <X className="w-5 h-5" />
         </button>
