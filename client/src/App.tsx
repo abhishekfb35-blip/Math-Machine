@@ -67,6 +67,7 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import RefundPolicyPage from "@/pages/RefundPolicyPage";
 import AboutPage from "@/pages/AboutPage";
 import ShippingPolicyPage from "@/pages/ShippingPolicyPage";
+import ContactPage from "@/pages/ContactPage";
 import NotFound from "@/pages/not-found";
 
 function ScrollToTop() {
@@ -127,6 +128,7 @@ function Router() {
       <Route path="/refund-policy" component={RefundPolicyPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/shipping" component={ShippingPolicyPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route component={NotFound} />
     </Switch>
   );

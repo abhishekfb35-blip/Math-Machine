@@ -87,6 +87,9 @@ export default function Footer() {
             <Link href="/about" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-about">
               About Us
             </Link>
+            <Link href="/contact" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-contact">
+              Contact Us
+            </Link>
             <Link href="/terms" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-terms">
               Terms & Conditions
             </Link>

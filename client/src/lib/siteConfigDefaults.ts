@@ -286,7 +286,7 @@ export const defaultFooter: FooterConfig = {
   whatsappUrl: "https://wa.me/919990079722",
   email: "hello@turtlelittle.com",
   phone: "+91 99900 79722",
-  address: "New Delhi, India",
+  address: "1st Floor, B-30, Sector - 8, Noida, Uttar Pradesh, India - 201301",
   shopLinks: [
     { label: "Towels", href: "/shop#towels" },
     { label: "Bathrobes", href: "/shop#bathrobes" },
