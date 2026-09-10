@@ -306,6 +306,26 @@ test.describe("Signup popup positioning", () => {
     await page.getByTestId("btn-dismiss-phone-form").click();
   });
 
+  test("keeps signup close controls unboxed with rounded focus treatment", async ({ page }) => {
+    await page.setViewportSize({ width: 400, height: 720 });
+    await openPopup(page);
+
+    const nudgeClose = page.getByTestId("btn-dismiss-nudge");
+    await expect(nudgeClose).toHaveCSS("border-radius", "9999px");
+    await expect(nudgeClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+
+    await openPhoneForm(page);
+    const phoneClose = page.getByTestId("btn-dismiss-phone-form");
+    await expect(phoneClose).toHaveCSS("border-radius", "9999px");
+    await expect(phoneClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await completeConsentGate(page);
+    await page.getByTestId("btn-signup-phone-submit").click();
+
+    const validationClose = page.getByTestId("btn-dismiss-signup-phone-validation");
+    await expect(validationClose).toHaveCSS("border-radius", "9999px");
+    await expect(validationClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  });
+
   test("enables consent immediately when the configured terms fit without scrolling", async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 720 });
     await openPopup(page, { consentText: "A short configured consent statement." });

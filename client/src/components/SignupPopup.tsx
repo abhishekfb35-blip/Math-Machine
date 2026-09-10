@@ -643,7 +643,7 @@ export default function SignupPopup() {
                 />
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-0.5 -mr-1 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                   className="shrink-0 -mt-0.5 -mr-1 flex h-8 w-8 touch-manipulation items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-nudge"
                 >
@@ -689,7 +689,7 @@ export default function SignupPopup() {
                 </div>
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 -mt-1 -mr-1 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                   className="shrink-0 -mt-1 -mr-1 flex h-8 w-8 touch-manipulation items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-phone-form"
                 >
@@ -884,7 +884,7 @@ export default function SignupPopup() {
             <button
               type="button"
               aria-label="Dismiss validation message"
-              className="shrink-0 rounded p-1 text-destructive-foreground/80 hover:bg-white/15 hover:text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-white"
+               className="shrink-0 rounded-full border-0 bg-transparent p-1 text-destructive-foreground/80 transition-colors hover:bg-white/15 hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-destructive"
               onClick={(event) => {
                 event.stopPropagation();
                 dismissPhoneValidation();
