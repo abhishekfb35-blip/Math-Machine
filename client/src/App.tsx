@@ -78,12 +78,23 @@ function ScrollToTop() {
   return null;
 }
 
+function LegacyKidsBathTowelsRedirect() {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    navigate("/shop?tag=kids-towels", { replace: true });
+  }, [navigate]);
+
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/shop" component={ShopPage} />
       <Route path="/collection/:audience" component={CollectionPage} />
+      <Route path="/category/kids-bath-towels" component={LegacyKidsBathTowelsRedirect} />
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/product/:slug" component={ProductPage} />
       <Route path="/cart" component={CartPage} />

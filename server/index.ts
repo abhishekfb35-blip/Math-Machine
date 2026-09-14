@@ -279,6 +279,10 @@ function startRateLimitStatsScheduler() {
 (async () => {
   await registerRoutes(httpServer, app);
 
+  app.get("/category/kids-bath-towels", (_req, res) => {
+    res.redirect(301, "/shop?tag=kids-towels");
+  });
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
