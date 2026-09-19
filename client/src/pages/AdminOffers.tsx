@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye, Banknote } from "lucide-react";
+import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye, Banknote, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
 import NudgeCard from "@/components/NudgeCard";
@@ -361,6 +361,8 @@ interface NudgeCardPreviewProps {
 }
 
 function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCardPreviewProps) {
+  const [replayKey, setReplayKey] = useState(0);
+
   if (configLoading) {
     return (
       <Card className="p-6 space-y-4" data-testid="nudge-card-preview-section">
@@ -424,25 +426,42 @@ function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCar
 
   return (
     <Card className="p-6 space-y-6" data-testid="nudge-card-preview-section">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Eye className="w-5 h-5 text-primary" />
           <h2 className="text-base font-semibold">NudgeCard State Preview</h2>
         </div>
-        {isUnsaved && (
-          <span
-            className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-300 dark:border-amber-700"
-            data-testid="nudge-preview-unsaved-badge"
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setReplayKey((key) => key + 1)}
+            data-testid="button-replay-nudge-preview"
           >
-            Draft · unsaved
-          </span>
-        )}
+            <RotateCcw className="w-4 h-4 mr-1.5" />
+            Replay animation
+          </Button>
+          {isUnsaved && (
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-300 dark:border-amber-700"
+              data-testid="nudge-preview-unsaved-badge"
+            >
+              Draft · unsaved
+            </span>
+          )}
+        </div>
       </div>
       <p className="text-sm text-muted-foreground">
         How the shopper-facing nudge card looks at each reward step. Updates <span className="font-medium text-foreground">live</span> as you edit the fields above — save to confirm.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        key={`nudge-preview-replay-${replayKey}`}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        data-testid="nudge-preview-grid"
+        data-replay-key={replayKey}
+      >
         {states.map(({ label, sublabel, itemCount, testId }) => (
           <div key={testId} className="space-y-2" data-testid={testId}>
             <div className="flex items-center gap-2">
