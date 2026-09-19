@@ -37,7 +37,7 @@ interface QuickAddSheetProps {
 
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
-  const { gateAddToCart } = useCartGate();
+  const { gateAddToCart, isGatePromptOpen } = useCartGate();
   const { formatPrice, convertPrice } = useCurrency();
   const offerLabel = useOfferLabel();
   const [personalizationName, setPersonalizationName] = useState("");
@@ -210,8 +210,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[90svh] flex flex-col">
+    <Sheet open={open} onOpenChange={onOpenChange} modal={!isGatePromptOpen}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl max-h-[90svh] flex flex-col"
+        onInteractOutside={(event) => {
+          if (isGatePromptOpen) event.preventDefault();
+        }}
+      >
         <SheetHeader>
           <SheetTitle className="text-left">Add to Cart</SheetTitle>
         </SheetHeader>

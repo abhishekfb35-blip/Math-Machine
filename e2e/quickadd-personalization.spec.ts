@@ -15,6 +15,119 @@ async function selectRequiredQuickAddVariant(page: Page) {
   await expect(submit).toBeEnabled();
 }
 
+async function submitQuickAdd(page: Page, productId: string) {
+  const quickAddButton = page.getByTestId(`button-quickadd-${productId}`);
+  await quickAddButton.scrollIntoViewIfNeeded();
+  await quickAddButton.click();
+  await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
+  await selectRequiredQuickAddVariant(page);
+  await page.getByTestId("button-quickadd-submit").click();
+
+  const confirmProceed = page.getByTestId("button-name-confirm-proceed");
+  if (await confirmProceed.isVisible()) {
+    await confirmProceed.click();
+  }
+}
+
+async function mockHardCartGateFlow(page: Page) {
+  let addRequestCount = 0;
+
+  await page.route("https://accounts.google.com/gsi/client", route => route.abort());
+  await page.route("**/api/auth/me", route =>
+    route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
+  );
+  await page.route("**/api/site-config/signup-popup", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        key: "signup-popup",
+        value: {
+          enabled: true,
+          delaySeconds: 60,
+          cartAddDelaySeconds: 0,
+          reshowIntervalSeconds: 0,
+          incentiveText: "Sign in to TurtleLittle",
+          subtitleText: "Save your wishlist, track orders, and check out faster.",
+          phoneSubtitleText: "Add your phone number to complete sign-up.",
+          phoneRequired: true,
+          consentText: "",
+        },
+      }),
+    }),
+  );
+  await page.route("**/api/auth/google-client-id", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ clientId: "playwright-client-id" }),
+    }),
+  );
+  await page.route("**/api/auth/google", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        needsPhone: false,
+        customer: {
+          id: "cart-gate-customer",
+          name: "Cart Gate Tester",
+          email: "cart-gate@example.test",
+        },
+      }),
+    }),
+  );
+  await page.route("**/api/cart/items", async route => {
+    if (route.request().method() !== "POST") {
+      return route.continue();
+    }
+    addRequestCount += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "cart-gate-test-cart",
+        items: [],
+        itemCount: addRequestCount,
+        subtotal: addRequestCount * 100,
+        discount: 0,
+        shippingFee: 0,
+        total: addRequestCount * 100,
+        freeIndices: [],
+        engineThresholds: {
+          retailFreeItemTrigger: 3,
+          retailBonusDiscountPct: 30,
+          wholesaleThreshold: 5,
+        },
+      }),
+    });
+  });
+
+  await page.addInitScript(() => {
+    const accounts = {
+      callback: undefined as undefined | ((response: { credential: string }) => void),
+      initialize(options: { callback: (response: { credential: string }) => void }) {
+        accounts.callback = options.callback;
+      },
+      renderButton(container: HTMLElement) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Continue with Google";
+        button.setAttribute("aria-label", "Continue with Google");
+        button.addEventListener("click", () => {
+          accounts.callback?.({ credential: "cart-gate-playwright-credential" });
+        });
+        container.replaceChildren(button);
+      },
+    };
+
+    Object.defineProperty(window, "google", {
+      configurable: true,
+      value: { accounts: { id: accounts } },
+    });
+  });
+
+  return {
+    getAddRequestCount: () => addRequestCount,
+  };
+}
+
 test.describe("QuickAdd personalization — mobile (400×720)", () => {
   let singleProductId: string;
   let couplesProductId: string;
@@ -119,6 +232,61 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await closeButton.tap();
     await expect(signupPopup).toBeHidden();
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
+  });
+
+  test("hard cart gate resumes one blocked QuickAdd exactly once after sign-in", async ({
+    page,
+  }) => {
+    const cartRequests = await mockHardCartGateFlow(page);
+    await page.goto("/shop");
+
+    await submitQuickAdd(page, singleProductId);
+    const signupPopup = page.getByTestId("signup-popup");
+    await expect(signupPopup).toBeVisible();
+    await expect(signupPopup).toHaveAttribute("data-trigger", "promotional");
+    expect(cartRequests.getAddRequestCount()).toBe(1);
+
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(signupPopup).toBeHidden();
+
+    await submitQuickAdd(page, singleProductId);
+    await expect(signupPopup).toBeVisible();
+    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
+    expect(cartRequests.getAddRequestCount()).toBe(1);
+
+    await page
+      .getByTestId("signup-popup-google-btn")
+      .getByRole("button", { name: "Continue with Google" })
+      .click();
+
+    await expect(signupPopup).toBeHidden();
+    await expect.poll(cartRequests.getAddRequestCount).toBe(2);
+    await page.waitForTimeout(300);
+    expect(cartRequests.getAddRequestCount()).toBe(2);
+    await expect(page.getByTestId("button-quickadd-submit")).toBeHidden();
+  });
+
+  test("dismissing the hard cart gate leaves the blocked QuickAdd unsubmitted", async ({
+    page,
+  }) => {
+    const cartRequests = await mockHardCartGateFlow(page);
+    await page.goto("/shop");
+
+    await submitQuickAdd(page, singleProductId);
+    const signupPopup = page.getByTestId("signup-popup");
+    await expect(signupPopup).toBeVisible();
+    await page.getByTestId("btn-dismiss-nudge").click();
+
+    await submitQuickAdd(page, singleProductId);
+    await expect(signupPopup).toBeVisible();
+    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
+    expect(cartRequests.getAddRequestCount()).toBe(1);
+
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(signupPopup).toBeHidden();
+    await page.waitForTimeout(300);
+    expect(cartRequests.getAddRequestCount()).toBe(1);
+    await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
   });
 
   test("add without name → confirmation dialog → proceed without name adds item to cart", async ({
