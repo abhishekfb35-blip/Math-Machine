@@ -128,7 +128,12 @@ export default function NudgeCard({
       className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm`}
       data-testid="nudge-card"
     >
-      <div className="flex items-start" data-testid="nudge-track">
+      <div
+        key={`nudge-sequence-${Math.min(itemCount, wholesale)}`}
+        className="flex items-start"
+        data-testid="nudge-track"
+        data-sequence-item-count={Math.min(itemCount, wholesale)}
+      >
         {nodes.flatMap((pos, idx) => {
           const state = nodeState(pos);
           const isMilestone = nodeLabel(pos) !== `Item ${pos}`;

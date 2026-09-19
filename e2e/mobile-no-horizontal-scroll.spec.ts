@@ -155,6 +155,7 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
 
     await page.waitForSelector('[data-testid="nudge-card"]', { timeout: 5000 });
     await assertNudgeNodesInViewport(page, `1-item cart (threshold=${wholesaleThreshold})`);
+    await expect(page.getByTestId("nudge-track")).toHaveAttribute("data-sequence-item-count", "1");
 
     const completedCart = page.getByTestId("nudge-cart-1");
     await expect(completedCart).not.toHaveClass(/cart-stroke-dashed/);
@@ -226,6 +227,10 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     expect(cart.itemCount, `Expected cart to have at least ${wholesaleThreshold} items (wholesale state)`).toBeGreaterThanOrEqual(wholesaleThreshold);
 
     await assertNudgeNodesInViewport(page, `wholesale-threshold cart (threshold=${wholesaleThreshold})`);
+    await expect(page.getByTestId("nudge-track")).toHaveAttribute(
+      "data-sequence-item-count",
+      String(wholesaleThreshold),
+    );
 
     for (let pos = 1; pos <= wholesaleThreshold; pos += 1) {
       const completedCart = page.getByTestId(`nudge-cart-${pos}`);
