@@ -188,12 +188,15 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
 
     expect(animationTiming).not.toBeNull();
     expect(animationTiming).toMatchObject({
-      configuredCycle: "12s",
+      configuredCycle: "6s",
       configuredPhaseDelay: "3s",
       activeAnimation: "nudgeActivePulse",
       activeDelay: "0s",
       finalAnimation: "nudgeBlink",
     });
+    expect(Number.parseFloat(animationTiming!.configuredCycle)).toBe(
+      Number.parseFloat(animationTiming!.configuredPhaseDelay) * 2,
+    );
     expect(animationTiming!.activeDuration).toBe(animationTiming!.configuredCycle);
     expect(animationTiming!.finalDuration).toBe(animationTiming!.configuredCycle);
     expect(animationTiming!.finalDelay).toBe(animationTiming!.configuredPhaseDelay);
@@ -309,6 +312,23 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
       },
       { activePos, finalPos },
       { timeout: 5000 },
+    );
+
+    await page.waitForFunction(
+      ({ activePos, finalPos }) => {
+        const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        if (!active || !final) return false;
+
+        const shadow = getComputedStyle(active).boxShadow;
+        const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
+        const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
+        const finalOpacity = Number(getComputedStyle(final).opacity);
+
+        return shadowAlpha > 0.1 && finalOpacity > 0.99;
+      },
+      { activePos, finalPos },
+      { timeout: 4000 },
     );
   });
 });

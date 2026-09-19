@@ -7,7 +7,7 @@
 :root {
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'DM Mono', monospace;
-  --nudge-animation-cycle: 12s;
+  --nudge-animation-cycle: 6s;
   --nudge-animation-phase-delay: 3s;
 
   --background: 30 25% 97%;
@@ -157,17 +157,17 @@
 }
 
 @keyframes nudgeActivePulse {
-  /* Three pulses in the first 3 seconds of the shared 12-second cycle. */
+  /* Three pulses fill the first 3 seconds (half) of the shared cycle. */
   0%      { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  1.5%    { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  6%      { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
-  8.33%   { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  9.83%   { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  14.33%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
+  3%      { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
+  12%     { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
   16.66%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  18.16%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  22.66%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
-  25%     { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
+  19.66%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
+  28.66%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
+  33.32%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
+  36.32%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
+  45.32%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
+  50%     { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
   100%    { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
 }
 
@@ -199,23 +199,23 @@
 }
 
 @keyframes nudgeBlink {
-  /* 3 blinks happen in first 3s (0–25% of 12s) */
+  /* Three blinks fill the first 3 seconds (half) of this delayed cycle. */
   /* blink 1: 0–1s */
   0%     { opacity: 1;    }
-  2.9%   { opacity: 0.12; }
-  4.2%   { opacity: 0.12; }
-  7.1%   { opacity: 1;    }
-  8.3%   { opacity: 1;    }
+  5.8%   { opacity: 0.12; }
+  8.4%   { opacity: 0.12; }
+  14.2%  { opacity: 1;    }
+  16.6%  { opacity: 1;    }
   /* blink 2: 1–2s */
-  11.2%  { opacity: 0.12; }
-  12.5%  { opacity: 0.12; }
-  15.4%  { opacity: 1;    }
-  16.7%  { opacity: 1;    }
+  22.4%  { opacity: 0.12; }
+  25%    { opacity: 0.12; }
+  30.8%  { opacity: 1;    }
+  33.4%  { opacity: 1;    }
   /* blink 3: 2–3s */
-  19.6%  { opacity: 0.12; }
-  20.8%  { opacity: 0.12; }
-  23.8%  { opacity: 1;    }
-  /* steady for 9s (3s–12s) */
-  25%    { opacity: 1;    }
+  39.2%  { opacity: 0.12; }
+  41.6%  { opacity: 0.12; }
+  47.6%  { opacity: 1;    }
+  /* Stay steady while the next-stage half of the cycle runs. */
+  50%    { opacity: 1;    }
   100%   { opacity: 1;    }
 }
