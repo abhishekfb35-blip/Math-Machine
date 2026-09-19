@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlist } from "@/hooks/useWishlist";
+import { showSignInModal } from "@/components/SignupPopup";
 
 const tabs = [
   { label: "Home", icon: Home, path: "/" },
@@ -35,48 +36,59 @@ export default function BottomNav() {
       <div className="flex items-center justify-around h-16 px-1">
         {tabs.map((tab) => {
           const active = isActive(tab.path);
-          const href = tab.label === "Account" && !isAuthenticated ? "/signin" : tab.path;
           const isAccountTab = tab.label === "Account";
           const isWishlistTab = tab.label === "Wishlist";
-          return (
-            <Link key={tab.path} href={href}>
-              <div
-                role="button"
-                aria-label={tab.label}
-                className={`flex flex-col items-center justify-center gap-0.5 w-14 h-full relative transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
-                }`}
-                data-testid={`tab-${tab.label.toLowerCase()}`}
-              >
-                <div className="relative">
-                  {isAccountTab && isAuthenticated ? (
-                    <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">
-                      {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
-                    </div>
-                  ) : isWishlistTab && active ? (
-                    <Heart className="w-5 h-5 fill-current" />
-                  ) : (
-                    <tab.icon className="w-5 h-5" />
-                  )}
-                  {tab.label === "Cart" && cart && cart.itemCount > 0 && (
-                    <Badge
-                      className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
-                      data-testid="badge-cart-count-bottom"
-                    >
-                      {cart.itemCount}
-                    </Badge>
-                  )}
-                  {isWishlistTab && wishlistCount > 0 && (
-                    <Badge
-                      className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
-                      data-testid="badge-wishlist-count"
-                    >
-                      {wishlistCount}
-                    </Badge>
-                  )}
-                </div>
-                <span className="text-[10px] font-medium">{tab.label}</span>
+          const content = (
+            <div
+              role="button"
+              aria-label={tab.label}
+              className={`flex flex-col items-center justify-center gap-0.5 w-14 h-full relative transition-colors ${
+                active ? "text-primary" : "text-muted-foreground"
+              }`}
+              data-testid={`tab-${tab.label.toLowerCase()}`}
+            >
+              <div className="relative">
+                {isAccountTab && isAuthenticated ? (
+                  <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-semibold">
+                    {(customer?.name || customer?.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                ) : isWishlistTab && active ? (
+                  <Heart className="w-5 h-5 fill-current" />
+                ) : (
+                  <tab.icon className="w-5 h-5" />
+                )}
+                {tab.label === "Cart" && cart && cart.itemCount > 0 && (
+                  <Badge
+                    className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
+                    data-testid="badge-cart-count-bottom"
+                  >
+                    {cart.itemCount}
+                  </Badge>
+                )}
+                {isWishlistTab && wishlistCount > 0 && (
+                  <Badge
+                    className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center p-0 text-[10px]"
+                    data-testid="badge-wishlist-count"
+                  >
+                    {wishlistCount}
+                  </Badge>
+                )}
               </div>
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </div>
+          );
+          return isAccountTab && !isAuthenticated ? (
+            <button
+              key={tab.path}
+              type="button"
+              className="h-full"
+              onClick={() => showSignInModal()}
+            >
+              {content}
+            </button>
+          ) : (
+            <Link key={tab.path} href={tab.path}>
+              {content}
             </Link>
           );
         })}

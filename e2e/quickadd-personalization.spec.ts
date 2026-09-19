@@ -73,6 +73,54 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     couplesProductId = couplesProduct.id;
   });
 
+  test("cart-triggered signup uses the shared circular close control", async ({ page }) => {
+    await page.route("**/api/site-config/signup-popup", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          key: "signup-popup",
+          value: {
+            enabled: true,
+            delaySeconds: 60,
+            cartAddDelaySeconds: 0,
+            reshowIntervalSeconds: 0,
+            incentiveText: "Sign in to TurtleLittle",
+            subtitleText: "Save your wishlist, track orders, and check out faster.",
+            phoneSubtitleText: "Add your phone number to complete sign-up.",
+            phoneRequired: true,
+            consentText: "",
+          },
+        }),
+      }),
+    );
+
+    await page.goto("/shop");
+    const quickAddButton = page.getByTestId(`button-quickadd-${singleProductId}`);
+    await quickAddButton.scrollIntoViewIfNeeded();
+    await quickAddButton.click();
+
+    await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
+    await selectRequiredQuickAddVariant(page);
+    await page.getByTestId("button-quickadd-submit").click();
+
+    const confirmProceed = page.getByTestId("button-name-confirm-proceed");
+    if (await confirmProceed.isVisible()) {
+      await confirmProceed.click();
+    }
+
+    const signupPopup = page.getByTestId("signup-popup");
+    const closeButton = page.getByTestId("btn-dismiss-nudge");
+    await expect(signupPopup).toBeVisible({ timeout: 10_000 });
+    await expect(signupPopup).toHaveAttribute("data-trigger", "promotional");
+    await expect(closeButton).toHaveCSS("width", "44px");
+    await expect(closeButton).toHaveCSS("height", "44px");
+    await expect(closeButton).toHaveCSS("border-top-width", "1px");
+
+    await closeButton.tap();
+    await expect(signupPopup).toBeHidden();
+    await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
+  });
+
   test("add without name → confirmation dialog → proceed without name adds item to cart", async ({
     page,
   }) => {

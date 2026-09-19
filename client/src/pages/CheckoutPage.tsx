@@ -17,7 +17,10 @@ import { checkoutSchema, type CheckoutInput } from "@shared/routes";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import type { Product, CartItem } from "@shared/types";
 import { useAuth } from "@/hooks/useAuth";
-import { showSignInModal } from "@/components/SignInModal";
+import {
+  showSignInModal,
+  SIGNIN_MODAL_DISMISSED_EVENT,
+} from "@/components/SignupPopup";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { trackBeginCheckout, trackEvent } from "@/lib/analytics";
@@ -88,7 +91,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("cod");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const pendingSubmitRef = useRef<CheckoutInput | null>(null);
-  const checkoutSigninStartedRef = useRef(false);
+  const checkoutSigninRequestRef = useRef<string | null>(null);
+  const checkoutSigninAttemptRef = useRef(0);
   const currencyRef = useRef(currency);
   useEffect(() => { currencyRef.current = currency; }, [currency]);
 
@@ -367,22 +371,40 @@ export default function CheckoutPage() {
 
   const onSubmit = (data: CheckoutInput) => {
     if (!customer && paymentMethod !== "cod") {
+      checkoutSigninAttemptRef.current += 1;
+      const requestId = `checkout-${checkoutSigninAttemptRef.current}`;
       pendingSubmitRef.current = data;
-      checkoutSigninStartedRef.current = true;
-      showSignInModal();
+      checkoutSigninRequestRef.current = requestId;
+      showSignInModal({ requestId });
       return;
     }
     processOrder(data);
   };
 
   useEffect(() => {
-    if (customer && checkoutSigninStartedRef.current && pendingSubmitRef.current) {
-      checkoutSigninStartedRef.current = false;
+    if (customer && checkoutSigninRequestRef.current && pendingSubmitRef.current) {
+      checkoutSigninRequestRef.current = null;
       const pending = pendingSubmitRef.current;
       pendingSubmitRef.current = null;
       setTimeout(() => processOrder(pending), 300);
     }
   }, [customer, processOrder]);
+
+  useEffect(() => {
+    const handleSignInDismissed = (event: Event) => {
+      const requestId = (
+        event as CustomEvent<{ requestId?: string }>
+      ).detail?.requestId;
+      if (!requestId || requestId !== checkoutSigninRequestRef.current) return;
+      checkoutSigninRequestRef.current = null;
+      pendingSubmitRef.current = null;
+    };
+
+    window.addEventListener(SIGNIN_MODAL_DISMISSED_EVENT, handleSignInDismissed);
+    return () => {
+      window.removeEventListener(SIGNIN_MODAL_DISMISSED_EVENT, handleSignInDismissed);
+    };
+  }, []);
 
   const isPending = codCheckoutMutation.isPending || isProcessingPayment;
 

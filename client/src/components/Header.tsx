@@ -31,6 +31,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import NudgeCard from "@/components/NudgeCard";
+import { showSignInModal } from "@/components/SignupPopup";
 
 interface MiniCartItem {
   id: string;
@@ -218,15 +219,15 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/signin">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  data-testid="button-signin"
-                >
-                  <User className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => showSignInModal()}
+                data-testid="button-signin"
+                aria-label="Sign in"
+              >
+                <User className="w-4 h-4" />
+              </Button>
             )}
 
             <Button
@@ -460,8 +461,16 @@ export default function Header() {
             <div className="border-t mt-2 pt-2">
               <SheetClose asChild>
                 <a
-                  href={isAuthenticated ? "/account" : "/signin"}
-                  onClick={(e) => { e.preventDefault(); navigate(isAuthenticated ? "/account" : "/signin"); setMenuOpen(false); }}
+                  href={isAuthenticated ? "/account" : "#sign-in"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMenuOpen(false);
+                    if (isAuthenticated) {
+                      navigate("/account");
+                    } else {
+                      requestAnimationFrame(() => showSignInModal());
+                    }
+                  }}
                   className="flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent text-foreground"
                   data-testid="drawer-link-account"
                 >

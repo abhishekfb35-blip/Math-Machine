@@ -14,6 +14,10 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, OrderItem } from "@shared/types";
+import {
+  showSignInModal,
+  SIGNIN_MODAL_DISMISSED_EVENT,
+} from "@/components/SignupPopup";
 
 interface OrderWithItems extends Order {
   items: OrderItem[];
@@ -52,9 +56,27 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate("/signin");
+      const frame = requestAnimationFrame(() => {
+        showSignInModal({ requestId: "account-page" });
+      });
+      return () => cancelAnimationFrame(frame);
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated]);
+
+  useEffect(() => {
+    const handleSignInDismissed = (event: Event) => {
+      const requestId = (
+        event as CustomEvent<{ requestId?: string }>
+      ).detail?.requestId;
+      if (requestId === "account-page") {
+        navigate("/");
+      }
+    };
+    window.addEventListener(SIGNIN_MODAL_DISMISSED_EVENT, handleSignInDismissed);
+    return () => {
+      window.removeEventListener(SIGNIN_MODAL_DISMISSED_EVENT, handleSignInDismissed);
+    };
+  }, [navigate]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

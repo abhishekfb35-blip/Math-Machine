@@ -306,24 +306,49 @@ test.describe("Signup popup positioning", () => {
     await page.getByTestId("btn-dismiss-phone-form").click();
   });
 
-  test("keeps signup close controls unboxed with rounded focus treatment", async ({ page }) => {
+  test("keeps signup close controls visible, circular, and interactive", async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 720 });
     await openPopup(page);
 
     const nudgeClose = page.getByTestId("btn-dismiss-nudge");
     await expect(nudgeClose).toHaveCSS("border-radius", "9999px");
-    await expect(nudgeClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(nudgeClose).toHaveCSS("width", "44px");
+    await expect(nudgeClose).toHaveCSS("height", "44px");
+    await expect(nudgeClose).toHaveCSS("border-top-width", "1px");
+    await expect(nudgeClose).toHaveCSS("pointer-events", "auto");
 
     await openPhoneForm(page);
     const phoneClose = page.getByTestId("btn-dismiss-phone-form");
     await expect(phoneClose).toHaveCSS("border-radius", "9999px");
-    await expect(phoneClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(phoneClose).toHaveCSS("width", "44px");
+    await expect(phoneClose).toHaveCSS("height", "44px");
+    await expect(phoneClose).toHaveCSS("border-top-width", "1px");
+    await expect(phoneClose).toHaveCSS("pointer-events", "auto");
     await completeConsentGate(page);
     await page.getByTestId("btn-signup-phone-submit").click();
 
     const validationClose = page.getByTestId("btn-dismiss-signup-phone-validation");
     await expect(validationClose).toHaveCSS("border-radius", "9999px");
     await expect(validationClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  });
+
+  test("keeps the close button clickable when cart activity reopens signup", async ({ page }) => {
+    await page.setViewportSize({ width: 400, height: 720 });
+    const popup = await openPopup(page);
+
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(popup).toBeHidden();
+
+    await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
+    await expect(popup).toBeVisible();
+
+    const reopenedClose = page.getByTestId("btn-dismiss-nudge");
+    await expect(reopenedClose).toBeVisible();
+    await expect(reopenedClose).toBeEnabled();
+    await reopenedClose.tap();
+
+    await expect(popup).toBeHidden();
+    await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
   });
 
   test("enables consent immediately when the configured terms fit without scrolling", async ({ page }) => {

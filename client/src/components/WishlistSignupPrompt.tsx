@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { showSignInModal } from "@/components/SignInModal";
+import { showSignInModal } from "@/components/SignupPopup";
 import { getProductImageUrl } from "@/lib/imageUtils";
 
 interface WishlistProduct {

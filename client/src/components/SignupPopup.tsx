@@ -35,6 +35,31 @@ import { ConsentScrollGate } from "@/components/ConsentScrollGate";
 import { getMonthDayValue, MONTH_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/signupProfileDetails";
 
 const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
+export const SIGNIN_MODAL_EVENT = "show:signin-modal";
+export const SIGNIN_MODAL_DISMISSED_EVENT = "signin-modal:dismissed";
+
+type SignupPopupTrigger = "promotional" | "cart-gate" | "explicit";
+
+interface ShowSignInModalOptions {
+  requestId?: string;
+}
+
+export function showSignInModal(options: ShowSignInModalOptions = {}) {
+  window.dispatchEvent(
+    new CustomEvent(SIGNIN_MODAL_EVENT, {
+      detail: {
+        trigger: "explicit" satisfies SignupPopupTrigger,
+        requestId: options.requestId,
+      },
+    }),
+  );
+}
+
+const TRIGGER_PRIORITY: Record<SignupPopupTrigger, number> = {
+  promotional: 1,
+  explicit: 2,
+  "cart-gate": 3,
+};
 
 function blockSignupBackdropInteraction(event: SyntheticEvent<HTMLDivElement>) {
   event.stopPropagation();
@@ -103,6 +128,7 @@ export default function SignupPopup() {
 
   const [visible, setVisible] = useState(false);
   const [view, setView] = useState<"nudge" | "phone">("nudge");
+  const [trigger, setTrigger] = useState<SignupPopupTrigger>("promotional");
   const [birthdayMonth, setBirthdayMonth] = useState("");
   const [birthdayDay, setBirthdayDay] = useState("");
   const [anniversaryMonth, setAnniversaryMonth] = useState("");
@@ -123,6 +149,9 @@ export default function SignupPopup() {
   const cartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reshowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAuthRef = useRef(isAuthenticated);
+  const visibleRef = useRef(false);
+  const triggerRef = useRef<SignupPopupTrigger>("promotional");
+  const explicitRequestIdRef = useRef<string | undefined>(undefined);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const gsiInitialized = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -130,7 +159,10 @@ export default function SignupPopup() {
   const phoneValidationIdRef = useRef(0);
   const touchGestureRef = useRef<"dialog" | "consent" | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const openPopupRef = useRef<(nextView?: "nudge" | "phone") => void>(() => {});
+  const openPopupRef = useRef<(
+    nextView?: "nudge" | "phone",
+    nextTrigger?: SignupPopupTrigger,
+  ) => void>(() => {});
 
   const showPhoneValidation = useCallback((
     field: PhoneValidationField,
@@ -262,6 +294,8 @@ export default function SignupPopup() {
   // ── Auth-success cleanup ──────────────────────────────────────────────────
   useEffect(() => {
     if (isAuthenticated) {
+      visibleRef.current = false;
+      explicitRequestIdRef.current = undefined;
       setVisible(false);
       setView("nudge");
       setBirthdayMonth("");
@@ -282,33 +316,73 @@ export default function SignupPopup() {
   }, [isAuthenticated, _onAuthSuccess]);
 
   // ── Eligibility ───────────────────────────────────────────────────────────
-  const canShow = useCallback(() => {
+  const canShowPromotional = useCallback(() => {
     if (!config?.enabled) return false;
     if (isAuthRef.current) return false;
     if (EXCLUDED_PREFIXES.some((p) => location.startsWith(p))) return false;
     return true;
   }, [location, config]);
 
-  // ── forceShow (used by CartGate hard gate) ────────────────────────────────
-  const openPopup = useCallback((nextView: "nudge" | "phone" = "nudge") => {
-    if (!canShow()) return;
+  const openPopup = useCallback((
+    nextView: "nudge" | "phone" = "nudge",
+    nextTrigger: SignupPopupTrigger = "promotional",
+  ) => {
+    if (isAuthRef.current) return false;
+    if (nextTrigger !== "explicit" && !canShowPromotional()) return false;
+    if (visibleRef.current) {
+      if (nextTrigger === triggerRef.current) {
+        return nextTrigger === "explicit";
+      }
+      if (TRIGGER_PRIORITY[nextTrigger] < TRIGGER_PRIORITY[triggerRef.current]) {
+        return false;
+      }
+      triggerRef.current = nextTrigger;
+      setTrigger(nextTrigger);
+      return true;
+    }
     const activeElement = document.activeElement;
     restoreFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
     gsiInitialized.current = false; // allow re-render of button on next open
     setPhoneValidation(null);
+    visibleRef.current = true;
+    triggerRef.current = nextTrigger;
+    setTrigger(nextTrigger);
     setView(nextView);
     setVisible(true);
-  }, [canShow]);
+    return true;
+  }, [canShowPromotional]);
 
   useEffect(() => {
     openPopupRef.current = openPopup;
   }, [openPopup]);
 
-  const forceShow = useCallback(() => openPopup("nudge"), [openPopup]);
+  const forceShow = useCallback(
+    () => openPopup("nudge", "cart-gate"),
+    [openPopup],
+  );
 
   useEffect(() => {
     _registerOpen(forceShow);
   }, [_registerOpen, forceShow]);
+
+  useEffect(() => {
+    const handleExplicitSignIn = (event: Event) => {
+      const requestId = (
+        event as CustomEvent<{ requestId?: string }>
+      ).detail?.requestId;
+      if (openPopup("nudge", "explicit")) {
+        explicitRequestIdRef.current = requestId;
+      } else if (requestId) {
+        window.dispatchEvent(
+          new CustomEvent(SIGNIN_MODAL_DISMISSED_EVENT, {
+            detail: { requestId },
+          }),
+        );
+      }
+    };
+    window.addEventListener(SIGNIN_MODAL_EVENT, handleExplicitSignIn);
+    return () => window.removeEventListener(SIGNIN_MODAL_EVENT, handleExplicitSignIn);
+  }, [openPopup]);
 
   // ── Session-start timer ───────────────────────────────────────────────────
   useEffect(() => {
@@ -320,7 +394,7 @@ export default function SignupPopup() {
     const delay = Math.max(0, config.delaySeconds ?? 15) * 1000;
 
     const timer = setTimeout(() => {
-      if (!isAuthRef.current) openPopupRef.current("nudge");
+      if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
     }, delay);
 
     return () => clearTimeout(timer);
@@ -334,7 +408,7 @@ export default function SignupPopup() {
       cartTriggered.current = true;
       const delay = Math.max(0, config.cartAddDelaySeconds ?? 2) * 1000;
       cartTimerRef.current = setTimeout(() => {
-        if (!isAuthRef.current) openPopupRef.current("nudge");
+        if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
       }, delay);
     };
 
@@ -347,6 +421,10 @@ export default function SignupPopup() {
 
   // ── Dismiss ───────────────────────────────────────────────────────────────
   const handleDismiss = useCallback(() => {
+    const dismissedTrigger = triggerRef.current;
+    const dismissedRequestId = explicitRequestIdRef.current;
+    visibleRef.current = false;
+    explicitRequestIdRef.current = undefined;
     setVisible(false);
     setView("nudge");
     setBirthdayMonth("");
@@ -362,21 +440,33 @@ export default function SignupPopup() {
     setGoogleUserData(null);
     gsiInitialized.current = false;
 
-    _onDismissed();
+    if (dismissedTrigger !== "explicit") {
+      _onDismissed();
+    } else {
+      window.dispatchEvent(
+        new CustomEvent(SIGNIN_MODAL_DISMISSED_EVENT, {
+          detail: { requestId: dismissedRequestId },
+        }),
+      );
+    }
 
     // Reshow after reshowIntervalSeconds — 0 means disabled (don't re-show).
     if (reshowTimerRef.current) clearTimeout(reshowTimerRef.current);
+    if (dismissedTrigger === "explicit") return;
     const interval = config?.reshowIntervalSeconds ?? 0;
     if (interval > 0) {
       reshowTimerRef.current = setTimeout(() => {
-        if (!isAuthRef.current && canShow()) {
+        if (!isAuthRef.current && canShowPromotional()) {
           gsiInitialized.current = false;
+          visibleRef.current = true;
+          triggerRef.current = "promotional";
+          setTrigger("promotional");
           setView("nudge");
           setVisible(true);
         }
       }, interval * 1000);
     }
-  }, [_onDismissed, config, canShow]);
+  }, [_onDismissed, config, canShowPromotional]);
 
   // Move focus into the active view and return it to the element that opened
   // the popup when it closes.
@@ -480,6 +570,7 @@ export default function SignupPopup() {
           setView("phone");
         } else {
           queryClient.setQueryData(["/api/auth/me"], data.customer);
+        visibleRef.current = false;
           setVisible(false);
           toast({ title: "Welcome back!", description: "Signed in with Google." });
         }
@@ -495,8 +586,8 @@ export default function SignupPopup() {
   );
 
   // ── GSI rendered button (replaces One Tap) ────────────────────────────────
-  // Initialises whenever the nudge card becomes visible. Uses the same
-  // renderButton pattern as SignInModal — no prompt(), no One Tap overlay.
+  // Initialises whenever the nudge card becomes visible — no prompt(), no
+  // Google One Tap overlay.
   useEffect(() => {
     if (!visible || view !== "nudge") return;
     if (!googleClientId || !googleButtonRef.current) return;
@@ -572,6 +663,7 @@ export default function SignupPopup() {
       const data = await res.json();
       queryClient.setQueryData(["/api/auth/me"], data.customer);
       setPhoneValidation(null);
+      visibleRef.current = false;
       setVisible(false);
       toast({ title: "Welcome!", description: "Your account has been created." });
     } catch (err: any) {
@@ -591,6 +683,12 @@ export default function SignupPopup() {
   const name = googleUserData
     ? [googleUserData.firstName, googleUserData.lastName].filter(Boolean).join(" ")
     : "";
+  const nudgeTitle = trigger === "explicit"
+    ? "Sign in to TurtleLittle"
+    : config?.incentiveText || "Sign in to TurtleLittle";
+  const nudgeSubtitle = trigger === "explicit"
+    ? "Save your wishlist and shop faster"
+    : config?.subtitleText;
 
   return (
     <>
@@ -621,7 +719,7 @@ export default function SignupPopup() {
         aria-labelledby="signup-popup-title"
         aria-describedby={
           view === "nudge"
-            ? config?.subtitleText
+            ? nudgeSubtitle
               ? "signup-popup-description"
               : undefined
             : config?.phoneSubtitleText
@@ -630,6 +728,7 @@ export default function SignupPopup() {
         }
         tabIndex={-1}
         data-testid="signup-popup"
+        data-trigger={trigger}
       >
         <div className="p-5">
           {view === "nudge" ? (
@@ -639,23 +738,24 @@ export default function SignupPopup() {
                 <div
                   id="signup-popup-title"
                   className="text-sm font-semibold text-foreground leading-snug"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config?.incentiveText || "Sign in to TurtleLittle") }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(nudgeTitle) }}
                 />
                 <button
+                  type="button"
                   onClick={handleDismiss}
-                   className="shrink-0 -mt-0.5 -mr-1 flex h-8 w-8 touch-manipulation items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                  className="relative z-10 shrink-0 -mt-1 -mr-1 inline-flex h-11 w-11 touch-manipulation pointer-events-auto items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-nudge"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {config?.subtitleText && (
+              {nudgeSubtitle && (
                 <div
                   className="text-xs text-muted-foreground mb-4 leading-relaxed"
                   id="signup-popup-description"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(config.subtitleText) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichTextHtml(nudgeSubtitle) }}
                 />
               )}
 
@@ -688,12 +788,13 @@ export default function SignupPopup() {
                   )}
                 </div>
                 <button
+                  type="button"
                   onClick={handleDismiss}
-                   className="shrink-0 -mt-1 -mr-1 flex h-8 w-8 touch-manipulation items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                  className="relative z-10 shrink-0 -mt-1 -mr-1 inline-flex h-11 w-11 touch-manipulation pointer-events-auto items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   aria-label="Dismiss"
                   data-testid="btn-dismiss-phone-form"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 

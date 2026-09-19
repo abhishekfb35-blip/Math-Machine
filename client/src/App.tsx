@@ -15,7 +15,6 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import WishlistSignupPrompt from "@/components/WishlistSignupPrompt";
 import SignupPopup from "@/components/SignupPopup";
-import SignInModal from "@/components/SignInModal";
 import { CartGateProvider } from "@/context/CartGateContext";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Home from "@/pages/Home";
@@ -168,7 +167,6 @@ function App() {
           <WhatsAppButton />
           <SignupPopup />
           <WishlistSignupPrompt />
-          <SignInModal />
           <Toaster />
         </TooltipProvider>
         </WishlistProvider>
