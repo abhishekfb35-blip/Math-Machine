@@ -7,6 +7,8 @@
 :root {
   --font-sans: 'Outfit', sans-serif;
   --font-mono: 'DM Mono', monospace;
+  --nudge-animation-cycle: 12s;
+  --nudge-animation-phase-delay: 3s;
 
   --background: 30 25% 97%;
   --foreground: 20 15% 15%;
@@ -170,7 +172,7 @@
 }
 
 .nudge-active-pulse {
-  animation: nudgeActivePulse 12s linear infinite;
+  animation: nudgeActivePulse var(--nudge-animation-cycle) linear infinite;
 }
 
 .cart-stroke-dashed path,
@@ -193,7 +195,7 @@
 
 .nudge-blink {
   /* Start after the next-stage pulses finish. */
-  animation: nudgeBlink 12s linear 3s infinite;
+  animation: nudgeBlink var(--nudge-animation-cycle) linear var(--nudge-animation-phase-delay) infinite;
 }
 
 @keyframes nudgeBlink {

@@ -173,7 +173,10 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
 
       const activeStyle = getComputedStyle(active);
       const finalStyle = getComputedStyle(final);
+      const rootStyle = getComputedStyle(document.documentElement);
       return {
+        configuredCycle: rootStyle.getPropertyValue("--nudge-animation-cycle").trim(),
+        configuredPhaseDelay: rootStyle.getPropertyValue("--nudge-animation-phase-delay").trim(),
         activeAnimation: activeStyle.animationName,
         activeDuration: activeStyle.animationDuration,
         activeDelay: activeStyle.animationDelay,
@@ -183,14 +186,17 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
       };
     }, wholesaleThreshold);
 
-    expect(animationTiming).toEqual({
+    expect(animationTiming).not.toBeNull();
+    expect(animationTiming).toMatchObject({
+      configuredCycle: "12s",
+      configuredPhaseDelay: "3s",
       activeAnimation: "nudgeActivePulse",
-      activeDuration: "12s",
       activeDelay: "0s",
       finalAnimation: "nudgeBlink",
-      finalDuration: "12s",
-      finalDelay: "3s",
     });
+    expect(animationTiming!.activeDuration).toBe(animationTiming!.configuredCycle);
+    expect(animationTiming!.finalDuration).toBe(animationTiming!.configuredCycle);
+    expect(animationTiming!.finalDelay).toBe(animationTiming!.configuredPhaseDelay);
 
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, "Cart page has horizontal overflow with NudgeCard visible (1 item)").toBe(true);
