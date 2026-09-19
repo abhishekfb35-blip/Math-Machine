@@ -138,13 +138,13 @@ export default function NudgeCard({
           const isWholesale = pos === wholesale;
           const isLocked = state === "locked";
 
-          const iconClass = isWholesale
-            ? "w-full h-full fill-none stroke-orange-500 text-orange-500"
-            : isComplete
+          const iconClass = isComplete
             ? "w-full h-full fill-amber-500 stroke-amber-500 text-amber-700"
             : state === "active"
             ? "w-full h-full fill-none stroke-orange-400 text-orange-400 nudge-active-pulse cart-stroke-dashed"
-            : "w-full h-full fill-none stroke-orange-300 text-orange-300 opacity-80";
+            : isWholesale
+            ? "w-full h-full fill-none stroke-orange-500 text-orange-500 cart-stroke-dashed"
+            : "w-full h-full fill-none stroke-orange-300 text-orange-300 opacity-80 cart-stroke-dashed";
 
           const arrowColor =
             isComplete
@@ -170,12 +170,14 @@ export default function NudgeCard({
                  * Badges are positioned relative to this box.
                  */}
                 <div
-                  className="relative"
+                  className={`relative ${isWholesale ? "nudge-blink" : ""}`}
                   style={{ width: `min(100%, ${iconCapPx}px)`, aspectRatio: "1" }}
+                  data-testid={`nudge-cart-wrap-${pos}`}
                 >
                   <ShoppingCart
                     className={iconClass}
                     strokeWidth={isWholesale || isComplete ? 2 : 1.5}
+                    data-testid={`nudge-cart-${pos}`}
                   />
                   <span
                     className={`absolute -top-1.5 -right-1.5 rounded-full flex items-center justify-center px-0.5 font-black text-white leading-none pointer-events-none shadow-sm ${

@@ -156,6 +156,16 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     await page.waitForSelector('[data-testid="nudge-card"]', { timeout: 5000 });
     await assertNudgeNodesInViewport(page, `1-item cart (threshold=${wholesaleThreshold})`);
 
+    const completedCart = page.getByTestId("nudge-cart-1");
+    await expect(completedCart).not.toHaveClass(/cart-stroke-dashed/);
+    await expect(completedCart).toHaveClass(/fill-amber-500/);
+
+    for (let pos = 2; pos <= wholesaleThreshold; pos += 1) {
+      await expect(page.getByTestId(`nudge-cart-${pos}`)).toHaveClass(/cart-stroke-dashed/);
+    }
+
+    await expect(page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`)).toHaveClass(/nudge-blink/);
+
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, "Cart page has horizontal overflow with NudgeCard visible (1 item)").toBe(true);
   });
@@ -191,6 +201,14 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     expect(cart.itemCount, `Expected cart to have at least ${wholesaleThreshold} items (wholesale state)`).toBeGreaterThanOrEqual(wholesaleThreshold);
 
     await assertNudgeNodesInViewport(page, `wholesale-threshold cart (threshold=${wholesaleThreshold})`);
+
+    for (let pos = 1; pos <= wholesaleThreshold; pos += 1) {
+      const completedCart = page.getByTestId(`nudge-cart-${pos}`);
+      await expect(completedCart).not.toHaveClass(/cart-stroke-dashed/);
+      await expect(completedCart).toHaveClass(/fill-amber-500/);
+    }
+
+    await expect(page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`)).toHaveClass(/nudge-blink/);
 
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, `Cart page has horizontal overflow at wholesale threshold (${wholesaleThreshold} items)`).toBe(true);
