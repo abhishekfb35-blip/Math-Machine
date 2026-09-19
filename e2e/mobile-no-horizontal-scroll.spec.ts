@@ -159,12 +159,37 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     const completedCart = page.getByTestId("nudge-cart-1");
     await expect(completedCart).not.toHaveClass(/cart-stroke-dashed/);
     await expect(completedCart).toHaveClass(/fill-amber-500/);
+    await expect(page.getByTestId("nudge-cart-2")).toHaveClass(/nudge-active-pulse/);
 
     for (let pos = 2; pos <= wholesaleThreshold; pos += 1) {
       await expect(page.getByTestId(`nudge-cart-${pos}`)).toHaveClass(/cart-stroke-dashed/);
     }
 
-    await expect(page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`)).toHaveClass(/nudge-blink/);
+    const animationTiming = await page.evaluate((finalPos) => {
+      const active = document.querySelector('[data-testid="nudge-cart-2"]');
+      const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+      if (!active || !final) return null;
+
+      const activeStyle = getComputedStyle(active);
+      const finalStyle = getComputedStyle(final);
+      return {
+        activeAnimation: activeStyle.animationName,
+        activeDuration: activeStyle.animationDuration,
+        activeDelay: activeStyle.animationDelay,
+        finalAnimation: finalStyle.animationName,
+        finalDuration: finalStyle.animationDuration,
+        finalDelay: finalStyle.animationDelay,
+      };
+    }, wholesaleThreshold);
+
+    expect(animationTiming).toEqual({
+      activeAnimation: "nudgeActivePulse",
+      activeDuration: "12s",
+      activeDelay: "0s",
+      finalAnimation: "nudgeBlink",
+      finalDuration: "12s",
+      finalDelay: "3s",
+    });
 
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, "Cart page has horizontal overflow with NudgeCard visible (1 item)").toBe(true);
