@@ -243,4 +243,66 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, `Cart page has horizontal overflow at wholesale threshold (${wholesaleThreshold} items)`).toBe(true);
   });
+
+  test("NudgeCard reward tracker: rapid cart changes restart alternating animations without overlap", async ({ page }) => {
+    const { wholesaleThreshold } = await getEngineThresholds(page);
+    expect(
+      wholesaleThreshold,
+      "Alternating animation test needs at least one future stage after the updated cart count",
+    ).toBeGreaterThan(2);
+
+    await addProductToCart(page);
+    await page.goto("/cart");
+    await page.waitForSelector('[data-testid="nudge-card"]', { timeout: 5000 });
+
+    const targetCount = Math.min(3, wholesaleThreshold - 1);
+    const increaseButton = page.locator('[data-testid^="button-increase-qty-"]').first();
+    const quantity = page.locator('[data-testid^="text-qty-"]').first();
+
+    for (let nextCount = 2; nextCount <= targetCount; nextCount += 1) {
+      await increaseButton.click();
+      await expect(quantity).toHaveText(String(nextCount));
+      await expect(page.getByTestId("nudge-track")).toHaveAttribute(
+        "data-sequence-item-count",
+        String(nextCount),
+      );
+    }
+
+    const activePos = targetCount + 1;
+    const finalPos = wholesaleThreshold;
+
+    await page.waitForFunction(
+      ({ activePos, finalPos }) => {
+        const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        if (!active || !final) return false;
+
+        const shadow = getComputedStyle(active).boxShadow;
+        const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
+        const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
+        const finalOpacity = Number(getComputedStyle(final).opacity);
+
+        return shadowAlpha > 0.1 && finalOpacity > 0.99;
+      },
+      { activePos, finalPos },
+      { timeout: 2000 },
+    );
+
+    await page.waitForFunction(
+      ({ activePos, finalPos }) => {
+        const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        if (!active || !final) return false;
+
+        const shadow = getComputedStyle(active).boxShadow;
+        const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
+        const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
+        const finalOpacity = Number(getComputedStyle(final).opacity);
+
+        return shadowAlpha <= 0.01 && finalOpacity < 0.5;
+      },
+      { activePos, finalPos },
+      { timeout: 5000 },
+    );
+  });
 });
