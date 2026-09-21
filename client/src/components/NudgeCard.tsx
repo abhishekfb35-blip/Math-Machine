@@ -125,12 +125,14 @@ export default function NudgeCard({
 
   return (
     <div
-      className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm`}
+      className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm ${
+        compact ? "w-full md:w-1/3 mx-auto" : ""
+      }`}
       data-testid="nudge-card"
     >
       <div
         key={`nudge-sequence-${Math.min(itemCount, wholesale)}`}
-        className={`flex items-start ${compact ? "w-full md:w-1/3 mx-auto" : ""}`}
+        className="flex items-start"
         data-testid="nudge-track"
         data-sequence-item-count={Math.min(itemCount, wholesale)}
       >
