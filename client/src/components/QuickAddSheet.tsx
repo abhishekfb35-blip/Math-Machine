@@ -211,12 +211,15 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange} modal={!keepSheetOpen}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
         side="bottom"
         className="rounded-t-2xl max-h-[90svh] flex flex-col"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (keepSheetOpen) event.preventDefault();
         }}
         onInteractOutside={(event) => {
           if (keepSheetOpen) event.preventDefault();

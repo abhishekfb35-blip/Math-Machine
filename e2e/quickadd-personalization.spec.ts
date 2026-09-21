@@ -263,6 +263,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     const nameInput = page.getByTestId("input-quickadd-name");
     await expect(nameInput).toBeVisible();
     await expect(nameInput).not.toBeFocused();
+    await nameInput.fill("Alex");
 
     await page.evaluate(() => {
       window.dispatchEvent(
@@ -278,6 +279,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
 
     await expect(signupPopup).toBeHidden();
     await expect(nameInput).toBeVisible();
+    await expect(nameInput).toHaveValue("Alex");
     await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
     await expect(nameInput).not.toBeFocused();
   });
