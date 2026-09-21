@@ -130,7 +130,7 @@ export default function NudgeCard({
     >
       <div
         key={`nudge-sequence-${Math.min(itemCount, wholesale)}`}
-        className="flex items-start"
+        className={`flex items-start ${compact ? "w-full md:w-1/3 mx-auto" : ""}`}
         data-testid="nudge-track"
         data-sequence-item-count={Math.min(itemCount, wholesale)}
       >
