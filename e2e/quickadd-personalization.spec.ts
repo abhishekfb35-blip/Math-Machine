@@ -264,6 +264,8 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(nameInput).toBeVisible();
     await expect(nameInput).not.toBeFocused();
     await nameInput.fill("Alex");
+    await nameInput.evaluate((element) => element.blur());
+    await expect(nameInput).not.toBeFocused();
 
     await page.evaluate(() => {
       window.dispatchEvent(

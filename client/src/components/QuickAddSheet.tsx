@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart, trackEvent } from "@/lib/analytics";
@@ -48,6 +48,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [sizeColorMap, setSizeColorMap] = useState<Record<string, string>>({});
+  const sheetContentRef = useRef<HTMLDivElement>(null);
+  const signupPopupWasOpenRef = useRef(false);
   const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
     queryKey: ["/api/site-config", "product-page-config"],
     queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
@@ -132,6 +134,20 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
     }
   }, [open]);
 
+  useEffect(() => {
+    if (isSignupPopupOpen) {
+      signupPopupWasOpenRef.current = true;
+      return;
+    }
+    if (!signupPopupWasOpenRef.current || !open) return;
+
+    signupPopupWasOpenRef.current = false;
+    const frame = requestAnimationFrame(() => {
+      sheetContentRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isSignupPopupOpen, open]);
+
   const colorsForSelectedSize = (() => {
     if (!showVariantSelectors || !selectedSizeName || !selectedSizeObj) return [];
     return selectedSizeObj.colors;
@@ -211,8 +227,15 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && keepSheetOpen) return;
+        onOpenChange(nextOpen);
+      }}
+    >
       <SheetContent
+        ref={sheetContentRef}
         side="bottom"
         className="rounded-t-2xl max-h-[90svh] flex flex-col"
         onOpenAutoFocus={(event) => {
