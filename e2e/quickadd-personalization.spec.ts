@@ -241,8 +241,8 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
         body: JSON.stringify({
           key: "signup-popup",
           value: {
-            enabled: true,
-            delaySeconds: 0,
+            enabled: false,
+            delaySeconds: 60,
             cartAddDelaySeconds: 60,
             reshowIntervalSeconds: 0,
             incentiveText: "Sign in to TurtleLittle",
@@ -263,6 +263,14 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     const nameInput = page.getByTestId("input-quickadd-name");
     await expect(nameInput).toBeVisible();
     await expect(nameInput).not.toBeFocused();
+
+    await page.evaluate(() => {
+      window.dispatchEvent(
+        new CustomEvent("show:signin-modal", {
+          detail: { trigger: "explicit" },
+        }),
+      );
+    });
 
     const signupPopup = page.getByTestId("signup-popup");
     await expect(signupPopup).toBeVisible({ timeout: 10_000 });
