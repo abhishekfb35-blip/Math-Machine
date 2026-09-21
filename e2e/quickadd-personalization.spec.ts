@@ -234,6 +234,46 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
   });
 
+  test("closing signup keeps the open QuickAdd customization form open", async ({ page }) => {
+    await page.route("**/api/site-config/signup-popup", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          key: "signup-popup",
+          value: {
+            enabled: true,
+            delaySeconds: 0,
+            cartAddDelaySeconds: 60,
+            reshowIntervalSeconds: 0,
+            incentiveText: "Sign in to TurtleLittle",
+            subtitleText: "Save your wishlist, track orders, and check out faster.",
+            phoneSubtitleText: "Add your phone number to complete sign-up.",
+            phoneRequired: true,
+            consentText: "",
+          },
+        }),
+      }),
+    );
+
+    await page.goto("/shop");
+    const quickAddButton = page.getByTestId(`button-quickadd-${singleProductId}`);
+    await quickAddButton.scrollIntoViewIfNeeded();
+    await quickAddButton.click();
+
+    const nameInput = page.getByTestId("input-quickadd-name");
+    await expect(nameInput).toBeVisible();
+    await expect(nameInput).not.toBeFocused();
+
+    const signupPopup = page.getByTestId("signup-popup");
+    await expect(signupPopup).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId("btn-dismiss-nudge").click();
+
+    await expect(signupPopup).toBeHidden();
+    await expect(nameInput).toBeVisible();
+    await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
+    await expect(nameInput).not.toBeFocused();
+  });
+
   test("hard cart gate resumes one blocked QuickAdd exactly once after sign-in", async ({
     page,
   }) => {

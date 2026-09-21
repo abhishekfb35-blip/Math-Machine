@@ -15,8 +15,12 @@ interface CartGateContextValue {
   gateAddToCart: (fn: () => void) => void;
   /** True while the hard-gate sign-in popup owns interaction over a cart surface. */
   isGatePromptOpen: boolean;
+  /** True while the shared signup popup is visible above a cart surface. */
+  isSignupPopupOpen: boolean;
   /** Internal — SignupPopup registers its force-show function here. */
   _registerOpen: (fn: () => void) => void;
+  /** Internal — SignupPopup reports its visibility here. */
+  _setSignupPopupOpen: (open: boolean) => void;
   /** Internal — SignupPopup calls this when the popup is dismissed. */
   _onDismissed: () => void;
   /** Internal — SignupPopup calls this when auth succeeds. */
@@ -26,15 +30,17 @@ interface CartGateContextValue {
 const CartGateContext = createContext<CartGateContextValue>({
   gateAddToCart: (fn) => fn(),
   isGatePromptOpen: false,
+  isSignupPopupOpen: false,
   _registerOpen: () => {},
+  _setSignupPopupOpen: () => {},
   _onDismissed: () => {},
   _onAuthSuccess: () => {},
 });
 
 /** Used by ProductPage / QuickAddSheet */
 export const useCartGate = () => {
-  const { gateAddToCart, isGatePromptOpen } = useContext(CartGateContext);
-  return { gateAddToCart, isGatePromptOpen };
+  const { gateAddToCart, isGatePromptOpen, isSignupPopupOpen } = useContext(CartGateContext);
+  return { gateAddToCart, isGatePromptOpen, isSignupPopupOpen };
 };
 
 /** Used internally by SignupPopup */
@@ -43,12 +49,17 @@ export const useCartGateInternal = () => useContext(CartGateContext);
 export function CartGateProvider({ children }: { children: ReactNode }) {
   const [gateActive, setGateActive] = useState(false);
   const [isGatePromptOpen, setIsGatePromptOpen] = useState(false);
+  const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
   const pendingFn = useRef<(() => void) | null>(null);
   const openPopupFn = useRef<() => void>(() => {});
   const hasCartActivity = useRef(false);
 
   const _registerOpen = useCallback((fn: () => void) => {
     openPopupFn.current = fn;
+  }, []);
+
+  const _setSignupPopupOpen = useCallback((open: boolean) => {
+    setIsSignupPopupOpen(open);
   }, []);
 
   const _onDismissed = useCallback(() => {
@@ -84,7 +95,17 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <CartGateContext.Provider value={{ gateAddToCart, isGatePromptOpen, _registerOpen, _onDismissed, _onAuthSuccess }}>
+    <CartGateContext.Provider
+      value={{
+        gateAddToCart,
+        isGatePromptOpen,
+        isSignupPopupOpen,
+        _registerOpen,
+        _setSignupPopupOpen,
+        _onDismissed,
+        _onAuthSuccess,
+      }}
+    >
       {children}
     </CartGateContext.Provider>
   );

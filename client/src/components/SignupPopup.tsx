@@ -124,7 +124,12 @@ export default function SignupPopup() {
   const [location] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { _registerOpen, _onDismissed, _onAuthSuccess } = useCartGateInternal();
+  const {
+    _registerOpen,
+    _setSignupPopupOpen,
+    _onDismissed,
+    _onAuthSuccess,
+  } = useCartGateInternal();
 
   const [visible, setVisible] = useState(false);
   const [view, setView] = useState<"nudge" | "phone">("nudge");
@@ -163,6 +168,10 @@ export default function SignupPopup() {
     nextView?: "nudge" | "phone",
     nextTrigger?: SignupPopupTrigger,
   ) => void>(() => {});
+
+  useEffect(() => {
+    _setSignupPopupOpen(visible);
+  }, [_setSignupPopupOpen, visible]);
 
   const showPhoneValidation = useCallback((
     field: PhoneValidationField,
