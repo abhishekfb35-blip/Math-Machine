@@ -438,6 +438,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
 
     const nameInput = page.getByTestId("input-quickadd-name");
     await expect(nameInput).toBeVisible({ timeout: 8000 });
+    await expect(page.getByTestId("icon-quickadd-needle")).toHaveCount(1);
 
     await nameInput.fill("Alex");
 
@@ -470,6 +471,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
 
     const gentlemanInput = page.getByTestId("input-quickadd-gentleman");
     await expect(gentlemanInput).toBeVisible({ timeout: 8000 });
+    await expect(page.getByTestId("icon-quickadd-needle")).toHaveCount(2);
 
     await gentlemanInput.fill("James");
     await page.getByTestId("input-quickadd-lady").fill("Emma");

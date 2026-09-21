@@ -29,6 +29,26 @@ function nameCharHint(val: string, min: number, max: number): { text: string; cl
   return { text: `${left} character${left !== 1 ? "s" : ""} left`, className: "text-muted-foreground" };
 }
 
+function EmbroideryNeedleIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-amber-600 dark:text-amber-300"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      data-testid="icon-quickadd-needle"
+    >
+      <path d="m5 15 10-10" />
+      <path d="m13.5 3.5 3 3" />
+      <path d="M5 15c-1.7.1-3.2.8-3.7 2.1-.4 1.1.3 2 1.5 1.8 1.3-.2 2.3-1.7 3-2.8 1.2-1.8 2.4-1.7 3.5-.7 1.1 1 2.1 1.1 3.2.5" />
+    </svg>
+  );
+}
+
 interface QuickAddSheetProps {
   product: Product | null;
   open: boolean;
@@ -388,26 +408,34 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             <div className="space-y-2">
               <div className="space-y-1">
                 <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
-                <Input
-                  id="qa-gentleman-name"
-                  placeholder={audienceConfig.person1Label}
-                  value={gentlemanName}
-                  onChange={(e) => setGentlemanName(e.target.value)}
-                  maxLength={nameMax}
-                  data-testid="input-quickadd-gentleman"
-                />
+                <div className="relative">
+                  <EmbroideryNeedleIcon />
+                  <Input
+                    id="qa-gentleman-name"
+                    placeholder={audienceConfig.person1Label}
+                    value={gentlemanName}
+                    onChange={(e) => setGentlemanName(e.target.value)}
+                    maxLength={nameMax}
+                    className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                    data-testid="input-quickadd-gentleman"
+                  />
+                </div>
                 {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
-                <Input
-                  id="qa-lady-name"
-                  placeholder={audienceConfig.person2Label}
-                  value={ladyName}
-                  onChange={(e) => setLadyName(e.target.value)}
-                  maxLength={nameMax}
-                  data-testid="input-quickadd-lady"
-                />
+                <div className="relative">
+                  <EmbroideryNeedleIcon />
+                  <Input
+                    id="qa-lady-name"
+                    placeholder={audienceConfig.person2Label}
+                    value={ladyName}
+                    onChange={(e) => setLadyName(e.target.value)}
+                    maxLength={nameMax}
+                    className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                    data-testid="input-quickadd-lady"
+                  />
+                </div>
                 {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
               </div>
             </div>
@@ -416,14 +444,18 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               <Label htmlFor="qa-personalization" className="text-sm font-medium">
                 {audienceConfig.heading}
               </Label>
-              <Input
-                id="qa-personalization"
-                placeholder={audienceConfig.nameLabel}
-                value={personalizationName}
-                onChange={(e) => setPersonalizationName(e.target.value)}
-                maxLength={nameMax}
-                data-testid="input-quickadd-name"
-              />
+              <div className="relative">
+                <EmbroideryNeedleIcon />
+                <Input
+                  id="qa-personalization"
+                  placeholder={audienceConfig.nameLabel}
+                  value={personalizationName}
+                  onChange={(e) => setPersonalizationName(e.target.value)}
+                  maxLength={nameMax}
+                  className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                  data-testid="input-quickadd-name"
+                />
+              </div>
               {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
             </div>
           ) : null}
