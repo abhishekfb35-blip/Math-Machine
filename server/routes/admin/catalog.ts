@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
-import { storage } from "../../storage";
+import { storage, ImageImportValidationError } from "../../storage";
 import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
 import { z } from "zod";
+import { imageImportSchema, duplicateImageImportRows } from "@shared/productImageImport";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
 import {
@@ -473,6 +474,27 @@ export function registerAdminCatalogRoutes(app: Express) {
     if (!id) return res.status(400).json({ message: "Invalid category ID" });
     const map = await storage.getProductTagIdsByCategory(id);
     res.json(map);
+  });
+
+  app.post("/api/admin/products/import-image-urls", requirePermission("catalog"), async (req, res) => {
+    const parsed = imageImportSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid image rows", errors: parsed.error.issues.map(issue => ({
+      row: typeof issue.path[1] === "number" ? issue.path[1] + 2 : 0,
+      message: issue.message,
+    })) });
+    const duplicateRows = duplicateImageImportRows(parsed.data.rows);
+    if (duplicateRows.length) return res.status(400).json({
+      message: "Duplicate product/sequence pairs",
+      errors: duplicateRows.map(index => ({ row: index + 2, message: "Duplicate product/sequence pair" })),
+    });
+    try {
+      const result = await storage.importProductImageUrls(parsed.data.rows, getAdminUsername(req));
+      res.json(result);
+    } catch (err) {
+      if (err instanceof ImageImportValidationError) return res.status(400).json({ message: err.message, errors: err.errors });
+      console.error("Import product image URLs error:", err);
+      res.status(500).json({ message: "Failed to import image URLs; no images were changed" });
+    }
   });
 
   app.post("/api/admin/products/bulk-upload-images", requirePermission("catalog"), async (req, res) => {
