@@ -273,7 +273,7 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
           </div>
           {order.discount > 0 && (
             <div className="flex justify-between text-sm text-green-600">
-              <span>Discount (Buy 2 Get 1 Free)</span>
+              <span>Promotion discount</span>
               <span>-{formatCurrency(order.discount)}</span>
             </div>
           )}

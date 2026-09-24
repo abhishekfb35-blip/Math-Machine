@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/components/ThemeProvider";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getCartDiscountLabel } from "@/lib/discountLabels";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, defaultPwaInstall, defaultSeo, type HeaderConfig, type PwaInstallConfig, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
@@ -374,13 +375,7 @@ export default function Header() {
                     <span data-testid="mini-cart-subtotal">{formatPrice(cart.subtotal)}</span>
                   </div>
                   {cart.discount > 0 && (() => {
-                    const { retailFreeItemTrigger: trigger, retailBonusDiscountPct: bonusPct, wholesaleThreshold: wholesale } = cart.engineThresholds ?? { retailFreeItemTrigger: 3, retailBonusDiscountPct: 30, wholesaleThreshold: 5 };
-                    const count = cart.itemCount;
-                    const label = count >= wholesale
-                      ? "Best Rates"
-                      : count >= trigger + 1
-                        ? `1 Free Item + ${bonusPct}% Off*`
-                        : `Buy ${trigger - 1} Get 1 Free*`;
+                    const label = getCartDiscountLabel(cart.itemCount, cart.engineThresholds);
                     return (
                       <div className="flex justify-between text-sm text-green-600 font-medium">
                         <span data-testid="mini-cart-discount-label">{label}</span>

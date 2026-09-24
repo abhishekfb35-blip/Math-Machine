@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
+import { getCartDiscountLabel } from "@/lib/discountLabels";
 import type { Product, CartItem } from "@shared/types";
 
 interface CartItemWithProduct extends CartItem {
@@ -238,13 +239,7 @@ export default function CartPage() {
               <span data-testid="text-subtotal">{cart ? formatPrice(cart.subtotal) : "—"}</span>
             </div>
             {cart && cart.discount > 0 && (() => {
-              const { retailFreeItemTrigger: trigger, retailBonusDiscountPct: bonusPct, wholesaleThreshold: wholesale } = cart.engineThresholds ?? { retailFreeItemTrigger: 3, retailBonusDiscountPct: 30, wholesaleThreshold: 5 };
-              const count = cart.itemCount;
-              const label = count >= wholesale
-                ? "Best Rates"
-                : count >= trigger + 1
-                  ? `1 Free Item + ${bonusPct}% Off*`
-                  : `Buy ${trigger - 1} Get 1 Free*`;
+              const label = getCartDiscountLabel(cart.itemCount, cart.engineThresholds);
               return (
                 <div className="flex justify-between gap-4 text-green-600">
                   <span data-testid="text-discount-label">{label}</span>

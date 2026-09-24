@@ -210,12 +210,13 @@ describe("Edge cases", () => {
     const notification = baseNotification({ discount: 200, total: 1000 });
     const html = buildCustomerEmailHtml(notification);
     assert.ok(html.includes("₹200"), "Expected discount amount in email");
-    assert.ok(html.includes("Buy 2 Get 1"), "Expected discount label in email");
+    assert.ok(html.includes("Promotion discount"), "Expected neutral promotion label in email");
+    assert.ok(!html.includes("Buy 2 Get 1"), "Expected no fixed promotion name in email");
   });
 
   test("discount section is hidden when discount is zero", () => {
     const notification = baseNotification({ discount: 0, total: 1200 });
     const html = buildCustomerEmailHtml(notification);
-    assert.ok(!html.includes("Buy 2 Get 1"), "Expected no discount row when discount=0");
+    assert.ok(!html.includes("Promotion discount"), "Expected no discount row when discount=0");
   });
 });

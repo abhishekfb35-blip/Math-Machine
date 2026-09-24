@@ -164,7 +164,7 @@ export function buildCustomerEmailHtml(n: OrderNotification): string {
           ` : ""}
           ${hasDiscount ? `
           <tr>
-            <td style="color: #16a34a; padding: 4px 0;">Buy 2 Get 1 Free Discount</td>
+            <td style="color: #16a34a; padding: 4px 0;">Promotion discount</td>
             <td style="text-align: right; color: #16a34a; font-weight: 500;">-${formatCurrency(n.discount!)}</td>
           </tr>
           ` : ""}
