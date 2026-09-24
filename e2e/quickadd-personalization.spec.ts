@@ -289,6 +289,26 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
   test("Quick Add keeps the stacked form in centered tablet and desktop sheets", async ({
     page,
   }) => {
+    await page.route("**/api/cart", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "quickadd-layout-test-cart",
+          items: [],
+          itemCount: 0,
+          subtotal: 0,
+          discount: 0,
+          shippingFee: 0,
+          total: 0,
+          freeIndices: [],
+          engineThresholds: {
+            retailFreeItemTrigger: 3,
+            retailBonusDiscountPct: 30,
+            wholesaleThreshold: 5,
+          },
+        }),
+      }),
+    );
     await page.route("**/api/site-config/signup-popup", route =>
       route.fulfill({
         contentType: "application/json",
@@ -329,6 +349,14 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     expect(tabletPanel.width).toBeGreaterThan(500);
     expect(tabletPanel.width).toBeLessThan(600);
     expect(Math.abs(tabletPanel.x + tabletPanel.width / 2 - 400)).toBeLessThan(2);
+    const nudgeCard = sheet.getByTestId("nudge-card");
+    await expect(nudgeCard).toBeVisible();
+    const tabletNudgeCard = await nudgeCard.boundingBox();
+    if (!tabletNudgeCard) throw new Error("Expected the Quick Add rewards card to have a bounding box");
+    const nudgeParentWidth = await nudgeCard.evaluate(element =>
+      element.parentElement?.getBoundingClientRect().width ?? 0,
+    );
+    expect(tabletNudgeCard.width).toBeGreaterThan(nudgeParentWidth * 0.9);
     await expect.poll(async () => {
       const box = await sheet.boundingBox();
       return box ? box.y + box.height : NaN;

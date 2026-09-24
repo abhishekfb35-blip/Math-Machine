@@ -10,6 +10,7 @@ interface NudgeCardProps {
   itemCount: number;
   engineThresholds: EngineThresholds | null;
   compact?: boolean;
+  fullWidth?: boolean;
   showTeaser?: boolean;
 }
 
@@ -27,6 +28,7 @@ export default function NudgeCard({
   itemCount,
   engineThresholds,
   compact = false,
+  fullWidth = false,
   showTeaser = false,
 }: NudgeCardProps) {
   if (!engineThresholds) return null;
@@ -126,7 +128,7 @@ export default function NudgeCard({
   return (
     <div
       className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm ${
-        compact ? "w-full md:w-1/3 mx-auto" : ""
+        compact ? (fullWidth ? "w-full" : "w-full md:w-1/3 mx-auto") : ""
       }`}
       data-testid="nudge-card"
     >

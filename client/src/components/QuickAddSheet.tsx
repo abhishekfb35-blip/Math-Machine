@@ -307,6 +307,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                   itemCount={cart.itemCount}
                   engineThresholds={cart.engineThresholds}
                   compact
+                  fullWidth
                   showTeaser
                 />
               ) : (
