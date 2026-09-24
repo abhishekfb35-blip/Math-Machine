@@ -449,7 +449,7 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
   const groupContents = (useMobileSelection: boolean) => {
     const activeSelection = useMobileSelection ? mobileSelected : selected;
     return visibleGroups.map(({ group, options: groupOptions }) => {
-      const expanded = expandedGroups[group.id] ?? true;
+      const expanded = expandedGroups[group.id] ?? false;
       return (
         <div key={group.id} className="rounded-lg border bg-background overflow-hidden">
           <button
