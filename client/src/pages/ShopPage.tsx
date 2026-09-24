@@ -398,13 +398,11 @@ interface GroupedThemeFilterProps {
 function GroupedThemeFilter({ options, groups, selected, onChange, counts }: GroupedThemeFilterProps) {
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [mobileSelected, setMobileSelected] = useState<string[]>(selected);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const optionMap = useMemo(() => new Map(options.map(option => [option.value, option])), [options]);
 
   const visibleGroups = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
     const configuredIds = new Set<string>();
     groups.forEach(group => group.themeIds.forEach(id => configuredIds.add(id)));
     const result = groups
@@ -415,19 +413,13 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
           .map(id => {
             return optionMap.get(id);
           })
-          .filter((option): option is { label: string; value: string } => Boolean(option))
-          .filter(option => !normalizedSearch || option.label.toLowerCase().includes(normalizedSearch));
+          .filter((option): option is { label: string; value: string } => Boolean(option));
         return { group, options: groupOptions };
       })
-      .filter(({ group, options: groupOptions }) => {
-        return !normalizedSearch
-          ? groupOptions.length > 0
-          : group.name.toLowerCase().includes(normalizedSearch) || groupOptions.length > 0;
-      });
+      .filter(({ options: groupOptions }) => groupOptions.length > 0);
 
     const unassigned = options
-      .filter(option => !configuredIds.has(option.value))
-      .filter(option => !normalizedSearch || option.label.toLowerCase().includes(normalizedSearch));
+      .filter(option => !configuredIds.has(option.value));
     if (unassigned.length > 0) {
       result.push({
         group: {
@@ -442,7 +434,7 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
       });
     }
     return result;
-  }, [groups, optionMap, options, search]);
+  }, [groups, optionMap, options]);
 
   const toggle = (values: string[], value: string) => {
     onChange(values.includes(value) ? values.filter(item => item !== value) : [...values, value]);
@@ -451,7 +443,7 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
   const themeLabel = selected.length === 0 ? "Themes" : `Themes (${selected.length})`;
 
   const toggleGroup = (id: string) => {
-    setExpandedGroups(previous => ({ ...previous, [id]: !(previous[id] ?? true) }));
+    setExpandedGroups(previous => ({ ...previous, [id]: !(previous[id] ?? false) }));
   };
 
   const groupContents = (useMobileSelection: boolean) => {
@@ -504,10 +496,15 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
     });
   };
 
+  const openDesktop = (open: boolean) => {
+    if (open) setExpandedGroups({});
+    setDesktopOpen(open);
+  };
+
   const openMobile = (open: boolean) => {
     if (open) {
       setMobileSelected(selected);
-      setSearch("");
+      setExpandedGroups({});
     }
     setMobileOpen(open);
   };
@@ -516,7 +513,7 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
     <>
       <div className="hidden sm:flex items-center gap-2">
         <span className="text-xs text-muted-foreground shrink-0 font-medium w-12">Theme</span>
-        <Popover open={desktopOpen} onOpenChange={setDesktopOpen}>
+        <Popover open={desktopOpen} onOpenChange={openDesktop}>
           <PopoverTrigger asChild>
             <Button
               variant={selected.length > 0 ? "default" : "outline"}
@@ -529,15 +526,7 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[min(42rem,calc(100vw-2rem))] p-3">
-            <div className="flex items-center gap-2 mb-3">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                placeholder="Search themes..."
-                className="h-8 text-sm"
-                data-testid="input-search-themes"
-              />
+            <div className="flex items-center justify-end mb-3">
               {selected.length > 0 && (
                 <button type="button" onClick={() => onChange([])} className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap">
                   Clear
@@ -589,18 +578,6 @@ function GroupedThemeFilter({ options, groups, selected, onChange, counts }: Gro
                 </button>
               )}
             </SheetHeader>
-            <div className="px-5 py-3 border-b shrink-0">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  placeholder="Search themes..."
-                  className="pl-9 h-10"
-                  data-testid="input-search-themes-mobile"
-                />
-              </div>
-            </div>
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
               {groupContents(true)}
               {visibleGroups.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No themes found.</p>}
