@@ -723,18 +723,14 @@ export default function ShopPage() {
   const getFilterResultCount = (state: FilterState): number | undefined => {
     if (!products) return undefined;
     const category = categoryOptions.find(c => c.name.toLowerCase() === state.category);
-    const query = state.query.trim().toLowerCase();
+    const query = state.query.trim();
     let filtered = products.filter(product => {
       if (category && product.categoryId !== category.id) return false;
       if (!matchesAudience(product.audience ?? [], state.audience)) return false;
       if (state.genders.length && !(product.genders ?? []).some(value => state.genders.includes(value))) return false;
       if (state.themes.length && !(product.themes ?? []).some(value => state.themes.includes(value))) return false;
       if (state.styles.length && !(product.styles ?? []).some(value => state.styles.includes(value))) return false;
-      if (query && !(
-        product.name.toLowerCase().includes(query) ||
-        product.sku?.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query)
-      )) return false;
+      if (query && !matchesProductSearch(query, product)) return false;
       return true;
     });
 

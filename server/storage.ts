@@ -45,7 +45,7 @@ import { generateSku } from "./utils/sku";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 import { duplicateImageImportRows, type ImageImportRow } from "@shared/productImageImport";
 import { duplicateProductCreateRows, type ProductCreateRow, type ProductCreateError } from "@shared/productCreateImport";
-import { getProductSearchTerms } from "@shared/productSearch";
+import { getProductSearchTerms, getProductSearchWordVariants } from "@shared/productSearch";
 
 export class ImageImportValidationError extends Error {
   constructor(public errors: Array<{ row: number; message: string }>) {
@@ -59,10 +59,19 @@ function buildProductSearchCondition(query: string) {
 
   return and(...terms.map(term => {
     const pattern = `%${term}%`;
+    const variants = getProductSearchWordVariants(term);
+    const wholeWordPattern = variants.length
+      ? `(^|[^[:alnum:]])(${variants.join("|")})($|[^[:alnum:]])`
+      : null;
     return or(
       ilike(products.name, pattern),
       ilike(products.sku, pattern),
       ilike(products.description, pattern),
+      ...(wholeWordPattern ? [
+        sql`${products.name} ~* ${wholeWordPattern}`,
+        sql`${products.sku} ~* ${wholeWordPattern}`,
+        sql`${products.description} ~* ${wholeWordPattern}`,
+      ] : []),
     );
   }));
 }
