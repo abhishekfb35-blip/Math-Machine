@@ -282,21 +282,30 @@ export function Current() {
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label htmlFor="qa-personalization" className="text-sm font-medium">Personalise with a Name</Label>
-                  <div className="relative">
-                    <EmbroideryNeedleIcon />
-                    <Input
-                      id="qa-personalization"
-                      placeholder="Enter name to embroider"
-                      value={personalizationName}
-                      onChange={(event) => setPersonalizationName(event.target.value)}
-                      maxLength={nameMax}
-                      className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
-                      data-testid="input-quickadd-name"
-                    />
+                <div
+                  className="space-y-3 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-800/50 dark:bg-amber-950/20"
+                  data-testid="section-quickadd-personalization"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold leading-5">Make it personal</p>
+                    <p className="text-xs text-muted-foreground">Your name will be embroidered on this item.</p>
                   </div>
-                  {(() => { const hint = nameCharHint(personalizationName); return <p className={`text-xs ${hint.className}`}>{hint.text}</p>; })()}
+                  <div className="space-y-1">
+                    <Label htmlFor="qa-personalization" className="text-sm font-semibold">Personalise with a Name</Label>
+                    <div className="relative">
+                      <EmbroideryNeedleIcon />
+                      <Input
+                        id="qa-personalization"
+                        placeholder="Enter name to embroider"
+                        value={personalizationName}
+                        onChange={(event) => setPersonalizationName(event.target.value)}
+                        maxLength={nameMax}
+                        className="h-[52px] border-amber-300 bg-white pl-10 text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
+                        data-testid="input-quickadd-name"
+                      />
+                    </div>
+                    {(() => { const hint = nameCharHint(personalizationName); return <p className={`text-xs ${hint.className}`}>{hint.text}</p>; })()}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-4">

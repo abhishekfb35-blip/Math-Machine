@@ -418,9 +418,17 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
             <div className="space-y-4">
               {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
-                <div className="space-y-2">
+                <div
+                  className="space-y-3 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-800/50 dark:bg-amber-950/20"
+                  data-testid="section-quickadd-personalization"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold leading-5">Make it personal</p>
+                    <p className="text-xs text-muted-foreground">Add a name for each person.</p>
+                  </div>
+                  <div className="space-y-2">
                   <div className="space-y-1">
-                    <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
+                    <Label htmlFor="qa-gentleman-name" className="text-sm font-semibold">{audienceConfig.person1Prefix}</Label>
                     <div className="relative">
                       <EmbroideryNeedleIcon />
                       <Input
@@ -429,14 +437,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                         value={gentlemanName}
                         onChange={(e) => setGentlemanName(e.target.value)}
                         maxLength={nameMax}
-                        className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                        className="h-[52px] border-amber-300 bg-white pl-10 text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
                         data-testid="input-quickadd-gentleman"
                       />
                     </div>
                     {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
+                    <Label htmlFor="qa-lady-name" className="text-sm font-semibold">{audienceConfig.person2Prefix}</Label>
                     <div className="relative">
                       <EmbroideryNeedleIcon />
                       <Input
@@ -445,31 +453,41 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                         value={ladyName}
                         onChange={(e) => setLadyName(e.target.value)}
                         maxLength={nameMax}
-                        className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                        className="h-[52px] border-amber-300 bg-white pl-10 text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
                         data-testid="input-quickadd-lady"
                       />
                     </div>
                     {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
                   </div>
                 </div>
+                </div>
               ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
-                <div className="space-y-1">
-                  <Label htmlFor="qa-personalization" className="text-sm font-medium">
-                    {audienceConfig.heading}
-                  </Label>
-                  <div className="relative">
-                    <EmbroideryNeedleIcon />
-                    <Input
-                      id="qa-personalization"
-                      placeholder={audienceConfig.nameLabel}
-                      value={personalizationName}
-                      onChange={(e) => setPersonalizationName(e.target.value)}
-                      maxLength={nameMax}
-                      className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
-                      data-testid="input-quickadd-name"
-                    />
+                <div
+                  className="space-y-3 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-800/50 dark:bg-amber-950/20"
+                  data-testid="section-quickadd-personalization"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold leading-5">Make it personal</p>
+                    <p className="text-xs text-muted-foreground">Your name will be embroidered on this item.</p>
                   </div>
-                  {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
+                  <div className="space-y-1">
+                    <Label htmlFor="qa-personalization" className="text-sm font-semibold">
+                      {audienceConfig.heading}
+                    </Label>
+                    <div className="relative">
+                      <EmbroideryNeedleIcon />
+                      <Input
+                        id="qa-personalization"
+                        placeholder={audienceConfig.nameLabel}
+                        value={personalizationName}
+                        onChange={(e) => setPersonalizationName(e.target.value)}
+                        maxLength={nameMax}
+                        className="h-[52px] border-amber-300 bg-white pl-10 text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
+                        data-testid="input-quickadd-name"
+                      />
+                    </div>
+                    {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
+                  </div>
                 </div>
               ) : null}
 

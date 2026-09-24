@@ -364,6 +364,9 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
 
     const nameInput = page.getByTestId("input-quickadd-name");
     const submit = page.getByTestId("button-quickadd-submit");
+    await expect(page.getByTestId("section-quickadd-personalization")).toBeVisible();
+    await expect(nameInput).toHaveCSS("height", "52px");
+    await expect(nameInput).toHaveCSS("font-size", "16px");
     await expect(nameInput).toBeVisible();
     await expect(nameInput).not.toBeFocused();
     await selectRequiredQuickAddVariant(page);
@@ -396,6 +399,9 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await couplesQuickAddButton.scrollIntoViewIfNeeded();
     await couplesQuickAddButton.click();
     await expect(page.getByTestId("section-quickadd-sizes")).toBeVisible();
+    await expect(page.getByTestId("section-quickadd-personalization")).toBeVisible();
+    await expect(page.getByTestId("input-quickadd-gentleman")).toHaveCSS("height", "52px");
+    await expect(page.getByTestId("input-quickadd-lady")).toHaveCSS("height", "52px");
     await selectRequiredQuickAddVariant(page);
     await page.getByTestId("input-quickadd-gentleman").fill("James");
     await page.getByTestId("input-quickadd-lady").fill("Emma");
