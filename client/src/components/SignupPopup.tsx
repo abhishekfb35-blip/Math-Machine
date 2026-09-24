@@ -83,6 +83,74 @@ function getFocusableElements(container: HTMLElement) {
   );
 }
 
+interface PausableTimeout {
+  handle: ReturnType<typeof setTimeout> | null;
+  startedAt: number | null;
+  remainingMs: number;
+  active: boolean;
+  callback: () => void;
+}
+
+type PausableTimeoutRef = { current: PausableTimeout | null };
+type BooleanRef = { current: boolean };
+
+function cancelPausableTimeout(timerRef: PausableTimeoutRef) {
+  const timer = timerRef.current;
+  if (!timer) return;
+  if (timer.handle !== null) clearTimeout(timer.handle);
+  timer.active = false;
+  timerRef.current = null;
+}
+
+function pausePausableTimeout(timerRef: PausableTimeoutRef) {
+  const timer = timerRef.current;
+  if (!timer?.active || timer.handle === null) return;
+
+  const elapsed = Date.now() - (timer.startedAt ?? Date.now());
+  timer.remainingMs = Math.max(0, timer.remainingMs - elapsed);
+  clearTimeout(timer.handle);
+  timer.handle = null;
+  timer.startedAt = null;
+}
+
+function resumePausableTimeout(
+  timerRef: PausableTimeoutRef,
+  blockedRef: BooleanRef,
+) {
+  const timer = timerRef.current;
+  if (!timer?.active || timer.handle !== null || blockedRef.current) return;
+
+  timer.startedAt = Date.now();
+  timer.handle = setTimeout(() => {
+    if (timerRef.current !== timer || !timer.active) return;
+    timer.handle = null;
+    timer.startedAt = null;
+    timer.remainingMs = 0;
+    if (blockedRef.current) return;
+
+    timer.active = false;
+    timerRef.current = null;
+    timer.callback();
+  }, timer.remainingMs);
+}
+
+function schedulePausableTimeout(
+  timerRef: PausableTimeoutRef,
+  delayMs: number,
+  callback: () => void,
+  blockedRef: BooleanRef,
+) {
+  cancelPausableTimeout(timerRef);
+  timerRef.current = {
+    handle: null,
+    startedAt: null,
+    remainingMs: Math.max(0, delayMs),
+    active: true,
+    callback,
+  };
+  resumePausableTimeout(timerRef, blockedRef);
+}
+
 interface SignupPopupConfig {
   enabled: boolean;
   delaySeconds: number;
@@ -129,6 +197,8 @@ export default function SignupPopup() {
     _setSignupPopupOpen,
     _onDismissed,
     _onAuthSuccess,
+    isQuickAddOpen,
+    quickAddClosedAfterAdd,
   } = useCartGateInternal();
 
   const [visible, setVisible] = useState(false);
@@ -151,8 +221,13 @@ export default function SignupPopup() {
   const pendingCredential = useRef<string | null>(null);
   const sessionTimerSet = useRef(false);
   const cartTriggered = useRef(false);
-  const cartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reshowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionTimerRef = useRef<PausableTimeout | null>(null);
+  const cartTimerRef = useRef<PausableTimeout | null>(null);
+  const reshowTimerRef = useRef<PausableTimeout | null>(null);
+  const quickAddCloseGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quickAddWasOpenRef = useRef(false);
+  const isQuickAddOpenRef = useRef(isQuickAddOpen);
+  isQuickAddOpenRef.current = isQuickAddOpen;
   const isAuthRef = useRef(isAuthenticated);
   const visibleRef = useRef(false);
   const triggerRef = useRef<SignupPopupTrigger>("promotional");
@@ -169,9 +244,75 @@ export default function SignupPopup() {
     nextTrigger?: SignupPopupTrigger,
   ) => void>(() => {});
 
+  const pausePromoTimers = useCallback(() => {
+    pausePausableTimeout(sessionTimerRef);
+    pausePausableTimeout(cartTimerRef);
+    pausePausableTimeout(reshowTimerRef);
+  }, []);
+
+  const resumePromoTimers = useCallback(() => {
+    resumePausableTimeout(sessionTimerRef, isQuickAddOpenRef);
+    resumePausableTimeout(cartTimerRef, isQuickAddOpenRef);
+    resumePausableTimeout(reshowTimerRef, isQuickAddOpenRef);
+  }, []);
+
+  const clearPromoTimers = useCallback(() => {
+    cancelPausableTimeout(sessionTimerRef);
+    cancelPausableTimeout(cartTimerRef);
+    cancelPausableTimeout(reshowTimerRef);
+  }, []);
+
+  const schedulePromoTimer = useCallback((
+    timerRef: PausableTimeoutRef,
+    delayMs: number,
+    callback: () => void,
+  ) => {
+    schedulePausableTimeout(timerRef, delayMs, callback, isQuickAddOpenRef);
+  }, []);
+
   useEffect(() => {
     _setSignupPopupOpen(visible);
   }, [_setSignupPopupOpen, visible]);
+
+  useEffect(() => {
+    if (isQuickAddOpen) {
+      quickAddWasOpenRef.current = true;
+      if (quickAddCloseGraceTimerRef.current !== null) {
+        clearTimeout(quickAddCloseGraceTimerRef.current);
+        quickAddCloseGraceTimerRef.current = null;
+      }
+      pausePromoTimers();
+      return;
+    }
+
+    if (!quickAddWasOpenRef.current) return;
+    quickAddWasOpenRef.current = false;
+
+    if (quickAddClosedAfterAdd) {
+      resumePromoTimers();
+      return;
+    }
+
+    if (quickAddCloseGraceTimerRef.current !== null) {
+      clearTimeout(quickAddCloseGraceTimerRef.current);
+    }
+    quickAddCloseGraceTimerRef.current = setTimeout(() => {
+      quickAddCloseGraceTimerRef.current = null;
+      resumePromoTimers();
+    }, 5_000);
+  }, [
+    isQuickAddOpen,
+    quickAddClosedAfterAdd,
+    pausePromoTimers,
+    resumePromoTimers,
+  ]);
+
+  useEffect(() => () => {
+    clearPromoTimers();
+    if (quickAddCloseGraceTimerRef.current !== null) {
+      clearTimeout(quickAddCloseGraceTimerRef.current);
+    }
+  }, [clearPromoTimers]);
 
   const showPhoneValidation = useCallback((
     field: PhoneValidationField,
@@ -319,10 +460,14 @@ export default function SignupPopup() {
       pendingCredential.current = null;
       setGoogleUserData(null);
       gsiInitialized.current = false;
-      if (reshowTimerRef.current) { clearTimeout(reshowTimerRef.current); reshowTimerRef.current = null; }
+      clearPromoTimers();
+      if (quickAddCloseGraceTimerRef.current !== null) {
+        clearTimeout(quickAddCloseGraceTimerRef.current);
+        quickAddCloseGraceTimerRef.current = null;
+      }
       _onAuthSuccess();
     }
-  }, [isAuthenticated, _onAuthSuccess]);
+  }, [isAuthenticated, _onAuthSuccess, clearPromoTimers]);
 
   // ── Eligibility ───────────────────────────────────────────────────────────
   const canShowPromotional = useCallback(() => {
@@ -337,6 +482,7 @@ export default function SignupPopup() {
     nextTrigger: SignupPopupTrigger = "promotional",
   ) => {
     if (isAuthRef.current) return false;
+    if (nextTrigger === "promotional" && isQuickAddOpenRef.current) return false;
     if (nextTrigger !== "explicit" && !canShowPromotional()) return false;
     if (visibleRef.current) {
       if (nextTrigger === triggerRef.current) {
@@ -402,13 +548,11 @@ export default function SignupPopup() {
     sessionTimerSet.current = true;
     const delay = Math.max(0, config.delaySeconds ?? 15) * 1000;
 
-    const timer = setTimeout(() => {
+    schedulePromoTimer(sessionTimerRef, delay, () => {
       if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
-    }, delay);
-
-    return () => clearTimeout(timer);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, isAuthenticated, config]);
+  }, [authLoading, isAuthenticated, config, schedulePromoTimer]);
 
   // ── Soft cart-add trigger ─────────────────────────────────────────────────
   useEffect(() => {
@@ -416,17 +560,17 @@ export default function SignupPopup() {
       if (cartTriggered.current || isAuthRef.current || !config?.enabled) return;
       cartTriggered.current = true;
       const delay = Math.max(0, config.cartAddDelaySeconds ?? 2) * 1000;
-      cartTimerRef.current = setTimeout(() => {
+      schedulePromoTimer(cartTimerRef, delay, () => {
         if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
-      }, delay);
+      });
     };
 
     window.addEventListener("cart:item-added-for-popup", handler);
     return () => {
       window.removeEventListener("cart:item-added-for-popup", handler);
-      if (cartTimerRef.current) clearTimeout(cartTimerRef.current);
+      cancelPausableTimeout(cartTimerRef);
     };
-  }, [config]);
+  }, [config, schedulePromoTimer]);
 
   // ── Dismiss ───────────────────────────────────────────────────────────────
   const handleDismiss = useCallback(() => {
@@ -460,11 +604,11 @@ export default function SignupPopup() {
     }
 
     // Reshow after reshowIntervalSeconds — 0 means disabled (don't re-show).
-    if (reshowTimerRef.current) clearTimeout(reshowTimerRef.current);
+    cancelPausableTimeout(reshowTimerRef);
     if (dismissedTrigger === "explicit") return;
     const interval = config?.reshowIntervalSeconds ?? 0;
     if (interval > 0) {
-      reshowTimerRef.current = setTimeout(() => {
+      schedulePromoTimer(reshowTimerRef, interval * 1000, () => {
         if (!isAuthRef.current && canShowPromotional()) {
           gsiInitialized.current = false;
           visibleRef.current = true;
@@ -473,9 +617,9 @@ export default function SignupPopup() {
           setView("nudge");
           setVisible(true);
         }
-      }, interval * 1000);
+      });
     }
-  }, [_onDismissed, config, canShowPromotional]);
+  }, [_onDismissed, config, canShowPromotional, schedulePromoTimer]);
 
   // Move focus into the active view and return it to the element that opened
   // the popup when it closes.

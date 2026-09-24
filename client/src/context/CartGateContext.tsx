@@ -17,6 +17,12 @@ interface CartGateContextValue {
   isGatePromptOpen: boolean;
   /** True while the shared signup popup is visible above a cart surface. */
   isSignupPopupOpen: boolean;
+  /** True while at least one Quick Add sheet is open. */
+  isQuickAddOpen: boolean;
+  /** True when the last Quick Add sheet closed after a successful add. */
+  quickAddClosedAfterAdd: boolean;
+  /** Register a Quick Add sheet's visibility with the global popup coordinator. */
+  setQuickAddOpen: (instanceId: string, open: boolean, closedAfterAdd?: boolean) => void;
   /** Internal — SignupPopup registers its force-show function here. */
   _registerOpen: (fn: () => void) => void;
   /** Internal — SignupPopup reports its visibility here. */
@@ -31,6 +37,9 @@ const CartGateContext = createContext<CartGateContextValue>({
   gateAddToCart: (fn) => fn(),
   isGatePromptOpen: false,
   isSignupPopupOpen: false,
+  isQuickAddOpen: false,
+  quickAddClosedAfterAdd: false,
+  setQuickAddOpen: () => {},
   _registerOpen: () => {},
   _setSignupPopupOpen: () => {},
   _onDismissed: () => {},
@@ -39,8 +48,13 @@ const CartGateContext = createContext<CartGateContextValue>({
 
 /** Used by ProductPage / QuickAddSheet */
 export const useCartGate = () => {
-  const { gateAddToCart, isGatePromptOpen, isSignupPopupOpen } = useContext(CartGateContext);
-  return { gateAddToCart, isGatePromptOpen, isSignupPopupOpen };
+  const {
+    gateAddToCart,
+    isGatePromptOpen,
+    isSignupPopupOpen,
+    setQuickAddOpen,
+  } = useContext(CartGateContext);
+  return { gateAddToCart, isGatePromptOpen, isSignupPopupOpen, setQuickAddOpen };
 };
 
 /** Used internally by SignupPopup */
@@ -50,6 +64,10 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
   const [gateActive, setGateActive] = useState(false);
   const [isGatePromptOpen, setIsGatePromptOpen] = useState(false);
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
+  const [quickAddState, setQuickAddState] = useState<{
+    openIds: Set<string>;
+    closedAfterAdd: boolean;
+  }>({ openIds: new Set(), closedAfterAdd: false });
   const pendingFn = useRef<(() => void) | null>(null);
   const openPopupFn = useRef<() => void>(() => {});
   const hasCartActivity = useRef(false);
@@ -60,6 +78,27 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
 
   const _setSignupPopupOpen = useCallback((open: boolean) => {
     setIsSignupPopupOpen(open);
+  }, []);
+
+  const setQuickAddOpen = useCallback((
+    instanceId: string,
+    open: boolean,
+    closedAfterAdd = false,
+  ) => {
+    setQuickAddState((current) => {
+      const openIds = new Set(current.openIds);
+      if (open) {
+        openIds.add(instanceId);
+        return { openIds, closedAfterAdd: false };
+      }
+
+      const wasOpen = openIds.delete(instanceId);
+      if (!wasOpen) return current;
+      return {
+        openIds,
+        closedAfterAdd: openIds.size === 0 && closedAfterAdd,
+      };
+    });
   }, []);
 
   const _onDismissed = useCallback(() => {
@@ -100,6 +139,9 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
         gateAddToCart,
         isGatePromptOpen,
         isSignupPopupOpen,
+        isQuickAddOpen: quickAddState.openIds.size > 0,
+        quickAddClosedAfterAdd: quickAddState.closedAfterAdd,
+        setQuickAddOpen,
         _registerOpen,
         _setSignupPopupOpen,
         _onDismissed,

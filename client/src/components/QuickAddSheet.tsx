@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useId } from "react";
 import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart, trackEvent } from "@/lib/analytics";
@@ -57,7 +57,7 @@ interface QuickAddSheetProps {
 
 export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
   const { toast } = useToast();
-  const { gateAddToCart, isGatePromptOpen, isSignupPopupOpen } = useCartGate();
+  const { gateAddToCart, isGatePromptOpen, isSignupPopupOpen, setQuickAddOpen } = useCartGate();
   const keepSheetOpen = isGatePromptOpen || isSignupPopupOpen;
   const { formatPrice, convertPrice } = useCurrency();
   const offerLabel = useOfferLabel();
@@ -70,6 +70,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [sizeColorMap, setSizeColorMap] = useState<Record<string, string>>({});
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const signupPopupWasOpenRef = useRef(false);
+  const quickAddInstanceId = useId();
+  const quickAddAddedRef = useRef(false);
   const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
     queryKey: ["/api/site-config", "product-page-config"],
     queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
@@ -155,6 +157,15 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   }, [open]);
 
   useEffect(() => {
+    setQuickAddOpen(quickAddInstanceId, open, quickAddAddedRef.current);
+    if (!open) quickAddAddedRef.current = false;
+  }, [open, quickAddInstanceId, setQuickAddOpen]);
+
+  useEffect(() => () => {
+    setQuickAddOpen(quickAddInstanceId, false, quickAddAddedRef.current);
+  }, [quickAddInstanceId, setQuickAddOpen]);
+
+  useEffect(() => {
     if (isSignupPopupOpen) {
       signupPopupWasOpenRef.current = true;
       return;
@@ -207,6 +218,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       return res.json();
     },
     onSuccess: (data) => {
+      quickAddAddedRef.current = true;
       queryClient.setQueryData(["/api/cart"], data);
       window.dispatchEvent(new CustomEvent("cart:item-added-for-popup"));
       trackAddToCart(
