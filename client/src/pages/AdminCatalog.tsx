@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { ProductImageCsvImport } from "@/components/admin/ProductImageCsvImport";
+import { ProductCreateCsvImport } from "@/components/admin/ProductCreateCsvImport";
 import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, Attributes, ColorSwatch, CategorySizeDefinition } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product";
@@ -1221,6 +1222,7 @@ export default function AdminCatalog() {
   type BulkImageSlot = { slotId: string; file: File | null; previewUrl: string | null; sortOrder: number };
   const [bulkImageDialogOpen, setBulkImageDialogOpen] = useState(false);
   const [imageCsvOpen, setImageCsvOpen] = useState(false);
+  const [productCreateCsvOpen, setProductCreateCsvOpen] = useState(false);
   const [bulkImageSlots, setBulkImageSlots] = useState<BulkImageSlot[]>([]);
   const [bulkImageProgress, setBulkImageProgress] = useState<string | null>(null);
 
@@ -1935,6 +1937,9 @@ export default function AdminCatalog() {
             <p className="text-sm text-muted-foreground">Manage categories and products</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setProductCreateCsvOpen(true)} data-testid="button-open-product-create-csv">
+              <Upload className="w-4 h-4 mr-1" /> Upload Products via CSV
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setImageCsvOpen(true)} data-testid="button-open-image-csv">
               <Upload className="w-4 h-4 mr-1" /> Update Images via CSV
             </Button>
@@ -1957,6 +1962,7 @@ export default function AdminCatalog() {
           </div>
         </div>
 
+        <ProductCreateCsvImport open={productCreateCsvOpen} onClose={() => setProductCreateCsvOpen(false)} />
         <ProductImageCsvImport open={imageCsvOpen} onClose={() => setImageCsvOpen(false)} />
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

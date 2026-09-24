@@ -1,8 +1,9 @@
 import type { Express, Request, Response } from "express";
-import { storage, ImageImportValidationError } from "../../storage";
+import { storage, ImageImportValidationError, ProductCreateImportValidationError } from "../../storage";
 import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
 import { z } from "zod";
 import { imageImportSchema, duplicateImageImportRows } from "@shared/productImageImport";
+import { productCreateImportSchema, duplicateProductCreateRows } from "@shared/productCreateImport";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
 import {
@@ -154,6 +155,38 @@ export function registerAdminCatalogRoutes(app: Express) {
       if (err.code === "23505") return res.status(409).json({ message: "A product with that slug already exists" });
       console.error("Create product error:", err);
       res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.post("/api/admin/products/import-new", (req, res, next) => {
+    // The legacy admin permission middleware allows requests through when admin
+    // credentials are absent. Never expose a bulk-write route in that state.
+    if (!process.env.ADMIN_USERNAME || !(process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD)) {
+      return res.status(503).json({ message: "Admin authentication is not configured" });
+    }
+    next();
+  }, requirePermission("catalog"), async (req, res) => {
+    const parsed = productCreateImportSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({
+      message: "Invalid product rows", errors: parsed.error.issues.map(issue => ({
+        row: typeof issue.path[1] === "number" ? issue.path[1] + 2 : 0,
+        message: `${issue.path.slice(2).join(".") || "rows"}: ${issue.message}`,
+      })),
+    });
+    const duplicates = duplicateProductCreateRows(parsed.data.rows);
+    if (duplicates.length) return res.status(400).json({ message: "Duplicate product identities", errors: duplicates });
+    try {
+      const result = await storage.importNewProducts(parsed.data.rows, getAdminUsername(req));
+      res.status(201).json(result);
+    } catch (err: any) {
+      if (err instanceof ProductCreateImportValidationError) {
+        return res.status(400).json({ message: err.message, errors: err.errors });
+      }
+      if (err.code === "23505") {
+        return res.status(409).json({ message: "A SKU or slug was added during import; no products were created. Refresh the catalog and try again." });
+      }
+      console.error("Import new products error:", err);
+      res.status(500).json({ message: "Failed to import products; no products were created" });
     }
   });
 

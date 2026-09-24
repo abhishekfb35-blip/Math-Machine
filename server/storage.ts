@@ -44,10 +44,17 @@ import { db } from "./db";
 import { generateSku } from "./utils/sku";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 import { duplicateImageImportRows, type ImageImportRow } from "@shared/productImageImport";
+import { duplicateProductCreateRows, type ProductCreateRow, type ProductCreateError } from "@shared/productCreateImport";
 
 export class ImageImportValidationError extends Error {
   constructor(public errors: Array<{ row: number; message: string }>) {
     super("Image import validation failed");
+  }
+}
+
+export class ProductCreateImportValidationError extends Error {
+  constructor(public errors: ProductCreateError[]) {
+    super("Product import validation failed");
   }
 }
 
@@ -78,6 +85,7 @@ export interface IStorage {
   getProductById(id: string): Promise<Product | undefined>;
   getProductsByIds(ids: string[]): Promise<Product[]>;
   createProduct(prod: InsertProduct): Promise<Product>;
+  importNewProducts(rows: ProductCreateRow[], username: string): Promise<{ createdProducts: number }>;
   createProductFromDraft(data: InsertProduct, relations: {
     tagIds: string[];
     audienceIds: string[];
@@ -527,6 +535,58 @@ export class DatabaseStorage implements IStorage {
     }
     const [enriched] = await this.withEnriched([created]);
     return enriched;
+  }
+
+  async importNewProducts(rows: ProductCreateRow[], username: string): Promise<{ createdProducts: number }> {
+    const duplicates = duplicateProductCreateRows(rows);
+    if (duplicates.length) throw new ProductCreateImportValidationError(duplicates);
+    const categoryIds = [...new Set(rows.map(row => row.categoryId))];
+    const skus = rows.map(row => row.sku.toLocaleLowerCase());
+    const slugs = rows.map(row => row.slug.toLocaleLowerCase());
+    return db.transaction(async tx => {
+      // Serialize CSV imports before checking case-insensitive identities.
+      // Database unique constraints also guard exact-case races with other writers.
+      await tx.execute(sql`select pg_advisory_xact_lock(415415415)`);
+      const foundCategories = await tx.select({ id: categories.id }).from(categories)
+        .where(inArray(categories.id, categoryIds));
+      const knownCategories = new Set(foundCategories.map(row => row.id));
+      const existing = await tx.select({ sku: products.sku, slug: products.slug }).from(products)
+        .where(or(inArray(sql<string>`lower(${products.sku})`, skus), inArray(sql<string>`lower(${products.slug})`, slugs)));
+      const existingSkus = new Set(existing.map(row => row.sku.toLocaleLowerCase()));
+      const existingSlugs = new Set(existing.map(row => row.slug.toLocaleLowerCase()));
+      const errors: ProductCreateError[] = [];
+      rows.forEach((row, index) => {
+        if (!knownCategories.has(row.categoryId)) errors.push({ row: index + 2, message: `Category not found: ${row.categoryId}` });
+        if (existingSkus.has(row.sku.toLocaleLowerCase())) errors.push({ row: index + 2, message: `SKU already exists: ${row.sku}` });
+        if (existingSlugs.has(row.slug.toLocaleLowerCase())) errors.push({ row: index + 2, message: `Slug already exists: ${row.slug}` });
+      });
+      if (errors.length) throw new ProductCreateImportValidationError(errors);
+
+      for (const row of rows) {
+        const id = createId();
+        await tx.insert(products).values({
+          id, sku: row.sku, name: row.name, slug: row.slug, price: row.price, categoryId: row.categoryId,
+          description: row.description || null, mrp: row.mrp ?? null,
+          color: row.color || null, material: row.material, gsm: row.gsm,
+          dimensions: row.dimensions || null, weightGrams: row.weightGrams ?? null,
+          itemsInSet: row.itemsInSet ?? 1, specialFeatures: row.specialFeatures || null,
+          bulletPoints: row.bulletPoints?.length ? JSON.stringify(row.bulletPoints) : null,
+          searchKeywords: row.searchKeywords || null, productType: row.productType || "towel",
+          active: row.active ?? true, sortOrder: row.sortOrder ?? 0,
+        });
+        if (row.heroImageUrl) {
+          await tx.insert(productImages).values({
+            id: createId(), productId: id, imageUrl: row.heroImageUrl, sortOrder: 0, isPrimary: true,
+          });
+        }
+      }
+      await tx.insert(auditLogs).values({
+        id: createId(), entityType: "product", entityId: "bulk",
+        entityName: `${rows.length} products`, action: "import-new-products",
+        changes: JSON.stringify({ skus: rows.map(row => row.sku) }), username,
+      });
+      return { createdProducts: rows.length };
+    });
   }
 
   async createProductFromDraft(data: Omit<InsertProduct, "sku">, relations: {
