@@ -257,7 +257,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       <SheetContent
         ref={sheetContentRef}
         side="bottom"
-        className="rounded-t-2xl max-h-[90svh] flex flex-col md:bottom-6 md:left-0 md:right-0 md:mx-auto md:w-[min(92vw,56rem)] md:rounded-2xl md:border md:max-h-[calc(100svh-3rem)] md:p-7"
+        className="rounded-t-2xl max-h-[90svh] flex flex-col md:left-0 md:right-0 md:mx-auto md:w-[min(92vw,34rem)] md:border-x"
         data-testid="quickadd-sheet-content"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
@@ -274,10 +274,10 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         </SheetHeader>
         <div className="overflow-y-auto flex-1 space-y-4 pt-4 md:min-h-0">
           <div
-            className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-4 md:content-start"
+            className="space-y-4"
             data-testid="quickadd-form-layout"
           >
-            <div className="space-y-4 md:col-span-2 md:space-y-0 md:grid md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.85fr)] md:items-center md:gap-6">
+            <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
                   <img
@@ -318,7 +318,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
 
             {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
-              <div className="space-y-4 md:col-start-1">
+              <div className="space-y-4">
               {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
                 <div className="space-y-1.5" data-testid="section-quickadd-sizes">
                   <Label className="text-sm font-medium">Size</Label>
@@ -415,7 +415,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               </div>
             )}
 
-            <div className={`space-y-4 ${showVariantSelectors ? "md:col-start-2" : "md:col-span-2"}`}>
+            <div className="space-y-4">
               {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
                 <div className="space-y-2">
                   <div className="space-y-1">

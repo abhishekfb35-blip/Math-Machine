@@ -286,7 +286,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(nameInput).not.toBeFocused();
   });
 
-  test("Quick Add adapts from a phone sheet to compact tablet and desktop layouts", async ({
+  test("Quick Add keeps the stacked form in centered tablet and desktop sheets", async ({
     page,
   }) => {
     await page.route("**/api/site-config/signup-popup", route =>
@@ -323,15 +323,16 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("block");
 
     await page.setViewportSize({ width: 800, height: 900 });
-    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("grid");
+    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("block");
     const tabletPanel = await sheet.boundingBox();
     if (!tabletPanel) throw new Error("Expected the tablet Quick Add panel to have a bounding box");
-    expect(tabletPanel.width).toBeGreaterThan(700);
-    expect(tabletPanel.width).toBeLessThan(800);
+    expect(tabletPanel.width).toBeGreaterThan(500);
+    expect(tabletPanel.width).toBeLessThan(600);
     expect(Math.abs(tabletPanel.x + tabletPanel.width / 2 - 400)).toBeLessThan(2);
-    expect(
-      await formLayout.evaluate(element => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length),
-    ).toBe(2);
+    await expect.poll(async () => {
+      const box = await sheet.boundingBox();
+      return box ? box.y + box.height : NaN;
+    }).toBeCloseTo(900, 0);
 
     const nameInput = page.getByTestId("input-quickadd-name");
     const submit = page.getByTestId("button-quickadd-submit");
@@ -378,12 +379,16 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await quickAddButton.scrollIntoViewIfNeeded();
     await quickAddButton.click();
     await expect(sheet).toBeVisible();
-    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("grid");
+    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("block");
     const desktopPanel = await sheet.boundingBox();
     if (!desktopPanel) throw new Error("Expected the desktop Quick Add panel to have a bounding box");
-    expect(desktopPanel.width).toBeGreaterThan(800);
-    expect(desktopPanel.width).toBeLessThanOrEqual(896);
+    expect(desktopPanel.width).toBeGreaterThan(500);
+    expect(desktopPanel.width).toBeLessThan(600);
     expect(Math.abs(desktopPanel.x + desktopPanel.width / 2 - 640)).toBeLessThan(2);
+    await expect.poll(async () => {
+      const box = await sheet.boundingBox();
+      return box ? box.y + box.height : NaN;
+    }).toBeCloseTo(900, 0);
     await expect(page.getByTestId("input-quickadd-name")).not.toBeFocused();
 
     const desktopNameInput = page.getByTestId("input-quickadd-name");
