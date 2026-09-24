@@ -16,6 +16,7 @@ import type { Product, Attributes, Category } from "@shared/types";
 import { buildDefaultThemeGroups, type ThemeGroupsConfig } from "@shared/themeGroups";
 import type { ShopSection } from "@/lib/siteConfigDefaults";
 import { trackEvent } from "@/lib/analytics";
+import { matchesAudience, selectedAudienceIds } from "@shared/audienceFilters";
 
 function GridSkeleton() {
   return (
@@ -690,7 +691,10 @@ export default function ShopPage() {
     const cat = p.get("category") || "";
     setActiveCategory(cat);
     const f = p.get("filter") || "all";
-    setActiveFilter(audienceFilters.length > 1 && audienceFilters.some(x => x.value === f) ? f : "all");
+    const validAudienceIds = selectedAudienceIds(f).filter(id =>
+      audienceFilters.some(option => option.value === id),
+    );
+    setActiveFilter(validAudienceIds.length ? validAudienceIds.join(",") : "all");
     const g = p.get("gender");
     setActiveGenders(g ? g.split(",").filter(Boolean) : []);
     const t = p.get("theme");
@@ -744,7 +748,7 @@ export default function ShopPage() {
     const query = state.query.trim().toLowerCase();
     let filtered = products.filter(product => {
       if (category && product.categoryId !== category.id) return false;
-      if (state.audience !== "all" && !(product.audience ?? []).includes(state.audience)) return false;
+      if (!matchesAudience(product.audience ?? [], state.audience)) return false;
       if (state.genders.length && !(product.genders ?? []).some(value => state.genders.includes(value))) return false;
       if (state.themes.length && !(product.themes ?? []).some(value => state.themes.includes(value))) return false;
       if (state.styles.length && !(product.styles ?? []).some(value => state.styles.includes(value))) return false;
@@ -959,7 +963,7 @@ export default function ShopPage() {
     if (!products) return [];
     let result = products;
     if (activeCategoryObj) result = result.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") result = result.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeFilter !== "all") result = result.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
@@ -982,7 +986,7 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
@@ -992,7 +996,7 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
@@ -1002,30 +1006,20 @@ export default function ShopPage() {
     if (!products) return [];
     let r = products;
     if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
+    if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     return r;
   }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes]);
 
-  // Count base for category chips: all other filters applied, but NOT category
-  const countBaseCategory = useMemo(() => {
-    if (!products) return [];
-    let r = products;
-    if (activeFilter !== "all") r = r.filter(p => (p.audience ?? []).includes(activeFilter));
-    if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
-    if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
-    if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
-    return r;
-  }, [products, activeFilter, activeGenders, activeThemes, activeStyles]);
-
   const categoryCounts = useMemo(() => {
     const map: Record<string, number> = {};
+    if (!products) return map;
     for (const cat of categoryOptions) {
-      map[cat.name.toLowerCase()] = countBaseCategory.filter(p => p.categoryId === cat.id).length;
+      map[cat.name.toLowerCase()] = products.filter(p => p.categoryId === cat.id).length;
     }
     return map;
-  }, [countBaseCategory, categoryOptions]);
+  }, [products, categoryOptions]);
 
   const audienceCounts = useMemo(() => {
     const map: Record<string, number> = { all: countBaseAudience.length };
@@ -1103,7 +1097,7 @@ export default function ShopPage() {
     if (!products) return [];
     return shopSections
       .filter(s => s.enabled)
-      .filter(s => activeFilter === "all" || (s.audience ?? []).includes(activeFilter))
+      .filter(s => activeFilter === "all" || (s.audience ?? []).some(audience => selectedAudienceIds(activeFilter).includes(audience)))
       .map(s => {
         const sTags = s.tags ?? [];
         if (!sTags.length && !s.categories?.length && !s.audience?.length && !s.genders?.length && !s.themes?.length && !s.styles?.length)
@@ -1272,7 +1266,7 @@ export default function ShopPage() {
                 return (
                   <Button
                     key={f.value}
-                    variant={(activeFilter === f.value && !activeTag && !searchQuery) ? "default" : "outline"}
+                    variant={(selectedAudienceIds(activeFilter).includes(f.value) && !activeTag && !searchQuery) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleFilterChange(f.value)}
                     className="shrink-0"
@@ -1369,16 +1363,20 @@ export default function ShopPage() {
           >
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
-              {activeFilter !== "all" && (
+              {selectedAudienceIds(activeFilter).map((audienceId, index) => (
                 <button
-                  onClick={() => handleFilterChange("all")}
+                  key={audienceId}
+                  onClick={() => {
+                    const next = selectedAudienceIds(activeFilter).filter(id => id !== audienceId);
+                    handleFilterChange(next.length ? next.join(",") : "all");
+                  }}
                   className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium"
-                  data-testid="active-filter-audience"
+                  data-testid={index === 0 ? "active-filter-audience" : `active-filter-audience-${audienceId}`}
                 >
-                  {audienceFilters.find(f => f.value === activeFilter)?.label ?? activeFilter}
+                  {audienceFilters.find(f => f.value === audienceId)?.label ?? audienceId}
                   <X className="w-3 h-3" />
                 </button>
-              )}
+              ))}
               {activeGenders.map(g => (
                 <button
                   key={g}

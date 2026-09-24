@@ -3,8 +3,8 @@ import { storage } from "../storage";
 import type { Product } from "@shared/types";
 import {
   loadAllSectionFilters, getProductIdsByFilters, seededShuffle,
-  type SectionFilters,
 } from "../lib/featuredQuery";
+import { buildHomeSectionSeeAllHref } from "@shared/homeSectionHref";
 
 export interface HomeSection {
   key: string;
@@ -21,18 +21,6 @@ let cache: { bucket: number; data: HomeSection[] } | null = null;
 
 export function bustHomeCache() {
   cache = null;
-}
-
-function buildSeeAllHref(filters: SectionFilters): string {
-  const p = new URLSearchParams();
-  if (filters.categoryFilters.length === 1) p.set("category", filters.categoryFilters[0]);
-  if (filters.audienceFilters.length === 1) p.set("filter",   filters.audienceFilters[0]);
-  if (filters.genderFilters.length)         p.set("gender",   filters.genderFilters.join(","));
-  if (filters.themeFilters.length)          p.set("theme",    filters.themeFilters.join(","));
-  if (filters.styleFilters.length)          p.set("style",    filters.styleFilters.join(","));
-  if (filters.tagFilters.length === 1)      p.set("tag",      filters.tagFilters[0]);
-  const qs = p.toString();
-  return qs ? `/shop?${qs}` : "/shop";
 }
 
 async function buildCollections(): Promise<HomeSection[]> {
@@ -65,7 +53,7 @@ async function buildCollections(): Promise<HomeSection[]> {
     key:        s.key,
     title:      s.title,
     subtitle:   s.subtitle,
-    seeAllHref: buildSeeAllHref(s.filters),
+    seeAllHref: buildHomeSectionSeeAllHref(s.filters),
     products:   selectedIdSets[i].map(id => productMap.get(id)).filter(Boolean) as Product[],
   }));
 
