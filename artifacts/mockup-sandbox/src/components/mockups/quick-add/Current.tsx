@@ -300,7 +300,7 @@ export function Current() {
                         value={personalizationName}
                         onChange={(event) => setPersonalizationName(event.target.value)}
                         maxLength={nameMax}
-                        className="h-[52px] border-amber-300 bg-white pl-10 text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
+                        className="h-[52px] border-amber-300 bg-white pl-10 text-base md:!text-base shadow-sm placeholder:text-muted-foreground/80 focus-visible:border-amber-500 focus-visible:ring-amber-500/30 dark:border-amber-800/60 dark:bg-background"
                         data-testid="input-quickadd-name"
                       />
                     </div>
