@@ -286,6 +286,131 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(nameInput).not.toBeFocused();
   });
 
+  test("Quick Add adapts from a phone sheet to compact tablet and desktop layouts", async ({
+    page,
+  }) => {
+    await page.route("**/api/site-config/signup-popup", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          key: "signup-popup",
+          value: {
+            enabled: false,
+            delaySeconds: 60,
+            cartAddDelaySeconds: 60,
+            reshowIntervalSeconds: 0,
+            incentiveText: "Sign in to TurtleLittle",
+            subtitleText: "Save your wishlist, track orders, and check out faster.",
+            phoneSubtitleText: "Add your phone number to complete sign-up.",
+            phoneRequired: true,
+            consentText: "",
+          },
+        }),
+      }),
+    );
+    await page.goto("/shop");
+    const quickAddButton = page.getByTestId(`button-quickadd-${singleProductId}`);
+    await quickAddButton.scrollIntoViewIfNeeded();
+    await quickAddButton.click();
+
+    const sheet = page.getByTestId("quickadd-sheet-content");
+    const formLayout = page.getByTestId("quickadd-form-layout");
+    await expect(sheet).toBeVisible();
+
+    const phonePanel = await sheet.boundingBox();
+    expect(phonePanel?.x ?? -1).toBe(0);
+    expect(phonePanel?.width ?? 0).toBeCloseTo(400, 0);
+    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("block");
+
+    await page.setViewportSize({ width: 800, height: 900 });
+    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("grid");
+    const tabletPanel = await sheet.boundingBox();
+    if (!tabletPanel) throw new Error("Expected the tablet Quick Add panel to have a bounding box");
+    expect(tabletPanel.width).toBeGreaterThan(700);
+    expect(tabletPanel.width).toBeLessThan(800);
+    expect(Math.abs(tabletPanel.x + tabletPanel.width / 2 - 400)).toBeLessThan(2);
+    expect(
+      await formLayout.evaluate(element => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length),
+    ).toBe(2);
+
+    const nameInput = page.getByTestId("input-quickadd-name");
+    const submit = page.getByTestId("button-quickadd-submit");
+    await expect(nameInput).toBeVisible();
+    await expect(nameInput).not.toBeFocused();
+    await selectRequiredQuickAddVariant(page);
+    await nameInput.fill("A");
+    const minimumLengthHint = page.getByText(/Minimum \d+ characters/);
+    if (await minimumLengthHint.count()) {
+      await expect(submit).toBeDisabled();
+    }
+    await nameInput.fill("Alex");
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("show:signin-modal", { detail: { trigger: "explicit" } }));
+    });
+    const tabletSignupPopup = page.getByTestId("signup-popup");
+    await expect(tabletSignupPopup).toBeVisible();
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(tabletSignupPopup).toBeHidden();
+    await expect(sheet).toBeVisible();
+    await expect(nameInput).toHaveValue("Alex");
+    await expect(nameInput).not.toBeFocused();
+
+    await page.getByTestId("button-quickadd-increase").click();
+    await expect(page.getByTestId("text-quickadd-qty")).toHaveText("2");
+    await page.getByTestId("button-quickadd-decrease").click();
+    await expect(page.getByTestId("text-quickadd-qty")).toHaveText("1");
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(submit).toBeHidden({ timeout: 8000 });
+
+    const couplesQuickAddButton = page.getByTestId(`button-quickadd-${couplesProductId}`);
+    await couplesQuickAddButton.scrollIntoViewIfNeeded();
+    await couplesQuickAddButton.click();
+    await expect(page.getByTestId("section-quickadd-sizes")).toBeVisible();
+    await selectRequiredQuickAddVariant(page);
+    await page.getByTestId("input-quickadd-gentleman").fill("James");
+    await page.getByTestId("input-quickadd-lady").fill("Emma");
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(submit).toBeHidden({ timeout: 8000 });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await quickAddButton.scrollIntoViewIfNeeded();
+    await quickAddButton.click();
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => formLayout.evaluate(element => getComputedStyle(element).display)).toBe("grid");
+    const desktopPanel = await sheet.boundingBox();
+    if (!desktopPanel) throw new Error("Expected the desktop Quick Add panel to have a bounding box");
+    expect(desktopPanel.width).toBeGreaterThan(800);
+    expect(desktopPanel.width).toBeLessThanOrEqual(896);
+    expect(Math.abs(desktopPanel.x + desktopPanel.width / 2 - 640)).toBeLessThan(2);
+    await expect(page.getByTestId("input-quickadd-name")).not.toBeFocused();
+
+    const desktopNameInput = page.getByTestId("input-quickadd-name");
+    await desktopNameInput.fill("Alex");
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("show:signin-modal", { detail: { trigger: "explicit" } }));
+    });
+    const desktopSignupPopup = page.getByTestId("signup-popup");
+    await expect(desktopSignupPopup).toBeVisible();
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(desktopSignupPopup).toBeHidden();
+    await expect(sheet).toBeVisible();
+    await expect(desktopNameInput).toHaveValue("Alex");
+    await expect(desktopNameInput).not.toBeFocused();
+    await desktopNameInput.clear();
+
+    await selectRequiredQuickAddVariant(page);
+    await submit.click();
+    const nameConfirm = page.getByTestId("button-name-confirm-cancel");
+    await expect(nameConfirm).toBeVisible();
+    await nameConfirm.click();
+    await expect(sheet).toBeVisible();
+    await expect(page.getByTestId("input-quickadd-name")).not.toBeFocused();
+    await page.getByRole("button", { name: "Close" }).click();
+    await expect(sheet).toBeHidden();
+  });
+
   test("hard cart gate resumes one blocked QuickAdd exactly once after sign-in", async ({
     page,
   }) => {

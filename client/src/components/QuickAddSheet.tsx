@@ -257,7 +257,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
       <SheetContent
         ref={sheetContentRef}
         side="bottom"
-        className="rounded-t-2xl max-h-[90svh] flex flex-col"
+        className="rounded-t-2xl max-h-[90svh] flex flex-col md:bottom-6 md:left-0 md:right-0 md:mx-auto md:w-[min(92vw,56rem)] md:rounded-2xl md:border md:max-h-[calc(100svh-3rem)] md:p-7"
+        data-testid="quickadd-sheet-content"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
         }}
@@ -271,217 +272,230 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         <SheetHeader>
           <SheetTitle className="text-left">Add to Cart</SheetTitle>
         </SheetHeader>
-        <div className="overflow-y-auto flex-1 space-y-4 pt-4">
-          <div className="flex gap-3">
-            <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
-              <img
-                src={getProductImageUrl(product.imageUrl, "small")}
-                alt={product.name}
-                className="w-full h-full object-contain"
-                data-testid="img-quickadd-product"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-sm leading-tight line-clamp-2" data-testid="text-quickadd-name">
-                {product.name}
-              </h3>
-              <p className="text-lg font-bold text-primary mt-1" data-testid="text-quickadd-price">
-                {formatPrice(effectivePrice)}
-                {effectiveMrp > effectivePrice && (
-                  <span className="text-sm font-normal text-muted-foreground line-through ml-2" data-testid="text-quickadd-mrp">
-                    {formatPrice(effectiveMrp)}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {cart?.engineThresholds ? (
-            <NudgeCard
-              itemCount={cart.itemCount}
-              engineThresholds={cart.engineThresholds}
-              compact
-              showTeaser
-            />
-          ) : (
-            <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
-              <Gift className="w-4 h-4 shrink-0" />
-              <span>{offerLabel} - discount applied at checkout</span>
-            </div>
-          )}
-
-          {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
-            <div className="space-y-1.5" data-testid="section-quickadd-sizes">
-              <Label className="text-sm font-medium">Size</Label>
-              <div className="flex flex-wrap gap-2">
-                {variantOptions!.sizes.map((size) => {
-                  const available = !size.blurOnFront && isSizeAvailable(size.name);
-                  const blurred = size.blurOnFront;
-                  const isSelected = selectedSizeName === size.name;
-                  return (
-                    <button
-                      key={size.name}
-                      onClick={() => {
-                        if (available) {
-                          setSelectedSizeName(size.name);
-                          if (!isCoupleProduct && !sizeColorMap[size.name]) {
-                            const firstColor = getFirstSelectableColor(size.name);
-                            if (firstColor) setSizeColorMap(prev => ({ ...prev, [size.name]: firstColor }));
-                          }
-                        }
-                      }}
-                      disabled={!available}
-                      className={`flex items-center px-3 py-1 text-xs rounded border transition-all ${
-                        isSelected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : blurred || !isSizeAvailable(size.name)
-                          ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
-                          : sizeColorMap[size.name]
-                          ? "border-primary/50 hover:border-primary"
-                          : "border-border hover:border-primary"
-                      }`}
-                      data-testid={`button-quickadd-size-${size.name}`}
-                    >
-                      <span>{size.name}</span>
-                      {size.priceAdd > 0 && (
-                        <span className="ml-1 text-[10px] opacity-70">+{formatPrice(size.priceAdd)}</span>
-                      )}
-                      {sizeColorMap[size.name] && (() => {
-                        const picked = size.colors.find(c => c.name === sizeColorMap[size.name]);
-                        return picked ? (
-                          picked.swatchUrl
-                            ? <img src={picked.swatchUrl} alt={picked.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white ml-1.5 shrink-0" />
-                            : <span className="w-5 h-5 rounded-full bg-muted ring-2 ring-white inline-block ml-1.5 shrink-0" />
-                        ) : null;
-                      })()}
-                    </button>
-                  );
-                })}
+        <div className="overflow-y-auto flex-1 space-y-4 pt-4 md:min-h-0">
+          <div
+            className="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-4 md:content-start"
+            data-testid="quickadd-form-layout"
+          >
+            <div className="space-y-4 md:col-span-2 md:space-y-0 md:grid md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.85fr)] md:items-center md:gap-6">
+              <div className="flex gap-3">
+                <div className="w-20 h-20 rounded-md overflow-hidden bg-muted shrink-0">
+                  <img
+                    src={getProductImageUrl(product.imageUrl, "small")}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                    data-testid="img-quickadd-product"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm leading-tight line-clamp-2" data-testid="text-quickadd-name">
+                    {product.name}
+                  </h3>
+                  <p className="text-lg font-bold text-primary mt-1" data-testid="text-quickadd-price">
+                    {formatPrice(effectivePrice)}
+                    {effectiveMrp > effectivePrice && (
+                      <span className="text-sm font-normal text-muted-foreground line-through ml-2" data-testid="text-quickadd-mrp">
+                        {formatPrice(effectiveMrp)}
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
-              {selectedSizeObj?.description && (
-                <p className="text-muted-foreground" style={{ fontSize: `${selectedSizeObj.descriptionFontSize ?? 12}px` }}>{selectedSizeObj.description}</p>
+
+              {cart?.engineThresholds ? (
+                <NudgeCard
+                  itemCount={cart.itemCount}
+                  engineThresholds={cart.engineThresholds}
+                  compact
+                  showTeaser
+                />
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 dark:bg-primary/10 rounded-md px-3 py-2">
+                  <Gift className="w-4 h-4 shrink-0" />
+                  <span>{offerLabel} - discount applied at checkout</span>
+                </div>
               )}
             </div>
-          )}
 
-          {showVariantSelectors && colorsForSelectedSize.length > 0 && (
-            <div className="space-y-1.5" data-testid="section-quickadd-colors">
-              <Label className="text-sm font-medium">Colour</Label>
-              <div className="flex flex-wrap gap-2">
-                {colorsForSelectedSize.map((color) => {
-                  const available = !color.blurOnFront && isColorAvailable(selectedSizeName!, color.name);
-                  const blurred = color.blurOnFront;
-                  const isSelected = sizeColorMap[selectedSizeName ?? ""] === color.name;
-                  return (
-                    <button
-                      key={color.name}
-                      onClick={() => { if (available) setSizeColorMap(prev => ({ ...prev, [selectedSizeName!]: color.name })); }}
-                      disabled={!available}
-                      className={`flex items-center gap-1.5 p-1 text-xs rounded border transition-all ${
-                        isSelected
-                          ? "border-primary ring-1 ring-primary"
-                          : blurred || !isColorAvailable(selectedSizeName!, color.name)
-                          ? "border-muted opacity-40 cursor-not-allowed"
-                          : "border-border hover:border-primary"
-                      }`}
-                      data-testid={`button-quickadd-color-${color.name}`}
-                      title={color.name}
-                    >
-                      {color.swatchUrl ? (
-                        <img
-                          src={color.swatchUrl}
-                          alt={color.name}
-                          className="w-12 h-12 rounded object-cover"
-                        />
-                      ) : (
-                        <span className="w-12 h-12 rounded bg-muted border border-border inline-block" />
-                      )}
-                      <span className="pr-1">{color.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
-            <div className="space-y-2">
-              <div className="space-y-1">
-                <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
-                <div className="relative">
-                  <EmbroideryNeedleIcon />
-                  <Input
-                    id="qa-gentleman-name"
-                    placeholder={audienceConfig.person1Label}
-                    value={gentlemanName}
-                    onChange={(e) => setGentlemanName(e.target.value)}
-                    maxLength={nameMax}
-                    className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
-                    data-testid="input-quickadd-gentleman"
-                  />
+            {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
+              <div className="space-y-4 md:col-start-1">
+              {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
+                <div className="space-y-1.5" data-testid="section-quickadd-sizes">
+                  <Label className="text-sm font-medium">Size</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {variantOptions!.sizes.map((size) => {
+                      const available = !size.blurOnFront && isSizeAvailable(size.name);
+                      const blurred = size.blurOnFront;
+                      const isSelected = selectedSizeName === size.name;
+                      return (
+                        <button
+                          key={size.name}
+                          onClick={() => {
+                            if (available) {
+                              setSelectedSizeName(size.name);
+                              if (!isCoupleProduct && !sizeColorMap[size.name]) {
+                                const firstColor = getFirstSelectableColor(size.name);
+                                if (firstColor) setSizeColorMap(prev => ({ ...prev, [size.name]: firstColor }));
+                              }
+                            }
+                          }}
+                          disabled={!available}
+                          className={`flex items-center px-3 py-1 text-xs rounded border transition-all ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : blurred || !isSizeAvailable(size.name)
+                              ? "border-muted text-muted-foreground opacity-40 cursor-not-allowed"
+                              : sizeColorMap[size.name]
+                              ? "border-primary/50 hover:border-primary"
+                              : "border-border hover:border-primary"
+                          }`}
+                          data-testid={`button-quickadd-size-${size.name}`}
+                        >
+                          <span>{size.name}</span>
+                          {size.priceAdd > 0 && (
+                            <span className="ml-1 text-[10px] opacity-70">+{formatPrice(size.priceAdd)}</span>
+                          )}
+                          {sizeColorMap[size.name] && (() => {
+                            const picked = size.colors.find(c => c.name === sizeColorMap[size.name]);
+                            return picked ? (
+                              picked.swatchUrl
+                                ? <img src={picked.swatchUrl} alt={picked.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white ml-1.5 shrink-0" />
+                                : <span className="w-5 h-5 rounded-full bg-muted ring-2 ring-white inline-block ml-1.5 shrink-0" />
+                            ) : null;
+                          })()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedSizeObj?.description && (
+                    <p className="text-muted-foreground" style={{ fontSize: `${selectedSizeObj.descriptionFontSize ?? 12}px` }}>{selectedSizeObj.description}</p>
+                  )}
                 </div>
-                {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
-                <div className="relative">
-                  <EmbroideryNeedleIcon />
-                  <Input
-                    id="qa-lady-name"
-                    placeholder={audienceConfig.person2Label}
-                    value={ladyName}
-                    onChange={(e) => setLadyName(e.target.value)}
-                    maxLength={nameMax}
-                    className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
-                    data-testid="input-quickadd-lady"
-                  />
-                </div>
-                {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
-              </div>
-            </div>
-          ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
-            <div className="space-y-1">
-              <Label htmlFor="qa-personalization" className="text-sm font-medium">
-                {audienceConfig.heading}
-              </Label>
-              <div className="relative">
-                <EmbroideryNeedleIcon />
-                <Input
-                  id="qa-personalization"
-                  placeholder={audienceConfig.nameLabel}
-                  value={personalizationName}
-                  onChange={(e) => setPersonalizationName(e.target.value)}
-                  maxLength={nameMax}
-                  className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
-                  data-testid="input-quickadd-name"
-                />
-              </div>
-              {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
-            </div>
-          ) : null}
+              )}
 
-          <div className="flex items-center justify-between gap-4">
-            <Label className="text-sm font-medium">Quantity</Label>
-            <div className="flex items-center gap-3">
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                data-testid="button-quickadd-decrease"
-              >
-                <Minus className="w-4 h-4" />
-              </Button>
-              <span className="text-base font-semibold w-8 text-center" data-testid="text-quickadd-qty">
-                {quantity}
-              </span>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => setQuantity(quantity + 1)}
-                data-testid="button-quickadd-increase"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
+              {showVariantSelectors && colorsForSelectedSize.length > 0 && (
+                <div className="space-y-1.5" data-testid="section-quickadd-colors">
+                  <Label className="text-sm font-medium">Colour</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {colorsForSelectedSize.map((color) => {
+                      const available = !color.blurOnFront && isColorAvailable(selectedSizeName!, color.name);
+                      const blurred = color.blurOnFront;
+                      const isSelected = sizeColorMap[selectedSizeName ?? ""] === color.name;
+                      return (
+                        <button
+                          key={color.name}
+                          onClick={() => { if (available) setSizeColorMap(prev => ({ ...prev, [selectedSizeName!]: color.name })); }}
+                          disabled={!available}
+                          className={`flex items-center gap-1.5 p-1 text-xs rounded border transition-all ${
+                            isSelected
+                              ? "border-primary ring-1 ring-primary"
+                              : blurred || !isColorAvailable(selectedSizeName!, color.name)
+                              ? "border-muted opacity-40 cursor-not-allowed"
+                              : "border-border hover:border-primary"
+                          }`}
+                          data-testid={`button-quickadd-color-${color.name}`}
+                          title={color.name}
+                        >
+                          {color.swatchUrl ? (
+                            <img
+                              src={color.swatchUrl}
+                              alt={color.name}
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                          ) : (
+                            <span className="w-12 h-12 rounded bg-muted border border-border inline-block" />
+                          )}
+                          <span className="pr-1">{color.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              </div>
+            )}
+
+            <div className={`space-y-4 ${showVariantSelectors ? "md:col-start-2" : "md:col-span-2"}`}>
+              {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="qa-gentleman-name" className="text-sm font-medium">{audienceConfig.person1Prefix}</Label>
+                    <div className="relative">
+                      <EmbroideryNeedleIcon />
+                      <Input
+                        id="qa-gentleman-name"
+                        placeholder={audienceConfig.person1Label}
+                        value={gentlemanName}
+                        onChange={(e) => setGentlemanName(e.target.value)}
+                        maxLength={nameMax}
+                        className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                        data-testid="input-quickadd-gentleman"
+                      />
+                    </div>
+                    {(() => { const h = nameCharHint(gentlemanName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="qa-lady-name" className="text-sm font-medium">{audienceConfig.person2Prefix}</Label>
+                    <div className="relative">
+                      <EmbroideryNeedleIcon />
+                      <Input
+                        id="qa-lady-name"
+                        placeholder={audienceConfig.person2Label}
+                        value={ladyName}
+                        onChange={(e) => setLadyName(e.target.value)}
+                        maxLength={nameMax}
+                        className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                        data-testid="input-quickadd-lady"
+                      />
+                    </div>
+                    {(() => { const h = nameCharHint(ladyName, nameMin, nameMax); return <p className={`text-xs mt-1 ${h.className}`}>{h.text}</p>; })()}
+                  </div>
+                </div>
+              ) : audienceConfig?.type === "single" && nameMin != null && nameMax != null ? (
+                <div className="space-y-1">
+                  <Label htmlFor="qa-personalization" className="text-sm font-medium">
+                    {audienceConfig.heading}
+                  </Label>
+                  <div className="relative">
+                    <EmbroideryNeedleIcon />
+                    <Input
+                      id="qa-personalization"
+                      placeholder={audienceConfig.nameLabel}
+                      value={personalizationName}
+                      onChange={(e) => setPersonalizationName(e.target.value)}
+                      maxLength={nameMax}
+                      className="border-amber-200/80 bg-amber-50/70 pl-9 dark:border-amber-800/50 dark:bg-amber-950/20"
+                      data-testid="input-quickadd-name"
+                    />
+                  </div>
+                  {(() => { const h = nameCharHint(personalizationName, nameMin, nameMax); return <p className={`text-xs ${h.className}`}>{h.text}</p>; })()}
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-between gap-4">
+                <Label className="text-sm font-medium">Quantity</Label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    data-testid="button-quickadd-decrease"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <span className="text-base font-semibold w-8 text-center" data-testid="text-quickadd-qty">
+                    {quantity}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => setQuantity(quantity + 1)}
+                    data-testid="button-quickadd-increase"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
 

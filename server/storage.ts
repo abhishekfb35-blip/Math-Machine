@@ -45,11 +45,26 @@ import { generateSku } from "./utils/sku";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
 import { duplicateImageImportRows, type ImageImportRow } from "@shared/productImageImport";
 import { duplicateProductCreateRows, type ProductCreateRow, type ProductCreateError } from "@shared/productCreateImport";
+import { getProductSearchTerms } from "@shared/productSearch";
 
 export class ImageImportValidationError extends Error {
   constructor(public errors: Array<{ row: number; message: string }>) {
     super("Image import validation failed");
   }
+}
+
+function buildProductSearchCondition(query: string) {
+  const terms = getProductSearchTerms(query);
+  if (terms.length === 0) return null;
+
+  return and(...terms.map(term => {
+    const pattern = `%${term}%`;
+    return or(
+      ilike(products.name, pattern),
+      ilike(products.sku, pattern),
+      ilike(products.description, pattern),
+    );
+  }));
 }
 
 export class ProductCreateImportValidationError extends Error {
@@ -468,30 +483,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    const pattern = `%${query}%`;
+    const searchCondition = buildProductSearchCondition(query);
+    if (!searchCondition) return [];
+
     const prods = await db.select().from(products)
       .where(and(
         eq(products.active, true),
-        or(
-          ilike(products.name, pattern),
-          ilike(products.sku, pattern),
-          ilike(products.description, pattern),
-        )
+        searchCondition,
       ))
       .orderBy(products.sortOrder, products.name);
     return this.withEnriched(prods);
   }
 
   async searchAllProducts(query: string): Promise<Product[]> {
-    const pattern = `%${query}%`;
+    const searchCondition = buildProductSearchCondition(query);
+    if (!searchCondition) return [];
+
     const prods = await db.select().from(products)
-      .where(
-        or(
-          ilike(products.name, pattern),
-          ilike(products.sku, pattern),
-          ilike(products.description, pattern),
-        )
-      )
+      .where(searchCondition)
       .orderBy(products.sortOrder, products.name);
     return this.withEnriched(prods);
   }

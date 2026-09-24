@@ -17,6 +17,7 @@ import { buildDefaultThemeGroups, type ThemeGroupsConfig } from "@shared/themeGr
 import type { ShopSection } from "@/lib/siteConfigDefaults";
 import { trackEvent } from "@/lib/analytics";
 import { matchesAudience, selectedAudienceIds } from "@shared/audienceFilters";
+import { matchesProductSearch } from "@shared/productSearch";
 
 function GridSkeleton() {
   return (
@@ -1035,12 +1036,7 @@ export default function ShopPage() {
   const flatProducts = useMemo(() => {
     let result = attributeFilteredProducts;
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.sku         && p.sku.toLowerCase().includes(q)) ||
-        (p.description && p.description.toLowerCase().includes(q))
-      );
+      result = result.filter(product => matchesProductSearch(searchQuery, product));
     }
     return result;
   }, [attributeFilteredProducts, searchQuery]);
