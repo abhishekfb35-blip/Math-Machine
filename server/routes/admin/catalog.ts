@@ -40,6 +40,13 @@ function broadcastProductUpdate(product: object) {
   }
 }
 
+export async function searchAdminProducts(req: Request, res: Response) {
+  const q = (req.query.q as string || "").trim();
+  if (!q) return res.json([]);
+  const prods = await storage.searchAllProducts(q);
+  res.json(prods);
+}
+
 export function registerAdminCatalogRoutes(app: Express) {
 
   app.get("/api/admin/product-updates/stream", requirePermission("catalog"), (req: Request, res: Response) => {
@@ -118,12 +125,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json(prods);
   });
 
-  app.get("/api/admin/products/search", requirePermission("catalog"), async (req, res) => {
-    const q = (req.query.q as string || "").trim();
-    if (!q) return res.json([]);
-    const prods = await storage.searchAllProducts(q);
-    res.json(prods);
-  });
+  app.get("/api/admin/products/search", requirePermission("catalog"), searchAdminProducts);
 
   app.get("/api/admin/products/category/:categoryId", requirePermission("catalog"), async (req, res) => {
     const categoryId = req.params.categoryId as string;
