@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useCartGate } from "@/context/CartGateContext";
 import { trackProductView, trackAddToCart, trackEvent } from "@/lib/analytics";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
@@ -35,6 +35,8 @@ type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
 
 const REVIEWS_PER_PAGE = 10;
+const GALLERY_SWIPE_MIN_DISTANCE = 40;
+const GALLERY_SWIPE_DIRECTION_RATIO = 1.25;
 
 function nameCharHint(val: string, min: number, max: number): { text: string; className: string } {
   const len = val.length;
@@ -58,6 +60,8 @@ export default function ProductPage() {
   const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const galleryPointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const suppressGalleryClickRef = useRef(false);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -351,6 +355,34 @@ export default function ProductPage() {
 
   const currentImage = images[selectedImageIndex] || images[0];
 
+  const handleGalleryPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    galleryPointerStartRef.current = null;
+    suppressGalleryClickRef.current = false;
+    if (images.length <= 1 || event.pointerType !== "touch" || !event.isPrimary) return;
+
+    galleryPointerStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    };
+  };
+
+  const handleGalleryPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const pointerStart = galleryPointerStartRef.current;
+    galleryPointerStartRef.current = null;
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId || images.length <= 1) return;
+
+    const deltaX = event.clientX - pointerStart.x;
+    const deltaY = event.clientY - pointerStart.y;
+    if (
+      Math.abs(deltaX) < GALLERY_SWIPE_MIN_DISTANCE
+      || Math.abs(deltaX) < Math.abs(deltaY) * GALLERY_SWIPE_DIRECTION_RATIO
+    ) return;
+
+    suppressGalleryClickRef.current = true;
+    setSelectedImageIndex(index => Math.max(0, Math.min(index + (deltaX < 0 ? 1 : -1), images.length - 1)));
+  };
+
   if (productLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -429,7 +461,17 @@ export default function ProductPage() {
           <div className="space-y-3 min-w-0">
             <div
               className="relative aspect-square overflow-hidden rounded-md bg-muted cursor-zoom-in group"
-              onClick={() => setZoomDialogOpen(true)}
+              onPointerDown={handleGalleryPointerDown}
+              onPointerUp={handleGalleryPointerUp}
+              onPointerCancel={() => { galleryPointerStartRef.current = null; }}
+              onClick={() => {
+                if (suppressGalleryClickRef.current) {
+                  suppressGalleryClickRef.current = false;
+                  return;
+                }
+                setZoomDialogOpen(true);
+              }}
+              style={{ touchAction: images.length > 1 ? "pan-y" : "auto" }}
               data-testid="button-open-zoom"
             >
               <img
