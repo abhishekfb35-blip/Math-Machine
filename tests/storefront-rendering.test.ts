@@ -21,6 +21,38 @@ const product = {
   categoryId: "category-1",
 } as unknown as Product;
 
+const shopSectionConfig = [
+  { label: "Kids Towels", tag: "kids-towels", tags: ["kids towel"], maxShown: 1, enabled: true },
+  { label: "Adult Towels", tag: "adult-towels", tags: ["adult towel"], maxShown: 1, enabled: true },
+  { label: "Couple Towels", tag: "couple-towels", tags: ["couple towel"], maxShown: 1, enabled: true },
+  { label: "Kids Blankets", tag: "kids-blankets", tags: ["kids blanket"], maxShown: 1, enabled: true },
+  { label: "Kids Bathrobes", tag: "kids-bathrobes", tags: ["kids bathrobe"], maxShown: 1, enabled: true },
+  { label: "Adult Bathrobes", tag: "adult-bathrobes", tags: ["adult bathrobe"], maxShown: 1, enabled: true },
+  { label: "Couple Bathrobes", tag: "couple-bathrobes", tags: ["couple bathrobe"], maxShown: 1, enabled: true },
+];
+
+function shopProduct(id: string, tagNames: string[]): Product {
+  return {
+    ...product,
+    id,
+    name: id,
+    slug: id,
+    tagNames,
+  } as Product;
+}
+
+const shopProducts = [
+  { ...product, tagNames: ["KIDS TOWEL"] } as Product,
+  shopProduct("adult-towel", ["adult towel"]),
+  shopProduct("couple-towel", ["couple towel"]),
+  shopProduct("kids-blanket", ["kids blanket"]),
+  shopProduct("kids-bathrobe", ["kids bathrobe"]),
+  shopProduct("adult-bathrobe", ["adult bathrobe"]),
+  shopProduct("couple-bathrobe", ["couple bathrobe"]),
+  shopProduct("shared-kids-couple-towel", ["kids towel", "couple towel"]),
+  shopProduct("unassigned-product", []),
+];
+
 const category = {
   id: "category-1",
   name: "Bath Towels",
@@ -56,17 +88,22 @@ const template = `<!doctype html>
 
 test("storefront routes return crawlable catalogue HTML to every user agent", async () => {
   const storage = {
-    getSiteContent: async () => ({
-      key: "seo",
-      value: JSON.stringify({
-        brandName: "TurtleLittle",
-        tagline: "Personalised Towels",
-        metaDescription: "Luxury personalised towels.",
-        ogImageUrl: "/images/og.jpg",
-        siteUrl: "https://shop.example",
-      }),
-    }),
-    getProducts: async () => [product],
+    getSiteContent: async (key: string) => {
+      if (key === "shop-sections") {
+        return { key, value: JSON.stringify(shopSectionConfig) };
+      }
+      return {
+        key: "seo",
+        value: JSON.stringify({
+          brandName: "TurtleLittle",
+          tagline: "Personalised Towels",
+          metaDescription: "Luxury personalised towels.",
+          ogImageUrl: "/images/og.jpg",
+          siteUrl: "https://shop.example",
+        }),
+      };
+    },
+    getProducts: async () => shopProducts,
     getCategories: async () => [category],
     getCategoryBySlug: async (slug: string) => slug === category.slug ? category : undefined,
     getProductsByCategory: async () => [product],
@@ -123,6 +160,27 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(shop, /<title data-storefront-seo>Shop All Products \| TurtleLittle<\/title>/);
     assert.match(shop, /Embroidered &lt;Cotton&gt; Towel/);
     assert.match(shop, /₹599/);
+    for (const section of shopSectionConfig) {
+      assert.match(shop, new RegExp(`<h2>${section.label}<\\/h2>`));
+    }
+    assert.match(shop, /href="\/category\/bath-towels">Shop Bath Towels<\/a>/);
+    const shopProductLinks = [...shop.matchAll(/href="\/product\/([^"]+)"/g)].map(match => match[1]);
+    assert.equal(shopProductLinks.length, 10, "overlapping products should appear in each matching section");
+    assert.equal(new Set(shopProductLinks).size, shopProducts.length, "every unique product should remain reachable");
+
+    const shopInitialDataMatch = shop.match(
+      /<script id="catalogue-initial-data" type="application\/json">([\s\S]*?)<\/script>/,
+    );
+    assert.ok(shopInitialDataMatch, "shop response should preload section configuration");
+    const shopInitialData = JSON.parse(shopInitialDataMatch[1]);
+    const shopSectionQuery = shopInitialData.queries.find((entry: { queryKey: unknown[] }) =>
+      entry.queryKey.join("/") === "/api/site-config/shop-sections",
+    );
+    assert.equal(shopSectionQuery.data.value.length, shopSectionConfig.length);
+    const shopProductsQuery = shopInitialData.queries.find((entry: { queryKey: unknown[] }) =>
+      entry.queryKey.join("/") === "/api/products",
+    );
+    assert.equal(shopProductsQuery.data.length, shopProducts.length);
 
     const categoryPage = pages.get("/category/bath-towels")!;
     assert.match(categoryPage, /<title data-storefront-seo>Bath Towels \| TurtleLittle<\/title>/);

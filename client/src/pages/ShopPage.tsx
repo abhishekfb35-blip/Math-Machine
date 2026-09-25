@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useLocation } from "wouter";
-import { SlidersHorizontal, Search, X, ChevronRight, ChevronLeft, ArrowLeft, ChevronDown, Check } from "lucide-react";
+import { SlidersHorizontal, Search, X, ChevronRight, ArrowLeft, ChevronDown, Check } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,12 @@ import ProductCardNew from "@/components/ProductCardNew";
 import QuickAddSheet from "@/components/QuickAddSheet";
 import type { Product, Attributes, Category } from "@shared/types";
 import { buildDefaultThemeGroups, type ThemeGroupsConfig } from "@shared/themeGroups";
-import type { ShopSection } from "@/lib/siteConfigDefaults";
+import {
+  groupProductsByShopSections,
+  normalizeShopSections,
+  productsForShopSection,
+  type ShopSection,
+} from "@shared/shopSections";
 import { trackEvent } from "@/lib/analytics";
 import { matchesAudience, selectedAudienceIds } from "@shared/audienceFilters";
 import { matchesProductSearch } from "@shared/productSearch";
@@ -57,64 +62,6 @@ function TagSectionsSkeleton() {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function ScrollRow({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
-
-  const update = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
-  }, [update]);
-
-  const scroll = (dir: "left" | "right") => {
-    const el = ref.current;
-    if (!el) return;
-    el.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
-  };
-
-  return (
-    <div className="relative">
-      {canLeft && (
-        <button
-          onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 border shadow-md flex items-center justify-center hover:bg-muted transition-colors"
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      )}
-      <div
-        ref={ref}
-        className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-2"
-      >
-        {children}
-      </div>
-      {canRight && (
-        <button
-          onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 border shadow-md flex items-center justify-center hover:bg-muted transition-colors"
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      )}
     </div>
   );
 }
@@ -854,18 +801,6 @@ export default function ShopPage() {
     pushURL(activeCategory, activeFilter, activeGenders, activeThemes, next, "", searchQuery);
   };
 
-  const handleTagDrillDown = (tag: string) => {
-    trackFilterApplied("section", {
-      category: activeCategory,
-      audience: "all",
-      genders: [],
-      themes: [],
-      styles: [],
-      query: "",
-      tag,
-    });
-    pushURL(activeCategory, "all", [], [], [], tag, "");
-  };
   const handleBackToAll = () => {
     if (activeTag) {
       trackFilterApplied("section", {
@@ -915,22 +850,10 @@ export default function ShopPage() {
     queryFn: () => fetch("/api/site-config/shop-sections").then(r => r.ok ? r.json() : null),
     staleTime: 0,
   });
-  const shopSections: ShopSection[] = useMemo(() => {
-    const raw = shopSectionsConfig?.value;
-    if (!Array.isArray(raw) || raw.length === 0) return [];
-    return raw.map((s): ShopSection => {
-      // `tag` is the section identifier (used for URLs/keys only).
-      // `tags` is the product-tag filter — do NOT derive it from `tag`.
-      const productFilterTags = Array.isArray(s.tags) ? s.tags : [];
-      const sectionKey = s.tag ?? s.label;
-      return {
-        ...s,
-        tags: productFilterTags,
-        tag: sectionKey,
-        audience: s.audience,
-      };
-    });
-  }, [shopSectionsConfig]);
+  const shopSections: ShopSection[] = useMemo(
+    () => normalizeShopSections(shopSectionsConfig?.value),
+    [shopSectionsConfig],
+  );
 
   // Shared predicate: apply all attribute filters client-side (OR within each dimension)
   const attributeFilteredProducts = useMemo(() => {
@@ -1043,20 +966,7 @@ export default function ShopPage() {
     const tagLower = activeTag.toLowerCase();
     // Look up section by its `tag` identifier (URL key), never by product-tag values
     const section = shopSections.find(s => (s.tag ?? s.label).toLowerCase() === tagLower);
-    if (section) {
-      let all = attributeFilteredProducts;
-      if (section.categories?.length) {
-        const catIds = (categories ?? []).filter(c => section.categories!.includes(c.slug)).map(c => c.id);
-        if (catIds.length) all = all.filter(p => catIds.includes(p.categoryId));
-      }
-      if (section.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => section.audience!.includes(a)));
-      if (section.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => section.genders!.includes(g)));
-      if (section.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => section.themes!.includes(t)));
-      if (section.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => section.styles!.includes(st)));
-      // Only apply product-tag filter when the section explicitly has product tags configured
-      if (section.tags?.length)      all = all.filter(p => (p.tagNames  ?? []).some(t => section.tags!.some(st => st.toLowerCase() === t.toLowerCase())));
-      return all;
-    }
+    if (section) return productsForShopSection(attributeFilteredProducts, categories ?? [], section);
     // Unknown tag key — no matching section, return empty
     return [];
   }, [attributeFilteredProducts, activeTag, shopSections, categories]);
@@ -1064,26 +974,8 @@ export default function ShopPage() {
   // Compute tag sections
   const tagSections = useMemo(() => {
     if (!products) return [];
-    return shopSections
-      .filter(s => s.enabled)
-      .filter(s => activeFilter === "all" || (s.audience ?? []).some(audience => selectedAudienceIds(activeFilter).includes(audience)))
-      .map(s => {
-        const sTags = s.tags ?? [];
-        if (!sTags.length && !s.categories?.length && !s.audience?.length && !s.genders?.length && !s.themes?.length && !s.styles?.length)
-          return { ...s, all: [], shown: [] };
-        let all = attributeFilteredProducts;
-        if (s.categories?.length) {
-          const catIds = (categories ?? []).filter(c => s.categories!.includes(c.slug)).map(c => c.id);
-          if (catIds.length) all = all.filter(p => catIds.includes(p.categoryId));
-        }
-        if (s.audience?.length) all = all.filter(p => (p.audience ?? []).some(a => s.audience!.includes(a)));
-        if (s.genders?.length)   all = all.filter(p => (p.genders   ?? []).some(g => s.genders!.includes(g)));
-        if (s.themes?.length)    all = all.filter(p => (p.themes    ?? []).some(t => s.themes!.includes(t)));
-        if (s.styles?.length)    all = all.filter(p => (p.styles    ?? []).some(st => s.styles!.includes(st)));
-        if (sTags.length)        all = all.filter(p => (p.tagNames  ?? []).some(t => sTags.some(st => st.toLowerCase() === t.toLowerCase())));
-        return { ...s, all, shown: all.slice(0, s.maxShown) };
-      });
-  }, [attributeFilteredProducts, shopSections, products, activeFilter, categories]);
+    return groupProductsByShopSections(attributeFilteredProducts, categories ?? [], shopSections);
+  }, [attributeFilteredProducts, shopSections, products, categories]);
 
   const hasAttributeFilters = activeFilter !== "all" || activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0;
 
@@ -1408,7 +1300,7 @@ export default function ShopPage() {
                 data-testid={`section-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
                 className={section.all.length === 0 ? "hidden" : undefined}
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col items-start gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <h2
                       className="text-base font-semibold"
@@ -1423,42 +1315,29 @@ export default function ShopPage() {
                       {section.all.length}
                     </Badge>
                   </div>
-                  {section.all.length > section.maxShown && (
-                    <button
-                      onClick={() => handleTagDrillDown(section.tag ?? section.label)}
-                      className="flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
-                      data-testid={`link-see-all-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
-                    >
-                      View all {section.all.length}
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <nav
+                    className="flex flex-wrap gap-x-3 gap-y-1"
+                    aria-label={`${section.label} categories`}
+                  >
+                    {categories?.filter(category =>
+                      section.all.some(product => product.categoryId === category.id),
+                    ).map(category => (
+                      <a
+                        key={category.id}
+                        href={`/category/${encodeURIComponent(category.slug)}`}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Shop {category.name}
+                      </a>
+                    ))}
+                  </nav>
                 </div>
 
-                <ScrollRow>
-                  {section.shown.map(product => (
-                    <div key={product.id} className="shrink-0 w-44 sm:w-52">
-                      <ProductCardNew product={product} onQuickAdd={setQuickAddProduct} />
-                    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {section.all.map(product => (
+                    <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
                   ))}
-
-                  {section.all.length > section.maxShown && (
-                    <div className="shrink-0 w-28 flex items-center justify-center">
-                      <button
-                        onClick={() => handleTagDrillDown(section.tag ?? section.label)}
-                        className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                        data-testid={`card-see-more-${(section.tag ?? section.label).replace(/\s+/g, "-")}`}
-                      >
-                        <div className="w-11 h-11 rounded-full border-2 border-current flex items-center justify-center">
-                          <ChevronRight className="w-4.5 h-4.5" />
-                        </div>
-                        <span className="text-xs font-medium text-center leading-tight">
-                          +{section.all.length - section.maxShown} more
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </ScrollRow>
+                </div>
               </section>
             ))}
           </div>

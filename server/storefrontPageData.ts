@@ -1,4 +1,9 @@
 import type { Category, Product, ProductImage, ProductVariantOptions } from "@shared/types";
+import {
+  groupProductsByShopSections,
+  normalizeShopSections,
+  type ShopSectionProductGroup,
+} from "@shared/shopSections";
 import { getHomeCollections, type HomeSection } from "./routes/home";
 import type { IStorage } from "./storage";
 
@@ -34,6 +39,8 @@ export type StorefrontPageData =
   | (StorefrontPageBase & {
       kind: "shop";
       products: Product[];
+      categories: Category[];
+      sections: ShopSectionProductGroup[];
     })
   | (StorefrontPageBase & {
       kind: "category";
@@ -149,17 +156,34 @@ async function loadShopPage(
   storage: IStorage,
   seo: StorefrontSeoSettings,
 ): Promise<StorefrontPageData> {
-  const [products, categories] = await Promise.all([
+  const [products, categories, shopSectionsRow] = await Promise.all([
     storage.getProducts(),
     storage.getCategories(),
+    storage.getSiteContent("shop-sections"),
   ]);
+  let shopSectionsValue: unknown = null;
+  if (shopSectionsRow) {
+    try {
+      shopSectionsValue = JSON.parse(shopSectionsRow.value);
+    } catch (error) {
+      console.error("Invalid shop-sections site content; rendering uncategorized products:", error);
+      shopSectionsValue = shopSectionsRow.value;
+    }
+  }
+  const shopSections = normalizeShopSections(shopSectionsValue);
   return {
     ...pageBase(seo, "Shop All Products", SHOP_DESCRIPTION, "/shop"),
     kind: "shop",
     products,
+    categories,
+    sections: groupProductsByShopSections(products, categories, shopSections),
     queries: [
       { queryKey: ["/api/products"], data: products },
       { queryKey: ["/api/categories"], data: categories },
+      {
+        queryKey: ["/api/site-config", "shop-sections"],
+        data: shopSectionsRow ? { key: shopSectionsRow.key, value: shopSectionsValue } : null,
+      },
     ],
   };
 }

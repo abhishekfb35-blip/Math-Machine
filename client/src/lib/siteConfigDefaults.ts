@@ -1,3 +1,7 @@
+import type { ShopSection as ShopSectionConfig } from "@shared/shopSections";
+
+export type { ShopSection } from "@shared/shopSections";
+
 export interface SeoConfig {
   brandName: string;
   tagline: string;
@@ -417,21 +421,7 @@ export const defaultShippingPage: ShippingPageConfig = {
   ],
 };
 
-export interface ShopSection {
-  label: string;
-  tag?: string;           // legacy — kept for reading old saved data
-  tags?: string[];        // replaces tag; used for product tag filtering + section key
-  categories?: string[];  // category slug filter
-  maxShown: number;
-  enabled: boolean;
-  /** Attribute IDs only; labels are resolved from /api/attributes for display. */
-  audience?: string[];
-  genders?: string[];
-  themes?: string[];
-  styles?: string[];
-}
-
-export const defaultShopSections: ShopSection[] = [
+export const defaultShopSections: ShopSectionConfig[] = [
   { label: "Kids Towels",      tag: "kids-towels",      tags: [], maxShown: 15, enabled: true, audience: [], genders: [] },
   { label: "Adult Towels",     tag: "adult-towels",     tags: [], maxShown: 8,  enabled: true, audience: [], genders: [] },
   { label: "Couple Towels",    tag: "couple-towels",    tags: [], maxShown: 8,  enabled: true, audience: [] },

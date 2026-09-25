@@ -1353,7 +1353,7 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Control which sections appear on the Shop page, in what order, and how many products each shows.
+        Control the Shop page sections and their filters. All products matching an enabled section are shown.
       </p>
       {sections.map((s, i) => {
         const preview = previewResults[i];
@@ -1391,8 +1391,8 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2 space-y-1.5">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Display Label</Label>
                 <Input
                   value={s.label}
@@ -1401,19 +1401,10 @@ function ShopSectionsEditor({ data }: { data: ShopSection[] }) {
                   data-testid={`input-shop-section-label-${i}`}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Max Products Shown</Label>
-                <Input
-                  type="number" min={1} max={24}
-                  value={s.maxShown}
-                  onChange={(e) => update(i, "maxShown", Math.max(1, parseInt(e.target.value) || 1))}
-                  data-testid={`input-shop-section-max-${i}`}
-                />
-              </div>
             </div>
 
             <div className="space-y-3 rounded-md border p-3 bg-muted/30">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — empty = show all</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filters — choose at least one; matching products display in full</p>
               <FilterChips label="Categories" options={categoryOptions} selected={s.categories ?? []} counts={productCounts}
                 onToggle={v => toggleArr(i, "categories", v)}
                 onToggleAll={() => toggleAll(i, "categories", categoryOptions.map(o => o.value))} />

@@ -7,6 +7,7 @@ import {
   buildStorefrontPageData,
   type StorefrontPageData,
 } from "./storefrontPageData";
+import type { ShopSectionProductGroup } from "@shared/shopSections";
 
 const SEO_START = "<!-- STOREFRONT_SEO_START -->";
 const SEO_END = "<!-- STOREFRONT_SEO_END -->";
@@ -85,6 +86,27 @@ function productListing(title: string, products: Product[], siteUrl: string, sub
     <h2>${escapeHtml(title)}</h2>
     ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
     <ul class="catalogue-grid">${products.map((product) => productCard(product, siteUrl)).join("")}</ul>
+  </section>`;
+}
+
+function shopSectionListing(
+  section: ShopSectionProductGroup,
+  categories: Category[],
+  siteUrl: string,
+): string {
+  const productCategoryIds = new Set(section.all.map(product => product.categoryId));
+  const categoryLinks = categories
+    .filter(category => productCategoryIds.has(category.id))
+    .map(category =>
+      `<a href="/category/${encodeURIComponent(category.slug)}">Shop ${escapeHtml(category.name)}</a>`,
+    )
+    .join(" ");
+
+  return `<section class="catalogue-section${section.all.length ? "" : " hidden"}" data-shop-section="${escapeHtml(section.tag ?? section.label)}">
+    <h2>${escapeHtml(section.label)}</h2>
+    <p>${section.all.length} products</p>
+    ${categoryLinks ? `<nav aria-label="${escapeHtml(section.label)} category links">${categoryLinks}</nav>` : ""}
+    <ul class="catalogue-grid">${section.all.map(product => productCard(product, siteUrl)).join("")}</ul>
   </section>`;
 }
 
@@ -209,7 +231,7 @@ function renderPageContent(page: StorefrontPageData): string {
     case "shop":
       return `<main class="catalogue-prerender-content">
         <h1>Shop All Products</h1>
-        ${productListing("All products", page.products, page.seo.siteUrl)}
+        ${page.sections.map(section => shopSectionListing(section, page.categories, page.seo.siteUrl)).join("")}
       </main>`;
     case "category":
       return `<main class="catalogue-prerender-content">
