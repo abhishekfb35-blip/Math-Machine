@@ -530,8 +530,14 @@ export default function ProductPage() {
             <div
               className="relative aspect-square overflow-hidden rounded-md bg-muted cursor-zoom-in group"
               onPointerDown={handleGalleryPointerDown}
+              onPointerMove={handleGalleryPointerMove}
               onPointerUp={handleGalleryPointerUp}
-              onPointerCancel={() => { galleryPointerStartRef.current = null; }}
+              onPointerCancel={() => {
+                galleryPointerStartRef.current = null;
+                suppressGalleryClickRef.current = false;
+                setGalleryDragOffset(0);
+                setGalleryIsDragging(false);
+              }}
               onClick={() => {
                 if (suppressGalleryClickRef.current) {
                   suppressGalleryClickRef.current = false;
@@ -542,12 +548,34 @@ export default function ProductPage() {
               style={{ touchAction: images.length > 1 ? "pan-y" : "auto" }}
               data-testid="button-open-zoom"
             >
-              <img
-                src={getProductImageUrl(currentImage?.imageUrl || product.imageUrl, "large")}
-                alt={product.name}
-                className="w-full h-full object-contain"
-                data-testid="img-product-detail"
-              />
+              <div
+                className="absolute inset-0 flex"
+                data-testid="product-gallery-track"
+                style={{
+                  transform: `translate3d(calc(-${selectedImageIndex * 100}% + ${galleryDragOffset}px), 0, 0)`,
+                  transition: galleryIsDragging ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  willChange: galleryIsDragging ? "transform" : undefined,
+                }}
+              >
+                {images.map((image, index) => (
+                  <div
+                    key={image.id}
+                    className="relative h-full w-full flex-none"
+                    data-gallery-index={index}
+                    data-testid={`product-gallery-slide-${index}`}
+                    aria-hidden={index !== selectedImageIndex}
+                  >
+                    <img
+                      src={getProductImageUrl(image.imageUrl, "large")}
+                      alt={index === selectedImageIndex ? product.name : ""}
+                      className="w-full h-full object-contain"
+                      loading={Math.abs(index - selectedImageIndex) <= 1 ? "eager" : "lazy"}
+                      draggable={false}
+                      data-testid={index === selectedImageIndex ? "img-product-detail" : `img-product-gallery-${index}`}
+                    />
+                  </div>
+                ))}
+              </div>
               <Badge
                 className="absolute top-3 left-3 no-default-hover-elevate no-default-active-elevate bg-primary text-primary-foreground"
                 data-testid="badge-offer-detail"
