@@ -26,6 +26,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { ProductImageCsvImport } from "@/components/admin/ProductImageCsvImport";
 import { ProductCreateCsvImport } from "@/components/admin/ProductCreateCsvImport";
+import { matchesProductSearch } from "@shared/productSearch";
 import type { Category, Product, ProductImage, ProductReview, Tag, TagType, CategoryTagVariantConfig, Attributes, ColorSwatch, CategorySizeDefinition } from "@shared/types";
 
 type View = "categories" | "products" | "edit-category" | "edit-product";
@@ -2253,8 +2254,7 @@ export default function AdminCatalog() {
   if (view === "products" && selectedCategory) {
     const filteredProducts = products?.filter((p) => {
       if (categoryFilter.trim()) {
-        const q = categoryFilter.trim().toLowerCase();
-        if (!p.name.toLowerCase().includes(q) && !(p.sku && p.sku.toLowerCase().includes(q))) return false;
+        if (!matchesProductSearch(categoryFilter, { name: p.name, sku: p.sku })) return false;
       }
       if (tagFilter !== "all") {
         const productTagIds = productTagMap?.[p.id] || [];

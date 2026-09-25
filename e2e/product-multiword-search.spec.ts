@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { Request, Response } from "express";
+import { storage } from "../server/storage";
 import { searchAdminProducts } from "../server/routes/admin/catalog";
 
 type SearchProduct = { id: string; name: string; active: boolean };
@@ -87,4 +88,54 @@ test("admin catalog screen renders separated and singular/plural search results"
   await input.fill("kid towel");
   await expect(page.getByTestId(`card-search-product-${separatedTitle!.id}`)).toBeVisible();
   expect(requestedQueries).toEqual(expect.arrayContaining(["kids towel", "kids initials towels", "kid towel"]));
+});
+
+test("category product filter matches separated words and singular/plural forms", async ({ page }) => {
+  const separatedTitle = (await storage.searchAllProducts("kids towel")).find(product =>
+    product.active && /\bkids\b/i.test(product.name) && /\btowel\b/i.test(product.name) && !/kids towel/i.test(product.name),
+  );
+  const singularTitle = (await storage.searchAllProducts("kids initials towels")).find(product =>
+    product.active && /\bkid\b/i.test(product.name) && /\btowel\b/i.test(product.name),
+  );
+  expect(separatedTitle).toBeTruthy();
+  expect(singularTitle).toBeTruthy();
+  expect(singularTitle!.categoryId).toBe(separatedTitle!.categoryId);
+
+  const category = (await storage.getCategories()).find(item => item.id === separatedTitle!.categoryId);
+  expect(category).toBeTruthy();
+  const categoryProducts = await storage.getAllProductsByCategory(category!.id);
+  const displayProducts = categoryProducts.filter(product =>
+    product.id === separatedTitle!.id || product.id === singularTitle!.id,
+  );
+  expect(displayProducts).toHaveLength(2);
+
+  await page.route("**/api/admin/check", route => route.fulfill({
+    json: { authenticated: true, isSuperAdmin: false, permissions: ["catalog"] },
+  }));
+  await page.route("**/api/admin/categories", route => route.fulfill({ json: [category] }));
+  await page.route("**/api/admin/tags", route => route.fulfill({ json: [] }));
+  await page.route("**/api/admin/tag-types", route => route.fulfill({ json: [] }));
+  await page.route("**/api/admin/product-updates/stream", route => route.fulfill({
+    status: 200,
+    contentType: "text/event-stream",
+    body: "",
+  }));
+  await page.route(`**/api/admin/catalog/category/${category!.id}`, route => route.fulfill({
+    json: { products: displayProducts, productTagMap: {}, productImages: {} },
+  }));
+
+  await page.goto("/admin/catalog");
+  await page.getByTestId(`text-category-name-${category!.id}`).click();
+  const filter = page.getByTestId("input-category-filter");
+  await expect(filter).toBeVisible();
+
+  await filter.fill("kids towel");
+  await expect(page.getByTestId(`card-product-${separatedTitle!.id}`)).toBeVisible();
+  await expect(page.getByTestId(`card-product-${singularTitle!.id}`)).toBeVisible();
+
+  await filter.fill("kids towels");
+  await expect(page.getByTestId(`card-product-${singularTitle!.id}`)).toBeVisible();
+
+  await filter.fill("kid towel");
+  await expect(page.getByTestId(`card-product-${separatedTitle!.id}`)).toBeVisible();
 });
