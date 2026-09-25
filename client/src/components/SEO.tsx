@@ -1,6 +1,8 @@
 import { Helmet } from "react-helmet-async";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultSeo, type SeoConfig } from "@/lib/siteConfigDefaults";
+import { buildProductStructuredData } from "@shared/productStructuredData";
+import type { ProductVariantOptions } from "@shared/types";
 
 interface SEOProps {
   title?: string;
@@ -68,6 +70,7 @@ export default function SEO({
 }
 
 export function ProductJsonLd(product: {
+  id?: string;
   name: string;
   description: string;
   price: number;
@@ -76,32 +79,34 @@ export function ProductJsonLd(product: {
   slug: string;
   sku: string;
   availability?: boolean;
+  imageUrls?: string[];
+  variantOptions?: ProductVariantOptions;
+  brandName?: string;
 }) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  const siteUrl = "https://turtlelittle.com";
+  const imageUrls = product.imageUrls?.length
+    ? product.imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+  const schema = buildProductStructuredData({
+    id: product.id || product.sku || product.slug,
     name: product.name,
     description: product.description,
-    ...(product.imageUrl ? { image: `https://turtlelittle.com${product.imageUrl}` } : {}),
-    url: `https://turtlelittle.com/product/${product.slug}`,
+    price: product.price,
     sku: product.sku,
-    brand: {
-      "@type": "Brand",
-      name: "TurtleLittle",
-    },
-    offers: {
-      "@type": "Offer",
-      price: product.price,
-      priceCurrency: "INR",
-      availability: product.availability !== false
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      seller: {
-        "@type": "Organization",
-        name: "TurtleLittle",
-      },
-    },
-  };
+    imageUrls,
+    url: `${siteUrl}/product/${encodeURIComponent(product.slug)}`,
+    brandName: product.brandName || "TurtleLittle",
+    variants: product.variantOptions,
+  });
+  if (product.availability === false) {
+    const offers = schema.offers;
+    if (offers && typeof offers === "object") {
+      (offers as Record<string, unknown>).availability = "https://schema.org/OutOfStock";
+    }
+  }
+  return schema;
 }
 
 export function OrganizationJsonLd() {

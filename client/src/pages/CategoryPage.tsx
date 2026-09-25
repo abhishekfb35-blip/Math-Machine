@@ -29,11 +29,12 @@ export default function CategoryPage() {
     queryKey: ["/api/categories", slug],
   });
 
-  const { data: allProducts, isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const { data: categoryProducts, isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products/category", category?.id ?? ""],
+    enabled: Boolean(category?.id),
   });
 
-  const products = allProducts?.filter((p) => category && p.categoryId === category.id) || [];
+  const products = categoryProducts || [];
   const isLoading = categoryLoading || productsLoading;
   const bannerImage = slug ? categoryBanners[slug] : undefined;
 
@@ -42,7 +43,7 @@ export default function CategoryPage() {
       {category && (
         <SEO
           title={category.name}
-          description={`Shop ${category.name} from TurtleLittle. Personalised luxury embroidered products, handcrafted with love. Buy 2 Get 1 Free.`.substring(0, 160)}
+          description={(category.description?.trim() || `Shop ${category.name} from TurtleLittle. Personalised luxury embroidered products, handcrafted with love. Buy 2 Get 1 Free.`).substring(0, 160)}
           path={`/category/${slug}`}
           jsonLd={BreadcrumbJsonLd([
             { name: "Home", url: "/" },

@@ -1,14 +1,22 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import type { IStorage } from "./storage";
+import { registerStorefrontDocumentRoutes } from "./storefrontHtml";
 
-export function serveStatic(app: Express) {
+export function serveStatic(app: Express, storage: IStorage) {
   const distPath = path.resolve(__dirname, "public");
   if (!fs.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
   }
+
+  const indexPath = path.resolve(distPath, "index.html");
+  registerStorefrontDocumentRoutes(app, storage, {
+    getTemplate: () => fs.promises.readFile(indexPath, "utf-8"),
+    transformHtml: async (_url, html) => html,
+  });
 
   app.use(express.static(distPath, {
     setHeaders(res, filePath) {

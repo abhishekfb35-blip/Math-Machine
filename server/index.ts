@@ -40,7 +40,6 @@ import { storage } from "./storage";
 import { notificationService } from "./providers/notification";
 import { startAbandonedCartScheduler } from "./jobs/abandonedCart";
 import { createServer } from "http";
-import { setupOgMiddleware } from "./ogMiddleware";
 import { loadRateLimitConfig, getPendingBlockSnapshot, clearPendingBlocks } from "./middleware/rateLimiter";
 import { recordCleanupRun } from "./services/cleanupHistory";
 
@@ -296,13 +295,11 @@ function startRateLimitStatsScheduler() {
     return res.status(status).json({ message });
   });
 
-  setupOgMiddleware(app, storage);
-
   if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+    serveStatic(app, storage);
   } else {
     const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+    await setupVite(httpServer, app, storage);
   }
 
   const port = parseInt(process.env.PORT || "5000", 10);

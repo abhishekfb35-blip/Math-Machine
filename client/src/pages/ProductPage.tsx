@@ -484,20 +484,24 @@ export default function ProductPage() {
       {product && (
         <SEO
           title={product.name}
-          description={(product.description || "").substring(0, 160)}
+          description={(product.description?.trim() || `Personalised ${product.name} — luxury embroidered product by TurtleLittle.`).substring(0, 160)}
           path={`/product/${slug}`}
           type="product"
+          noindex={product.active === false}
           image={product.imageUrl ? `https://turtlelittle.com${product.imageUrl}` : undefined}
           jsonLd={[
             ProductJsonLd({
+              id: product.id,
               name: product.name,
-              description: product.description || "",
+              description: product.description?.trim() || `Personalised ${product.name} — luxury embroidered product by TurtleLittle.`,
               price: product.price,
               mrp: product.mrp || product.price,
               imageUrl: product.imageUrl,
+              imageUrls: images.map((image) => image.imageUrl),
               slug: product.slug,
               sku: product.sku || "",
               availability: true,
+              variantOptions: variantOptions ?? { productId: product.id, sizes: [] },
             }),
             BreadcrumbJsonLd([
               { name: "Home", url: "/" },

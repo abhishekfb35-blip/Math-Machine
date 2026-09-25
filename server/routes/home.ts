@@ -61,10 +61,14 @@ async function buildCollections(): Promise<HomeSection[]> {
   return data;
 }
 
+export function getHomeCollections(): Promise<HomeSection[]> {
+  return buildCollections();
+}
+
 export function registerHomeRoutes(app: Express) {
   app.get("/api/home/collections", async (_req, res) => {
     try {
-      const data = await buildCollections();
+      const data = await getHomeCollections();
       res.json(data);
     } catch (err) {
       console.error("Error building home collections:", err);
