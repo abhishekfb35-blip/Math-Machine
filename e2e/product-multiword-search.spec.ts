@@ -139,3 +139,18 @@ test("category product filter matches separated words and singular/plural forms"
   await filter.fill("kid towel");
   await expect(page.getByTestId(`card-product-${separatedTitle!.id}`)).toBeVisible();
 });
+
+test("product details display the stored description that matched a Shop search", async ({ page }) => {
+  const product = (await storage.getProducts()).find(item =>
+    /star fish/i.test(item.description ?? "") && !/\bfish\b/i.test(item.name),
+  );
+  expect(product, "Expected an existing product whose description mentions Star Fish but title does not").toBeTruthy();
+
+  await page.goto(`/product/${product!.slug}`);
+  const description = page.getByTestId("text-product-description");
+  await expect(description).toBeVisible();
+  await expect(description).toContainText("Star Fish");
+  await expect(page.getByTestId("text-product-name")).toHaveText(product!.name);
+  expect(await description.evaluate(element => window.getComputedStyle(element).whiteSpace)).toBe("pre-line");
+  expect(await description.evaluate(element => element.textContent)).toBe(product!.description);
+});

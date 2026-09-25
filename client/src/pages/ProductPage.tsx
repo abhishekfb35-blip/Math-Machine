@@ -522,6 +522,18 @@ export default function ProductPage() {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Inclusive of all taxes</p>
 
+              {product.description?.trim() && (
+                <section className="mt-4 space-y-2" data-testid="section-product-description">
+                  <h3 className="text-sm font-semibold">Description</h3>
+                  <p
+                    className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line"
+                    data-testid="text-product-description"
+                  >
+                    {product.description}
+                  </p>
+                </section>
+              )}
+
               {productReviews && productReviews.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-2">
                   <div className="flex items-center gap-0.5">
