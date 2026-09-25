@@ -1,0 +1,147 @@
+You’re right to challenge that. I re-ran the homepage crawl just now, and **my previous conclusion about the homepage was wrong**.
+
+The current crawler result for `https://turtlelittle.com/` is very clearly returning substantial, crawlable HTML content. ([TurtleLittle][1])
+
+### What the homepage is actually returning
+
+The crawler sees:
+
+**H1:**
+
+> Personalised Luxury Towels, Bathrobes & Blankets
+
+Then actual category/content structure:
+
+* **Popular for Kids Towels**
+
+  * Disney princesses, superheroes & more
+  * individual product links and prices
+* **Couple Towel Sets**
+
+  * Elegant matching towel sets for two
+  * individual products
+* **Cozy Blankets**
+
+  * Soft personalised AC blankets for kids
+  * individual products
+* **Luxury Bathrobes**
+
+  * Premium personalised cotton bathrobes
+  * individual products
+
+So this is **not** a case of the homepage returning only a GTM iframe. The GTM iframe is simply line 0; the actual page content follows it. ([TurtleLittle][1])
+
+My earlier crawl apparently failed to expose the rendered content, and I incorrectly treated that failure as evidence of an indexing problem. **That's on me.**
+
+---
+
+## And actually, this changes my SEO assessment
+
+Looking at the homepage itself now, I'd move it from the concern I raised earlier to **reasonably healthy technically from a crawlability/content-exposure standpoint**.
+
+The homepage has a good basic semantic hierarchy:
+
+```text
+H1
+Personalised Luxury Towels, Bathrobes & Blankets
+
+H2
+Popular for Kids Towels
+  → products
+
+H2
+Couple Towel Sets
+  → products
+
+H2
+Cozy Blankets
+  → products
+
+H2
+Luxury Bathrobes
+  → products
+```
+
+That's actually quite sensible.
+
+More importantly, the content isn't just marketing copy. Google/AI crawlers can see **real entities and relationships**:
+
+> TurtleLittle → personalised → towels / bathrobes / blankets → kids / couples → specific products.
+
+That's exactly the kind of information retrieval systems can work with. ([TurtleLittle][1])
+
+### So I retract this statement from my previous answer:
+
+> "When I fetched the homepage, the crawler essentially received only Google Tag Manager iframe..."
+
+**That was incorrect.**
+
+The fresh crawl demonstrates that the homepage is returning the actual content.
+
+---
+
+## What I would investigate now instead
+
+The interesting question is no longer:
+
+**"Can Google/AI crawl the homepage?"**
+
+It clearly can.
+
+The better question is:
+
+**"Is the homepage giving Google/AI enough *entity and topical context* to understand TurtleLittle beyond a collection of products?"**
+
+That's a much more nuanced issue.
+
+And from the fresh crawl, I'd say **you're doing better than I initially gave you credit for**, but there are still some opportunities.
+
+For example, your homepage currently establishes:
+
+**TurtleLittle**
+→ personalised luxury towels
+→ bathrobes
+→ blankets
+→ kids
+→ couples
+→ cotton bathrobes
+→ personalised products
+
+That's good.
+
+But it doesn't yet explicitly establish some potentially valuable concepts such as:
+
+* **embroidered personalisation**
+* **100% cotton terry**
+* **personalised gifting**
+* **India**
+* **kids + adults + couples**
+* **birthday / return gifting / wedding / anniversary**
+* **why TurtleLittle's personalisation is different**
+* **how the personalisation works**
+
+Those are **content/entity opportunities**, not crawlability problems.
+
+And I would **not start stuffing all of that onto the homepage**. Some belong on category pages, About, Personalisation, FAQ, etc.
+
+---
+
+### One other interesting point
+
+The homepage's title being:
+
+**"TurtleLittle - Personalised Luxury Towels, Bathrobes & Blankets"**
+
+and the H1 being:
+
+**"Personalised Luxury Towels, Bathrobes & Blankets"**
+
+is very clean. It tells both traditional search and AI systems what the business sells immediately.
+
+So I wouldn't blindly change that.
+
+The next thing I'd do is a **proper technical + semantic audit of the homepage itself**—title, description, H1/H2, canonical, schema, internal links, image alt text, rendered HTML, word/content structure, and what Google actually has indexed—rather than making assumptions from one failed crawler response.
+
+And yes: **your other AI engines were right to flag that the homepage is functioning normally.**
+
+[1]: https://turtlelittle.com/ "TurtleLittle - Personalised Luxury Towels, Bathrobes & Blankets"
