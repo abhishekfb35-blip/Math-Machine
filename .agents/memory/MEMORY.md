@@ -14,3 +14,4 @@
 - [Test rate-limit isolation](browser-test-api-throttling.md) — browser automation needs test-only limiter isolation while production request protections remain unchanged.
 - [Service worker safe takeover](service-worker-safe-takeover.md) — warm and validate a build-specific app shell before activation; never replace the known-good offline cache early.
 - [Product search inflection](product-search-inflection.md) — preserve typed-term partial matches, but match plural alternatives as whole words in admin and customer search.
+- [Preview forwarding checks](replit-preview-forwarding.md) — recheck port mapping after workflow changes; a healthy local server can still have a Replit-domain 404.
