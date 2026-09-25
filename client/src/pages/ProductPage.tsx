@@ -60,8 +60,16 @@ export default function ProductPage() {
   const [showNameConfirm, setShowNameConfirm] = useState(false);
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const galleryPointerStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const galleryPointerStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+    axis: "pending" | "horizontal" | "vertical";
+    didDrag: boolean;
+  } | null>(null);
   const suppressGalleryClickRef = useRef(false);
+  const [galleryDragOffset, setGalleryDragOffset] = useState(0);
+  const [galleryIsDragging, setGalleryIsDragging] = useState(false);
   const [zoomDialogOpen, setZoomDialogOpen] = useState(false);
   const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PER_PAGE);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -353,34 +361,94 @@ export default function ProductPage() {
     return [mainImage];
   })() : [];
 
-  const currentImage = images[selectedImageIndex] || images[0];
-
   const handleGalleryPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     galleryPointerStartRef.current = null;
     suppressGalleryClickRef.current = false;
+    setGalleryDragOffset(0);
+    setGalleryIsDragging(false);
     if (images.length <= 1 || event.pointerType !== "touch" || !event.isPrimary) return;
 
     galleryPointerStartRef.current = {
       x: event.clientX,
       y: event.clientY,
       pointerId: event.pointerId,
+      axis: "pending",
+      didDrag: false,
     };
+  };
+
+  const handleGalleryPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const pointerStart = galleryPointerStartRef.current;
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId) return;
+
+    const deltaX = event.clientX - pointerStart.x;
+    const deltaY = event.clientY - pointerStart.y;
+    if (pointerStart.axis === "pending") {
+      if (
+        Math.abs(deltaX) >= 8
+        && Math.abs(deltaX) >= Math.abs(deltaY) * GALLERY_SWIPE_DIRECTION_RATIO
+      ) {
+        pointerStart.axis = "horizontal";
+      } else if (
+        Math.abs(deltaY) >= 8
+        && Math.abs(deltaY) >= Math.abs(deltaX) * GALLERY_SWIPE_DIRECTION_RATIO
+      ) {
+        pointerStart.axis = "vertical";
+      } else {
+        return;
+      }
+    }
+
+    if (pointerStart.axis !== "horizontal") return;
+
+    pointerStart.didDrag = true;
+    suppressGalleryClickRef.current = true;
+
+    const galleryWidth = Math.max(event.currentTarget.clientWidth, 1);
+    const boundedDelta = Math.max(-galleryWidth, Math.min(galleryWidth, deltaX));
+    const pullingPastEdge = (
+      (selectedImageIndex === 0 && deltaX > 0)
+      || (selectedImageIndex === images.length - 1 && deltaX < 0)
+    );
+    const renderedDelta = pullingPastEdge
+      ? Math.sign(deltaX) * Math.min(Math.abs(deltaX) * 0.28, 72)
+      : boundedDelta;
+
+    setGalleryIsDragging(true);
+    setGalleryDragOffset(renderedDelta);
   };
 
   const handleGalleryPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const pointerStart = galleryPointerStartRef.current;
     galleryPointerStartRef.current = null;
-    if (!pointerStart || event.pointerId !== pointerStart.pointerId || images.length <= 1) return;
+    if (!pointerStart || event.pointerId !== pointerStart.pointerId || images.length <= 1) {
+      setGalleryDragOffset(0);
+      setGalleryIsDragging(false);
+      return;
+    }
 
     const deltaX = event.clientX - pointerStart.x;
     const deltaY = event.clientY - pointerStart.y;
-    if (
-      Math.abs(deltaX) < GALLERY_SWIPE_MIN_DISTANCE
-      || Math.abs(deltaX) < Math.abs(deltaY) * GALLERY_SWIPE_DIRECTION_RATIO
-    ) return;
+    const horizontalGesture = pointerStart.axis === "horizontal"
+      || (
+        pointerStart.axis === "pending"
+        && Math.abs(deltaX) >= 8
+        && Math.abs(deltaX) >= Math.abs(deltaY) * GALLERY_SWIPE_DIRECTION_RATIO
+      );
+    if (horizontalGesture && (pointerStart.didDrag || Math.abs(deltaX) >= 8)) {
+      suppressGalleryClickRef.current = true;
+    }
 
-    suppressGalleryClickRef.current = true;
-    setSelectedImageIndex(index => Math.max(0, Math.min(index + (deltaX < 0 ? 1 : -1), images.length - 1)));
+    if (
+      horizontalGesture
+      && Math.abs(deltaX) >= GALLERY_SWIPE_MIN_DISTANCE
+      && Math.abs(deltaX) >= Math.abs(deltaY) * GALLERY_SWIPE_DIRECTION_RATIO
+    ) {
+      setSelectedImageIndex(index => Math.max(0, Math.min(index + (deltaX < 0 ? 1 : -1), images.length - 1)));
+    }
+
+    setGalleryDragOffset(0);
+    setGalleryIsDragging(false);
   };
 
   if (productLoading) {
