@@ -21,7 +21,7 @@
  *   - reshowIntervalSeconds = 0 means "never reshow after dismiss".
  */
 
-import { useState, useEffect, useCallback, useRef, type SyntheticEvent } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, type SyntheticEvent } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -276,7 +276,7 @@ export default function SignupPopup() {
     _setSignupPopupOpen(visible);
   }, [_setSignupPopupOpen, visible]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isQuickAddOpen) {
       quickAddWasOpenRef.current = true;
       if (quickAddCloseGraceTimerRef.current !== null) {
@@ -309,7 +309,7 @@ export default function SignupPopup() {
     resumePromoTimers,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isMiniCartOpen) {
       miniCartWasOpenRef.current = true;
       pausePromoTimers();

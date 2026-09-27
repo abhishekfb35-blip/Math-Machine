@@ -72,6 +72,45 @@ async function loadQuickAddTimerPage(
   };
 }
 
+async function mockEmptyMiniCart(page: Page) {
+  await page.route("**/api/cart", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        itemCount: 0,
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        shippingFee: 0,
+        total: 0,
+        engineThresholds: null,
+      }),
+    }),
+  );
+}
+
+function miniCartDrawer(page: Page) {
+  return page
+    .getByRole("dialog")
+    .filter({ has: page.getByTestId("button-mini-cart-shop") });
+}
+
+async function openMiniCart(page: Page, whileQuickAddIsOpen = false) {
+  const cartButton = page.getByTestId("button-cart");
+  if (whileQuickAddIsOpen) {
+    await cartButton.evaluate(button => (button as HTMLButtonElement).click());
+  } else {
+    await cartButton.click();
+  }
+  await expect(miniCartDrawer(page)).toHaveCount(1);
+}
+
+async function closeMiniCart(page: Page) {
+  const drawer = miniCartDrawer(page);
+  await page.keyboard.press("Escape");
+  await expect(drawer).toHaveCount(0);
+}
+
 async function mockHardCartGateFlow(page: Page) {
   let addRequestCount = 0;
 
@@ -429,6 +468,111 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await page.clock.runFor(3_000);
     await expect(signupPopup).toBeHidden();
     await page.clock.runFor(2_000);
+    await expect(signupPopup).toBeVisible();
+  });
+
+  test("pauses the session countdown in the mini-cart and resumes with the remaining time", async ({
+    page,
+  }) => {
+    await mockEmptyMiniCart(page);
+    const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
+      delaySeconds: 20,
+      cartAddDelaySeconds: 60,
+      reshowIntervalSeconds: 0,
+    });
+
+    await page.clock.runFor(5_000);
+    await openMiniCart(page);
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+
+    await closeMiniCart(page);
+    await page.clock.runFor(5_000);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(15_000);
+    await expect(signupPopup).toBeVisible();
+  });
+
+  test("pauses the cart-add countdown in the mini-cart and resumes with the remaining time", async ({
+    page,
+  }) => {
+    await mockEmptyMiniCart(page);
+    const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
+      delaySeconds: 60,
+      cartAddDelaySeconds: 20,
+      reshowIntervalSeconds: 0,
+    });
+
+    await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
+    await page.clock.runFor(3_000);
+    await openMiniCart(page);
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+
+    await closeMiniCart(page);
+    await page.clock.runFor(5_000);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(15_000);
+    await expect(signupPopup).toBeVisible();
+  });
+
+  test("pauses the re-show countdown in the mini-cart and resumes with the remaining time", async ({
+    page,
+  }) => {
+    await mockEmptyMiniCart(page);
+    const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
+      delaySeconds: 0,
+      cartAddDelaySeconds: 60,
+      reshowIntervalSeconds: 20,
+    });
+
+    await expect(signupPopup).toBeVisible();
+    await page.getByTestId("btn-dismiss-nudge").click();
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(3_000);
+
+    await openMiniCart(page);
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+
+    await closeMiniCart(page);
+    await page.clock.runFor(5_000);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(15_000);
+    await expect(signupPopup).toBeVisible();
+  });
+
+  test("keeps promo timers paused until both Quick Add and the mini-cart are closed", async ({
+    page,
+  }) => {
+    await mockEmptyMiniCart(page);
+    const { quickAddButton, quickAddSheet, signupPopup } =
+      await loadQuickAddTimerPage(page, singleProductId, {
+        delaySeconds: 20,
+        cartAddDelaySeconds: 60,
+        reshowIntervalSeconds: 0,
+      });
+
+    await page.clock.runFor(3_000);
+    await quickAddButton.click();
+    await expect(quickAddSheet).toBeVisible();
+    await openMiniCart(page, true);
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+
+    await closeMiniCart(page);
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+
+    await page.keyboard.press("Escape");
+    await expect(quickAddSheet).toBeHidden();
+    await page.clock.runFor(4_999);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(1);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(10_000);
+    await expect(signupPopup).toBeHidden();
+    await page.clock.runFor(10_000);
     await expect(signupPopup).toBeVisible();
   });
 
