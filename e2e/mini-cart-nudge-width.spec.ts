@@ -38,6 +38,29 @@ const populatedCart = {
   total: 1998,
 };
 
+function createLongCart() {
+  const items = Array.from({ length: 12 }, (_, index) => ({
+    id: `mini-cart-long-item-${index + 1}`,
+    quantity: 1,
+    product: {
+      id: `mini-cart-long-product-${index + 1}`,
+      slug: `mini-cart-long-product-${index + 1}`,
+      imageUrl: "",
+      name: `Long cart test product ${index + 1}`,
+      price: 1998,
+    },
+  }));
+  const subtotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+
+  return {
+    ...emptyCart,
+    items,
+    itemCount: items.length,
+    subtotal,
+    total: subtotal,
+  };
+}
+
 async function expectNudgeToFillAvailableWidth(nudge: Locator) {
   const dimensions = await nudge.evaluate(element => {
     const parent = element.parentElement;
@@ -104,4 +127,106 @@ test("header mini-cart nudge fills available width when empty and populated", as
   await expect(mobileNudge).toBeVisible();
   await expectNudgeToFillAvailableWidth(mobileNudge);
   await expect(page.getByTestId("button-mini-cart-checkout")).toBeVisible();
+});
+
+async function expectMiniCartFooterInViewport(page: Page) {
+  for (const testId of [
+    "mini-cart-subtotal",
+    "mini-cart-total",
+    "button-mini-cart-view-cart",
+    "button-mini-cart-checkout",
+  ]) {
+    const element = page.getByTestId(testId);
+    await expect(element).toBeVisible();
+    await expect(element).toBeInViewport({ ratio: 1 });
+  }
+}
+
+test("long mini-cart lists scroll without moving totals or checkout actions", async ({ page }) => {
+  let cart = createLongCart();
+  await page.route("**/api/cart", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(cart),
+    }),
+  );
+  await page.route("**/api/cart/items/**", async route => {
+    const request = route.request();
+    const itemId = request.url().split("/").at(-1);
+
+    if (request.method() === "PATCH") {
+      const { quantity } = request.postDataJSON() as { quantity: number };
+      cart = {
+        ...cart,
+        items: cart.items.map(item => item.id === itemId ? { ...item, quantity } : item),
+      };
+    } else if (request.method() === "DELETE") {
+      cart = {
+        ...cart,
+        items: cart.items.filter(item => item.id !== itemId),
+      };
+    } else {
+      return route.continue();
+    }
+
+    cart.itemCount = cart.items.reduce((count, item) => count + item.quantity, 0);
+    cart.subtotal = cart.items.reduce(
+      (total, item) => total + item.product.price * item.quantity,
+      0,
+    );
+    cart.total = cart.subtotal;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(cart),
+    });
+  });
+  await page.route("**/api/auth/me", route =>
+    route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
+  );
+  await page.route("**/api/site-config/signup-popup", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ key: "signup-popup", value: { enabled: false } }),
+    }),
+  );
+
+  const viewportCases = [
+    { width: 400, height: 420, action: "view-cart" },
+    { width: 1024, height: 420, action: "checkout" },
+  ] as const;
+
+  for (const { width, height, action } of viewportCases) {
+    cart = createLongCart();
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    await page.getByTestId("button-cart").click();
+
+    const itemList = page.getByTestId("mini-cart-items");
+    await expect(itemList).toBeVisible();
+    expect(await itemList.evaluate(element => element.scrollHeight))
+      .toBeGreaterThan(await itemList.evaluate(element => element.clientHeight));
+
+    await itemList.evaluate(element => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect.poll(() => itemList.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    await expect(page.getByTestId("mini-cart-item-mini-cart-long-item-12")).toBeVisible();
+    await expectMiniCartFooterInViewport(page);
+
+    await page.getByTestId("button-mini-increase-qty-mini-cart-long-item-12").click();
+    await expect(page.getByTestId("text-mini-qty-mini-cart-long-item-12")).toHaveText("2");
+    await expectMiniCartFooterInViewport(page);
+
+    await page.getByTestId("button-mini-remove-item-mini-cart-long-item-1").click();
+    await expect(page.getByTestId("mini-cart-item-mini-cart-long-item-1")).toHaveCount(0);
+    await expectMiniCartFooterInViewport(page);
+
+    if (action === "view-cart") {
+      await page.getByTestId("button-mini-cart-view-cart").click();
+      await expect(page).toHaveURL(/\/cart$/);
+    } else {
+      await page.getByTestId("button-mini-cart-checkout").click();
+      await expect(page).toHaveURL(/\/checkout$/);
+    }
+  }
 });

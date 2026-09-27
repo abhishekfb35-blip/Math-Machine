@@ -286,9 +286,12 @@ export default function Header() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-0 divide-y">
+              <div
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-3 space-y-0 divide-y"
+                data-testid="mini-cart-items"
+              >
                 {cart.items.filter(i => i.product).map((item) => (
-                  <div key={item.id} className="py-3 flex gap-3" data-testid={`mini-cart-item-${item.id}`}>
+                  <div key={item.id} className="px-5 py-3 flex gap-3" data-testid={`mini-cart-item-${item.id}`}>
                     <SheetClose asChild>
                       <Link href={`/product/${item.product!.slug}`}>
                         <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0 cursor-pointer">
@@ -355,19 +358,17 @@ export default function Header() {
                     </div>
                   </div>
                 ))}
+                {cart.engineThresholds && (
+                  <div className="px-5 pt-3" data-testid="mini-cart-nudge">
+                    <NudgeCard
+                      itemCount={cart.itemCount}
+                      engineThresholds={cart.engineThresholds}
+                      compact
+                      fullWidth
+                    />
+                  </div>
+                )}
               </div>
-
-
-              {cart?.engineThresholds && (
-                <div className="px-5 pt-3" data-testid="mini-cart-nudge">
-                  <NudgeCard
-                    itemCount={cart.itemCount}
-                    engineThresholds={cart.engineThresholds}
-                    compact
-                    fullWidth
-                  />
-                </div>
-              )}
 
               <div className="px-5 pb-5 space-y-3 shrink-0">
                 <Separator />
