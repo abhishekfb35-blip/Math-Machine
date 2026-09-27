@@ -4,7 +4,7 @@ import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultRefundPage, normalizePolicyPage } from "@/lib/siteConfigDefaults";
-import { publicInfoMetadata } from "@shared/discoverability";
+import { formatDateOnly, publicInfoMetadata } from "@shared/discoverability";
 
 function renderBody(body: string) {
   const lines = body.split("\n");
@@ -70,7 +70,7 @@ export default function RefundPolicyPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="refund-policy-page">
-      <SEO {...publicInfoMetadata["refund-policy"]} path="/refund-policy" />
+      <SEO {...publicInfoMetadata["refund-policy"]} path="/refund-policy" dateModified={config.lastUpdatedDate} />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home
@@ -78,7 +78,11 @@ export default function RefundPolicyPage() {
       </Link>
 
       <h1 className="text-2xl font-bold mb-6" data-testid="text-refund-title">{config.title}</h1>
-      <p className="text-sm text-muted-foreground mb-6">Last updated: {config.lastUpdated}</p>
+      <p className="text-sm text-muted-foreground mb-6">
+        Last updated: {config.lastUpdatedDate
+          ? <time dateTime={config.lastUpdatedDate}>{formatDateOnly(config.lastUpdatedDate)}</time>
+          : config.lastUpdated}
+      </p>
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-6">
         {config.sections.map((section, idx) => (

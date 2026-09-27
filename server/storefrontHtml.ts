@@ -3,6 +3,7 @@ import type { Category, Product, ProductVariantOptions } from "@shared/types";
 import { buildProductStructuredData } from "@shared/productStructuredData";
 import {
   businessDetails,
+  formatDateOnly,
   siteIdentityStructuredData,
   storefrontAnswers,
   storefrontFaqStructuredData,
@@ -150,13 +151,30 @@ function breadcrumbJsonLd(items: { name: string; url: string }[]): Record<string
   };
 }
 
+function freshnessStructuredData(page: StorefrontPageData): Record<string, unknown>[] {
+  if (!page.dateModified) return [];
+  const origin = new URL(page.seo.siteUrl).origin;
+  const url = canonicalUrl(page);
+  return [{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    name: page.title,
+    url,
+    dateModified: page.dateModified,
+    isPartOf: { "@id": `${origin}/#website` },
+    publisher: { "@id": `${origin}/#organization` },
+  }];
+}
+
 function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
   if (page.kind === "not-found") return [];
   const identity = siteIdentityStructuredData(page.seo.brandName, page.seo.siteUrl);
-  if (page.kind === "home") return [...identity, storefrontFaqStructuredData()];
+  const freshness = freshnessStructuredData(page);
+  if (page.kind === "home") return [...identity, ...freshness, storefrontFaqStructuredData()];
   if (page.kind === "product") {
     const images = imageList(page.product, page.images, page.seo.siteUrl);
-    return [...identity, buildProductStructuredData({
+    return [...identity, ...freshness, buildProductStructuredData({
       id: page.product.id,
       name: page.product.name,
       description: page.description,
@@ -169,12 +187,12 @@ function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
     })];
   }
   if (page.kind === "category") {
-    return [...identity, breadcrumbJsonLd([
+    return [...identity, ...freshness, breadcrumbJsonLd([
       { name: "Home", url: absoluteUrl("/", page.seo.siteUrl) },
       { name: page.category.name, url: canonicalUrl(page) },
     ])];
   }
-  return identity;
+  return [...identity, ...freshness];
 }
 
 function renderMeta(page: StorefrontPageData): string {
@@ -228,6 +246,15 @@ function renderProductPage(
     ${description}
     ${renderVariantOptions(product, variants)}
   </main>`;
+}
+
+function renderLastUpdated(dateModified?: string, legacyLabel?: string): string {
+  if (dateModified) {
+    return `<p class="catalogue-updated">Last updated: <time datetime="${escapeHtml(dateModified)}">${escapeHtml(formatDateOnly(dateModified))}</time></p>`;
+  }
+  return legacyLabel
+    ? `<p class="catalogue-updated">Last updated: ${escapeHtml(legacyLabel)}</p>`
+    : "";
 }
 
 function renderPlainText(body: string): string {
@@ -286,6 +313,7 @@ function renderInfoPage(info: PublicInfoContent): string {
     const whatsapp = config.contactWhatsapp.replace(/\D/g, "");
     return `<main class="catalogue-prerender-content">
       <h1>${escapeHtml(config.title)}</h1>
+      ${renderLastUpdated(config.lastUpdatedDate)}
       ${renderPlainText(config.intro)}
       ${config.sections.map(section =>
         `<section><h2>${escapeHtml(section.heading)}</h2>${renderPlainText(section.body)}</section>`,
@@ -299,7 +327,7 @@ function renderInfoPage(info: PublicInfoContent): string {
   const { config } = info;
   return `<main class="catalogue-prerender-content">
     <h1>${escapeHtml(config.title)}</h1>
-    <p>Last updated: ${escapeHtml(config.lastUpdated)}</p>
+    ${renderLastUpdated(config.lastUpdatedDate, config.lastUpdated)}
     ${config.sections.map(section =>
       `<section><h2>${escapeHtml(section.heading)}</h2>${renderPlainText(section.body)}</section>`,
     ).join("")}
@@ -322,6 +350,7 @@ function renderPageContent(page: StorefrontPageData): string {
       return `<main class="catalogue-prerender-content">
         <h1>${escapeHtml(page.seo.tagline)}</h1>
         <p>${escapeHtml(storefrontIntro)}</p>
+        ${renderLastUpdated(page.dateModified)}
         ${page.sections.map((section) =>
           productListing(section.title, section.products, page.seo.siteUrl, section.subtitle),
         ).join("")}

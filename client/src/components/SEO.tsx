@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultSeo, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { buildProductStructuredData } from "@shared/productStructuredData";
-import { siteIdentityStructuredData } from "@shared/discoverability";
+import { normalizeDateOnly, siteIdentityStructuredData, siteOrigin } from "@shared/discoverability";
 import type { ProductVariantOptions } from "@shared/types";
 
 interface SEOProps {
@@ -12,6 +12,7 @@ interface SEOProps {
   image?: string;
   type?: "website" | "product" | "article";
   noindex?: boolean;
+  dateModified?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
@@ -22,6 +23,7 @@ export default function SEO({
   image,
   type = "website",
   noindex = false,
+  dateModified,
   jsonLd,
 }: SEOProps) {
   const seo = useSiteConfig<SeoConfig>("seo", defaultSeo);
@@ -39,8 +41,24 @@ export default function SEO({
     ? `${title} | ${siteName}`
     : `${siteName} - ${seo.tagline || "Personalised Luxury Towels & Blankets"}`;
   const canonicalUrl = `${siteUrl}${path}`;
+  const origin = siteOrigin(siteUrl);
+  const resolvedDateModified = normalizeDateOnly(
+    dateModified ?? (path === "/" ? seo.lastUpdatedDate : undefined),
+  );
   const schemas = [
     ...siteIdentityStructuredData(siteName, siteUrl),
+    ...(resolvedDateModified
+      ? [{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "@id": `${canonicalUrl}#webpage`,
+          name: fullTitle,
+          url: canonicalUrl,
+          dateModified: resolvedDateModified,
+          isPartOf: { "@id": `${origin}/#website` },
+          publisher: { "@id": `${origin}/#organization` },
+        }]
+      : []),
     ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
   ];
 

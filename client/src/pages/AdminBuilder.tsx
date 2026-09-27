@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { normalizeDateOnly } from "@shared/discoverability";
 import type { Attributes, Product, Tag, TagType, Category } from "@shared/types";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
@@ -194,6 +195,18 @@ function SeoSection({ data }: { data: SeoConfig }) {
           placeholder="https://turtlelittle.com"
           data-testid="input-seo-site-url"
         />
+      </div>
+      <div className="space-y-2">
+        <Label>Homepage last updated (exact date)</Label>
+        <Input
+          type="date"
+          value={normalizeDateOnly(config.lastUpdatedDate) ?? ""}
+          onChange={(e) => setConfig({ ...config, lastUpdatedDate: e.target.value })}
+          data-testid="input-seo-last-updated-date"
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave blank unless you can confirm the exact date the homepage content was updated.
+        </p>
       </div>
       <div className="space-y-2">
         <Label>Default Meta Description</Label>

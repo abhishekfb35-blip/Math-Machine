@@ -65,13 +65,31 @@ export function siteOrigin(siteUrl: unknown): string {
   return "https://turtlelittle.com";
 }
 
+export function normalizeDateOnly(value: unknown): string | undefined {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) return undefined;
+  return value;
+}
+
+export function formatDateOnly(value: string): string {
+  const dateOnly = normalizeDateOnly(value);
+  if (!dateOnly) return "";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${dateOnly}T00:00:00.000Z`));
+}
+
 export function siteIdentityStructuredData(brandName: string, siteUrl: string): Record<string, unknown>[] {
   const origin = siteOrigin(siteUrl);
   const organizationId = `${origin}/#organization`;
   return [
     {
       "@context": "https://schema.org",
-      "@type": "OnlineStore",
+      "@type": ["Organization", "OnlineStore"],
       "@id": organizationId,
       name: brandName,
       legalName: businessDetails.legalName,

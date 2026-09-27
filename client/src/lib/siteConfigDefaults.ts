@@ -1,4 +1,5 @@
 import type { ShopSection as ShopSectionConfig } from "@shared/shopSections";
+import { normalizeDateOnly } from "@shared/discoverability";
 
 export type { ShopSection } from "@shared/shopSections";
 
@@ -8,6 +9,7 @@ export interface SeoConfig {
   metaDescription: string;
   ogImageUrl: string;
   siteUrl: string;
+  lastUpdatedDate: string;
 }
 
 export const defaultSeo: SeoConfig = {
@@ -16,6 +18,7 @@ export const defaultSeo: SeoConfig = {
   metaDescription: "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered only within India.",
   ogImageUrl: "/og-image.png",
   siteUrl: "https://turtlelittle.com",
+  lastUpdatedDate: "",
 };
 
 export interface AnnouncementConfig {
@@ -307,6 +310,7 @@ export interface PageSection {
 
 export interface AboutPageConfig {
   title: string;
+  lastUpdatedDate: string;
   intro: string;
   sections: PageSection[];
   valueCards: { title: string; description: string }[];
@@ -318,29 +322,34 @@ export interface AboutPageConfig {
 export interface TermsPageConfig {
   title: string;
   lastUpdated: string;
+  lastUpdatedDate: string;
   sections: PageSection[];
 }
 
 export interface PrivacyPageConfig {
   title: string;
   lastUpdated: string;
+  lastUpdatedDate: string;
   sections: PageSection[];
 }
 
 export interface RefundPageConfig {
   title: string;
   lastUpdated: string;
+  lastUpdatedDate: string;
   sections: PageSection[];
 }
 
 export interface ShippingPageConfig {
   title: string;
   lastUpdated: string;
+  lastUpdatedDate: string;
   sections: PageSection[];
 }
 
 export const defaultAboutPage: AboutPageConfig = {
   title: "About TurtleLittle",
+  lastUpdatedDate: "",
   intro: "TurtleLittle was born from a simple idea: that everyday essentials like towels, blankets, and bathrobes can be something truly special when made personal. We believe in the magic of seeing your own name beautifully embroidered on a premium product — it transforms something ordinary into a cherished keepsake.",
   sections: [
     { heading: "What We Do", body: "We specialise in personalised, embroidered luxury towels, blankets, and bathrobes for kids, adults, and couples. Every product is crafted using premium fabrics — our towels are made from 550 GSM zero-twist cotton that's incredibly soft and absorbent. Each item is embroidered with care, featuring your chosen name, initials, or design." },
@@ -361,6 +370,7 @@ export const defaultAboutPage: AboutPageConfig = {
 export const defaultTermsPage: TermsPageConfig = {
   title: "Terms & Conditions",
   lastUpdated: "February 2026",
+  lastUpdatedDate: "",
   sections: [
     { heading: "1. Introduction", body: "Welcome to TurtleLittle (\"we,\" \"our,\" or \"us\"). These Terms & Conditions govern your use of our website turtlelittle.com and the purchase of our products. By accessing our website or placing an order, you agree to be bound by these terms. Please read them carefully before using our services." },
     { heading: "2. Products & Personalisation", body: "TurtleLittle offers personalised embroidered towels, blankets, and bathrobes. All personalisation details (names, initials, designs) provided by the customer must be accurate. We are not responsible for errors in personalisation caused by incorrect information provided by the customer. Due to the personalised nature of our products, please double-check all details before confirming your order." },
@@ -378,6 +388,7 @@ export const defaultTermsPage: TermsPageConfig = {
 export const defaultPrivacyPage: PrivacyPageConfig = {
   title: "Privacy Policy",
   lastUpdated: "February 2026",
+  lastUpdatedDate: "",
   sections: [
     { heading: "1. Introduction", body: "TurtleLittle (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you visit turtlelittle.com or purchase our products." },
     { heading: "2. Information We Collect", body: "We collect the following types of information:\n• Personal Information: Name, email address, phone number, shipping address, and billing address when you place an order.\n• Personalisation Details: Names and initials you provide for embroidery on our products.\n• Payment Information: Payment details are processed securely through our payment gateway partners and are not stored on our servers.\n• Usage Data: Browser type, pages visited, time spent on pages, and other analytics data to improve our website experience.\n• Cookies: We use cookies to maintain your cart, remember preferences, and improve your browsing experience." },
@@ -395,6 +406,7 @@ export const defaultPrivacyPage: PrivacyPageConfig = {
 export const defaultRefundPage: RefundPageConfig = {
   title: "Refund & Cancellation Policy",
   lastUpdated: "February 2026",
+  lastUpdatedDate: "",
   sections: [
     { heading: "1. Personalised Products", body: "Since all TurtleLittle products are personalised with custom embroidery (names, initials, or specific designs), they are made-to-order and cannot be resold. Therefore, we do not accept returns or exchanges for change of mind, incorrect personalisation details provided by the customer, or size/colour preferences after the order has been placed." },
     { heading: "2. Eligible Returns", body: "We accept returns and provide replacements or refunds only in the following cases:\n• Manufacturing Defects: If the product has a defect in the fabric, stitching, or embroidery quality.\n• Wrong Item: If you receive a product different from what you ordered.\n• Damaged in Transit: If the product arrives damaged due to shipping." },
@@ -409,6 +421,7 @@ export const defaultRefundPage: RefundPageConfig = {
 export const defaultShippingPage: ShippingPageConfig = {
   title: "Shipping Policy",
   lastUpdated: "February 2026",
+  lastUpdatedDate: "",
   sections: [
     { heading: "1. Processing Time", body: "Since all TurtleLittle products are personalised with custom embroidery, each item is made-to-order. Orders typically take 3-5 business days to process and prepare for dispatch. During festive seasons or high-demand periods, processing may take slightly longer." },
     { heading: "2. Delivery Timeline", body: "TurtleLittle currently delivers only to addresses within India; delivery outside India is not available.\n\nAfter dispatch, estimated delivery times are:\n• Metro Cities (Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad): 2-4 business days\n• Other Cities & Towns: 4-7 business days\n• Remote Areas: 7-10 business days\n\nPlease note that delivery timelines are estimates and may vary based on the shipping partner and your location. You will receive a shipping confirmation with tracking details once your order is dispatched." },
@@ -437,6 +450,7 @@ export function normalizeAboutPage(value: unknown): AboutPageConfig {
   const saved = isPageRecord(value) ? value : {};
   return {
     title: savedText(saved.title, defaultAboutPage.title),
+    lastUpdatedDate: normalizeDateOnly(saved.lastUpdatedDate) ?? "",
     intro: savedText(saved.intro, defaultAboutPage.intro),
     sections: Array.isArray(saved.sections) && saved.sections.every(isPageSection)
       ? saved.sections : defaultAboutPage.sections,
@@ -454,6 +468,7 @@ export function normalizePolicyPage(value: unknown, fallback: TermsPageConfig): 
   return {
     title: savedText(saved.title, fallback.title),
     lastUpdated: savedText(saved.lastUpdated, fallback.lastUpdated),
+    lastUpdatedDate: normalizeDateOnly(saved.lastUpdatedDate) ?? "",
     sections: Array.isArray(saved.sections) && saved.sections.every(isPageSection)
       ? saved.sections : fallback.sections,
   };

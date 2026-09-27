@@ -9,7 +9,11 @@ import type { IStorage } from "../server/storage";
 import { registerStorefrontDocumentRoutes } from "../server/storefrontHtml";
 import { loadPublicInfoPage } from "../server/publicInfoPages";
 import { registerSeoRoutes } from "../server/routes/seo";
-import { storefrontAnswers } from "@shared/discoverability";
+import {
+  formatDateOnly,
+  normalizeDateOnly,
+  storefrontAnswers,
+} from "@shared/discoverability";
 import { defaultAboutPage } from "../client/src/lib/siteConfigDefaults";
 import { ensureIndiaOnlyDeliveryContent } from "../server/migrations/india-only-delivery";
 
@@ -105,6 +109,7 @@ function readInitialData(html: string): { queries: { queryKey: string[]; data: a
 test("storefront routes return crawlable catalogue HTML to every user agent", async () => {
   const aboutConfig = {
     title: "About <TurtleLittle>",
+    lastUpdatedDate: "2026-05-13",
     intro: "We make embroidered gifts </script><script>alert(1)</script>.",
     sections: [{ heading: "What We Do", body: "Personalised towels and blankets." }],
     valueCards: [{ title: "Made with care", description: "Custom embroidery." }],
@@ -120,6 +125,12 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
       body: "TurtleLittle currently delivers only to addresses within India; delivery outside India is not available.\nAfter dispatch, estimates are:\n• Metro: 2-4 business days\n• Other cities: 4-7 business days",
     }],
   };
+  const termsConfig = {
+    title: "Terms & Conditions",
+    lastUpdated: "February 2026",
+    lastUpdatedDate: "2026-08-19",
+    sections: [],
+  };
   const storage = {
     getSiteContent: async (key: string) => {
       if (key === "shop-sections") {
@@ -133,6 +144,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
           metaDescription: "Luxury personalised towels. Delivered only within India.",
           ogImageUrl: "/images/og.jpg",
           siteUrl: "https://shop.example",
+          lastUpdatedDate: "2026-09-23",
         }),
       };
     },
@@ -147,6 +159,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     getAllSiteContents: async () => [
       { key: "page-about", value: JSON.stringify(aboutConfig) },
       { key: "page-shipping", value: JSON.stringify(shippingConfig) },
+      { key: "page-terms", value: JSON.stringify(termsConfig) },
     ],
   } as unknown as IStorage;
 
@@ -208,13 +221,22 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(home, /Delivery is available only within India/);
     assert.match(home, /Does TurtleLittle deliver outside India\?/);
     assert.match(home, /Delivered only within India/);
+    assert.match(home, /Last updated: <time datetime="2026-09-23">23 September 2026<\/time>/);
     const homeSchemas = readSchemas(home);
-    assert.deepEqual(homeSchemas.map(schema => schema["@type"]), ["OnlineStore", "WebSite", "FAQPage"]);
+    assert.deepEqual(homeSchemas.map(schema => schema["@type"]), [
+      ["Organization", "OnlineStore"],
+      "WebSite",
+      "WebPage",
+      "FAQPage",
+    ]);
     assert.equal(homeSchemas[0].legalName, "Pandora Innovations");
     assert.equal(homeSchemas[0].areaServed.name, "India");
+    assert.equal(homeSchemas[0].sameAs, undefined, "unverified official profile links should be omitted");
     assert.equal(homeSchemas[1].publisher["@id"], "https://shop.example/#organization");
-    assert.equal(homeSchemas[2].mainEntity[0].acceptedAnswer.text, storefrontAnswers[0].answer);
-    assert.match(homeSchemas[2].mainEntity.find((entry: any) =>
+    assert.equal(homeSchemas[2].dateModified, "2026-09-23");
+    assert.equal(homeSchemas[2].publisher["@id"], "https://shop.example/#organization");
+    assert.equal(homeSchemas[3].mainEntity[0].acceptedAnswer.text, storefrontAnswers[0].answer);
+    assert.match(homeSchemas[3].mainEntity.find((entry: any) =>
       entry.name === "Does TurtleLittle deliver outside India?",
     ).acceptedAnswer.text, /only within India/);
 
@@ -270,19 +292,30 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(about, /href="https:\/\/shop\.example\/about"/);
     assert.match(about, /We make embroidered gifts &lt;\/script&gt;/);
     assert.doesNotMatch(about, /<script>alert\(1\)<\/script>/);
+    assert.match(about, /Last updated: <time datetime="2026-05-13">13 May 2026<\/time>/);
+    assert.equal(readSchemas(about).find(schema => schema["@type"] === "WebPage")?.dateModified, "2026-05-13");
     assert.equal(readInitialData(about).queries.find(entry => entry.queryKey[0] === "/api/site-config")?.data["page-about"].title, aboutConfig.title);
 
     const shipping = pages.get("/shipping")!;
     assert.match(shipping, /<h2>Dispatch and delivery<\/h2>/);
     assert.match(shipping, /delivers only to addresses within India/);
     assert.match(shipping, /<ul><li>Metro: 2-4 business days<\/li><li>Other cities: 4-7 business days<\/li><\/ul>/);
+    assert.match(shipping, /Last updated: September 2026/);
+    assert.equal(readSchemas(shipping).find(schema => schema["@type"] === "WebPage")?.dateModified, undefined);
     assert.equal(readInitialData(shipping).queries.find(entry => entry.queryKey[0] === "/api/site-config")?.data["page-shipping"].lastUpdated, "September 2026");
+
+    const termsPage = pages.get("/terms")!;
+    assert.match(termsPage, /Last updated: <time datetime="2026-08-19">19 August 2026<\/time>/);
+    assert.equal(readSchemas(termsPage).find(schema => schema["@type"] === "WebPage")?.dateModified, "2026-08-19");
 
     for (const route of ["/terms", "/privacy", "/refund-policy", "/contact"]) {
       const info = pages.get(route)!;
       assert.match(info, /<h1>[^<]+<\/h1>/, `${route} should contain meaningful HTML`);
       assert.match(info, new RegExp(`href="https://shop\\.example${route}"`));
-      assert.ok(readSchemas(info).some(schema => schema["@type"] === "OnlineStore"));
+      assert.ok(readSchemas(info).some(schema =>
+        schema["@type"] === "OnlineStore"
+        || (Array.isArray(schema["@type"]) && schema["@type"].includes("OnlineStore")),
+      ));
     }
     assert.match(pages.get("/contact")!, /Pandora Innovations/);
     const trailingSlash = await fetchPage("/about/", "Mozilla/5.0");
@@ -411,4 +444,13 @@ test("saved delivery copy is normalized without discarding unrelated admin conte
 
   await ensureIndiaOnlyDeliveryContent(fakeStorage);
   assert.equal(writes, 4, "the migration should be idempotent");
+});
+
+test("exact page update dates reject partial and impossible calendar dates", () => {
+  assert.equal(normalizeDateOnly("2026-02-28"), "2026-02-28");
+  assert.equal(normalizeDateOnly("2026-02"), undefined);
+  assert.equal(normalizeDateOnly("February 2026"), undefined);
+  assert.equal(normalizeDateOnly("2026-02-30"), undefined);
+  assert.equal(formatDateOnly("2026-02-28"), "28 February 2026");
+  assert.equal(formatDateOnly("2026-02-30"), "");
 });

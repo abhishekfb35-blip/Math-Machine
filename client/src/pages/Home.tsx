@@ -3,7 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ArrowRight, ChevronLeft, ChevronRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
 import SEO from "@/components/SEO";
-import { storefrontAnswers, storefrontFaqStructuredData, storefrontIntro } from "@shared/discoverability";
+import {
+  formatDateOnly,
+  normalizeDateOnly,
+  storefrontAnswers,
+  storefrontFaqStructuredData,
+  storefrontIntro,
+} from "@shared/discoverability";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +28,12 @@ import type { Product } from "@shared/types";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
-  defaultPromo, defaultTestimonials, defaultStats,
+  defaultPromo, defaultTestimonials, defaultStats, defaultSeo,
   defaultHomepageCollections,
   type HeroConfig, type PromiseConfig, type CollectionsConfig,
   type ProductTypesConfig, type PromoConfig, type TestimonialsConfig,
   type StatsConfig,
+  type SeoConfig,
   type HomepageCollectionsConfig, type HomepageCollectionSection,
 } from "@/lib/siteConfigDefaults";
 
@@ -133,6 +140,8 @@ function FeaturedSection({ products, title, subtitle, link, testIdPrefix, onQuic
 export default function Home() {
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
 
+  const seoConfig = useSiteConfig<SeoConfig>("seo", defaultSeo);
+  const lastUpdatedDate = normalizeDateOnly(seoConfig.lastUpdatedDate);
   const hero = useSiteConfig<HeroConfig>("hero", defaultHero);
   const promise = useSiteConfig<PromiseConfig>("promise", defaultPromise);
   const promo = useSiteConfig<PromoConfig>("promo", defaultPromo);
@@ -211,6 +220,11 @@ export default function Home() {
         <p className="max-w-3xl mx-auto text-center text-sm md:text-base leading-relaxed text-muted-foreground">
           {storefrontIntro}
         </p>
+        {lastUpdatedDate && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Last updated: <time dateTime={lastUpdatedDate}>{formatDateOnly(lastUpdatedDate)}</time>
+          </p>
+        )}
       </section>
 
       <section className="max-w-7xl mx-auto px-4 py-10 md:py-14" data-testid="section-promise">

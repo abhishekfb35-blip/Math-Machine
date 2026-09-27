@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultAboutPage, normalizeAboutPage } from "@/lib/siteConfigDefaults";
-import { publicInfoMetadata } from "@shared/discoverability";
+import { formatDateOnly, publicInfoMetadata } from "@shared/discoverability";
 
 const iconMap = [Sparkles, Heart, Shield, Truck];
 
@@ -14,7 +14,7 @@ export default function AboutPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="about-page">
-      <SEO {...publicInfoMetadata.about} path="/about" />
+      <SEO {...publicInfoMetadata.about} path="/about" dateModified={config.lastUpdatedDate} />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home
@@ -22,6 +22,11 @@ export default function AboutPage() {
       </Link>
 
       <h1 className="text-2xl font-bold mb-6" data-testid="text-about-title">{config.title}</h1>
+      {config.lastUpdatedDate && (
+        <p className="text-sm text-muted-foreground mb-6">
+          Last updated: <time dateTime={config.lastUpdatedDate}>{formatDateOnly(config.lastUpdatedDate)}</time>
+        </p>
+      )}
 
       <div className="space-y-8">
         <section>

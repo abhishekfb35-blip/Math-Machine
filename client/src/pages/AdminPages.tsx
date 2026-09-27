@@ -16,6 +16,7 @@ import {
   Save, Plus, Trash2, ArrowLeft, FileText, Info, Shield, RefreshCcw, Truck, LogOut,
 } from "lucide-react";
 import { Link } from "wouter";
+import { normalizeDateOnly } from "@shared/discoverability";
 import {
   defaultAboutPage, defaultTermsPage, defaultPrivacyPage, defaultRefundPage, defaultShippingPage,
   type AboutPageConfig, type TermsPageConfig, type PrivacyPageConfig, type RefundPageConfig, type ShippingPageConfig,
@@ -126,6 +127,18 @@ function AboutSection({ data }: { data: AboutPageConfig }) {
         <Input value={config.title} onChange={(e) => setConfig({ ...config, title: e.target.value })} data-testid="input-about-title" />
       </div>
       <div className="space-y-2">
+        <Label>About page last updated (exact date)</Label>
+        <Input
+          type="date"
+          value={normalizeDateOnly(config.lastUpdatedDate) ?? ""}
+          onChange={(e) => setConfig({ ...config, lastUpdatedDate: e.target.value })}
+          data-testid="input-about-updated-date"
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave blank unless you can confirm the exact date the page content was updated.
+        </p>
+      </div>
+      <div className="space-y-2">
         <Label>Introduction Paragraph</Label>
         <Textarea value={config.intro} onChange={(e) => setConfig({ ...config, intro: e.target.value })} rows={4} data-testid="input-about-intro" />
       </div>
@@ -192,6 +205,18 @@ function PolicySection({ configKey, label, data, defaultData }: { configKey: str
       <div className="space-y-2">
         <Label>Last Updated</Label>
         <Input value={config.lastUpdated} onChange={(e) => setConfig({ ...config, lastUpdated: e.target.value })} data-testid={`input-${configKey}-updated`} />
+      </div>
+      <div className="space-y-2">
+        <Label>Exact update date (optional)</Label>
+        <Input
+          type="date"
+          value={normalizeDateOnly(config.lastUpdatedDate) ?? ""}
+          onChange={(e) => setConfig({ ...config, lastUpdatedDate: e.target.value })}
+          data-testid={`input-${configKey}-updated-date`}
+        />
+        <p className="text-xs text-muted-foreground">
+          Only an exact date is used in structured data. Existing month-and-year text remains unchanged unless you set this date.
+        </p>
       </div>
 
       <div>

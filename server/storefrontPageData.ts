@@ -4,7 +4,7 @@ import {
   normalizeShopSections,
   type ShopSectionProductGroup,
 } from "@shared/shopSections";
-import { publicInfoMetadata } from "@shared/discoverability";
+import { normalizeDateOnly, publicInfoMetadata } from "@shared/discoverability";
 import { getHomeCollections, type HomeSection } from "./routes/home";
 import { loadPublicInfoPage, type PublicInfoContent } from "./publicInfoPages";
 import type { IStorage } from "./storage";
@@ -15,6 +15,7 @@ export interface StorefrontSeoSettings {
   metaDescription: string;
   ogImageUrl: string;
   siteUrl: string;
+  lastUpdatedDate: string;
 }
 
 export interface InitialQuery {
@@ -29,6 +30,7 @@ interface StorefrontPageBase {
   imageUrl: string;
   ogType: "website" | "product";
   noindex: boolean;
+  dateModified?: string;
   seo: StorefrontSeoSettings;
   queries: InitialQuery[];
 }
@@ -71,6 +73,7 @@ const DEFAULT_SEO: StorefrontSeoSettings = {
     "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered only within India.",
   ogImageUrl: "/og-image.png",
   siteUrl: "https://turtlelittle.com",
+  lastUpdatedDate: "",
 };
 
 const SHOP_DESCRIPTION =
@@ -115,6 +118,7 @@ async function loadSeoSettings(storage: IStorage): Promise<StorefrontSeoSettings
     metaDescription: stringValue("metaDescription", DEFAULT_SEO.metaDescription),
     ogImageUrl: stringValue("ogImageUrl", DEFAULT_SEO.ogImageUrl),
     siteUrl: siteOrigin(parsed.siteUrl),
+    lastUpdatedDate: normalizeDateOnly(parsed.lastUpdatedDate) ?? "",
   };
 }
 
@@ -127,7 +131,12 @@ function pageBase(
   title: string,
   description: string,
   canonicalPath: string,
-  options: { imageUrl?: string; ogType?: "website" | "product"; noindex?: boolean } = {},
+  options: {
+    imageUrl?: string;
+    ogType?: "website" | "product";
+    noindex?: boolean;
+    dateModified?: string;
+  } = {},
 ): StorefrontPageBase {
   return {
     title,
@@ -136,6 +145,7 @@ function pageBase(
     imageUrl: options.imageUrl || seo.ogImageUrl,
     ogType: options.ogType || "website",
     noindex: options.noindex || false,
+    dateModified: normalizeDateOnly(options.dateModified),
     seo,
     queries: [],
   };
@@ -151,7 +161,9 @@ async function loadHomePage(
 ): Promise<StorefrontPageData> {
   const sections = await loadHomeSections();
   return {
-    ...pageBase(seo, seo.tagline, seo.metaDescription, "/"),
+    ...pageBase(seo, seo.tagline, seo.metaDescription, "/", {
+      dateModified: seo.lastUpdatedDate,
+    }),
     kind: "home",
     sections,
     queries: [{ queryKey: ["/api/home/collections"], data: sections }],
@@ -297,8 +309,11 @@ export async function buildStorefrontPageData(
     const infoPage = await loadPublicInfoPage(pathname, storage);
     if (!infoPage) return null;
     const metadata = publicInfoMetadata[infoPage.path];
+    const dateModified = infoPage.content.kind === "about" || infoPage.content.kind === "policy"
+      ? infoPage.content.config.lastUpdatedDate
+      : undefined;
     return {
-      ...pageBase(seo, metadata.title, metadata.description, `/${infoPage.path}`),
+      ...pageBase(seo, metadata.title, metadata.description, `/${infoPage.path}`, { dateModified }),
       kind: "info",
       info: infoPage.content,
       queries: [{ queryKey: ["/api/site-config"], data: infoPage.siteConfig }],
