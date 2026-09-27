@@ -9,6 +9,8 @@
   --font-mono: 'DM Mono', monospace;
   --nudge-animation-cycle: 6s;
   --nudge-animation-phase-delay: 3s;
+  --nudge-active-pulse-rgb: 6, 182, 212;
+  --nudge-wholesale-halo-rgb: 6, 182, 212;
 
   --background: 30 25% 97%;
   --foreground: 20 15% 15%;
@@ -42,6 +44,9 @@
 }
 
 .dark {
+  --nudge-active-pulse-rgb: 34, 211, 238;
+  --nudge-wholesale-halo-rgb: 103, 232, 249;
+
   --background: 20 15% 8%;
   --foreground: 30 15% 95%;
 
@@ -158,17 +163,17 @@
 
 @keyframes nudgeActivePulse {
   /* Three pulses fill the first 3 seconds (half) of the shared cycle. */
-  0%      { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  3%      { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  12%     { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
-  16.66%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  19.66%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  28.66%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
-  33.32%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  36.32%  { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0.65); }
-  45.32%  { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
-  50%     { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
-  100%    { box-shadow: 0 0 0 0px rgba(251, 146, 60, 0); }
+  0%      { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0); }
+  3%      { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0.65); }
+  12%     { box-shadow: 0 0 0 8px rgba(var(--nudge-active-pulse-rgb), 0); }
+  16.66%  { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0); }
+  19.66%  { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0.65); }
+  28.66%  { box-shadow: 0 0 0 8px rgba(var(--nudge-active-pulse-rgb), 0); }
+  33.32%  { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0); }
+  36.32%  { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0.65); }
+  45.32%  { box-shadow: 0 0 0 8px rgba(var(--nudge-active-pulse-rgb), 0); }
+  50%     { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0); }
+  100%    { box-shadow: 0 0 0 0px rgba(var(--nudge-active-pulse-rgb), 0); }
 }
 
 .nudge-active-pulse {
@@ -196,6 +201,35 @@
 .nudge-blink {
   /* Start after the next-stage pulses finish. */
   animation: nudgeBlink var(--nudge-animation-cycle) linear var(--nudge-animation-phase-delay) infinite;
+}
+
+@keyframes nudgeWholesaleHalo {
+  /* Three low-intensity halos occupy the wholesale stage's existing blink phase. */
+  0%      { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  3%      { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0.24); }
+  12%     { box-shadow: 0 0 8px 2px rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  16.66%  { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  19.66%  { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0.24); }
+  28.66%  { box-shadow: 0 0 8px 2px rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  33.32%  { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  36.32%  { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0.24); }
+  45.32%  { box-shadow: 0 0 8px 2px rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  50%     { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0); }
+  100%    { box-shadow: 0 0 0 0 rgba(var(--nudge-wholesale-halo-rgb), 0); }
+}
+
+.nudge-wholesale-halo {
+  isolation: isolate;
+}
+
+.nudge-wholesale-halo::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -3px;
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: nudgeWholesaleHalo var(--nudge-animation-cycle) linear var(--nudge-animation-phase-delay) infinite;
 }
 
 @keyframes nudgeBlink {
