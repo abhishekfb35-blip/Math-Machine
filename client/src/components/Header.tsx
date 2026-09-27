@@ -14,6 +14,7 @@ import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultHeader, defaultPwaInstall, defaultSeo, type HeaderConfig, type PwaInstallConfig, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useCartGate } from "@/context/CartGateContext";
 import CurrencySelector from "@/components/CurrencySelector";
 import ShareButton from "@/components/ShareButton";
 import { getProductImageUrl } from "@/lib/imageUtils";
@@ -71,7 +72,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [miniCartOpen, setMiniCartOpen] = useState(false);
+  const { isMiniCartOpen, setMiniCartOpen } = useCartGate();
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
   const { formatPrice } = useCurrency();
@@ -254,7 +255,7 @@ export default function Header() {
       </div>
 
       {/* Mini-cart sidebar */}
-      <Sheet open={miniCartOpen} onOpenChange={setMiniCartOpen}>
+      <Sheet open={isMiniCartOpen} onOpenChange={setMiniCartOpen}>
         <SheetContent side="right" className="w-80 sm:w-96 flex flex-col p-0">
           <SheetHeader className="px-5 py-4 border-b shrink-0">
             <SheetTitle className="text-left text-base font-semibold flex items-center gap-2">

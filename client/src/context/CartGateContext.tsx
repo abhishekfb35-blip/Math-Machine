@@ -19,10 +19,14 @@ interface CartGateContextValue {
   isSignupPopupOpen: boolean;
   /** True while at least one Quick Add sheet is open. */
   isQuickAddOpen: boolean;
+  /** True while the header mini-cart drawer is open. */
+  isMiniCartOpen: boolean;
   /** True when the last Quick Add sheet closed after a successful add. */
   quickAddClosedAfterAdd: boolean;
   /** Register a Quick Add sheet's visibility with the global popup coordinator. */
   setQuickAddOpen: (instanceId: string, open: boolean, closedAfterAdd?: boolean) => void;
+  /** Register the header mini-cart drawer's visibility with the popup coordinator. */
+  setMiniCartOpen: (open: boolean) => void;
   /** Internal — SignupPopup registers its force-show function here. */
   _registerOpen: (fn: () => void) => void;
   /** Internal — SignupPopup reports its visibility here. */
@@ -38,8 +42,10 @@ const CartGateContext = createContext<CartGateContextValue>({
   isGatePromptOpen: false,
   isSignupPopupOpen: false,
   isQuickAddOpen: false,
+  isMiniCartOpen: false,
   quickAddClosedAfterAdd: false,
   setQuickAddOpen: () => {},
+  setMiniCartOpen: () => {},
   _registerOpen: () => {},
   _setSignupPopupOpen: () => {},
   _onDismissed: () => {},
@@ -53,8 +59,17 @@ export const useCartGate = () => {
     isGatePromptOpen,
     isSignupPopupOpen,
     setQuickAddOpen,
+    isMiniCartOpen,
+    setMiniCartOpen,
   } = useContext(CartGateContext);
-  return { gateAddToCart, isGatePromptOpen, isSignupPopupOpen, setQuickAddOpen };
+  return {
+    gateAddToCart,
+    isGatePromptOpen,
+    isSignupPopupOpen,
+    setQuickAddOpen,
+    isMiniCartOpen,
+    setMiniCartOpen,
+  };
 };
 
 /** Used internally by SignupPopup */
@@ -64,6 +79,7 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
   const [gateActive, setGateActive] = useState(false);
   const [isGatePromptOpen, setIsGatePromptOpen] = useState(false);
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
+  const [isMiniCartOpen, setMiniCartOpen] = useState(false);
   const [quickAddState, setQuickAddState] = useState<{
     openIds: Set<string>;
     closedAfterAdd: boolean;
@@ -140,8 +156,10 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
         isGatePromptOpen,
         isSignupPopupOpen,
         isQuickAddOpen: quickAddState.openIds.size > 0,
+        isMiniCartOpen,
         quickAddClosedAfterAdd: quickAddState.closedAfterAdd,
         setQuickAddOpen,
+        setMiniCartOpen,
         _registerOpen,
         _setSignupPopupOpen,
         _onDismissed,

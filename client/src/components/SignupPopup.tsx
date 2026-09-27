@@ -198,6 +198,7 @@ export default function SignupPopup() {
     _onDismissed,
     _onAuthSuccess,
     isQuickAddOpen,
+    isMiniCartOpen,
     quickAddClosedAfterAdd,
   } = useCartGateInternal();
 
@@ -226,8 +227,9 @@ export default function SignupPopup() {
   const reshowTimerRef = useRef<PausableTimeout | null>(null);
   const quickAddCloseGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickAddWasOpenRef = useRef(false);
-  const isQuickAddOpenRef = useRef(isQuickAddOpen);
-  isQuickAddOpenRef.current = isQuickAddOpen;
+  const miniCartWasOpenRef = useRef(false);
+  const isPromoSurfaceOpenRef = useRef(isQuickAddOpen || isMiniCartOpen);
+  isPromoSurfaceOpenRef.current = isQuickAddOpen || isMiniCartOpen;
   const isAuthRef = useRef(isAuthenticated);
   const visibleRef = useRef(false);
   const triggerRef = useRef<SignupPopupTrigger>("promotional");
@@ -251,9 +253,9 @@ export default function SignupPopup() {
   }, []);
 
   const resumePromoTimers = useCallback(() => {
-    resumePausableTimeout(sessionTimerRef, isQuickAddOpenRef);
-    resumePausableTimeout(cartTimerRef, isQuickAddOpenRef);
-    resumePausableTimeout(reshowTimerRef, isQuickAddOpenRef);
+    resumePausableTimeout(sessionTimerRef, isPromoSurfaceOpenRef);
+    resumePausableTimeout(cartTimerRef, isPromoSurfaceOpenRef);
+    resumePausableTimeout(reshowTimerRef, isPromoSurfaceOpenRef);
   }, []);
 
   const clearPromoTimers = useCallback(() => {
@@ -267,7 +269,7 @@ export default function SignupPopup() {
     delayMs: number,
     callback: () => void,
   ) => {
-    schedulePausableTimeout(timerRef, delayMs, callback, isQuickAddOpenRef);
+    schedulePausableTimeout(timerRef, delayMs, callback, isPromoSurfaceOpenRef);
   }, []);
 
   useEffect(() => {
@@ -306,6 +308,20 @@ export default function SignupPopup() {
     pausePromoTimers,
     resumePromoTimers,
   ]);
+
+  useEffect(() => {
+    if (isMiniCartOpen) {
+      miniCartWasOpenRef.current = true;
+      pausePromoTimers();
+      return;
+    }
+
+    if (!miniCartWasOpenRef.current) return;
+    miniCartWasOpenRef.current = false;
+
+    if (isQuickAddOpen || quickAddCloseGraceTimerRef.current !== null) return;
+    resumePromoTimers();
+  }, [isMiniCartOpen, isQuickAddOpen, pausePromoTimers, resumePromoTimers]);
 
   useEffect(() => () => {
     clearPromoTimers();
@@ -482,7 +498,7 @@ export default function SignupPopup() {
     nextTrigger: SignupPopupTrigger = "promotional",
   ) => {
     if (isAuthRef.current) return false;
-    if (nextTrigger === "promotional" && isQuickAddOpenRef.current) return false;
+    if (nextTrigger === "promotional" && isPromoSurfaceOpenRef.current) return false;
     if (nextTrigger !== "explicit" && !canShowPromotional()) return false;
     if (visibleRef.current) {
       if (nextTrigger === triggerRef.current) {
