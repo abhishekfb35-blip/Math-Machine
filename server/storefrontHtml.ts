@@ -83,7 +83,7 @@ function productCard(product: Product, siteUrl: string): string {
   return `<li class="catalogue-card">
     <a href="${escapeHtml(href)}" class="catalogue-card-link">
       ${image}
-      <span class="catalogue-card-name">${escapeHtml(product.name)}</span>
+      <h3 class="catalogue-card-name" style="display:inline;margin:0;font:inherit">${escapeHtml(product.name)}</h3>
     </a>
     <p class="catalogue-card-price">${escapeHtml(priceText(product.price))}</p>
   </li>`;

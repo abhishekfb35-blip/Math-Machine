@@ -196,6 +196,13 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(home, /Popular towels/);
     assert.match(home, /href="\/product\/embroidered-cotton-towel"/);
     assert.match(home, /https:\/\/shop\.example\/images\/towel-primary\.jpg/);
+    assert.match(home, /<h2>Popular towels<\/h2>/);
+    assert.match(home, /<h3 class="catalogue-card-name" style="display:inline;margin:0;font:inherit">Embroidered &lt;Cotton&gt; Towel<\/h3>/);
+    const homeProductCards = [...home.matchAll(/<li class="catalogue-card">([\s\S]*?)<\/li>/g)];
+    assert.equal(homeProductCards.length, 1);
+    for (const card of homeProductCards) {
+      assert.match(card[1], /<h3 class="catalogue-card-name"/, "each crawlable product card should have a semantic product heading");
+    }
     assert.match(home, /TurtleLittle makes personalised embroidered towels/);
     assert.match(home, /<h3>What products does TurtleLittle make\?<\/h3>/);
     assert.match(home, /Delivery is available only within India/);
