@@ -219,6 +219,7 @@
 }
 
 .nudge-wholesale-halo {
+  position: relative;
   isolation: isolate;
 }
 
@@ -227,7 +228,7 @@
   position: absolute;
   z-index: -1;
   inset: -3px;
-  border-radius: 9999px;
+  border-radius: 0.375rem;
   pointer-events: none;
   animation: nudgeWholesaleHalo var(--nudge-animation-cycle) linear var(--nudge-animation-phase-delay) infinite;
 }

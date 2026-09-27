@@ -3,7 +3,7 @@ import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart, trackEvent } from "@/lib/analytics";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
-import { ShoppingCart, Gift, Minus, Plus } from "lucide-react";
+import { ShoppingCart, Gift, Minus, Plus, ArrowDown } from "lucide-react";
 import NudgeCard from "@/components/NudgeCard";
 import { useCurrency } from "@/context/CurrencyContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -20,6 +20,8 @@ type SingleAudienceConfig = { type: "single"; heading: string; nameLabel: string
 type CoupleAudienceConfig = { type: "couples"; heading: string; person1Prefix: string; person1Label: string; person2Prefix: string; person2Label: string; nameMin?: number; nameMax?: number };
 type AudiencePageConfig = SingleAudienceConfig | CoupleAudienceConfig;
 type ProductPageConfig = Record<string, AudiencePageConfig>;
+
+const QUICK_ADD_SCROLL_CUE_HEIGHT = 40;
 
 function nameCharHint(val: string, min: number, max: number): { text: string; className: string } {
   const len = val.length;
@@ -69,9 +71,13 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [sizeColorMap, setSizeColorMap] = useState<Record<string, string>>({});
   const sheetContentRef = useRef<HTMLDivElement>(null);
+  const quickAddScrollRef = useRef<HTMLDivElement>(null);
+  const quickAddControlsRef = useRef<HTMLDivElement>(null);
+  const quickAddScrollCueRef = useRef<HTMLDivElement>(null);
   const signupPopupWasOpenRef = useRef(false);
   const quickAddInstanceId = useId();
   const quickAddAddedRef = useRef(false);
+  const [showScrollCue, setShowScrollCue] = useState(false);
   const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
     queryKey: ["/api/site-config", "product-page-config"],
     queryFn: () => fetch("/api/site-config/product-page-config").then(r => r.ok ? r.json() : null),
@@ -95,6 +101,8 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const isCoupleProduct = audienceConfig?.type === "couples";
   const nameMin = audienceConfig?.nameMin;
   const nameMax = audienceConfig?.nameMax;
+  const hasPersonalization = nameMin != null && nameMax != null &&
+    (audienceConfig?.type === "couples" || audienceConfig?.type === "single");
 
   const { data: cart } = useQuery<{
     itemCount: number;
@@ -116,6 +124,44 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
 
   const hasVariantConfig = (variantOptions?.sizes?.length ?? 0) > 0;
   const showVariantSelectors = hasVariantConfig;
+
+  useEffect(() => {
+    const scrollArea = quickAddScrollRef.current;
+    if (!open || !scrollArea) {
+      setShowScrollCue(false);
+      return;
+    }
+
+    const updateScrollCue = () => {
+      const controls = quickAddControlsRef.current;
+      if (!controls) {
+        setShowScrollCue(false);
+        return;
+      }
+
+      const areaRect = scrollArea.getBoundingClientRect();
+      const controlsRect = controls.getBoundingClientRect();
+      const visibleBottom = areaRect.top + scrollArea.clientHeight - QUICK_ADD_SCROLL_CUE_HEIGHT;
+      const atBottom = scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 2;
+      const controlsBelow = controlsRect.top >= visibleBottom;
+
+      setShowScrollCue(!atBottom && controlsBelow);
+    };
+
+    const frame = requestAnimationFrame(updateScrollCue);
+    scrollArea.addEventListener("scroll", updateScrollCue, { passive: true });
+    window.addEventListener("resize", updateScrollCue);
+    const resizeObserver = new ResizeObserver(updateScrollCue);
+    resizeObserver.observe(scrollArea);
+    if (quickAddControlsRef.current) resizeObserver.observe(quickAddControlsRef.current);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      scrollArea.removeEventListener("scroll", updateScrollCue);
+      window.removeEventListener("resize", updateScrollCue);
+      resizeObserver.disconnect();
+    };
+  }, [open, hasPersonalization, showVariantSelectors, variantOptions]);
 
   const selectedSizeObj: VariantSize | undefined = variantOptions?.sizes?.find(s => s.name === selectedSizeName);
 
@@ -284,7 +330,11 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
         <SheetHeader>
           <SheetTitle className="text-left">Add to Cart</SheetTitle>
         </SheetHeader>
-        <div className="overflow-y-auto flex-1 space-y-4 pt-4 md:min-h-0">
+        <div
+          ref={quickAddScrollRef}
+          className="relative flex-1 overflow-y-auto space-y-4 pt-4 md:min-h-0"
+          data-testid="quickadd-scroll-area"
+        >
           <div
             className="space-y-4"
             data-testid="quickadd-form-layout"
@@ -331,7 +381,11 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
             </div>
 
             {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
-              <div className="space-y-4">
+              <div
+                className="space-y-4"
+                ref={quickAddControlsRef}
+                data-testid="quickadd-controls-start"
+              >
               {showVariantSelectors && (variantOptions?.sizes.length ?? 0) > 0 && (
                 <div className="space-y-1.5" data-testid="section-quickadd-sizes">
                   <Label className="text-sm font-medium">Size</Label>
@@ -428,7 +482,11 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
               </div>
             )}
 
-            <div className="space-y-4">
+            <div
+              className="space-y-4"
+              ref={!showVariantSelectors ? quickAddControlsRef : undefined}
+              data-testid={!showVariantSelectors ? "quickadd-controls-start" : undefined}
+            >
               {audienceConfig?.type === "couples" && nameMin != null && nameMax != null ? (
                 <div
                   className="space-y-3 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-800/50 dark:bg-amber-950/20"
@@ -531,6 +589,20 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           </div>
 
         </div>
+        {showScrollCue && (
+          <div
+            ref={quickAddScrollCueRef}
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex h-10 items-center justify-center gap-1.5 bg-background/95 px-2 text-center text-xs font-medium text-muted-foreground backdrop-blur-sm"
+            role="status"
+            data-testid="quickadd-scroll-cue"
+          >
+            <ArrowDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Scroll down for options
+              {hasPersonalization ? " · Personalization is optional" : ""}
+            </span>
+          </div>
+        )}
 
         {/* Pinned Add to Cart — always visible, never inside scroll area */}
         <div className="shrink-0 pt-3 pb-1">

@@ -186,6 +186,72 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     });
   });
 
+  test("shows the optional-personalization scroll cue only until controls come into view", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 400, height: 420 });
+    await page.route("**/api/cart", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "quickadd-scroll-cue-test-cart",
+          items: [],
+          itemCount: 0,
+          subtotal: 0,
+          discount: 0,
+          shippingFee: 0,
+          total: 0,
+          freeIndices: [],
+          engineThresholds: {
+            retailFreeItemTrigger: 3,
+            retailBonusDiscountPct: 30,
+            wholesaleThreshold: 5,
+          },
+        }),
+      }),
+    );
+    await page.route("**/api/site-config/signup-popup", route =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          key: "signup-popup",
+          value: { enabled: false },
+        }),
+      }),
+    );
+
+    await page.goto("/shop");
+    const quickAddButton = page.getByTestId(`button-quickadd-${singleProductId}`);
+    await quickAddButton.scrollIntoViewIfNeeded();
+    await quickAddButton.click();
+
+    const sheet = page.getByTestId("quickadd-sheet-content");
+    const scrollArea = page.getByTestId("quickadd-scroll-area");
+    const controls = page.getByTestId("quickadd-controls-start");
+    const cue = page.getByTestId("quickadd-scroll-cue");
+    const submit = page.getByTestId("button-quickadd-submit");
+
+    await expect(sheet).toBeVisible();
+    await expect(controls).toBeVisible();
+    await expect(cue).toBeVisible();
+    await expect(cue).toContainText("Personalization is optional");
+    await page.waitForTimeout(500);
+    const initialSubmitBox = await submit.boundingBox();
+    expect(initialSubmitBox).not.toBeNull();
+
+    await scrollArea.evaluate((area) => {
+      const controlStart = area.querySelector<HTMLElement>('[data-testid="quickadd-controls-start"]');
+      if (!controlStart) throw new Error("Expected the Quick Add controls marker");
+      area.scrollTop += controlStart.getBoundingClientRect().top - area.getBoundingClientRect().top - 4;
+    });
+    await expect(cue).toBeHidden();
+
+    const scrolledSubmitBox = await submit.boundingBox();
+    expect(scrolledSubmitBox).not.toBeNull();
+    expect(scrolledSubmitBox!.y).toBeCloseTo(initialSubmitBox!.y, 0);
+    await expect(submit).toBeVisible();
+  });
+
   test.beforeAll(async ({ request }) => {
     const [productsResponse, attributesResponse] = await Promise.all([
       request.get("/api/products?limit=100"),

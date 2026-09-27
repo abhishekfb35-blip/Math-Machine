@@ -221,7 +221,9 @@ export default function NudgeCard({
                     isWholesale ? "font-extrabold" : ""
                   } ${
                     isWholesale
-                      ? "text-orange-500 dark:text-orange-400 nudge-blink"
+                      ? `text-orange-500 dark:text-orange-400 nudge-blink ${
+                          !isComplete ? "nudge-wholesale-halo relative isolate block rounded-md" : ""
+                        }`
                       : isComplete
                       ? "text-amber-600 dark:text-amber-400"
                       : isLocked

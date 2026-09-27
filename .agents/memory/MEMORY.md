@@ -16,3 +16,4 @@
 - [Product search inflection](product-search-inflection.md) — preserve typed-term partial matches, but match plural alternatives as whole words in admin and customer search.
 - [Preview forwarding checks](replit-preview-forwarding.md) — recheck port mapping after workflow changes; a healthy local server can still have a Replit-domain 404.
 - [Catalogue HTML handoff](storefront-crawlable-rendering.md) — keep no-JS snapshots visible, seed matching client query caches before removing them.
+- [Quick Add scroll cue placement](quickadd-scroll-cue.md) — keep scroll hints inside the existing scroll viewport so they cannot shift or intercept the pinned cart action.

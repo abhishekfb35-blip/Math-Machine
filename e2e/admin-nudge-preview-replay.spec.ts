@@ -48,10 +48,27 @@ test("admin can replay the nudge preview without saving configuration", async ({
   const activeCart = page
     .getByTestId("nudge-preview-state1")
     .getByTestId("nudge-cart-2");
+  const incompleteWholesaleLabel = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-node-5")
+    .locator(".nudge-wholesale-halo");
+  const unlockedWholesaleLabel = page
+    .getByTestId("nudge-preview-wholesale")
+    .getByTestId("nudge-node-5")
+    .locator(".nudge-wholesale-halo");
 
   await expect(previewGrid).toHaveAttribute("data-replay-key", "0");
   await expect(replayButton).toBeVisible();
   await expect(activeCart).toHaveClass(/nudge-active-pulse/);
+  await expect(incompleteWholesaleLabel).toBeVisible();
+  await expect(unlockedWholesaleLabel).toHaveCount(0);
+  await expect
+    .poll(() =>
+      activeCart.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
+      ),
+    )
+    .toBe("6, 182, 212");
 
   await page.waitForTimeout(750);
   const elapsedBeforeReplay = await activeCart.evaluate((element) => {
