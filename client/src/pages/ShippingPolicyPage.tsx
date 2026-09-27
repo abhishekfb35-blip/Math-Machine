@@ -3,7 +3,8 @@ import { ChevronLeft } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { defaultShippingPage, type ShippingPageConfig } from "@/lib/siteConfigDefaults";
+import { defaultShippingPage, normalizePolicyPage } from "@/lib/siteConfigDefaults";
+import { publicInfoMetadata } from "@shared/discoverability";
 
 function renderBody(body: string) {
   const lines = body.split("\n");
@@ -65,11 +66,11 @@ function renderBody(body: string) {
 }
 
 export default function ShippingPolicyPage() {
-  const config = useSiteConfig<ShippingPageConfig>("page-shipping", defaultShippingPage);
+  const config = normalizePolicyPage(useSiteConfig<unknown>("page-shipping", defaultShippingPage), defaultShippingPage);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="shipping-policy-page">
-      <SEO title="Shipping Policy" path="/shipping" />
+      <SEO {...publicInfoMetadata.shipping} path="/shipping" />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home

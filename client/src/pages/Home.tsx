@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ArrowRight, ChevronLeft, ChevronRight, Gift, Truck, Star, Sparkles, Heart, Scissors, Shield } from "lucide-react";
-import SEO, { OrganizationJsonLd } from "@/components/SEO";
+import SEO from "@/components/SEO";
+import { storefrontAnswers, storefrontFaqStructuredData, storefrontIntro } from "@shared/discoverability";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -168,7 +169,7 @@ export default function Home() {
 
   return (
     <div className="pb-20 md:pb-0">
-      <SEO path="/" jsonLd={OrganizationJsonLd()} />
+      <SEO path="/" jsonLd={storefrontFaqStructuredData()} />
       <section className="relative overflow-hidden" data-testid="section-hero">
         <div className="absolute inset-0">
           <img
@@ -204,6 +205,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 pt-8 md:pt-10">
+        <p className="max-w-3xl mx-auto text-center text-sm md:text-base leading-relaxed text-muted-foreground">
+          {storefrontIntro}
+        </p>
       </section>
 
       <section className="max-w-7xl mx-auto px-4 py-10 md:py-14" data-testid="section-promise">
@@ -346,6 +353,23 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 py-12" aria-labelledby="home-questions-heading">
+        <h2 id="home-questions-heading" className="text-xl md:text-2xl font-bold mb-6 text-center">Questions about TurtleLittle</h2>
+        <div className="grid gap-6 md:grid-cols-3">
+          {storefrontAnswers.map(({ question, answer }) => (
+            <article key={question}>
+              <h3 className="font-semibold mb-2">{question}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{answer}</p>
+            </article>
+          ))}
+        </div>
+        <p className="text-sm text-center mt-7 text-muted-foreground">
+          <Link href="/shipping" className="underline">Shipping policy</Link>
+          {" · "}
+          <Link href="/refund-policy" className="underline">Refund &amp; cancellation policy</Link>
+        </p>
       </section>
 
       <QuickAddSheet

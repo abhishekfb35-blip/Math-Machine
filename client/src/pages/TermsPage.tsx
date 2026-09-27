@@ -3,7 +3,8 @@ import { ChevronLeft } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { defaultTermsPage, type TermsPageConfig } from "@/lib/siteConfigDefaults";
+import { defaultTermsPage, normalizePolicyPage } from "@/lib/siteConfigDefaults";
+import { publicInfoMetadata } from "@shared/discoverability";
 
 function renderBody(body: string) {
   const lines = body.split("\n");
@@ -65,11 +66,11 @@ function renderBody(body: string) {
 }
 
 export default function TermsPage() {
-  const config = useSiteConfig<TermsPageConfig>("page-terms", defaultTermsPage);
+  const config = normalizePolicyPage(useSiteConfig<unknown>("page-terms", defaultTermsPage), defaultTermsPage);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="terms-page">
-      <SEO title="Terms & Conditions" path="/terms" />
+      <SEO {...publicInfoMetadata.terms} path="/terms" />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home

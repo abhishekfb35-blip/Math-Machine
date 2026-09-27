@@ -1,8 +1,16 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import type { Category, Product, ProductVariantOptions } from "@shared/types";
 import { buildProductStructuredData } from "@shared/productStructuredData";
+import {
+  businessDetails,
+  siteIdentityStructuredData,
+  storefrontAnswers,
+  storefrontFaqStructuredData,
+  storefrontIntro,
+} from "@shared/discoverability";
 import type { HomeSection } from "./routes/home";
 import type { IStorage } from "./storage";
+import type { PublicInfoContent } from "./publicInfoPages";
 import {
   buildStorefrontPageData,
   type StorefrontPageData,
@@ -143,9 +151,12 @@ function breadcrumbJsonLd(items: { name: string; url: string }[]): Record<string
 }
 
 function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
+  if (page.kind === "not-found") return [];
+  const identity = siteIdentityStructuredData(page.seo.brandName, page.seo.siteUrl);
+  if (page.kind === "home") return [...identity, storefrontFaqStructuredData()];
   if (page.kind === "product") {
     const images = imageList(page.product, page.images, page.seo.siteUrl);
-    return [buildProductStructuredData({
+    return [...identity, buildProductStructuredData({
       id: page.product.id,
       name: page.product.name,
       description: page.description,
@@ -158,12 +169,12 @@ function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
     })];
   }
   if (page.kind === "category") {
-    return [breadcrumbJsonLd([
+    return [...identity, breadcrumbJsonLd([
       { name: "Home", url: absoluteUrl("/", page.seo.siteUrl) },
       { name: page.category.name, url: canonicalUrl(page) },
     ])];
   }
-  return [];
+  return identity;
 }
 
 function renderMeta(page: StorefrontPageData): string {
@@ -219,14 +230,102 @@ function renderProductPage(
   </main>`;
 }
 
+function renderPlainText(body: string): string {
+  const html: string[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+  let listType: "ul" | "ol" = "ul";
+  const flushParagraph = () => {
+    if (paragraph.length) html.push(`<p>${paragraph.map(escapeHtml).join("<br />")}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length) html.push(`<${listType}>${list.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</${listType}>`);
+    list = [];
+  };
+  for (const line of body.split(/\r?\n/)) {
+    const text = line.trim();
+    if (!text) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+    const bullet = /^(?:•|-)\s+(.+)$/.exec(text);
+    const numbered = /^\d+\.\s+(.+)$/.exec(text);
+    if (bullet || numbered) {
+      flushParagraph();
+      const nextType = numbered ? "ol" : "ul";
+      if (list.length && listType !== nextType) flushList();
+      listType = nextType;
+      list.push((bullet || numbered)![1]);
+    } else {
+      flushList();
+      paragraph.push(text);
+    }
+  }
+  flushParagraph();
+  flushList();
+  return html.join("");
+}
+
+function renderInfoPage(info: PublicInfoContent): string {
+  if (info.kind === "contact") {
+    return `<main class="catalogue-prerender-content">
+      <h1>Contact Us</h1>
+      <p>Have a question about a product, personalisation, delivery, or an existing order? Our customer support team is here to help.</p>
+      <section><h2>Email support</h2><p><a href="mailto:${escapeHtml(businessDetails.supportEmail)}">${escapeHtml(businessDetails.supportEmail)}</a></p></section>
+      <section><h2>Telephone</h2><p><a href="tel:${escapeHtml(businessDetails.telephone)}">${escapeHtml(businessDetails.supportPhone)}</a></p></section>
+      <section><h2>WhatsApp</h2><p><a href="${escapeHtml(businessDetails.whatsappUrl)}">Message ${escapeHtml(businessDetails.supportPhone)}</a></p></section>
+      <section><h2>Support hours</h2><p>Monday to Saturday, 10:00 AM to 6:00 PM IST</p></section>
+      <section><h2>Business details</h2><p>TurtleLittle is owned and operated by ${escapeHtml(businessDetails.legalName)}.</p></section>
+      <section><h2>Registered address</h2><address>${escapeHtml(businessDetails.registeredAddress)}</address></section>
+    </main>`;
+  }
+  if (info.kind === "about") {
+    const { config } = info;
+    const whatsapp = config.contactWhatsapp.replace(/\D/g, "");
+    return `<main class="catalogue-prerender-content">
+      <h1>${escapeHtml(config.title)}</h1>
+      ${renderPlainText(config.intro)}
+      ${config.sections.map(section =>
+        `<section><h2>${escapeHtml(section.heading)}</h2>${renderPlainText(section.body)}</section>`,
+      ).join("")}
+      <section><h2>Our values</h2>${config.valueCards.map(card =>
+        `<article><h3>${escapeHtml(card.title)}</h3><p>${escapeHtml(card.description)}</p></article>`,
+      ).join("")}</section>
+      <section><h2>Get in Touch</h2><p>Reach out via WhatsApp at <a href="https://wa.me/${whatsapp}">${escapeHtml(config.contactWhatsapp)}</a> or email us at <a href="mailto:${escapeHtml(config.contactEmail)}">${escapeHtml(config.contactEmail)}</a>. We're based in ${escapeHtml(config.contactLocation)}.</p></section>
+    </main>`;
+  }
+  const { config } = info;
+  return `<main class="catalogue-prerender-content">
+    <h1>${escapeHtml(config.title)}</h1>
+    <p>Last updated: ${escapeHtml(config.lastUpdated)}</p>
+    ${config.sections.map(section =>
+      `<section><h2>${escapeHtml(section.heading)}</h2>${renderPlainText(section.body)}</section>`,
+    ).join("")}
+  </main>`;
+}
+
+function renderHomeAnswers(): string {
+  return `<section class="catalogue-section">
+    <h2>Questions about TurtleLittle</h2>
+    ${storefrontAnswers.map(({ question, answer }) =>
+      `<article><h3>${escapeHtml(question)}</h3><p>${escapeHtml(answer)}</p></article>`,
+    ).join("")}
+    <p><a href="/shipping">Shipping policy</a> · <a href="/refund-policy">Refund &amp; cancellation policy</a></p>
+  </section>`;
+}
+
 function renderPageContent(page: StorefrontPageData): string {
   switch (page.kind) {
     case "home":
       return `<main class="catalogue-prerender-content">
         <h1>${escapeHtml(page.seo.tagline)}</h1>
+        <p>${escapeHtml(storefrontIntro)}</p>
         ${page.sections.map((section) =>
           productListing(section.title, section.products, page.seo.siteUrl, section.subtitle),
         ).join("")}
+        ${renderHomeAnswers()}
       </main>`;
     case "shop":
       return `<main class="catalogue-prerender-content">
@@ -247,6 +346,8 @@ function renderPageContent(page: StorefrontPageData): string {
         page.seo.siteUrl,
         page.description,
       );
+    case "info":
+      return renderInfoPage(page.info);
     case "not-found":
       return `<main class="catalogue-prerender-content">
         <h1>${page.entity === "product" ? "Product not found" : "Category not found"}</h1>

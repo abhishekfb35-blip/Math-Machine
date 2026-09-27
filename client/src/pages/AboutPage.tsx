@@ -4,16 +4,17 @@ import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { defaultAboutPage, type AboutPageConfig } from "@/lib/siteConfigDefaults";
+import { defaultAboutPage, normalizeAboutPage } from "@/lib/siteConfigDefaults";
+import { publicInfoMetadata } from "@shared/discoverability";
 
 const iconMap = [Sparkles, Heart, Shield, Truck];
 
 export default function AboutPage() {
-  const config = useSiteConfig<AboutPageConfig>("page-about", defaultAboutPage);
+  const config = normalizeAboutPage(useSiteConfig<unknown>("page-about", defaultAboutPage));
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="about-page">
-      <SEO title="About Us" description="Learn about TurtleLittle - makers of personalised luxury embroidered towels and blankets, handcrafted with love in India." path="/about" />
+      <SEO {...publicInfoMetadata.about} path="/about" />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home

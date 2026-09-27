@@ -7,6 +7,10 @@ import type { Category, Product, ProductImage, ProductVariantOptions } from "@sh
 import type { HomeSection } from "../server/routes/home";
 import type { IStorage } from "../server/storage";
 import { registerStorefrontDocumentRoutes } from "../server/storefrontHtml";
+import { loadPublicInfoPage } from "../server/publicInfoPages";
+import { registerSeoRoutes } from "../server/routes/seo";
+import { storefrontAnswers } from "@shared/discoverability";
+import { defaultAboutPage } from "../client/src/lib/siteConfigDefaults";
 
 const product = {
   id: "product-1",
@@ -86,7 +90,35 @@ const template = `<!doctype html>
 <html><head><!-- STOREFRONT_SEO_START --><title>Default</title><!-- STOREFRONT_SEO_END --></head>
 <body><!-- STOREFRONT_CONTENT --><div id="root"></div></body></html>`;
 
+function readSchemas(html: string): Record<string, any>[] {
+  return [...html.matchAll(/<script data-storefront-seo type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((match) => JSON.parse(match[1]));
+}
+
+function readInitialData(html: string): { queries: { queryKey: string[]; data: any }[] } {
+  const match = html.match(/<script id="catalogue-initial-data" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(match, "response should include initial query data");
+  return JSON.parse(match[1]);
+}
+
 test("storefront routes return crawlable catalogue HTML to every user agent", async () => {
+  const aboutConfig = {
+    title: "About <TurtleLittle>",
+    intro: "We make embroidered gifts </script><script>alert(1)</script>.",
+    sections: [{ heading: "What We Do", body: "Personalised towels and blankets." }],
+    valueCards: [{ title: "Made with care", description: "Custom embroidery." }],
+    contactWhatsapp: "+91 99900 79722",
+    contactEmail: "hello@turtlelittle.com",
+    contactLocation: "New Delhi, India",
+  };
+  const shippingConfig = {
+    title: "Shipping Policy",
+    lastUpdated: "September 2026",
+    sections: [{
+      heading: "Dispatch and delivery",
+      body: "After dispatch, estimates are:\n• Metro: 2-4 business days\n• Other cities: 4-7 business days",
+    }],
+  };
   const storage = {
     getSiteContent: async (key: string) => {
       if (key === "shop-sections") {
@@ -110,6 +142,11 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     getProductBySlug: async (slug: string) => slug === product.slug ? product : undefined,
     getProductImages: async () => productImages,
     getProductVariantOptions: async () => variants,
+    getAllSiteConfigs: async () => [],
+    getAllSiteContents: async () => [
+      { key: "page-about", value: JSON.stringify(aboutConfig) },
+      { key: "page-shipping", value: JSON.stringify(shippingConfig) },
+    ],
   } as unknown as IStorage;
 
   const app = express();
@@ -137,7 +174,10 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
       return { response, html: await response.text() };
     };
 
-    const routes = ["/", "/shop", "/category/bath-towels", "/product/embroidered-cotton-towel"];
+    const routes = [
+      "/", "/shop", "/category/bath-towels", "/product/embroidered-cotton-towel",
+      "/about", "/contact", "/shipping", "/terms", "/privacy", "/refund-policy",
+    ];
     const pages = new Map<string, string>();
     for (const route of routes) {
       const ordinary = await fetchPage(route, "Mozilla/5.0 storefront test");
@@ -155,6 +195,13 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(home, /Popular towels/);
     assert.match(home, /href="\/product\/embroidered-cotton-towel"/);
     assert.match(home, /https:\/\/shop\.example\/images\/towel-primary\.jpg/);
+    assert.match(home, /TurtleLittle makes personalised embroidered towels/);
+    assert.match(home, /<h3>What products does TurtleLittle make\?<\/h3>/);
+    const homeSchemas = readSchemas(home);
+    assert.deepEqual(homeSchemas.map(schema => schema["@type"]), ["OnlineStore", "WebSite", "FAQPage"]);
+    assert.equal(homeSchemas[0].legalName, "Pandora Innovations");
+    assert.equal(homeSchemas[1].publisher["@id"], "https://shop.example/#organization");
+    assert.equal(homeSchemas[2].mainEntity[0].acceptedAnswer.text, storefrontAnswers[0].answer);
 
     const shop = pages.get("/shop")!;
     assert.match(shop, /<title data-storefront-seo>Shop All Products \| TurtleLittle<\/title>/);
@@ -168,11 +215,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.equal(shopProductLinks.length, 10, "overlapping products should appear in each matching section");
     assert.equal(new Set(shopProductLinks).size, shopProducts.length, "every unique product should remain reachable");
 
-    const shopInitialDataMatch = shop.match(
-      /<script id="catalogue-initial-data" type="application\/json">([\s\S]*?)<\/script>/,
-    );
-    assert.ok(shopInitialDataMatch, "shop response should preload section configuration");
-    const shopInitialData = JSON.parse(shopInitialDataMatch[1]);
+    const shopInitialData = readInitialData(shop);
     const shopSectionQuery = shopInitialData.queries.find((entry: { queryKey: unknown[] }) =>
       entry.queryKey.join("/") === "/api/site-config/shop-sections",
     );
@@ -195,23 +238,94 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(productPage, /₹699/);
     assert.doesNotMatch(productPage, /<\/script><script>window\.injected/);
 
-    const structuredDataMatch = productPage.match(
-      /<script data-storefront-seo type="application\/ld\+json">([\s\S]*?)<\/script>/,
-    );
-    assert.ok(structuredDataMatch, "product response should include JSON-LD");
-    const structuredData = JSON.parse(structuredDataMatch[1]);
+    const structuredData = readSchemas(productPage).find(schema => schema["@type"] === "ProductGroup");
+    assert.ok(structuredData, "product response should include ProductGroup JSON-LD");
     assert.equal(structuredData["@type"], "ProductGroup");
     assert.equal(structuredData.hasVariant[0].offers.price, 699);
     assert.equal(structuredData.hasVariant[0].color, "Ivory");
 
-    const initialDataMatch = productPage.match(
-      /<script id="catalogue-initial-data" type="application\/json">([\s\S]*?)<\/script>/,
-    );
-    assert.ok(initialDataMatch, "response should preload interactive query data");
-    const initialData = JSON.parse(initialDataMatch[1]);
+    const initialData = readInitialData(productPage);
     assert.ok(initialData.queries.some((entry: { queryKey: unknown[] }) =>
       entry.queryKey.join("/") === `/api/products/${product.slug}`,
     ));
+
+    const about = pages.get("/about")!;
+    assert.match(about, /<title data-storefront-seo>About Us \| TurtleLittle<\/title>/);
+    assert.match(about, /<h1>About &lt;TurtleLittle&gt;<\/h1>/);
+    assert.match(about, /href="https:\/\/shop\.example\/about"/);
+    assert.match(about, /We make embroidered gifts &lt;\/script&gt;/);
+    assert.doesNotMatch(about, /<script>alert\(1\)<\/script>/);
+    assert.equal(readInitialData(about).queries.find(entry => entry.queryKey[0] === "/api/site-config")?.data["page-about"].title, aboutConfig.title);
+
+    const shipping = pages.get("/shipping")!;
+    assert.match(shipping, /<h2>Dispatch and delivery<\/h2>/);
+    assert.match(shipping, /<ul><li>Metro: 2-4 business days<\/li><li>Other cities: 4-7 business days<\/li><\/ul>/);
+    assert.equal(readInitialData(shipping).queries.find(entry => entry.queryKey[0] === "/api/site-config")?.data["page-shipping"].lastUpdated, "September 2026");
+
+    for (const route of ["/terms", "/privacy", "/refund-policy", "/contact"]) {
+      const info = pages.get(route)!;
+      assert.match(info, /<h1>[^<]+<\/h1>/, `${route} should contain meaningful HTML`);
+      assert.match(info, new RegExp(`href="https://shop\\.example${route}"`));
+      assert.ok(readSchemas(info).some(schema => schema["@type"] === "OnlineStore"));
+    }
+    assert.match(pages.get("/contact")!, /Pandora Innovations/);
+    const trailingSlash = await fetchPage("/about/", "Mozilla/5.0");
+    assert.equal(trailingSlash.response.status, 200);
+    assert.match(trailingSlash.html, /href="https:\/\/shop\.example\/about"/);
+  } finally {
+    server.close();
+    await once(server, "close");
+  }
+});
+
+test("legacy saved About sections remain visible instead of being replaced by defaults", async () => {
+  const legacyAbout = {
+    title: "Our saved story",
+    sections: [{ heading: "Our workshop", body: "A detail written by the shop owner." }],
+  };
+  const storage = {
+    getAllSiteConfigs: async () => [],
+    getAllSiteContents: async () => [{ key: "page-about", value: JSON.stringify(legacyAbout) }],
+  } as unknown as IStorage;
+
+  const loaded = await loadPublicInfoPage("/about", storage);
+  assert.equal(loaded?.content.kind, "about");
+  if (!loaded || loaded.content.kind !== "about") return;
+  assert.equal(loaded.content.config.title, legacyAbout.title);
+  assert.deepEqual(loaded.content.config.sections, legacyAbout.sections);
+  assert.equal(loaded.content.config.intro, defaultAboutPage.intro);
+  assert.deepEqual(loaded.siteConfig["page-about"], loaded.content.config);
+});
+
+test("discovery files use the same configured origin as page canonicals", async () => {
+  const storage = {
+    getSiteContent: async () => ({
+      key: "seo",
+      value: JSON.stringify({ siteUrl: "https://shop.example/some-path" }),
+    }),
+    getCategories: async () => [category],
+    getProducts: async () => [product],
+  } as unknown as IStorage;
+  const app = express();
+  registerSeoRoutes(app, storage);
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const { port } = server.address() as AddressInfo;
+
+  try {
+    const get = async (path: string) => {
+      const response = await fetch(`http://127.0.0.1:${port}${path}`);
+      assert.equal(response.status, 200);
+      return response.text();
+    };
+    const robots = await get("/robots.txt");
+    const llms = await get("/llms.txt");
+    const sitemap = await get("/sitemap.xml");
+    assert.match(robots, /Sitemap: https:\/\/shop\.example\/sitemap\.xml/);
+    assert.match(llms, /https:\/\/shop\.example\/about/);
+    assert.match(sitemap, /<loc>https:\/\/shop\.example\/contact<\/loc>/);
+    assert.match(sitemap, /<loc>https:\/\/shop\.example\/product\/embroidered-cotton-towel<\/loc>/);
+    assert.doesNotMatch(`${robots}${llms}${sitemap}`, /https:\/\/turtlelittle\.com/);
   } finally {
     server.close();
     await once(server, "close");

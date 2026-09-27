@@ -3,20 +3,20 @@ import { Building2, ChevronLeft, Clock, Mail, MapPin, MessageCircle, Phone } fro
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { businessDetails, publicInfoMetadata } from "@shared/discoverability";
 
-const businessAddress = "1st Floor, B-30, Sector - 8, Noida, Uttar Pradesh, India - 201301";
-const supportEmail = "hello@turtlelittle.com";
-const supportPhone = "+91 99900 79722";
-const whatsappUrl = "https://wa.me/919990079722";
+const {
+  registeredAddress: businessAddress,
+  supportEmail,
+  supportPhone,
+  telephone,
+  whatsappUrl,
+} = businessDetails;
 
 export default function ContactPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="contact-page">
-      <SEO
-        title="Contact Us"
-        description="Contact TurtleLittle customer support by email, telephone, or WhatsApp. TurtleLittle is owned and operated by Pandora Innovations."
-        path="/contact"
-      />
+      <SEO {...publicInfoMetadata.contact} path="/contact" />
 
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
@@ -47,7 +47,7 @@ export default function ContactPage() {
             <Phone className="w-5 h-5 text-primary mt-0.5 shrink-0" />
             <div>
               <h2 className="font-semibold mb-1">Telephone</h2>
-              <a className="text-sm text-muted-foreground underline" href="tel:+919990079722">
+              <a className="text-sm text-muted-foreground underline" href={`tel:${telephone}`}>
                 {supportPhone}
               </a>
             </div>
@@ -83,7 +83,7 @@ export default function ContactPage() {
           <div>
             <h2 className="font-semibold mb-1">Business details</h2>
             <p className="text-sm text-muted-foreground">
-              TurtleLittle is owned and operated by <strong className="text-foreground">Pandora Innovations</strong>.
+              TurtleLittle is owned and operated by <strong className="text-foreground">{businessDetails.legalName}</strong>.
             </p>
           </div>
         </div>

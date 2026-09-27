@@ -421,6 +421,44 @@ export const defaultShippingPage: ShippingPageConfig = {
   ],
 };
 
+function isPageRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isPageSection(value: unknown): value is PageSection {
+  return isPageRecord(value) && typeof value.heading === "string" && typeof value.body === "string";
+}
+
+function savedText(value: unknown, fallback: string): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+export function normalizeAboutPage(value: unknown): AboutPageConfig {
+  const saved = isPageRecord(value) ? value : {};
+  return {
+    title: savedText(saved.title, defaultAboutPage.title),
+    intro: savedText(saved.intro, defaultAboutPage.intro),
+    sections: Array.isArray(saved.sections) && saved.sections.every(isPageSection)
+      ? saved.sections : defaultAboutPage.sections,
+    valueCards: Array.isArray(saved.valueCards) && saved.valueCards.every((card: unknown) =>
+      isPageRecord(card) && typeof card.title === "string" && typeof card.description === "string",
+    ) ? saved.valueCards : defaultAboutPage.valueCards,
+    contactWhatsapp: savedText(saved.contactWhatsapp, defaultAboutPage.contactWhatsapp),
+    contactEmail: savedText(saved.contactEmail, defaultAboutPage.contactEmail),
+    contactLocation: savedText(saved.contactLocation, defaultAboutPage.contactLocation),
+  };
+}
+
+export function normalizePolicyPage(value: unknown, fallback: TermsPageConfig): TermsPageConfig {
+  const saved = isPageRecord(value) ? value : {};
+  return {
+    title: savedText(saved.title, fallback.title),
+    lastUpdated: savedText(saved.lastUpdated, fallback.lastUpdated),
+    sections: Array.isArray(saved.sections) && saved.sections.every(isPageSection)
+      ? saved.sections : fallback.sections,
+  };
+}
+
 export const defaultShopSections: ShopSectionConfig[] = [
   { label: "Kids Towels",      tag: "kids-towels",      tags: [], maxShown: 15, enabled: true, audience: [], genders: [] },
   { label: "Adult Towels",     tag: "adult-towels",     tags: [], maxShown: 8,  enabled: true, audience: [], genders: [] },

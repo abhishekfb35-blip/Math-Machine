@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { defaultSeo, type SeoConfig } from "@/lib/siteConfigDefaults";
 import { buildProductStructuredData } from "@shared/productStructuredData";
+import { siteIdentityStructuredData } from "@shared/discoverability";
 import type { ProductVariantOptions } from "@shared/types";
 
 interface SEOProps {
@@ -38,6 +39,10 @@ export default function SEO({
     ? `${title} | ${siteName}`
     : `${siteName} - ${seo.tagline || "Personalised Luxury Towels & Blankets"}`;
   const canonicalUrl = `${siteUrl}${path}`;
+  const schemas = [
+    ...siteIdentityStructuredData(siteName, siteUrl),
+    ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
+  ];
 
   return (
     <Helmet>
@@ -60,11 +65,11 @@ export default function SEO({
       <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image" content={resolvedImage} />
 
-      {jsonLd && (
-        <script type="application/ld+json">
-          {JSON.stringify(Array.isArray(jsonLd) ? jsonLd : jsonLd)}
+      {schemas.map((schema, index) => (
+        <script key={`${path}-schema-${index}`} type="application/ld+json">
+          {JSON.stringify(schema)}
         </script>
-      )}
+      ))}
     </Helmet>
   );
 }
@@ -107,23 +112,6 @@ export function ProductJsonLd(product: {
     }
   }
   return schema;
-}
-
-export function OrganizationJsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "TurtleLittle",
-    url: "https://turtlelittle.com",
-    logo: "https://turtlelittle.com/icon-512.png",
-    contactPoint: {
-      "@type": "ContactPoint",
-      telephone: "+91-99900-79722",
-      contactType: "customer service",
-      availableLanguage: ["English", "Hindi"],
-    },
-    sameAs: [],
-  };
 }
 
 export function BreadcrumbJsonLd(items: { name: string; url: string }[]) {

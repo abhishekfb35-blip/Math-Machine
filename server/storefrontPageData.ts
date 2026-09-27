@@ -4,7 +4,9 @@ import {
   normalizeShopSections,
   type ShopSectionProductGroup,
 } from "@shared/shopSections";
+import { publicInfoMetadata } from "@shared/discoverability";
 import { getHomeCollections, type HomeSection } from "./routes/home";
+import { loadPublicInfoPage, type PublicInfoContent } from "./publicInfoPages";
 import type { IStorage } from "./storage";
 
 export interface StorefrontSeoSettings {
@@ -52,6 +54,10 @@ export type StorefrontPageData =
       product: Product;
       images: ProductImage[];
       variants: ProductVariantOptions;
+    })
+  | (StorefrontPageBase & {
+      kind: "info";
+      info: PublicInfoContent;
     })
   | (StorefrontPageBase & {
       kind: "not-found";
@@ -281,11 +287,23 @@ export async function buildStorefrontPageData(
   const isShop = pathname === "/shop";
   const categoryMatch = /^\/category\/([^/]+)\/?$/.exec(pathname);
   const productMatch = /^\/product\/([^/]+)\/?$/.exec(pathname);
-  if (!isHome && !isShop && !categoryMatch && !productMatch) return null;
+  const isInfo = /^\/(?:about|contact|shipping|terms|privacy|refund-policy)\/?$/.test(pathname);
+  if (!isHome && !isShop && !categoryMatch && !productMatch && !isInfo) return null;
 
   const seo = await loadSeoSettings(storage);
   if (isHome) return loadHomePage(seo, loadHomeSections);
   if (isShop) return loadShopPage(storage, seo);
+  if (isInfo) {
+    const infoPage = await loadPublicInfoPage(pathname, storage);
+    if (!infoPage) return null;
+    const metadata = publicInfoMetadata[infoPage.path];
+    return {
+      ...pageBase(seo, metadata.title, metadata.description, `/${infoPage.path}`),
+      kind: "info",
+      info: infoPage.content,
+      queries: [{ queryKey: ["/api/site-config"], data: infoPage.siteConfig }],
+    };
+  }
   if (categoryMatch) {
     return loadCategoryPage(decodeURIComponent(categoryMatch[1]), storage, seo);
   }
