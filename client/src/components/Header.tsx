@@ -380,14 +380,14 @@ export default function Header() {
                   {cart.discount > 0 && (() => {
                     const label = getCartDiscountLabel(cart.itemCount, cart.engineThresholds);
                     return (
-                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                      <div className="flex justify-between text-sm text-green-600 font-medium" data-testid="mini-cart-discount">
                         <span data-testid="mini-cart-discount-label">{label}</span>
                         <span data-testid="mini-cart-saving">−{formatPrice(cart.discount)}</span>
                       </div>
                     );
                   })()}
                   {cart.shippingFee > 0 && (
-                    <div className="flex justify-between text-sm text-muted-foreground">
+                    <div className="flex justify-between text-sm text-muted-foreground" data-testid="mini-cart-delivery">
                       <span>Delivery</span>
                       <span>{formatPrice(cart.shippingFee)}</span>
                     </div>

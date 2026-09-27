@@ -51,13 +51,18 @@ function createLongCart() {
     },
   }));
   const subtotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  const discount = 1199;
+  const shippingFee = 499;
 
   return {
     ...emptyCart,
+    engineThresholds: { ...engineThresholds, wholesaleThreshold: 20 },
     items,
     itemCount: items.length,
     subtotal,
-    total: subtotal,
+    discount,
+    shippingFee,
+    total: subtotal - discount + shippingFee,
   };
 }
 
@@ -132,7 +137,11 @@ test("header mini-cart nudge fills available width when empty and populated", as
 async function expectMiniCartFooterInViewport(page: Page) {
   for (const testId of [
     "mini-cart-subtotal",
+    "mini-cart-discount",
+    "mini-cart-saving",
+    "mini-cart-delivery",
     "mini-cart-total",
+    "mini-cart-discount-footnote",
     "button-mini-cart-view-cart",
     "button-mini-cart-checkout",
   ]) {
@@ -174,7 +183,7 @@ test("long mini-cart lists scroll without moving totals or checkout actions", as
       (total, item) => total + item.product.price * item.quantity,
       0,
     );
-    cart.total = cart.subtotal;
+    cart.total = cart.subtotal - cart.discount + cart.shippingFee;
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify(cart),
