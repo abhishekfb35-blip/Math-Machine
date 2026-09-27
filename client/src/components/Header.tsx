@@ -278,6 +278,7 @@ export default function Header() {
                     itemCount={0}
                     engineThresholds={cart.engineThresholds}
                     compact
+                    fullWidth
                     showTeaser
                   />
                 </div>
@@ -363,6 +364,7 @@ export default function Header() {
                     itemCount={cart.itemCount}
                     engineThresholds={cart.engineThresholds}
                     compact
+                    fullWidth
                   />
                 </div>
               )}
