@@ -13,6 +13,7 @@ import { and, eq, like, sql } from "drizzle-orm";
 import seedData from "./seed-data.json";
 import { assertSeedTargetIsWritable } from "./lib/catalogSyncGuard";
 import { validateSeedSnapshotIds } from "./lib/seedValidation";
+import { normalizeIndiaOnlyDeliveryContent } from "./migrations/india-only-delivery";
 
 const BATCH = 100;
 
@@ -89,14 +90,28 @@ function normalizeBundledAttributeJunctions(
   return output;
 }
 
+function normalizeSeedDeliveryContent(input: Record<string, unknown>): Record<string, unknown> {
+  if (!Array.isArray(input.siteContent)) return input;
+  return {
+    ...input,
+    siteContent: input.siteContent.map((entry: unknown) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) return entry;
+      const row = entry as Record<string, unknown>;
+      if (typeof row.key !== "string" || typeof row.value !== "string") return entry;
+      return { ...row, value: normalizeIndiaOnlyDeliveryContent(row.key, row.value) };
+    }),
+  };
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function seedDatabase(overrideData?: Record<string, unknown>) {
   assertSeedTargetIsWritable();
   try {
-    const snapshot = (overrideData !== undefined
+    const sourceSnapshot = (overrideData !== undefined
       ? overrideData
       : await normalizeBundledAttributeJunctions(seedData as unknown as Record<string, unknown>)) as Record<string, unknown>;
+    const snapshot = normalizeSeedDeliveryContent(sourceSnapshot);
 
     // Validate the complete snapshot before copying assets, opening a
     // transaction, clearing hashes, or touching any database row.

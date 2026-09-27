@@ -7,6 +7,7 @@ import { serveStatic } from "./static";
 import { seedDatabase } from "./seed";
 import { runMigrations } from "./migrations/runner";
 import { ensurePolicyPages } from "./migrations/policy-pages";
+import { ensureIndiaOnlyDeliveryContent } from "./migrations/india-only-delivery";
 import { ensureSkuNotNull } from "./migrations/sku-not-null";
 import { syncImageReviewIds } from "./migrations/sync-image-review-ids";
 import { migrateSiteConfigKeyPk } from "./migrations/site-config-key-pk";
@@ -352,6 +353,8 @@ function startRateLimitStatsScheduler() {
           } else {
             log("seed-database: skipped in development");
           }
+          currentStep = "ensure-india-only-delivery-content";
+          await ensureIndiaOnlyDeliveryContent(storage);
           currentStep = "initialize-exchange-rate-service";
           await initializeExchangeRateService();
           currentStep = "restore-brand-logos";

@@ -68,7 +68,7 @@ const DEFAULT_SEO: StorefrontSeoSettings = {
   brandName: "TurtleLittle",
   tagline: "Personalised Luxury Towels & Blankets",
   metaDescription:
-    "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered across India.",
+    "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered only within India.",
   ogImageUrl: "/og-image.png",
   siteUrl: "https://turtlelittle.com",
 };

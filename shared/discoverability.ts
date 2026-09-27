@@ -10,7 +10,7 @@ export const businessDetails = {
 export const publicInfoMetadata = {
   about: {
     title: "About Us",
-    description: "Learn about TurtleLittle - makers of personalised luxury embroidered towels and blankets, handcrafted with love in India.",
+    description: "Learn about TurtleLittle - makers of personalised luxury embroidered towels and blankets, handcrafted in India and delivered only within India.",
   },
   contact: {
     title: "Contact Us",
@@ -18,7 +18,7 @@ export const publicInfoMetadata = {
   },
   shipping: {
     title: "Shipping Policy",
-    description: "Read TurtleLittle's shipping policy for processing, delivery estimates, tracking and delivery support across India.",
+    description: "Read TurtleLittle's shipping policy for processing, delivery estimates and tracking. Delivery is available only within India.",
   },
   terms: {
     title: "Terms & Conditions",
@@ -37,7 +37,7 @@ export const publicInfoMetadata = {
 export type PublicInfoPath = keyof typeof publicInfoMetadata;
 
 export const storefrontIntro =
-  "TurtleLittle makes personalised embroidered towels, blankets and bathrobes for kids, adults and couples. Choose a product, add your name or initials, and explore gifts for everyday use and special occasions.";
+  "TurtleLittle makes personalised embroidered towels, blankets and bathrobes for kids, adults and couples. Choose a product, add your name or initials, and explore gifts for everyday use and special occasions. Delivery is available only within India.";
 
 export const storefrontAnswers = [
   {
@@ -49,8 +49,8 @@ export const storefrontAnswers = [
     answer: "Choose a product, select the available options, and enter the name or initials you want embroidered before adding it to your cart.",
   },
   {
-    question: "Where can I find delivery and return information?",
-    answer: "Read TurtleLittle's shipping and refund policies for current delivery estimates, charges and return eligibility.",
+    question: "Does TurtleLittle deliver outside India?",
+    answer: "No. TurtleLittle delivers only within India. See the Shipping Policy for delivery estimates and charges.",
   },
 ] as const;
 
@@ -84,6 +84,10 @@ export function siteIdentityStructuredData(brandName: string, siteUrl: string): 
         addressRegion: "Uttar Pradesh",
         postalCode: "201301",
         addressCountry: "IN",
+      },
+      areaServed: {
+        "@type": "Country",
+        name: "India",
       },
       contactPoint: {
         "@type": "ContactPoint",

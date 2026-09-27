@@ -47,6 +47,9 @@ Sitemap: ${baseUrl}/sitemap.xml
 - [Refund and cancellation policy](${baseUrl}/refund-policy): Return eligibility and cancellation details.
 - [Contact](${baseUrl}/contact): Customer support and business details.
 
+## Delivery
+- Delivery is available only to addresses within India. International delivery is not offered.
+
 Product prices, availability, delivery terms and policies may change. Check the linked pages for current details.
 `);
   });

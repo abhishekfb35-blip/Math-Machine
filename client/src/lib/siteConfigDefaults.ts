@@ -13,7 +13,7 @@ export interface SeoConfig {
 export const defaultSeo: SeoConfig = {
   brandName: "TurtleLittle",
   tagline: "Personalised Luxury Towels & Blankets",
-  metaDescription: "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered across India.",
+  metaDescription: "Personalised luxury embroidered towels, blankets & bathrobes. Premium quality, handcrafted with your name. Buy 2 Get 1 Free. Delivered only within India.",
   ogImageUrl: "/og-image.png",
   siteUrl: "https://turtlelittle.com",
 };
@@ -351,7 +351,7 @@ export const defaultAboutPage: AboutPageConfig = {
     { title: "Handcrafted Quality", description: "Every piece is individually embroidered with precision and care, ensuring a premium finish." },
     { title: "Made with Love", description: "We put our heart into every product, because we know it's going to be loved by someone special." },
     { title: "Premium Fabrics", description: "550 GSM zero-twist cotton towels and ultra-soft blankets — only the best materials make it into our products." },
-    { title: "All-India Delivery", description: "We deliver across India so you can send a personalised gift to anyone, anywhere." },
+    { title: "Delivery Across India", description: "We deliver only to addresses within India. International delivery is not available." },
   ],
   contactWhatsapp: "+91 99900 79722",
   contactEmail: "hello@turtlelittle.com",
@@ -366,7 +366,7 @@ export const defaultTermsPage: TermsPageConfig = {
     { heading: "2. Products & Personalisation", body: "TurtleLittle offers personalised embroidered towels, blankets, and bathrobes. All personalisation details (names, initials, designs) provided by the customer must be accurate. We are not responsible for errors in personalisation caused by incorrect information provided by the customer. Due to the personalised nature of our products, please double-check all details before confirming your order." },
     { heading: "3. Pricing & Payment", body: "All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise. We reserve the right to change prices at any time without prior notice. Payment must be completed at the time of placing an order through our accepted payment methods. We use secure, industry-standard payment processing to protect your financial information." },
     { heading: "4. Orders & Confirmation", body: "Once you place an order, you will receive an order confirmation. This confirmation does not guarantee acceptance of your order. We reserve the right to cancel or refuse any order for reasons including product availability, pricing errors, or suspected fraudulent activity. In such cases, you will be notified and any payment made will be refunded." },
-    { heading: "5. Shipping & Delivery", body: "We aim to dispatch all orders within 3-5 business days after order confirmation. Delivery timelines depend on your location and the shipping partner. Please refer to our Shipping Policy for detailed information on delivery timelines and charges." },
+    { heading: "5. Shipping & Delivery", body: "We currently deliver only to addresses within India; delivery outside India is not available. We aim to dispatch all orders within 3-5 business days after order confirmation. Delivery timelines depend on your location and the shipping partner. Please refer to our Shipping Policy for detailed information on delivery timelines and charges." },
     { heading: "6. Returns & Refunds", body: "Due to the personalised nature of our products, returns and exchanges are accepted only in cases of manufacturing defects or incorrect items delivered. Please refer to our Refund & Cancellation Policy for complete details on the return process and eligibility." },
     { heading: "7. Intellectual Property", body: "All content on turtlelittle.com, including text, images, logos, designs, and graphics, is the property of TurtleLittle and is protected by applicable intellectual property laws. You may not reproduce, distribute, or use any content from our website without our prior written permission." },
     { heading: "8. Limitation of Liability", body: "TurtleLittle shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products. Our total liability shall not exceed the amount paid by you for the specific product in question." },
@@ -411,7 +411,7 @@ export const defaultShippingPage: ShippingPageConfig = {
   lastUpdated: "February 2026",
   sections: [
     { heading: "1. Processing Time", body: "Since all TurtleLittle products are personalised with custom embroidery, each item is made-to-order. Orders typically take 3-5 business days to process and prepare for dispatch. During festive seasons or high-demand periods, processing may take slightly longer." },
-    { heading: "2. Delivery Timeline", body: "After dispatch, estimated delivery times are:\n• Metro Cities (Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad): 2-4 business days\n• Other Cities & Towns: 4-7 business days\n• Remote Areas: 7-10 business days\n\nPlease note that delivery timelines are estimates and may vary based on the shipping partner and your location. You will receive a shipping confirmation with tracking details once your order is dispatched." },
+    { heading: "2. Delivery Timeline", body: "TurtleLittle currently delivers only to addresses within India; delivery outside India is not available.\n\nAfter dispatch, estimated delivery times are:\n• Metro Cities (Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad): 2-4 business days\n• Other Cities & Towns: 4-7 business days\n• Remote Areas: 7-10 business days\n\nPlease note that delivery timelines are estimates and may vary based on the shipping partner and your location. You will receive a shipping confirmation with tracking details once your order is dispatched." },
     { heading: "3. Shipping Charges", body: "We offer free shipping across India on all orders. No minimum order value is required. We want the joy of receiving a personalised TurtleLittle product to begin the moment you place your order." },
     { heading: "4. Shipping Partners", body: "We work with reputable logistics partners to ensure safe and timely delivery of your orders. All products are carefully packaged to protect the embroidery and fabric during transit." },
     { heading: "5. Order Tracking", body: "Once your order is dispatched, you will receive a tracking number via WhatsApp or email. You can use this to track the real-time status of your delivery. If you haven't received tracking details within 5 business days of placing your order, please contact us." },

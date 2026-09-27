@@ -11,6 +11,7 @@ import { loadPublicInfoPage } from "../server/publicInfoPages";
 import { registerSeoRoutes } from "../server/routes/seo";
 import { storefrontAnswers } from "@shared/discoverability";
 import { defaultAboutPage } from "../client/src/lib/siteConfigDefaults";
+import { ensureIndiaOnlyDeliveryContent } from "../server/migrations/india-only-delivery";
 
 const product = {
   id: "product-1",
@@ -116,7 +117,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     lastUpdated: "September 2026",
     sections: [{
       heading: "Dispatch and delivery",
-      body: "After dispatch, estimates are:\n• Metro: 2-4 business days\n• Other cities: 4-7 business days",
+      body: "TurtleLittle currently delivers only to addresses within India; delivery outside India is not available.\nAfter dispatch, estimates are:\n• Metro: 2-4 business days\n• Other cities: 4-7 business days",
     }],
   };
   const storage = {
@@ -129,7 +130,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
         value: JSON.stringify({
           brandName: "TurtleLittle",
           tagline: "Personalised Towels",
-          metaDescription: "Luxury personalised towels.",
+          metaDescription: "Luxury personalised towels. Delivered only within India.",
           ogImageUrl: "/images/og.jpg",
           siteUrl: "https://shop.example",
         }),
@@ -197,11 +198,18 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(home, /https:\/\/shop\.example\/images\/towel-primary\.jpg/);
     assert.match(home, /TurtleLittle makes personalised embroidered towels/);
     assert.match(home, /<h3>What products does TurtleLittle make\?<\/h3>/);
+    assert.match(home, /Delivery is available only within India/);
+    assert.match(home, /Does TurtleLittle deliver outside India\?/);
+    assert.match(home, /Delivered only within India/);
     const homeSchemas = readSchemas(home);
     assert.deepEqual(homeSchemas.map(schema => schema["@type"]), ["OnlineStore", "WebSite", "FAQPage"]);
     assert.equal(homeSchemas[0].legalName, "Pandora Innovations");
+    assert.equal(homeSchemas[0].areaServed.name, "India");
     assert.equal(homeSchemas[1].publisher["@id"], "https://shop.example/#organization");
     assert.equal(homeSchemas[2].mainEntity[0].acceptedAnswer.text, storefrontAnswers[0].answer);
+    assert.match(homeSchemas[2].mainEntity.find((entry: any) =>
+      entry.name === "Does TurtleLittle deliver outside India?",
+    ).acceptedAnswer.text, /only within India/);
 
     const shop = pages.get("/shop")!;
     assert.match(shop, /<title data-storefront-seo>Shop All Products \| TurtleLittle<\/title>/);
@@ -259,6 +267,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
 
     const shipping = pages.get("/shipping")!;
     assert.match(shipping, /<h2>Dispatch and delivery<\/h2>/);
+    assert.match(shipping, /delivers only to addresses within India/);
     assert.match(shipping, /<ul><li>Metro: 2-4 business days<\/li><li>Other cities: 4-7 business days<\/li><\/ul>/);
     assert.equal(readInitialData(shipping).queries.find(entry => entry.queryKey[0] === "/api/site-config")?.data["page-shipping"].lastUpdated, "September 2026");
 
@@ -323,6 +332,7 @@ test("discovery files use the same configured origin as page canonicals", async 
     const sitemap = await get("/sitemap.xml");
     assert.match(robots, /Sitemap: https:\/\/shop\.example\/sitemap\.xml/);
     assert.match(llms, /https:\/\/shop\.example\/about/);
+    assert.match(llms, /Delivery is available only to addresses within India/);
     assert.match(sitemap, /<loc>https:\/\/shop\.example\/contact<\/loc>/);
     assert.match(sitemap, /<loc>https:\/\/shop\.example\/product\/embroidered-cotton-towel<\/loc>/);
     assert.doesNotMatch(`${robots}${llms}${sitemap}`, /https:\/\/turtlelittle\.com/);
@@ -330,4 +340,68 @@ test("discovery files use the same configured origin as page canonicals", async 
     server.close();
     await once(server, "close");
   }
+});
+
+test("saved delivery copy is normalized without discarding unrelated admin content", async () => {
+  const rows = new Map([
+    ["seo", {
+      key: "seo",
+      value: JSON.stringify({
+        brandName: "TurtleLittle",
+        tagline: "Personalised towels",
+        metaDescription: "Premium towels. Delivered across the Globe.",
+        adminNote: "Preserve this field.",
+      }),
+    }],
+    ["page-about", {
+      key: "page-about",
+      value: JSON.stringify({
+        title: "Our story",
+        valueCards: [{ title: "All-India Delivery", description: "Send a gift to anyone, anywhere." }],
+      }),
+    }],
+    ["page-shipping", {
+      key: "page-shipping",
+      value: JSON.stringify({
+        sections: [{
+          heading: "2. Delivery Timeline",
+          body: "After dispatch: Metro 2-4 business days.",
+        }],
+      }),
+    }],
+    ["page-terms", {
+      key: "page-terms",
+      value: JSON.stringify({
+        sections: [{
+          heading: "5. Shipping & Delivery",
+          body: "See our Shipping Policy for delivery estimates.",
+        }],
+      }),
+    }],
+  ]);
+  let writes = 0;
+  const fakeStorage = {
+    getSiteContent: async (key: string) => rows.get(key),
+    upsertSiteContent: async (key: string, value: string) => {
+      writes++;
+      const row = { key, value };
+      rows.set(key, row);
+      return row;
+    },
+  } as unknown as IStorage;
+
+  await ensureIndiaOnlyDeliveryContent(fakeStorage);
+  const seo = JSON.parse(rows.get("seo")!.value);
+  const about = JSON.parse(rows.get("page-about")!.value);
+  const shipping = JSON.parse(rows.get("page-shipping")!.value);
+  const terms = JSON.parse(rows.get("page-terms")!.value);
+  assert.match(seo.metaDescription, /Delivered only within India/);
+  assert.equal(seo.adminNote, "Preserve this field.");
+  assert.equal(about.valueCards[0].description, "We deliver only to addresses within India. International delivery is not available.");
+  assert.match(shipping.sections[0].body, /only to addresses within India/);
+  assert.match(shipping.sections[0].body, /Metro 2-4 business days/);
+  assert.match(terms.sections[0].body, /only to addresses within India/);
+
+  await ensureIndiaOnlyDeliveryContent(fakeStorage);
+  assert.equal(writes, 4, "the migration should be idempotent");
 });
