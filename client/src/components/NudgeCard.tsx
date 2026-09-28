@@ -168,7 +168,9 @@ export default function NudgeCard({
           const nodeEl = (
             <div
               key={pos}
-              className="relative z-10 flex flex-col flex-1 min-w-0 items-center"
+              className={`relative z-10 flex flex-col flex-1 min-w-0 items-center ${
+                isWholesale && !isComplete ? "nudge-wholesale-halo" : ""
+              }`}
               data-testid={`nudge-node-${pos}`}
             >
               {/* Track row: uniform height, icon fluid-centered within the flex share */}
@@ -179,7 +181,7 @@ export default function NudgeCard({
                  * Badges are positioned relative to this box.
                  */}
                 <div
-                  className={`relative ${isWholesale ? "nudge-blink" : ""}`}
+                  className="relative"
                   style={{ width: `min(100%, ${iconCapPx}px)`, aspectRatio: "1" }}
                   data-testid={`nudge-cart-wrap-${pos}`}
                 >
@@ -221,9 +223,7 @@ export default function NudgeCard({
                     isWholesale ? "font-extrabold" : ""
                   } ${
                     isWholesale
-                      ? `text-orange-500 dark:text-orange-400 nudge-blink ${
-                          !isComplete ? "nudge-wholesale-halo relative isolate block rounded-md" : ""
-                        }`
+                      ? "text-orange-500 dark:text-orange-400"
                       : isComplete
                       ? "text-amber-600 dark:text-amber-400"
                       : isLocked

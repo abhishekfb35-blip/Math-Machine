@@ -168,11 +168,11 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
 
     const animationTiming = await page.evaluate((finalPos) => {
       const active = document.querySelector('[data-testid="nudge-cart-2"]');
-      const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+      const final = document.querySelector(`[data-testid="nudge-node-${finalPos}"]`);
       if (!active || !final) return null;
 
       const activeStyle = getComputedStyle(active);
-      const finalStyle = getComputedStyle(final);
+      const finalHaloStyle = getComputedStyle(final, "::after");
       const rootStyle = getComputedStyle(document.documentElement);
       return {
         configuredCycle: rootStyle.getPropertyValue("--nudge-animation-cycle").trim(),
@@ -180,9 +180,9 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
         activeAnimation: activeStyle.animationName,
         activeDuration: activeStyle.animationDuration,
         activeDelay: activeStyle.animationDelay,
-        finalAnimation: finalStyle.animationName,
-        finalDuration: finalStyle.animationDuration,
-        finalDelay: finalStyle.animationDelay,
+        finalAnimation: finalHaloStyle.animationName,
+        finalDuration: finalHaloStyle.animationDuration,
+        finalDelay: finalHaloStyle.animationDelay,
       };
     }, wholesaleThreshold);
 
@@ -192,7 +192,7 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
       configuredPhaseDelay: "3s",
       activeAnimation: "nudgeActivePulse",
       activeDelay: "0s",
-      finalAnimation: "nudgeBlink",
+      finalAnimation: "nudgeWholesaleHalo",
     });
     expect(Number.parseFloat(animationTiming!.configuredCycle)).toBe(
       Number.parseFloat(animationTiming!.configuredPhaseDelay) * 2,
@@ -200,6 +200,24 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     expect(animationTiming!.activeDuration).toBe(animationTiming!.configuredCycle);
     expect(animationTiming!.finalDuration).toBe(animationTiming!.configuredCycle);
     expect(animationTiming!.finalDelay).toBe(animationTiming!.configuredPhaseDelay);
+    await expect(page.getByTestId(`nudge-node-${wholesaleThreshold}`)).toHaveClass(
+      /nudge-wholesale-halo/,
+    );
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const reducedMotionTiming = await page.evaluate((finalPos) => {
+      const active = document.querySelector('[data-testid="nudge-cart-2"]');
+      const final = document.querySelector(`[data-testid="nudge-node-${finalPos}"]`);
+      if (!active || !final) return null;
+      return {
+        activeAnimation: getComputedStyle(active).animationName,
+        haloAnimation: getComputedStyle(final, "::after").animationName,
+      };
+    }, wholesaleThreshold);
+    expect(reducedMotionTiming).toEqual({
+      activeAnimation: "none",
+      haloAnimation: "none",
+    });
 
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, "Cart page has horizontal overflow with NudgeCard visible (1 item)").toBe(true);
@@ -247,7 +265,9 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
       await expect(completedCart).toHaveClass(/fill-amber-500/);
     }
 
-    await expect(page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`)).toHaveClass(/nudge-blink/);
+    await expect(page.getByTestId(`nudge-node-${wholesaleThreshold}`)).not.toHaveClass(
+      /nudge-wholesale-halo/,
+    );
 
     const noOverflow = await hasNoHorizontalOverflow(page);
     expect(noOverflow, `Cart page has horizontal overflow at wholesale threshold (${wholesaleThreshold} items)`).toBe(true);
@@ -283,15 +303,15 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     await page.waitForFunction(
       ({ activePos, finalPos }) => {
         const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
-        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-node-${finalPos}"]`);
         if (!active || !final) return false;
 
         const shadow = getComputedStyle(active).boxShadow;
         const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
         const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
-        const finalOpacity = Number(getComputedStyle(final).opacity);
+        const haloOpacity = Number(getComputedStyle(final, "::after").opacity);
 
-        return shadowAlpha > 0.1 && finalOpacity > 0.99;
+        return shadowAlpha > 0.1 && haloOpacity <= 0.01;
       },
       { activePos, finalPos },
       { timeout: 2000 },
@@ -300,15 +320,15 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     await page.waitForFunction(
       ({ activePos, finalPos }) => {
         const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
-        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-node-${finalPos}"]`);
         if (!active || !final) return false;
 
         const shadow = getComputedStyle(active).boxShadow;
         const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
         const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
-        const finalOpacity = Number(getComputedStyle(final).opacity);
+        const haloOpacity = Number(getComputedStyle(final, "::after").opacity);
 
-        return shadowAlpha <= 0.01 && finalOpacity < 0.5;
+        return shadowAlpha <= 0.01 && haloOpacity > 0.5;
       },
       { activePos, finalPos },
       { timeout: 5000 },
@@ -317,15 +337,15 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     await page.waitForFunction(
       ({ activePos, finalPos }) => {
         const active = document.querySelector(`[data-testid="nudge-cart-${activePos}"]`);
-        const final = document.querySelector(`[data-testid="nudge-cart-wrap-${finalPos}"]`);
+        const final = document.querySelector(`[data-testid="nudge-node-${finalPos}"]`);
         if (!active || !final) return false;
 
         const shadow = getComputedStyle(active).boxShadow;
         const alphaMatch = shadow.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
         const shadowAlpha = alphaMatch ? Number(alphaMatch[1]) : 0;
-        const finalOpacity = Number(getComputedStyle(final).opacity);
+        const haloOpacity = Number(getComputedStyle(final, "::after").opacity);
 
-        return shadowAlpha > 0.1 && finalOpacity > 0.99;
+        return shadowAlpha > 0.1 && haloOpacity <= 0.01;
       },
       { activePos, finalPos },
       { timeout: 4000 },
