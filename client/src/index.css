@@ -9,8 +9,12 @@
   --font-mono: 'DM Mono', monospace;
   --nudge-animation-cycle: 6s;
   --nudge-animation-phase-delay: 3s;
-  --nudge-active-pulse-rgb: 74, 144, 226;
-  --nudge-wholesale-halo-rgb: 74, 144, 226;
+  --nudge-active-pulse-light-rgb: 74, 144, 226;
+  --nudge-active-pulse-dark-rgb: 103, 169, 239;
+  --nudge-wholesale-halo-light-rgb: 74, 144, 226;
+  --nudge-wholesale-halo-dark-rgb: 136, 186, 242;
+  --nudge-active-pulse-rgb: var(--nudge-active-pulse-light-rgb);
+  --nudge-wholesale-halo-rgb: var(--nudge-wholesale-halo-light-rgb);
 
   --background: 30 25% 97%;
   --foreground: 20 15% 15%;
@@ -44,8 +48,8 @@
 }
 
 .dark {
-  --nudge-active-pulse-rgb: 103, 169, 239;
-  --nudge-wholesale-halo-rgb: 136, 186, 242;
+  --nudge-active-pulse-rgb: var(--nudge-active-pulse-dark-rgb);
+  --nudge-wholesale-halo-rgb: var(--nudge-wholesale-halo-dark-rgb);
 
   --background: 20 15% 8%;
   --foreground: 30 15% 95%;
@@ -74,6 +78,16 @@
   --border: 20 10% 20%;
   --input: 20 10% 20%;
   --ring: 157 50% 45%;
+}
+
+.nudge-cue-color-scope {
+  --nudge-active-pulse-rgb: var(--nudge-active-pulse-light-rgb);
+  --nudge-wholesale-halo-rgb: var(--nudge-wholesale-halo-light-rgb);
+}
+
+.dark .nudge-cue-color-scope {
+  --nudge-active-pulse-rgb: var(--nudge-active-pulse-dark-rgb);
+  --nudge-wholesale-halo-rgb: var(--nudge-wholesale-halo-dark-rgb);
 }
 
 @layer base {

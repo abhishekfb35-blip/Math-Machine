@@ -1,4 +1,11 @@
 import { ShoppingCart, ArrowRight } from "lucide-react";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import {
+  DEFAULT_NUDGE_CUE_COLORS,
+  hexColorToRgb,
+  normalizeNudgeCueColors,
+  type NudgeCueColors,
+} from "@/lib/nudgeCueColors";
 
 export interface EngineThresholds {
   retailFreeItemTrigger: number;
@@ -12,6 +19,7 @@ interface NudgeCardProps {
   compact?: boolean;
   fullWidth?: boolean;
   showTeaser?: boolean;
+  cueColors?: NudgeCueColors;
 }
 
 function ord(n: number): string {
@@ -30,7 +38,14 @@ export default function NudgeCard({
   compact = false,
   fullWidth = false,
   showTeaser = false,
+  cueColors,
 }: NudgeCardProps) {
+  const savedCueColors = useSiteConfig<NudgeCueColors>(
+    "nudge-cue-colors",
+    DEFAULT_NUDGE_CUE_COLORS,
+  );
+  const activeCueColors = normalizeNudgeCueColors(cueColors ?? savedCueColors);
+
   if (!engineThresholds) return null;
   if (itemCount === 0 && !showTeaser) return null;
 
@@ -127,9 +142,15 @@ export default function NudgeCard({
 
   return (
     <div
-      className={`bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm ${
+      className={`nudge-cue-color-scope bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 rounded-xl ${pad} space-y-4 shadow-sm ${
         compact ? (fullWidth ? "w-full" : "w-full md:w-1/3 mx-auto") : ""
       }`}
+      style={{
+        "--nudge-active-pulse-light-rgb": hexColorToRgb(activeCueColors.light.pulse),
+        "--nudge-active-pulse-dark-rgb": hexColorToRgb(activeCueColors.dark.pulse),
+        "--nudge-wholesale-halo-light-rgb": hexColorToRgb(activeCueColors.light.halo),
+        "--nudge-wholesale-halo-dark-rgb": hexColorToRgb(activeCueColors.dark.halo),
+      } as React.CSSProperties}
       data-testid="nudge-card"
     >
       <div

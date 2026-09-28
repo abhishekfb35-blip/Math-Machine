@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function openOffersPage(page: Page) {
+async function openOffersPage(page: Page, extraConfig: Record<string, unknown> = {}) {
   await page.route("**/api/admin/check", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -12,23 +12,36 @@ async function openOffersPage(page: Page) {
     });
   });
 
+  const siteConfig: Record<string, unknown> = {
+    "cart-engine-config": {
+      wholesaleThreshold: 5,
+      retailFreeItemTrigger: 3,
+      retailBonusDiscountPct: 30,
+    },
+    "delivery-tiers": [],
+    "payment-methods": { codEnabled: true },
+    ...extraConfig,
+  };
+
   await page.route("**/api/site-config", async (route) => {
-    if (route.request().method() !== "GET") {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(siteConfig),
+    });
+  });
+
+  await page.route("**/api/site-config/**", async (route) => {
+    const request = route.request();
+    const key = new URL(request.url()).pathname.split("/").pop()!;
+    if (request.method() === "POST") {
+      const { value } = request.postDataJSON();
+      siteConfig[key] = value;
       await route.fulfill({ status: 204 });
       return;
     }
-
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({
-        "cart-engine-config": {
-          wholesaleThreshold: 5,
-          retailFreeItemTrigger: 3,
-          retailBonusDiscountPct: 30,
-        },
-        "delivery-tiers": [],
-        "payment-methods": { codEnabled: true },
-      }),
+      body: JSON.stringify({ key, value: siteConfig[key] }),
     });
   });
 
@@ -182,4 +195,86 @@ test("nudge preview keeps distinct pulse and stage-five halo colors in dark mode
   expect(pulse.delay).toBe("0s");
   expect(halo.duration).toBe("6s");
   expect(halo.delay).toBe("3s");
+});
+
+test("admin can edit and save theme-specific nudge cue colors", async ({ page }) => {
+  const savedCueColors: unknown[] = [];
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname === "/api/site-config/nudge-cue-colors"
+    ) {
+      savedCueColors.push(request.postDataJSON().value);
+    }
+  });
+
+  await openOffersPage(page);
+
+  const colors = {
+    "input-nudge-color-light-pulse-hex": "#123456",
+    "input-nudge-color-light-halo-hex": "#654321",
+    "input-nudge-color-dark-pulse-hex": "#abcdef",
+    "input-nudge-color-dark-halo-hex": "#fedcba",
+  };
+  for (const [testId, value] of Object.entries(colors)) {
+    await page.getByTestId(testId).fill(value);
+  }
+
+  const saveButton = page.getByTestId("button-save-nudge-colors");
+  await expect(saveButton).toBeEnabled();
+
+  const activeCart = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-2");
+  const stageFiveCart = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-wrap-5");
+
+  await expect
+    .poll(() =>
+      activeCart.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
+      ),
+    )
+    .toBe("18, 52, 86");
+  await expect
+    .poll(() =>
+      stageFiveCart.evaluate((element) =>
+        getComputedStyle(element, "::after")
+          .getPropertyValue("--nudge-wholesale-halo-rgb")
+          .trim(),
+      ),
+    )
+    .toBe("101, 67, 33");
+
+  await saveButton.click();
+  await expect(saveButton).toBeDisabled();
+  expect(savedCueColors).toEqual([
+    {
+      light: { pulse: "#123456", halo: "#654321" },
+      dark: { pulse: "#abcdef", halo: "#fedcba" },
+    },
+  ]);
+
+  await page.reload();
+  await expect(page.getByTestId("input-nudge-color-light-pulse-hex")).toHaveValue("#123456");
+  await expect(page.getByTestId("input-nudge-color-dark-halo-hex")).toHaveValue("#FEDCBA");
+  await page.locator("html").evaluate((element) => element.classList.add("dark"));
+
+  await expect
+    .poll(() =>
+      activeCart.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
+      ),
+    )
+    .toBe("171, 205, 239");
+  await expect
+    .poll(() =>
+      stageFiveCart.evaluate((element) =>
+        getComputedStyle(element, "::after")
+          .getPropertyValue("--nudge-wholesale-halo-rgb")
+          .trim(),
+      ),
+    )
+    .toBe("254, 220, 186");
 });

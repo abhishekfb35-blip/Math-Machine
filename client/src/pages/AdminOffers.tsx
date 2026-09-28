@@ -11,6 +11,11 @@ import { Save, ArrowLeft, Tag, Truck, Info, Plus, Trash2, AlertCircle, Eye, Bank
 import { Link } from "wouter";
 import type { DeliveryTier } from "@/lib/siteConfigDefaults";
 import NudgeCard from "@/components/NudgeCard";
+import {
+  DEFAULT_NUDGE_CUE_COLORS,
+  normalizeNudgeCueColors,
+  type NudgeCueColors,
+} from "@/lib/nudgeCueColors";
 
 interface CartEngineConfig {
   wholesaleThreshold: number;
@@ -63,6 +68,8 @@ export default function AdminOffers() {
   });
   const [deliveryTiers, setDeliveryTiers] = useState<DeliveryTier[]>([]);
   const [codEnabled, setCodEnabled] = useState(true);
+  const [nudgeCueColors, setNudgeCueColors] = useState<NudgeCueColors>(DEFAULT_NUDGE_CUE_COLORS);
+  const [savedNudgeCueColors, setSavedNudgeCueColors] = useState<NudgeCueColors>(DEFAULT_NUDGE_CUE_COLORS);
   const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
@@ -85,6 +92,9 @@ export default function AdminOffers() {
       if (rawPayment && typeof rawPayment.codEnabled === "boolean") {
         setCodEnabled(rawPayment.codEnabled);
       }
+      const rawNudgeCueColors = normalizeNudgeCueColors(allConfig["nudge-cue-colors"]);
+      setNudgeCueColors(rawNudgeCueColors);
+      setSavedNudgeCueColors(rawNudgeCueColors);
       setConfigLoaded(true);
     }
   }, [allConfig, configLoaded]);
@@ -92,6 +102,7 @@ export default function AdminOffers() {
   const saveEngine = useSaveConfig("cart-engine-config");
   const saveDelivery = useSaveConfig("delivery-tiers");
   const savePaymentMethods = useSaveConfig("payment-methods");
+  const saveNudgeCueColors = useSaveConfig("nudge-cue-colors");
 
   const updateEngineDraft = (field: keyof CartEngineConfig, raw: string) => {
     const v = parseInt(raw, 10);
@@ -348,7 +359,20 @@ export default function AdminOffers() {
           )}
         </Card>
 
-        <NudgeCardPreview engineDraft={engineDraft} engineConfig={engineConfig} configLoading={configLoading} />
+        <NudgeCardPreview
+          engineDraft={engineDraft}
+          engineConfig={engineConfig}
+          configLoading={configLoading}
+          nudgeCueColors={nudgeCueColors}
+          savedNudgeCueColors={savedNudgeCueColors}
+          onNudgeCueColorsChange={setNudgeCueColors}
+          onSaveNudgeCueColors={() =>
+            saveNudgeCueColors.mutate(nudgeCueColors, {
+              onSuccess: () => setSavedNudgeCueColors(nudgeCueColors),
+            })
+          }
+          isSavingNudgeCueColors={saveNudgeCueColors.isPending}
+        />
       </div>
     </div>
   );
@@ -358,9 +382,64 @@ interface NudgeCardPreviewProps {
   engineDraft: CartEngineConfig;
   engineConfig: CartEngineConfig | null;
   configLoading: boolean;
+  nudgeCueColors: NudgeCueColors;
+  savedNudgeCueColors: NudgeCueColors;
+  onNudgeCueColorsChange: (colors: NudgeCueColors) => void;
+  onSaveNudgeCueColors: () => void;
+  isSavingNudgeCueColors: boolean;
 }
 
-function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCardPreviewProps) {
+function NudgeCueColorControl({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={label}
+          className="h-10 w-14 cursor-pointer p-1"
+          data-testid={id}
+        />
+        <Input
+          type="text"
+          value={value.toUpperCase()}
+          onChange={(event) => {
+            if (/^#[0-9a-f]{6}$/i.test(event.target.value)) onChange(event.target.value);
+          }}
+          aria-label={`${label} hex value`}
+          pattern="#[0-9a-fA-F]{6}"
+          maxLength={7}
+          className="font-mono uppercase"
+          data-testid={`${id}-hex`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function NudgeCardPreview({
+  engineDraft,
+  engineConfig,
+  configLoading,
+  nudgeCueColors,
+  savedNudgeCueColors,
+  onNudgeCueColorsChange,
+  onSaveNudgeCueColors,
+  isSavingNudgeCueColors,
+}: NudgeCardPreviewProps) {
   const [replayKey, setReplayKey] = useState(0);
 
   if (configLoading) {
@@ -379,7 +458,8 @@ function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCar
     !engineConfig ||
     engineDraft.wholesaleThreshold !== engineConfig.wholesaleThreshold ||
     engineDraft.retailFreeItemTrigger !== engineConfig.retailFreeItemTrigger ||
-    engineDraft.retailBonusDiscountPct !== engineConfig.retailBonusDiscountPct;
+    engineDraft.retailBonusDiscountPct !== engineConfig.retailBonusDiscountPct ||
+    JSON.stringify(nudgeCueColors) !== JSON.stringify(savedNudgeCueColors);
 
   const { retailFreeItemTrigger: trigger, wholesaleThreshold: wholesale, retailBonusDiscountPct: bonusPct } = engineDraft;
 
@@ -453,8 +533,50 @@ function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCar
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
-        How the shopper-facing nudge card looks at each reward step. Updates <span className="font-medium text-foreground">live</span> as you edit the fields above — save to confirm.
+        Adjust the next-stage pulse and Stage 5 halo independently for light and dark themes. The preview updates live; color changes do not affect animation timing or reward stages.
       </p>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-testid="nudge-cue-color-controls">
+        {(["light", "dark"] as const).map((theme) => (
+          <section key={theme} className="space-y-4 rounded-lg border p-4">
+            <h3 className="text-sm font-semibold capitalize">{theme} theme</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <NudgeCueColorControl
+                id={`input-nudge-color-${theme}-pulse`}
+                label="Next-stage pulse"
+                value={nudgeCueColors[theme].pulse}
+                onChange={(pulse) =>
+                  onNudgeCueColorsChange({
+                    ...nudgeCueColors,
+                    [theme]: { ...nudgeCueColors[theme], pulse },
+                  })
+                }
+              />
+              <NudgeCueColorControl
+                id={`input-nudge-color-${theme}-halo`}
+                label="Stage 5 halo"
+                value={nudgeCueColors[theme].halo}
+                onChange={(halo) =>
+                  onNudgeCueColorsChange({
+                    ...nudgeCueColors,
+                    [theme]: { ...nudgeCueColors[theme], halo },
+                  })
+                }
+              />
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <Button
+        type="button"
+        onClick={onSaveNudgeCueColors}
+        disabled={isSavingNudgeCueColors || JSON.stringify(nudgeCueColors) === JSON.stringify(savedNudgeCueColors)}
+        data-testid="button-save-nudge-colors"
+      >
+        <Save className="mr-2 h-4 w-4" />
+        {isSavingNudgeCueColors ? "Saving..." : "Save cue colors"}
+      </Button>
 
       <div
         key={`nudge-preview-replay-${replayKey}`}
@@ -471,6 +593,7 @@ function NudgeCardPreview({ engineDraft, engineConfig, configLoading }: NudgeCar
             <NudgeCard
               itemCount={itemCount}
               engineThresholds={thresholds}
+              cueColors={nudgeCueColors}
               compact
             />
           </div>

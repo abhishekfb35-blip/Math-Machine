@@ -281,7 +281,7 @@ export function registerCheckoutRoutes(app: Express) {
     "consent-popup", "pwa-install", "wishlist-signup-prompt",
     "terms", "privacy", "refund", "shipping", "about",
     "page-terms", "page-privacy", "page-refund", "page-shipping", "page-about",
-     "product-page-config", "theme-groups",
+     "product-page-config", "theme-groups", "nudge-cue-colors",
   ]);
 
   app.get("/api/site-config", async (_req, res) => {
@@ -326,6 +326,7 @@ export function registerCheckoutRoutes(app: Express) {
     "cart-engine-config": "offers",
     "cart-banners": "offers",
     "payment-methods": "offers",
+    "nudge-cue-colors": "offers",
     "product-page-config": "builder",
      "theme-groups": "catalog",
   };
