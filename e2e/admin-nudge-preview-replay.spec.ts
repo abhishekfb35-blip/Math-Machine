@@ -87,6 +87,13 @@ test("admin can replay the nudge preview without saving configuration", async ({
       ),
     )
     .toBe("nudgeWholesaleHalo");
+  await page.addStyleTag({
+    content: ".nudge-wholesale-halo::after { animation: none !important; }",
+  });
+  const restingHalo = await incompleteWholesaleCartWrap.evaluate((element) =>
+    getComputedStyle(element, "::after").boxShadow,
+  );
+  expect(restingHalo).toContain("0.3");
   await expect(incompleteWholesaleLabel).toBeVisible();
   await expect(unlockedWholesaleCartWrap).not.toHaveClass(/nudge-wholesale-halo/);
   await expect(unlockedWholesaleLabel).toHaveCount(0);
