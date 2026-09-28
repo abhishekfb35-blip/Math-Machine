@@ -340,4 +340,43 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
       { timeout: 4000 },
     );
   });
+
+  test("Nudge Stage 5 halo stays visible on the dark storefront cart", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("theme", "dark");
+    });
+
+    const { wholesaleThreshold } = await getEngineThresholds(page);
+    test.skip(wholesaleThreshold < 5, "Stage 5 is not configured in the cart engine");
+
+    await addProductToCart(page);
+    await page.goto("/cart");
+    await page.waitForSelector('[data-testid="nudge-card"]', { timeout: 5000 });
+    await expect(page.locator("html")).toHaveClass(/dark/);
+
+    const stageFive = page.getByTestId("nudge-cart-wrap-5");
+    await expect(stageFive).toHaveClass(/nudge-wholesale-halo/);
+
+    const haloColor = await stageFive.evaluate((element) =>
+      getComputedStyle(element, "::after")
+        .getPropertyValue("--nudge-wholesale-halo-rgb")
+        .trim(),
+    );
+    const activeStage = page.getByTestId("nudge-cart-2");
+    await expect(activeStage).toHaveClass(/nudge-active-pulse/);
+    const activePulseColor = await activeStage.evaluate((element) =>
+      getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
+    );
+    expect(haloColor).toBe("103, 232, 249");
+    expect(activePulseColor).toBe("34, 211, 238");
+    expect(haloColor).not.toBe(activePulseColor);
+
+    await page.addStyleTag({
+      content: ".nudge-wholesale-halo::after { animation: none !important; }",
+    });
+    const restingHalo = await stageFive.evaluate((element) =>
+      getComputedStyle(element, "::after").boxShadow,
+    );
+    expect(restingHalo).toContain("0.3");
+  });
 });
