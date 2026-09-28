@@ -162,6 +162,15 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     await expect(completedCart).toHaveClass(/fill-amber-500/);
     await expect(page.getByTestId("nudge-cart-2")).toHaveClass(/nudge-active-pulse/);
 
+    if (wholesaleThreshold >= 5) {
+      await expect(page.getByTestId("nudge-cart-wrap-5")).toHaveClass(/nudge-wholesale-halo/);
+    }
+    if (wholesaleThreshold > 5) {
+      await expect(
+        page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`),
+      ).not.toHaveClass(/nudge-wholesale-halo/);
+    }
+
     for (let pos = 2; pos <= wholesaleThreshold; pos += 1) {
       await expect(page.getByTestId(`nudge-cart-${pos}`)).toHaveClass(/cart-stroke-dashed/);
     }

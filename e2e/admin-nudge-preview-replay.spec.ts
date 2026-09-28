@@ -48,19 +48,43 @@ test("admin can replay the nudge preview without saving configuration", async ({
   const activeCart = page
     .getByTestId("nudge-preview-state1")
     .getByTestId("nudge-cart-2");
+  const activeCartWrap = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-wrap-2");
+  const earlierCartWrap = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-wrap-4");
+  const incompleteWholesaleCartWrap = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-wrap-5");
   const incompleteWholesaleLabel = page
     .getByTestId("nudge-preview-state1")
     .getByTestId("nudge-node-5")
-    .locator(".nudge-wholesale-halo");
+    .locator("span.nudge-wholesale-halo");
+  const unlockedWholesaleCartWrap = page
+    .getByTestId("nudge-preview-wholesale")
+    .getByTestId("nudge-cart-wrap-5");
   const unlockedWholesaleLabel = page
     .getByTestId("nudge-preview-wholesale")
     .getByTestId("nudge-node-5")
-    .locator(".nudge-wholesale-halo");
+    .locator("span.nudge-wholesale-halo");
 
   await expect(previewGrid).toHaveAttribute("data-replay-key", "0");
   await expect(replayButton).toBeVisible();
   await expect(activeCart).toHaveClass(/nudge-active-pulse/);
+  await expect(activeCartWrap).not.toHaveClass(/nudge-wholesale-halo/);
+  await expect(earlierCartWrap).not.toHaveClass(/nudge-wholesale-halo/);
+  await expect(incompleteWholesaleCartWrap).toHaveClass(/nudge-blink/);
+  await expect(incompleteWholesaleCartWrap).toHaveClass(/nudge-wholesale-halo/);
+  await expect
+    .poll(() =>
+      incompleteWholesaleCartWrap.evaluate((element) =>
+        getComputedStyle(element, "::after").animationName,
+      ),
+    )
+    .toBe("nudgeWholesaleHalo");
   await expect(incompleteWholesaleLabel).toBeVisible();
+  await expect(unlockedWholesaleCartWrap).not.toHaveClass(/nudge-wholesale-halo/);
   await expect(unlockedWholesaleLabel).toHaveCount(0);
   await expect
     .poll(() =>

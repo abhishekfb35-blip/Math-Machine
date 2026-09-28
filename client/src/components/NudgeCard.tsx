@@ -179,7 +179,9 @@ export default function NudgeCard({
                  * Badges are positioned relative to this box.
                  */}
                 <div
-                  className={`relative ${isWholesale ? "nudge-blink" : ""}`}
+                  className={`relative ${isWholesale ? "nudge-blink" : ""} ${
+                    pos === 5 && !isComplete ? "nudge-wholesale-halo" : ""
+                  }`}
                   style={{ width: `min(100%, ${iconCapPx}px)`, aspectRatio: "1" }}
                   data-testid={`nudge-cart-wrap-${pos}`}
                 >
