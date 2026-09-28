@@ -169,6 +169,37 @@ test("browser Back closes the mini-cart before navigating away", async ({ page }
   await expect(page).toHaveURL(/\/shop$/);
 });
 
+test("closing the mini-cart directly does not leave a duplicate history entry", async ({ page }) => {
+  await page.route("**/api/cart", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(emptyCart),
+    }),
+  );
+  await page.route("**/api/auth/me", route =>
+    route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
+  );
+  await page.route("**/api/site-config/signup-popup", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ key: "signup-popup", value: { enabled: false } }),
+    }),
+  );
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    window.history.pushState(null, "", "/shop");
+    window.history.pushState(null, "", "/");
+  });
+
+  await page.getByTestId("button-cart").click();
+  await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/shop$/);
+});
+
 async function expectMiniCartFooterInViewport(page: Page) {
   for (const testId of [
     "mini-cart-subtotal",
@@ -225,7 +256,14 @@ test("long mini-cart lists scroll without moving totals or checkout actions", as
     });
   });
   await page.route("**/api/auth/me", route =>
-    route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "mini-cart-layout-test-customer",
+        email: "mini-cart-layout@example.test",
+        name: "Mini Cart Tester",
+      }),
+    }),
   );
   await page.route("**/api/site-config/signup-popup", route =>
     route.fulfill({
@@ -272,5 +310,7 @@ test("long mini-cart lists scroll without moving totals or checkout actions", as
       await page.getByTestId("button-mini-cart-checkout").click();
       await expect(page).toHaveURL(/\/checkout$/);
     }
+    await page.goBack();
+    await expect(page).toHaveURL("/");
   }
 });
