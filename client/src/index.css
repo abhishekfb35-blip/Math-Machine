@@ -9,8 +9,8 @@
   --font-mono: 'DM Mono', monospace;
   --nudge-animation-cycle: 6s;
   --nudge-animation-phase-delay: 3s;
-  --nudge-active-pulse-rgb: 6, 182, 212;
-  --nudge-wholesale-halo-rgb: 6, 182, 212;
+  --nudge-active-pulse-rgb: 74, 144, 226;
+  --nudge-wholesale-halo-rgb: 74, 144, 226;
 
   --background: 30 25% 97%;
   --foreground: 20 15% 15%;
@@ -44,8 +44,8 @@
 }
 
 .dark {
-  --nudge-active-pulse-rgb: 34, 211, 238;
-  --nudge-wholesale-halo-rgb: 103, 232, 249;
+  --nudge-active-pulse-rgb: 103, 169, 239;
+  --nudge-wholesale-halo-rgb: 136, 186, 242;
 
   --background: 20 15% 8%;
   --foreground: 30 15% 95%;

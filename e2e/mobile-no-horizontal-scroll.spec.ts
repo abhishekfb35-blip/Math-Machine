@@ -165,6 +165,20 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     if (wholesaleThreshold >= 5) {
       await expect(page.getByTestId("nudge-cart-wrap-5")).toHaveClass(/nudge-wholesale-halo/);
     }
+    const lightPulseColor = await page.getByTestId("nudge-cart-2").evaluate((element) =>
+      getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
+    );
+    expect(lightPulseColor).toBe("74, 144, 226");
+    if (wholesaleThreshold >= 5) {
+      const lightHaloColor = await page
+        .getByTestId("nudge-cart-wrap-5")
+        .evaluate((element) =>
+          getComputedStyle(element, "::after")
+            .getPropertyValue("--nudge-wholesale-halo-rgb")
+            .trim(),
+        );
+      expect(lightHaloColor).toBe("74, 144, 226");
+    }
     if (wholesaleThreshold > 5) {
       await expect(
         page.getByTestId(`nudge-cart-wrap-${wholesaleThreshold}`),
@@ -367,8 +381,8 @@ async function assertNudgeNodesInViewport(page: Page, context: string) {
     const activePulseColor = await activeStage.evaluate((element) =>
       getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
     );
-    expect(haloColor).toBe("103, 232, 249");
-    expect(activePulseColor).toBe("34, 211, 238");
+    expect(haloColor).toBe("136, 186, 242");
+    expect(activePulseColor).toBe("103, 169, 239");
     expect(haloColor).not.toBe(activePulseColor);
 
     await page.addStyleTag({

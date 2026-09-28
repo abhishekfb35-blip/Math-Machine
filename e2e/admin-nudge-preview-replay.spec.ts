@@ -103,7 +103,16 @@ test("admin can replay the nudge preview without saving configuration", async ({
         getComputedStyle(element).getPropertyValue("--nudge-active-pulse-rgb").trim(),
       ),
     )
-    .toBe("6, 182, 212");
+    .toBe("74, 144, 226");
+  await expect
+    .poll(() =>
+      incompleteWholesaleCartWrap.evaluate((element) =>
+        getComputedStyle(element, "::after")
+          .getPropertyValue("--nudge-wholesale-halo-rgb")
+          .trim(),
+      ),
+    )
+    .toBe("74, 144, 226");
 
   await page.waitForTimeout(750);
   const elapsedBeforeReplay = await activeCart.evaluate((element) => {
@@ -166,8 +175,8 @@ test("nudge preview keeps distinct pulse and stage-five halo colors in dark mode
     };
   });
 
-  expect(pulse.color).toBe("34, 211, 238");
-  expect(halo.color).toBe("103, 232, 249");
+  expect(pulse.color).toBe("103, 169, 239");
+  expect(halo.color).toBe("136, 186, 242");
   expect(pulse.color).not.toBe(halo.color);
   expect(pulse.duration).toBe("6s");
   expect(pulse.delay).toBe("0s");
