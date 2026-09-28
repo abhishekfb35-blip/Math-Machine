@@ -134,6 +134,41 @@ test("header mini-cart nudge fills available width when empty and populated", as
   await expect(page.getByTestId("button-mini-cart-checkout")).toBeVisible();
 });
 
+test("browser Back closes the mini-cart before navigating away", async ({ page }) => {
+  await page.route("**/api/cart", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(emptyCart),
+    }),
+  );
+  await page.route("**/api/auth/me", route =>
+    route.fulfill({ status: 401, contentType: "application/json", body: "{}" }),
+  );
+  await page.route("**/api/site-config/signup-popup", route =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ key: "signup-popup", value: { enabled: false } }),
+    }),
+  );
+
+  await page.goto("/");
+  const homeUrl = page.url();
+  await page.evaluate(() => {
+    window.history.pushState(null, "", "/shop");
+    window.history.pushState(null, "", "/");
+  });
+
+  await page.getByTestId("button-cart").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+
+  await page.goBack();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page).toHaveURL(homeUrl);
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/shop$/);
+});
+
 async function expectMiniCartFooterInViewport(page: Page) {
   for (const testId of [
     "mini-cart-subtotal",

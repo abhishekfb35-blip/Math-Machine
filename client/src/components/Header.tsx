@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
@@ -73,9 +73,61 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isMiniCartOpen, setMiniCartOpen, gateAddToCart } = useCartGate();
+  const miniCartHistoryEntryRef = useRef(false);
+  const miniCartHistoryClosePendingRef = useRef(false);
+  const pendingMiniCartNavigationRef = useRef<string | null>(null);
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
   const { formatPrice } = useCurrency();
+
+  const handleMiniCartOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      if (!miniCartHistoryEntryRef.current && !miniCartHistoryClosePendingRef.current) {
+        window.history.pushState(null, "", window.location.href);
+        miniCartHistoryEntryRef.current = true;
+      }
+      setMiniCartOpen(true);
+      return;
+    }
+
+    setMiniCartOpen(false);
+    if (miniCartHistoryEntryRef.current && !miniCartHistoryClosePendingRef.current) {
+      miniCartHistoryClosePendingRef.current = true;
+      window.history.back();
+    }
+  }, [setMiniCartOpen]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!miniCartHistoryEntryRef.current) return;
+
+      miniCartHistoryEntryRef.current = false;
+      miniCartHistoryClosePendingRef.current = false;
+      setMiniCartOpen(false);
+
+      const destination = pendingMiniCartNavigationRef.current;
+      pendingMiniCartNavigationRef.current = null;
+      if (destination) navigate(destination);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [navigate, setMiniCartOpen]);
+
+  const handleMiniCartNavigation = (event: React.MouseEvent, href: string) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    event.preventDefault();
+    pendingMiniCartNavigationRef.current = href;
+    if (miniCartHistoryEntryRef.current) {
+      handleMiniCartOpenChange(false);
+      return;
+    }
+
+    pendingMiniCartNavigationRef.current = null;
+    setMiniCartOpen(false);
+    navigate(href);
+  };
 
   const { data: cart } = useQuery<MiniCartData>({
     queryKey: ["/api/cart"],
@@ -108,7 +160,7 @@ export default function Header() {
       1,
     );
     if (!isAuthenticated) {
-      setMiniCartOpen(false);
+      handleMiniCartOpenChange(false);
       window.setTimeout(update, 250);
       return;
     }
@@ -249,7 +301,7 @@ export default function Header() {
               variant="ghost"
               size="icon"
               className="relative"
-              onClick={() => setMiniCartOpen(true)}
+              onClick={() => handleMiniCartOpenChange(true)}
               data-testid="button-cart"
               aria-label="Open cart"
             >
@@ -268,7 +320,7 @@ export default function Header() {
       </div>
 
       {/* Mini-cart sidebar */}
-      <Sheet open={isMiniCartOpen} onOpenChange={setMiniCartOpen}>
+      <Sheet open={isMiniCartOpen} onOpenChange={handleMiniCartOpenChange}>
         <SheetContent side="right" className="w-80 sm:w-96 flex flex-col p-0">
           <SheetHeader className="px-5 py-4 border-b shrink-0">
             <SheetTitle className="text-left text-base font-semibold flex items-center gap-2">
@@ -281,11 +333,9 @@ export default function Header() {
             <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
               <ShoppingBag className="w-12 h-12 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">Your cart is empty</p>
-              <SheetClose asChild>
-                <Link href="/shop">
-                  <Button size="sm" data-testid="button-mini-cart-shop">Start Shopping</Button>
-                </Link>
-              </SheetClose>
+              <Link href="/shop" onClick={(event) => handleMiniCartNavigation(event, "/shop")}>
+                <Button size="sm" data-testid="button-mini-cart-shop">Start Shopping</Button>
+              </Link>
               {cart?.engineThresholds && (
                 <div className="w-full mt-1" data-testid="mini-cart-teaser">
                   <NudgeCard
@@ -306,25 +356,27 @@ export default function Header() {
               >
                 {cart.items.filter(i => i.product).map((item) => (
                   <div key={item.id} className="px-5 py-3 flex gap-3" data-testid={`mini-cart-item-${item.id}`}>
-                    <SheetClose asChild>
-                      <Link href={`/product/${item.product!.slug}`}>
-                        <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0 cursor-pointer">
-                          <img
-                            src={getProductImageUrl(item.product!.imageUrl, "small")}
-                            alt={item.product!.name}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      </Link>
-                    </SheetClose>
+                    <Link
+                      href={`/product/${item.product!.slug}`}
+                      onClick={(event) => handleMiniCartNavigation(event, `/product/${item.product!.slug}`)}
+                    >
+                      <div className="w-14 h-14 rounded-md overflow-hidden bg-muted shrink-0 cursor-pointer">
+                        <img
+                          src={getProductImageUrl(item.product!.imageUrl, "small")}
+                          alt={item.product!.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </Link>
                     <div className="flex-1 min-w-0 space-y-0.5">
-                      <SheetClose asChild>
-                        <Link href={`/product/${item.product!.slug}`}>
-                          <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
-                            {item.product!.name}
-                          </p>
-                        </Link>
-                      </SheetClose>
+                      <Link
+                        href={`/product/${item.product!.slug}`}
+                        onClick={(event) => handleMiniCartNavigation(event, `/product/${item.product!.slug}`)}
+                      >
+                        <p className="text-sm font-medium leading-tight line-clamp-2 hover:text-primary transition-colors cursor-pointer">
+                          {item.product!.name}
+                        </p>
+                      </Link>
                       {(item.selectedSize || item.selectedColor) && (
                         <p className="text-xs text-muted-foreground">
                           {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
@@ -419,20 +471,16 @@ export default function Header() {
                     ) : null;
                   })()}
                 </div>
-                <SheetClose asChild>
-                  <Link href="/cart">
-                    <Button className="w-full" data-testid="button-mini-cart-view-cart">
-                      View Cart <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="/checkout">
-                    <Button variant="outline" className="w-full" data-testid="button-mini-cart-checkout">
-                      Checkout
-                    </Button>
-                  </Link>
-                </SheetClose>
+                <Link href="/cart" onClick={(event) => handleMiniCartNavigation(event, "/cart")}>
+                  <Button className="w-full" data-testid="button-mini-cart-view-cart">
+                    View Cart <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/checkout" onClick={(event) => handleMiniCartNavigation(event, "/checkout")}>
+                  <Button variant="outline" className="w-full" data-testid="button-mini-cart-checkout">
+                    Checkout
+                  </Button>
+                </Link>
               </div>
             </>
           )}
