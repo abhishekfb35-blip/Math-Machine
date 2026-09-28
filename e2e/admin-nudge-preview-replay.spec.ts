@@ -1,15 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-test("admin can replay the nudge preview without saving configuration", async ({ page }) => {
-  let configSaveRequests = 0;
-
-  page.on("request", (request) => {
-    const path = new URL(request.url()).pathname;
-    if (request.method() === "POST" && path.startsWith("/api/site-config/")) {
-      configSaveRequests += 1;
-    }
-  });
-
+async function openOffersPage(page: Page) {
   await page.route("**/api/admin/check", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -42,6 +33,19 @@ test("admin can replay the nudge preview without saving configuration", async ({
   });
 
   await page.goto("/admin/offers");
+}
+
+test("admin can replay the nudge preview without saving configuration", async ({ page }) => {
+  let configSaveRequests = 0;
+
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (request.method() === "POST" && path.startsWith("/api/site-config/")) {
+      configSaveRequests += 1;
+    }
+  });
+
+  await openOffersPage(page);
 
   const previewGrid = page.getByTestId("nudge-preview-grid");
   const replayButton = page.getByTestId("button-replay-nudge-preview");
@@ -108,4 +112,58 @@ test("admin can replay the nudge preview without saving configuration", async ({
   });
   expect(Number(elapsedAfterReplay)).toBeLessThan(500);
   expect(configSaveRequests).toBe(0);
+});
+
+test("nudge preview keeps distinct pulse and stage-five halo colors in dark mode", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("theme", "dark");
+  });
+  await openOffersPage(page);
+
+  await expect(page.locator("html")).toHaveClass(/dark/);
+
+  const activeCart = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-2");
+  const incompleteWholesaleCartWrap = page
+    .getByTestId("nudge-preview-state1")
+    .getByTestId("nudge-cart-wrap-5");
+
+  await expect(activeCart).toHaveClass(/nudge-active-pulse/);
+  await expect(incompleteWholesaleCartWrap).toHaveClass(/nudge-wholesale-halo/);
+  await expect
+    .poll(() => activeCart.evaluate((element) => getComputedStyle(element).animationName))
+    .toBe("nudgeActivePulse");
+  await expect
+    .poll(() =>
+      incompleteWholesaleCartWrap.evaluate((element) =>
+        getComputedStyle(element, "::after").animationName,
+      ),
+    )
+    .toBe("nudgeWholesaleHalo");
+
+  const pulse = await activeCart.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      color: style.getPropertyValue("--nudge-active-pulse-rgb").trim(),
+      duration: style.animationDuration,
+      delay: style.animationDelay,
+    };
+  });
+  const halo = await incompleteWholesaleCartWrap.evaluate((element) => {
+    const style = getComputedStyle(element, "::after");
+    return {
+      color: style.getPropertyValue("--nudge-wholesale-halo-rgb").trim(),
+      duration: style.animationDuration,
+      delay: style.animationDelay,
+    };
+  });
+
+  expect(pulse.color).toBe("34, 211, 238");
+  expect(halo.color).toBe("103, 232, 249");
+  expect(pulse.color).not.toBe(halo.color);
+  expect(pulse.duration).toBe("6s");
+  expect(pulse.delay).toBe("0s");
+  expect(halo.duration).toBe("6s");
+  expect(halo.delay).toBe("3s");
 });
