@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * CartGateContext — coordinates the hard gate that blocks add-to-cart
@@ -12,7 +14,7 @@ import { createContext, useContext, useState, useCallback, useRef, type ReactNod
 
 interface CartGateContextValue {
   /** Wrap every add-to-cart call with this. Blocks and shows popup when gate is active. */
-  gateAddToCart: (fn: () => void) => void;
+  gateAddToCart: (fn: () => void, quantity?: number) => void;
   /** True while the hard-gate sign-in popup owns interaction over a cart surface. */
   isGatePromptOpen: boolean;
   /** True while the shared signup popup is visible above a cart surface. */
@@ -76,8 +78,9 @@ export const useCartGate = () => {
 export const useCartGateInternal = () => useContext(CartGateContext);
 
 export function CartGateProvider({ children }: { children: ReactNode }) {
-  const [gateActive, setGateActive] = useState(false);
   const [isGatePromptOpen, setIsGatePromptOpen] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
   const [isMiniCartOpen, setMiniCartOpen] = useState(false);
   const [quickAddState, setQuickAddState] = useState<{
@@ -86,8 +89,6 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
   }>({ openIds: new Set(), closedAfterAdd: false });
   const pendingFn = useRef<(() => void) | null>(null);
   const openPopupFn = useRef<() => void>(() => {});
-  const hasCartActivity = useRef(false);
-
   const _registerOpen = useCallback((fn: () => void) => {
     openPopupFn.current = fn;
   }, []);
@@ -119,34 +120,50 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
 
   const _onDismissed = useCallback(() => {
     setIsGatePromptOpen(false);
-    // Only activate the hard gate when the user has already added something to cart.
-    if (hasCartActivity.current) {
-      setGateActive(true);
-    }
     pendingFn.current = null;
   }, []);
 
   const _onAuthSuccess = useCallback(() => {
     const fn = pendingFn.current;
     pendingFn.current = null;
-    setGateActive(false);
     setIsGatePromptOpen(false);
-    hasCartActivity.current = false;
     if (fn) fn();
   }, []);
 
   const gateAddToCart = useCallback(
-    (fn: () => void) => {
-      if (gateActive) {
-        pendingFn.current = fn;
-        setIsGatePromptOpen(true);
-        openPopupFn.current();
-      } else {
+    (fn: () => void, quantity = 1) => {
+      if (isAuthenticated || authLoading) {
         fn();
-        hasCartActivity.current = true;
+        return;
       }
+
+      const checkCart = async () => {
+        let cart = queryClient.getQueryData<{ itemCount?: number }>(["/api/cart"]);
+        if (!cart) {
+          try {
+            cart = await queryClient.fetchQuery<{ itemCount?: number }>({
+              queryKey: ["/api/cart"],
+            });
+          } catch {
+            // The server remains authoritative if the cart cannot be fetched here.
+            fn();
+            return;
+          }
+        }
+
+        if ((cart.itemCount ?? 0) + quantity > 1) {
+          pendingFn.current = fn;
+          setIsGatePromptOpen(true);
+          openPopupFn.current();
+          return;
+        }
+
+        fn();
+      };
+
+      void checkCart();
     },
-    [gateActive],
+    [authLoading, isAuthenticated, queryClient],
   );
 
   return (

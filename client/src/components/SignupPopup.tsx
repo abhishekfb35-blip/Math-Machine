@@ -199,7 +199,6 @@ export default function SignupPopup() {
     _onAuthSuccess,
     isQuickAddOpen,
     isMiniCartOpen,
-    quickAddClosedAfterAdd,
   } = useCartGateInternal();
 
   const [visible, setVisible] = useState(false);
@@ -228,8 +227,8 @@ export default function SignupPopup() {
   const quickAddCloseGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickAddWasOpenRef = useRef(false);
   const miniCartWasOpenRef = useRef(false);
-  const isPromoSurfaceOpenRef = useRef(isQuickAddOpen || isMiniCartOpen);
-  isPromoSurfaceOpenRef.current = isQuickAddOpen || isMiniCartOpen;
+  const isPromoSurfaceOpenRef = useRef(isQuickAddOpen || isMiniCartOpen || visible);
+  isPromoSurfaceOpenRef.current = isQuickAddOpen || isMiniCartOpen || visible;
   const isAuthRef = useRef(isAuthenticated);
   const visibleRef = useRef(false);
   const triggerRef = useRef<SignupPopupTrigger>("promotional");
@@ -257,6 +256,16 @@ export default function SignupPopup() {
     resumePausableTimeout(cartTimerRef, isPromoSurfaceOpenRef);
     resumePausableTimeout(reshowTimerRef, isPromoSurfaceOpenRef);
   }, []);
+
+  const scheduleCloseGrace = useCallback(() => {
+    if (quickAddCloseGraceTimerRef.current !== null) {
+      clearTimeout(quickAddCloseGraceTimerRef.current);
+    }
+    quickAddCloseGraceTimerRef.current = setTimeout(() => {
+      quickAddCloseGraceTimerRef.current = null;
+      resumePromoTimers();
+    }, 5_000);
+  }, [resumePromoTimers]);
 
   const clearPromoTimers = useCallback(() => {
     cancelPausableTimeout(sessionTimerRef);
@@ -290,28 +299,20 @@ export default function SignupPopup() {
     if (!quickAddWasOpenRef.current) return;
     quickAddWasOpenRef.current = false;
 
-    if (quickAddClosedAfterAdd) {
-      resumePromoTimers();
-      return;
-    }
-
-    if (quickAddCloseGraceTimerRef.current !== null) {
-      clearTimeout(quickAddCloseGraceTimerRef.current);
-    }
-    quickAddCloseGraceTimerRef.current = setTimeout(() => {
-      quickAddCloseGraceTimerRef.current = null;
-      resumePromoTimers();
-    }, 5_000);
+    scheduleCloseGrace();
   }, [
     isQuickAddOpen,
-    quickAddClosedAfterAdd,
     pausePromoTimers,
-    resumePromoTimers,
+    scheduleCloseGrace,
   ]);
 
   useLayoutEffect(() => {
     if (isMiniCartOpen) {
       miniCartWasOpenRef.current = true;
+      if (quickAddCloseGraceTimerRef.current !== null) {
+        clearTimeout(quickAddCloseGraceTimerRef.current);
+        quickAddCloseGraceTimerRef.current = null;
+      }
       pausePromoTimers();
       return;
     }
@@ -319,9 +320,18 @@ export default function SignupPopup() {
     if (!miniCartWasOpenRef.current) return;
     miniCartWasOpenRef.current = false;
 
-    if (isQuickAddOpen || quickAddCloseGraceTimerRef.current !== null) return;
+    if (isQuickAddOpen) return;
+    scheduleCloseGrace();
+  }, [isMiniCartOpen, isQuickAddOpen, pausePromoTimers, scheduleCloseGrace]);
+
+  useLayoutEffect(() => {
+    if (visible) {
+      pausePromoTimers();
+      return;
+    }
+    if (isQuickAddOpen || isMiniCartOpen || quickAddCloseGraceTimerRef.current !== null) return;
     resumePromoTimers();
-  }, [isMiniCartOpen, isQuickAddOpen, pausePromoTimers, resumePromoTimers]);
+  }, [visible, isQuickAddOpen, isMiniCartOpen, pausePromoTimers, resumePromoTimers]);
 
   useEffect(() => () => {
     clearPromoTimers();
@@ -499,7 +509,7 @@ export default function SignupPopup() {
   ) => {
     if (isAuthRef.current) return false;
     if (nextTrigger === "promotional" && isPromoSurfaceOpenRef.current) return false;
-    if (nextTrigger !== "explicit" && !canShowPromotional()) return false;
+    if (nextTrigger === "promotional" && !canShowPromotional()) return false;
     if (visibleRef.current) {
       if (nextTrigger === triggerRef.current) {
         return nextTrigger === "explicit";

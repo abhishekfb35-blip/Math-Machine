@@ -138,6 +138,7 @@ export default function CategoryPage() {
       <QuickAddSheet
         product={quickAddProduct}
         open={!!quickAddProduct}
+        onReopen={(product) => setQuickAddProduct(product)}
         onOpenChange={(open) => !open && setQuickAddProduct(null)}
       />
     </div>

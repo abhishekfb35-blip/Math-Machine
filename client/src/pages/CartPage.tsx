@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useCartGate } from "@/context/CartGateContext";
 import { getCartDiscountLabel } from "@/lib/discountLabels";
 import type { Product, CartItem } from "@shared/types";
 
@@ -131,6 +132,7 @@ function CartItemRow({ item, onRemove, onUpdateQty, formatPrice }: {
 
 export default function CartPage() {
   const { formatPrice, currency } = useCurrency();
+  const { gateAddToCart } = useCartGate();
   const { data: cart, isLoading } = useQuery<CartData>({
     queryKey: ["/api/cart"],
   });
@@ -208,7 +210,17 @@ export default function CartPage() {
               key={item.id}
               item={item}
               onRemove={() => removeMutation.mutate(item.id)}
-              onUpdateQty={(qty) => updateMutation.mutate({ id: item.id, quantity: qty })}
+              onUpdateQty={(qty) => {
+                const increaseBy = qty - item.quantity;
+                if (increaseBy > 0) {
+                  gateAddToCart(
+                    () => updateMutation.mutate({ id: item.id, quantity: qty }),
+                    increaseBy,
+                  );
+                } else {
+                  updateMutation.mutate({ id: item.id, quantity: qty });
+                }
+              }}
               formatPrice={formatPrice}
             />
           ))}

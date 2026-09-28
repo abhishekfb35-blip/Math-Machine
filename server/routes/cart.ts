@@ -6,6 +6,29 @@ import { CartService, NotFoundError } from "../services/cartService";
 import { getSessionId, getAuthenticatedCustomer } from "./helpers";
 
 const cartService = new CartService(storage);
+const guestCartMutationQueues = new Map<string, Promise<void>>();
+
+async function withGuestCartMutationLock<T>(
+  sessionId: string,
+  mutate: () => Promise<T>,
+): Promise<T> {
+  const previous = guestCartMutationQueues.get(sessionId) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  guestCartMutationQueues.set(sessionId, current);
+
+  await previous;
+  try {
+    return await mutate();
+  } finally {
+    releaseCurrent();
+    if (guestCartMutationQueues.get(sessionId) === current) {
+      guestCartMutationQueues.delete(sessionId);
+    }
+  }
+}
 
 async function touchCart(req: any, res: any, sessionId: string) {
   try {
@@ -30,14 +53,35 @@ export function registerCartRoutes(app: Express) {
       const sessionId = getSessionId(req, res);
       const currency: string = (req.cookies?.tl_currency as string) || "INR";
       const isDomestic = currency.toUpperCase() === "INR";
-      const { isNew } = await cartService.addItem(
-        sessionId,
-        input.productId,
-        input.quantity,
-        input.personalizationName || null,
-        input.selectedColor || null,
-        input.selectedSize || null
-      );
+      const customer = await getAuthenticatedCustomer(req);
+      const addItem = async () => {
+        if (!customer) {
+          const cart = await storage.getOrCreateCart(sessionId);
+          const items = await storage.getCartItems(cart.id);
+          const currentQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+          if (currentQuantity + input.quantity > 1) {
+            return null;
+          }
+        }
+        return cartService.addItem(
+          sessionId,
+          input.productId,
+          input.quantity,
+          input.personalizationName || null,
+          input.selectedColor || null,
+          input.selectedSize || null
+        );
+      };
+      const addResult = customer
+        ? await addItem()
+        : await withGuestCartMutationLock(sessionId, addItem);
+      if (!addResult) {
+        return res.status(403).json({
+          code: "SIGNUP_REQUIRED",
+          message: "Sign in to add more than one item to your cart.",
+        });
+      }
+      const { isNew } = addResult;
       await touchCart(req, res, sessionId);
       const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
       res.status(isNew ? 201 : 200).json(cartDetails);
@@ -59,7 +103,36 @@ export function registerCartRoutes(app: Express) {
       const sessionId = getSessionId(req, res);
       const currency: string = (req.cookies?.tl_currency as string) || "INR";
       const isDomestic = currency.toUpperCase() === "INR";
-      await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
+      const customer = await getAuthenticatedCustomer(req);
+      const updateItem = async () => {
+        if (!customer) {
+          const cart = await storage.getOrCreateCart(sessionId);
+          const items = await storage.getCartItems(cart.id);
+          const currentItem = items.find((item) => item.id === id);
+          if (!currentItem) {
+            return "not-found" as const;
+          }
+          const currentQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+          const nextQuantity = currentQuantity - currentItem.quantity + input.quantity;
+          if (nextQuantity > 1) {
+            return "signup-required" as const;
+          }
+        }
+        await cartService.updateItem(id, input.quantity, input.personalizationName, input.selectedColor, input.selectedSize);
+        return "updated" as const;
+      };
+      const updateResult = customer
+        ? await updateItem()
+        : await withGuestCartMutationLock(sessionId, updateItem);
+      if (updateResult === "not-found") {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      if (updateResult === "signup-required") {
+        return res.status(403).json({
+          code: "SIGNUP_REQUIRED",
+          message: "Sign in to add more than one item to your cart.",
+        });
+      }
       await touchCart(req, res, sessionId);
       const cartDetails = await cartService.getCartDetails(sessionId, isDomestic);
       res.json(cartDetails);

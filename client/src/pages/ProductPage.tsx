@@ -1168,6 +1168,7 @@ export default function ProductPage() {
       <QuickAddSheet
         product={quickAddProduct}
         open={!!quickAddProduct}
+        onReopen={(product) => setQuickAddProduct(product)}
         onOpenChange={(open) => { if (!open) setQuickAddProduct(null); }}
       />
 

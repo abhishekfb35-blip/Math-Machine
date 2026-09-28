@@ -6,6 +6,7 @@ import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { ShoppingCart, Gift, Minus, Plus, ArrowDown } from "lucide-react";
 import NudgeCard from "@/components/NudgeCard";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,11 +56,13 @@ interface QuickAddSheetProps {
   product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onReopen: (product: Product) => void;
 }
 
-export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddSheetProps) {
+export default function QuickAddSheet({ product, open, onOpenChange, onReopen }: QuickAddSheetProps) {
   const { toast } = useToast();
   const { gateAddToCart, isGatePromptOpen, isSignupPopupOpen, setQuickAddOpen } = useCartGate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const keepSheetOpen = isGatePromptOpen || isSignupPopupOpen;
   const { formatPrice, convertPrice } = useCurrency();
   const offerLabel = useOfferLabel();
@@ -77,6 +80,14 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   const signupPopupWasOpenRef = useRef(false);
   const quickAddInstanceId = useId();
   const quickAddAddedRef = useRef(false);
+  const pendingQuantityGateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingQuantityStateRef = useRef<{
+    personalizationName: string;
+    gentlemanName: string;
+    ladyName: string;
+    selectedSizeName: string | null;
+    sizeColorMap: Record<string, string>;
+  } | null>(null);
   const [showScrollCue, setShowScrollCue] = useState(false);
   const { data: productPageConfigData } = useQuery<{ value: ProductPageConfig } | null>({
     queryKey: ["/api/site-config", "product-page-config"],
@@ -208,8 +219,45 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
   }, [open, quickAddInstanceId, setQuickAddOpen]);
 
   useEffect(() => () => {
+    if (pendingQuantityGateRef.current !== null) {
+      clearTimeout(pendingQuantityGateRef.current);
+    }
     setQuickAddOpen(quickAddInstanceId, false, quickAddAddedRef.current);
   }, [quickAddInstanceId, setQuickAddOpen]);
+
+  const requestQuantityIncrease = () => {
+    const nextQuantity = quantity + 1;
+    if (isAuthenticated || authLoading) {
+      setQuantity(nextQuantity);
+      return;
+    }
+
+    pendingQuantityStateRef.current = {
+      personalizationName,
+      gentlemanName,
+      ladyName,
+      selectedSizeName,
+      sizeColorMap: { ...sizeColorMap },
+    };
+    const productToReopen = product;
+    onOpenChange(false);
+    pendingQuantityGateRef.current = setTimeout(() => {
+      pendingQuantityGateRef.current = null;
+      gateAddToCart(() => {
+        const pending = pendingQuantityStateRef.current;
+        pendingQuantityStateRef.current = null;
+        if (pending) {
+          setPersonalizationName(pending.personalizationName);
+          setGentlemanName(pending.gentlemanName);
+          setLadyName(pending.ladyName);
+          setSelectedSizeName(pending.selectedSizeName);
+          setSizeColorMap(pending.sizeColorMap);
+        }
+        setQuantity(nextQuantity);
+        if (productToReopen) onReopen(productToReopen);
+      }, nextQuantity);
+    }, 300);
+  };
 
   useEffect(() => {
     if (isSignupPopupOpen) {
@@ -578,7 +626,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                   <Button
                     size="icon"
                     variant="outline"
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={requestQuantityIncrease}
                     data-testid="button-quickadd-increase"
                   >
                     <Plus className="w-4 h-4" />
@@ -619,7 +667,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
                 ? gentlemanName.trim() === "" && ladyName.trim() === ""
                 : personalizationName.trim() === "";
               if (nameEmpty) { setShowNameConfirm(true); return; }
-              gateAddToCart(() => addToCartMutation.mutate());
+              gateAddToCart(() => addToCartMutation.mutate(), quantity);
             }}
             disabled={addToCartMutation.isPending || !!variantSelectionIncomplete || (() => {
               const min = nameMin ?? 0;
@@ -656,7 +704,7 @@ export default function QuickAddSheet({ product, open, onOpenChange }: QuickAddS
           <AlertDialogCancel data-testid="button-name-confirm-cancel">Add a name</AlertDialogCancel>
           <AlertDialogAction
             data-testid="button-name-confirm-proceed"
-            onClick={() => { setShowNameConfirm(false); gateAddToCart(() => addToCartMutation.mutate()); }}
+            onClick={() => { setShowNameConfirm(false); gateAddToCart(() => addToCartMutation.mutate(), quantity); }}
           >
             Proceed without name
           </AlertDialogAction>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductImageUrl } from "@/lib/imageUtils";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useCartGate } from "@/context/CartGateContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { trackEvent } from "@/lib/analytics";
@@ -31,6 +32,7 @@ interface ProductCardNewProps {
 
 export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewProps) {
   const { formatPrice } = useCurrency();
+  const { gateAddToCart } = useCartGate();
   const { isWishlisted, toggle } = useWishlist();
   const wishlisted = isWishlisted(product.id);
   const offerLabel = useOfferLabel();
@@ -119,11 +121,13 @@ export default function ProductCardNew({ product, onQuickAdd }: ProductCardNewPr
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-               trackEvent("quick_add_opened", {
-                 product_id: product.id,
-                 placement: getProductPlacement(),
+               gateAddToCart(() => {
+                 trackEvent("quick_add_opened", {
+                   product_id: product.id,
+                   placement: getProductPlacement(),
+                 });
+                 onQuickAdd(product);
                });
-              onQuickAdd(product);
             }}
             data-testid={`button-quickadd-${product.id}`}
           >

@@ -72,7 +72,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isMiniCartOpen, setMiniCartOpen } = useCartGate();
+  const { isMiniCartOpen, setMiniCartOpen, gateAddToCart } = useCartGate();
   const { customer, isAuthenticated, logout } = useAuth();
   const { installable, promptInstall } = usePWAInstall();
   const { formatPrice } = useCurrency();
@@ -101,6 +101,19 @@ export default function Header() {
   };
 
   const isShopActive = location.startsWith("/shop");
+
+  const increaseCartQuantity = (id: string, quantity: number) => {
+    const update = () => gateAddToCart(
+      () => cartMutation.mutate({ id, quantity }),
+      1,
+    );
+    if (!isAuthenticated) {
+      setMiniCartOpen(false);
+      window.setTimeout(update, 250);
+      return;
+    }
+    update();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
@@ -336,7 +349,7 @@ export default function Header() {
                           size="icon"
                           variant="outline"
                           className="w-6 h-6"
-                          onClick={() => cartMutation.mutate({ id: item.id, quantity: item.quantity + 1 })}
+                          onClick={() => increaseCartQuantity(item.id, item.quantity + 1)}
                           disabled={cartMutation.isPending}
                           data-testid={`button-mini-increase-qty-${item.id}`}
                         >
