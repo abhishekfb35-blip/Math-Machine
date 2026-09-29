@@ -1,8 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
+import { getMetaCatalogItemId } from "../shared/metaCatalogIds";
 
 const ORDER_ID = "analytics-order-123";
 const ORDER_PATH = `/order/${ORDER_ID}`;
 const STORAGE_KEY = `turtlelittle:gtm-purchase:${ORDER_ID}`;
+const META_STORAGE_KEY = `turtlelittle:meta-purchase:${ORDER_ID}`;
 
 const order = {
   id: ORDER_ID,
@@ -46,9 +48,9 @@ const order = {
   ],
 };
 
-async function mockOrder(page: Page) {
+async function mockOrder(page: Page, orderResponse = order) {
   await page.route(`**/api/orders/${ORDER_ID}`, async route => {
-    await route.fulfill({ json: order });
+    await route.fulfill({ json: orderResponse });
   });
 }
 
@@ -84,6 +86,16 @@ async function gtagPurchaseEvents(page: Page) {
           entry?.[1] === "purchase",
       )
       .map(entry => entry[2]),
+  );
+}
+
+async function metaPixelEvents(page: Page, eventName: string) {
+  return page.evaluate(
+    name =>
+      ((window as any).__metaPixelCalls ?? []).filter(
+        (entry: any[]) => entry?.[0] === "track" && entry?.[1] === name,
+      ),
+    eventName,
   );
 }
 
@@ -158,6 +170,10 @@ test.describe("order confirmation purchase analytics", () => {
     await page.addInitScript(() => {
       window.dataLayer = [];
       (window as any).__customAnalyticsEvents = [];
+      (window as any).__META_PIXEL_ID__ = "123456789012345";
+      (window as any).__metaPixelCalls = [];
+      (window as any).fbq = (...args: any[]) => (window as any).__metaPixelCalls.push(args);
+      (window as any)._fbq = (window as any).fbq;
       (window as any).umami = {
         track(name: string, data?: Record<string, string | number | boolean>) {
           (window as any).__customAnalyticsEvents.push({ name, data });
@@ -172,13 +188,28 @@ test.describe("order confirmation purchase analytics", () => {
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
     await expectOneOrderCompleted(page);
+    await expect.poll(async () => (await metaPixelEvents(page, "Purchase")).length).toBe(1);
+    const [metaPurchase] = await metaPixelEvents(page, "Purchase");
+    const metaItemId = getMetaCatalogItemId("product-1", "M", "Blue");
+    expect(metaPurchase[2]).toMatchObject({
+      content_ids: [metaItemId],
+      content_type: "product",
+      contents: [{ id: metaItemId, quantity: 1 }],
+      currency: "INR",
+      value: 799,
+    });
+    expect(JSON.stringify(metaPurchase)).not.toContain(order.customerName);
+    expect(JSON.stringify(metaPurchase)).not.toContain(order.customerEmail);
     await expect(page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).resolves.toBe("1");
+    await expect(page.evaluate(key => localStorage.getItem(key), META_STORAGE_KEY)).resolves.toBe("1");
+    expect(await metaPixelEvents(page, "PageView")).toHaveLength(1);
 
     await page.evaluate(() => {
       history.pushState({}, "", "/privacy");
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
     await expect(page).toHaveURL(/\/privacy$/);
+    await expect.poll(async () => (await metaPixelEvents(page, "PageView")).length).toBe(2);
     await page.evaluate(path => {
       history.pushState({}, "", path);
       window.dispatchEvent(new PopStateEvent("popstate"));
@@ -186,6 +217,8 @@ test.describe("order confirmation purchase analytics", () => {
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
     await expectOnePurchase(page);
     await expectOneOrderCompleted(page);
+    expect(await metaPixelEvents(page, "Purchase")).toHaveLength(1);
+    expect(await metaPixelEvents(page, "PageView")).toHaveLength(3);
 
     await page.reload();
     await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
@@ -193,6 +226,7 @@ test.describe("order confirmation purchase analytics", () => {
     expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
     expect(await customAnalyticsEvents(page, "order_completed")).toHaveLength(0);
+    expect(await metaPixelEvents(page, "Purchase")).toHaveLength(0);
 
     await page.goto("/privacy");
     await page.goto(ORDER_PATH);
@@ -201,6 +235,15 @@ test.describe("order confirmation purchase analytics", () => {
     expect(await gtmCustomEventsNamedPurchase(page)).toHaveLength(0);
     expect(await gtagPurchaseEvents(page)).toHaveLength(0);
     expect(await customAnalyticsEvents(page, "order_completed")).toHaveLength(0);
+  });
+
+  test("does not send Meta Purchase while an order is still pending", async ({ page }) => {
+    await mockOrder(page, { ...order, status: "pending", paymentStatus: "pending" });
+    await page.goto(ORDER_PATH);
+    await expect(page.getByTestId("text-order-confirmed")).toBeVisible();
+
+    expect(await metaPixelEvents(page, "Purchase")).toHaveLength(0);
+    await expect(page.evaluate(key => localStorage.getItem(key), META_STORAGE_KEY)).resolves.toBeNull();
   });
 
   test("uses the page-lifecycle fallback when browser storage is unavailable", async ({ page }) => {

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { useRef, useEffect } from "react";
-import { trackEvent, trackPurchase } from "@/lib/analytics";
+import { trackEvent, trackMetaPurchase, trackPurchase } from "@/lib/analytics";
+import { getMetaCatalogTrackingIdentity } from "@shared/metaCatalogIds";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,34 +23,52 @@ export default function OrderConfirmation() {
     queryKey: ["/api/orders", id],
   });
 
-  const purchaseTrackedRef = useRef(false);
+  const analyticsPurchaseTrackedRef = useRef(false);
+  const metaPurchaseTrackedOrderIdsRef = useRef(new Set<string>());
   useEffect(() => {
-    if (!order || purchaseTrackedRef.current) return;
-    purchaseTrackedRef.current = true;
-    const purchaseTracked = trackPurchase(
-      order.id,
-      order.total,
-      order.items.map((item) => ({
+    if (!order) return;
+    const items = order.items.map((item) => {
+      const metaIdentity = getMetaCatalogTrackingIdentity(
+        item.productId,
+        item.selectedSize,
+        item.selectedColor,
+      );
+      return {
         id: item.productId,
         name: item.productName,
         price: item.productPrice,
         quantity: item.quantity,
-      })),
-      order.currency ?? "INR",
-    );
-    if (purchaseTracked) {
-      const paymentMethod =
-        order.paymentStatus === "cod"
-          ? "cod"
-          : order.paymentStatus === "paid" || order.paymentId || order.razorpayOrderId
-            ? "online"
-            : "other";
-      trackEvent("order_completed", {
-        value: order.total,
-        currency: order.currency ?? "INR",
-        item_count: order.items.reduce((count, item) => count + item.quantity, 0),
-        payment_method: paymentMethod,
-      });
+        metaId: metaIdentity.id,
+        metaContentType: metaIdentity.contentType,
+      };
+    });
+    const currency = order.currency ?? "INR";
+
+    if (!analyticsPurchaseTrackedRef.current) {
+      analyticsPurchaseTrackedRef.current = true;
+      const purchaseTracked = trackPurchase(order.id, order.total, items, currency);
+      if (purchaseTracked) {
+        const paymentMethod =
+          order.paymentStatus === "cod"
+            ? "cod"
+            : order.paymentStatus === "paid" || order.paymentId || order.razorpayOrderId
+              ? "online"
+              : "other";
+        trackEvent("order_completed", {
+          value: order.total,
+          currency,
+          item_count: order.items.reduce((count, item) => count + item.quantity, 0),
+          payment_method: paymentMethod,
+        });
+      }
+    }
+
+    const status = order.status?.toLowerCase();
+    const isConfirmed = ["confirmed", "processing", "shipped", "delivered"].includes(status ?? "");
+    if (isConfirmed && !metaPurchaseTrackedOrderIdsRef.current.has(order.id)) {
+      if (trackMetaPurchase(order.id, order.total, items, currency)) {
+        metaPurchaseTrackedOrderIdsRef.current.add(order.id);
+      }
     }
   }, [order]);
 

@@ -2,7 +2,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useCartGate } from "@/context/CartGateContext";
-import { trackProductView, trackAddToCart, trackEvent } from "@/lib/analytics";
+import {
+  trackMetaProductView,
+  trackProductView,
+  trackAddToCart,
+  trackEvent,
+} from "@/lib/analytics";
+import {
+  getMetaCatalogGroupId,
+  getMetaCatalogTrackingIdentity,
+} from "@shared/metaCatalogIds";
 import { ChevronRight, ShoppingCart, Gift, Check, Star, Ruler, Weight, Layers, Droplets, Palette, Package, Search, PenLine, Heart } from "lucide-react";
 import SEO, { ProductJsonLd, BreadcrumbJsonLd } from "@/components/SEO";
 import ImageZoomDialog from "@/components/ImageZoomDialog";
@@ -187,21 +196,40 @@ export default function ProductPage() {
 
   const category = categories?.find((c) => c.id === product?.categoryId);
 
-  const viewTrackedRef = useRef(false);
+  const viewTrackedProductIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!product || viewTrackedRef.current) return;
+    if (!product || categories === undefined || viewTrackedProductIdRef.current === product.id) return;
     // Wait until category has resolved so the GA4 payload is complete.
     // categories query is fast (cached), so this fires within the same tick in practice.
-    if (categories !== undefined && !viewTrackedRef.current) {
-      viewTrackedRef.current = true;
-      trackProductView({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        category: category?.name,
-      });
-    }
+    viewTrackedProductIdRef.current = product.id;
+    trackProductView({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: category?.name,
+    });
   }, [product, category, categories]);
+
+  const metaViewTrackedProductIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !product
+      || categories === undefined
+      || variantOptions === undefined
+      || metaViewTrackedProductIdRef.current === product.id
+    ) return;
+
+    metaViewTrackedProductIdRef.current = product.id;
+    const hasVariants = variantOptions.sizes.length > 0;
+    trackMetaProductView({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: category?.name,
+      metaId: hasVariants ? getMetaCatalogGroupId(product.id) : product.id,
+      metaContentType: hasVariants ? "product_group" : "product",
+    });
+  }, [product, category, categories, variantOptions]);
 
   const relatedProducts = allProducts
     ?.filter((p) => p.categoryId === product?.categoryId && p.id !== product?.id)
@@ -306,11 +334,20 @@ export default function ProductPage() {
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/cart"], data);
       window.dispatchEvent(new CustomEvent("cart:item-added-for-popup"));
+      const metaIdentity = isCoupleProduct
+        ? { id: product!.id, contentType: "product_group" as const }
+        : getMetaCatalogTrackingIdentity(
+            product!.id,
+            selectedSize,
+            sizeColorMap[selectedSize ?? ""],
+          );
       trackAddToCart({
         id: product!.id,
         name: product!.name,
         price: effectiveSellingPrice,
         category: category?.name,
+        metaId: metaIdentity.id,
+        metaContentType: metaIdentity.contentType,
       });
        trackEvent("cart_item_added", {
          product_id: product!.id,

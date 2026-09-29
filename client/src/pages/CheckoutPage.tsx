@@ -24,6 +24,7 @@ import {
 import { useCurrency } from "@/context/CurrencyContext";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { trackBeginCheckout, trackEvent } from "@/lib/analytics";
+import { getMetaCatalogTrackingIdentity } from "@shared/metaCatalogIds";
 
 interface CartData {
   id: string;
@@ -182,13 +183,23 @@ export default function CheckoutPage() {
     trackBeginCheckout(
       cart.items
         .filter((i) => i.product)
-        .map((i) => ({
-          id: i.product!.id,
-          name: i.product!.name,
-          price: i.product!.price,
-          quantity: i.quantity,
-        })),
+        .map((i) => {
+          const metaIdentity = getMetaCatalogTrackingIdentity(
+            i.product!.id,
+            i.selectedSize,
+            i.selectedColor,
+          );
+          return {
+            id: i.product!.id,
+            name: i.product!.name,
+            price: i.product!.price,
+            quantity: i.quantity,
+            metaId: metaIdentity.id,
+            metaContentType: metaIdentity.contentType,
+          };
+        }),
       cart.total,
+      currency,
     );
     trackEvent("checkout_started", {
       item_count: cart.itemCount,

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useId } from "react";
 import { useCartGate } from "@/context/CartGateContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trackAddToCart, trackEvent } from "@/lib/analytics";
+import { getMetaCatalogTrackingIdentity } from "@shared/metaCatalogIds";
 import { useOfferLabel } from "@/hooks/useOfferLabel";
 import { ShoppingCart, Gift, Minus, Plus, ArrowDown } from "lucide-react";
 import NudgeCard from "@/components/NudgeCard";
@@ -315,11 +316,20 @@ export default function QuickAddSheet({ product, open, onOpenChange, onReopen }:
       quickAddAddedRef.current = true;
       queryClient.setQueryData(["/api/cart"], data);
       window.dispatchEvent(new CustomEvent("cart:item-added-for-popup"));
+      const metaIdentity = isCoupleProduct
+        ? { id: product!.id, contentType: "product_group" as const }
+        : getMetaCatalogTrackingIdentity(
+            product!.id,
+            selectedSizeName,
+            sizeColorMap[selectedSizeName ?? ""],
+          );
       trackAddToCart(
         {
           id: product!.id,
           name: product!.name,
           price: effectivePrice,
+          metaId: metaIdentity.id,
+          metaContentType: metaIdentity.contentType,
         },
         quantity,
       );
