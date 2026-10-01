@@ -23,8 +23,9 @@ export const imageImportSchema = z.object({
 }).strict();
 
 export type ImageImportRow = z.infer<typeof imageImportRowSchema>;
+export type ImageImportTarget = Pick<ImageImportRow, "productId" | "imageSequenceNumber">;
 
-export function duplicateImageImportRows(rows: ImageImportRow[]): number[] {
+export function duplicateImageImportRows(rows: readonly ImageImportTarget[]): number[] {
   const seen = new Map<string, number>();
   const duplicates = new Set<number>();
   rows.forEach((row, index) => {

@@ -48,11 +48,20 @@ export class LocalFileStorage implements IFileStorage {
     const ext = path.extname(originalName).toLowerCase() || ".jpg";
     const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
     const filePath = path.join(PRODUCT_IMAGES_DIR, filename);
-    await fs.promises.writeFile(filePath, file);
     try {
-      await generateResizedVariants(file, filename);
+      await fs.promises.writeFile(filePath, file);
+      try {
+        await generateResizedVariants(file, filename);
+      } catch (err) {
+        console.warn(`[fileStorage] Resize failed for ${filename}:`, err);
+      }
     } catch (err) {
-      console.warn(`[fileStorage] Resize failed for ${filename}:`, err);
+      try {
+        await this.delete(`/images/products/${filename}`);
+      } catch (cleanupError) {
+        console.warn(`[fileStorage] Could not clean up failed upload ${filename}:`, cleanupError);
+      }
+      throw err;
     }
     return { url: `/images/products/medium/${filename}`, filename };
   }

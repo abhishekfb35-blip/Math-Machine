@@ -43,7 +43,7 @@ import type {
 import { db } from "./db";
 import { generateSku } from "./utils/sku";
 import { eq, and, or, ilike, sql, desc, asc, gt, inArray, count, isNull } from "drizzle-orm";
-import { duplicateImageImportRows, type ImageImportRow } from "@shared/productImageImport";
+import { duplicateImageImportRows, type ImageImportRow, type ImageImportTarget } from "@shared/productImageImport";
 import { duplicateProductCreateRows, type ProductCreateRow, type ProductCreateError } from "@shared/productCreateImport";
 import { getProductSearchTerms, getProductSearchWordVariants } from "@shared/productSearch";
 
@@ -166,7 +166,8 @@ export interface IStorage {
   deleteProductImage(id: string): Promise<void>;
   reorderProductImages(productId: string, imageIds: string[]): Promise<void>;
   bulkReplaceProductImages(productIds: string[], slots: { sortOrder: number; imageUrl: string }[]): Promise<void>;
-  importProductImageUrls(rows: ImageImportRow[], username: string): Promise<{ updatedRows: number; updatedProducts: number }>;
+  validateProductImageImportTargets(targets: ImageImportTarget[]): Promise<void>;
+  importProductImageUrls(rows: ImageImportRow[], username: string): Promise<{ addedRows: number; addedProducts: number }>;
 
   getProductReviews(productId: string): Promise<ProductReview[]>;
   getCustomerReviewForProduct(customerId: string, productId: string): Promise<ProductReview | undefined>;
@@ -1473,7 +1474,43 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async importProductImageUrls(rows: ImageImportRow[], username: string): Promise<{ updatedRows: number; updatedProducts: number }> {
+  async validateProductImageImportTargets(targets: ImageImportTarget[]): Promise<void> {
+    if (targets.length === 0) throw new ImageImportValidationError([{ row: 0, message: "At least one image is required" }]);
+    const duplicateRows = duplicateImageImportRows(targets);
+    if (duplicateRows.length) {
+      throw new ImageImportValidationError(duplicateRows.map(index => ({ row: index + 2, message: "Duplicate product/sequence pair" })));
+    }
+    const ids = [...new Set(targets.map(target => target.productId))];
+    await db.transaction(async (tx) => {
+      const found = await tx.select({ id: products.id }).from(products)
+        .where(inArray(products.id, ids)).orderBy(products.id).for("update");
+      const known = new Set(found.map(product => product.id));
+      const unknown = targets.flatMap((target, index) => known.has(target.productId) ? [] : [{
+        row: index + 2,
+        message: `Product ID not found: ${target.productId}`,
+      }]);
+      if (unknown.length) throw new ImageImportValidationError(unknown);
+
+      const occupied: Array<{ row: number; message: string }> = [];
+      for (let index = 0; index < targets.length; index++) {
+        const target = targets[index];
+        const sortOrder = target.imageSequenceNumber - 1;
+        const existing = await tx.select({ id: productImages.id }).from(productImages)
+          .where(and(eq(productImages.productId, target.productId), eq(productImages.sortOrder, sortOrder)));
+        if (existing.length) {
+          occupied.push({
+            row: index + 2,
+            message: existing.length > 1
+              ? `Multiple images already occupy sequence ${target.imageSequenceNumber}; resolve the conflict before importing`
+              : `An image already exists at sequence ${target.imageSequenceNumber}`,
+          });
+        }
+      }
+      if (occupied.length) throw new ImageImportValidationError(occupied);
+    });
+  }
+
+  async importProductImageUrls(rows: ImageImportRow[], username: string): Promise<{ addedRows: number; addedProducts: number }> {
     const duplicateRows = duplicateImageImportRows(rows);
     if (duplicateRows.length) {
       throw new ImageImportValidationError(duplicateRows.map(index => ({ row: index + 2, message: "Duplicate product/sequence pair" })));
@@ -1488,30 +1525,35 @@ export class DatabaseStorage implements IStorage {
       const unknown = rows.flatMap((row, index) => known.has(row.productId) ? [] : [{ row: index + 2, message: `Product ID not found: ${row.productId}` }]);
       if (unknown.length) throw new ImageImportValidationError(unknown);
 
-      for (const row of rows) {
+      const occupied: Array<{ row: number; message: string }> = [];
+      for (let index = 0; index < rows.length; index++) {
+        const row = rows[index];
         const sortOrder = row.imageSequenceNumber - 1;
-        // Never update sortOrder=0 (the hero). Keep existing image IDs and ordering intact.
         const existing = await tx.select({ id: productImages.id }).from(productImages)
           .where(and(eq(productImages.productId, row.productId), eq(productImages.sortOrder, sortOrder)));
-        if (existing.length > 1) {
-          throw new ImageImportValidationError([{ row: rows.indexOf(row) + 2, message: "Multiple existing images occupy this position; resolve them before importing" }]);
-        }
-        if (existing[0]) {
-          await tx.update(productImages).set({ imageUrl: row.imageUrl, isPrimary: false, updatedAt: new Date() })
-            .where(eq(productImages.id, existing[0].id));
-        } else {
-          await tx.insert(productImages).values({
-            id: createId(), productId: row.productId, imageUrl: row.imageUrl,
-            sortOrder, isPrimary: false,
+        if (existing.length) {
+          occupied.push({
+            row: index + 2,
+            message: existing.length > 1
+              ? `Multiple images already occupy sequence ${row.imageSequenceNumber}; resolve the conflict before importing`
+              : `An image already exists at sequence ${row.imageSequenceNumber}`,
           });
         }
       }
+      if (occupied.length) throw new ImageImportValidationError(occupied);
+
+      for (const row of rows) {
+        await tx.insert(productImages).values({
+          id: createId(), productId: row.productId, imageUrl: row.imageUrl,
+          sortOrder: row.imageSequenceNumber - 1, isPrimary: false,
+        });
+      }
       await tx.insert(auditLogs).values({
         id: createId(), entityType: "product", entityId: "bulk",
-        entityName: `${ids.length} products`, action: "import-image-urls",
+        entityName: `${ids.length} products`, action: "import-product-images",
         changes: JSON.stringify({ rows }), username,
       });
-      return { updatedRows: rows.length, updatedProducts: ids.length };
+      return { addedRows: rows.length, addedProducts: ids.length };
     });
   }
 

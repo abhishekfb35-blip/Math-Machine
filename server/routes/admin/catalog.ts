@@ -1,8 +1,21 @@
-import type { Express, Request, Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
+import crypto from "crypto";
+import fs from "fs";
+import multer from "multer";
+import os from "os";
+import path from "path";
 import { storage, ImageImportValidationError, ProductCreateImportValidationError } from "../../storage";
+import { fileStorage } from "../../providers/fileStorage";
 import { insertCategorySchema, insertProductSchema, insertTagSchema, insertTagTypeSchema } from "@shared/schema";
 import { z } from "zod";
 import { imageImportSchema, duplicateImageImportRows } from "@shared/productImageImport";
+import {
+  maxProductImageFileSize,
+  maxProductImageFolderFiles,
+  maxProductImageFolderSize,
+  productImageFileIdentity,
+  productImageFolderExtensions,
+} from "@shared/productImageFolderImport";
 import { productCreateImportSchema, duplicateProductCreateRows } from "@shared/productCreateImport";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
@@ -65,6 +78,61 @@ function metaCatalogSettingsFromSeo(value: string | undefined) {
     brandName,
     siteUrl: siteOrigin(settings.siteUrl),
   };
+}
+
+type ProductImageImportRequest = Request & { productImageImportTempDir?: string };
+
+function requireConfiguredCatalogAdmin(_req: Request, res: Response, next: NextFunction) {
+  if (!process.env.ADMIN_USERNAME || !(process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD)) {
+    return res.status(503).json({ message: "Admin authentication is not configured" });
+  }
+  next();
+}
+
+async function removeProductImageImportTempDir(tempDir: string | undefined) {
+  if (!tempDir) return;
+  try {
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
+  } catch (error) {
+    console.warn("Could not remove temporary product image imports:", error);
+  }
+}
+
+function receiveProductImageFolder(req: Request, res: Response, next: (error?: unknown) => void) {
+  void fs.promises.mkdtemp(path.join(os.tmpdir(), "product-image-import-")).then(tempDir => {
+    (req as ProductImageImportRequest).productImageImportTempDir = tempDir;
+    const folderUpload = multer({
+      storage: multer.diskStorage({
+        destination: (_request, _file, callback) => callback(null, tempDir),
+        filename: (_request, file, callback) => callback(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+      }),
+      limits: { fileSize: maxProductImageFileSize, files: maxProductImageFolderFiles },
+      fileFilter: (_request, file, callback) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+        if (productImageFolderExtensions.includes(extension as typeof productImageFolderExtensions[number])) {
+          callback(null, true);
+        } else {
+          callback(new Error("Only JPG, JPEG, PNG, GIF, and WebP images are supported"));
+        }
+      },
+    }).array("images", maxProductImageFolderFiles);
+
+    folderUpload(req, res, error => {
+      if (error) {
+        void removeProductImageImportTempDir(tempDir);
+        if (error instanceof multer.MulterError) {
+          const message = error.code === "LIMIT_FILE_SIZE"
+            ? "Each image must be 5 MB or smaller."
+            : error.code === "LIMIT_FILE_COUNT"
+              ? `Select no more than ${maxProductImageFolderFiles} images at a time.`
+              : "The image folder could not be uploaded.";
+          return res.status(400).json({ message });
+        }
+        return res.status(400).json({ message: error.message || "The image folder could not be uploaded." });
+      }
+      next();
+    });
+  }).catch(next);
 }
 
 export async function searchAdminProducts(req: Request, res: Response) {
@@ -593,7 +661,7 @@ export function registerAdminCatalogRoutes(app: Express) {
     res.json(map);
   });
 
-  app.post("/api/admin/products/import-image-urls", requirePermission("catalog"), async (req, res) => {
+  app.post("/api/admin/products/import-image-urls", requireConfiguredCatalogAdmin, requirePermission("catalog"), async (req, res) => {
     const parsed = imageImportSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid image rows", errors: parsed.error.issues.map(issue => ({
       row: typeof issue.path[1] === "number" ? issue.path[1] + 2 : 0,
@@ -606,11 +674,81 @@ export function registerAdminCatalogRoutes(app: Express) {
     });
     try {
       const result = await storage.importProductImageUrls(parsed.data.rows, getAdminUsername(req));
-      res.json(result);
+      res.status(201).json(result);
     } catch (err) {
       if (err instanceof ImageImportValidationError) return res.status(400).json({ message: err.message, errors: err.errors });
       console.error("Import product image URLs error:", err);
-      res.status(500).json({ message: "Failed to import image URLs; no images were changed" });
+      res.status(500).json({ message: "Failed to add image URLs; no images were changed" });
+    }
+  });
+
+  app.post("/api/admin/products/import-image-files", requireConfiguredCatalogAdmin, requirePermission("catalog"), receiveProductImageFolder, async (req, res) => {
+    const importRequest = req as ProductImageImportRequest;
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const uploadedUrls: string[] = [];
+    let committed = false;
+    try {
+      if (files.length === 0) return res.status(400).json({ message: "Choose a folder containing image files." });
+      const sequenceResult = z.coerce.number().int().min(2).max(2147483647).safeParse(req.body?.imageSequenceNumber);
+      if (!sequenceResult.success) {
+        return res.status(400).json({
+          message: "Sequence must be a whole number of 2 or greater.",
+          errors: [{ row: 0, message: "Sequence must be a whole number of 2 or greater." }],
+        });
+      }
+      const totalSize = files.reduce((total, file) => total + file.size, 0);
+      if (totalSize > maxProductImageFolderSize) {
+        return res.status(400).json({ message: "The selected images must total 50 MB or less." });
+      }
+      const emptyFiles = files.flatMap((file, index) => file.size === 0
+        ? [{ row: index + 2, message: "Image file is empty." }]
+        : []);
+      if (emptyFiles.length) return res.status(400).json({ message: "Empty image files cannot be imported.", errors: emptyFiles });
+
+      const identities = files.map(file => productImageFileIdentity(file.originalname));
+      const invalidNames = identities.flatMap((identity, index) => identity.productId
+        ? []
+        : [{ row: index + 2, message: "Name each image with its product ID, such as product-id.jpg." }]);
+      if (invalidNames.length) return res.status(400).json({ message: "Invalid image filenames", errors: invalidNames });
+
+      const targets = identities.map(identity => ({
+        productId: identity.productId,
+        imageSequenceNumber: sequenceResult.data,
+      }));
+      await storage.validateProductImageImportTargets(targets);
+
+      const rows = [];
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        const image = await fileStorage.upload(await fs.promises.readFile(file.path), file.originalname, file.mimetype);
+        uploadedUrls.push(image.url);
+        rows.push({
+          productId: identities[index].productId,
+          imageUrl: image.url,
+          imageSequenceNumber: sequenceResult.data,
+        });
+      }
+
+      const result = await storage.importProductImageUrls(rows, getAdminUsername(req));
+      committed = true;
+      return res.status(201).json(result);
+    } catch (err) {
+      if (err instanceof ImageImportValidationError) {
+        return res.status(400).json({ message: err.message, errors: err.errors });
+      }
+      console.error("Import product image files error:", err);
+      return res.status(500).json({ message: "Failed to add folder images; no gallery images were changed" });
+    } finally {
+      if (!committed) {
+        for (const url of uploadedUrls) {
+          try {
+            await fileStorage.delete(url);
+          } catch (error) {
+            console.warn("Could not clean up an uncommitted product image:", error);
+          }
+        }
+      }
+      await removeProductImageImportTempDir(importRequest.productImageImportTempDir);
     }
   });
 
