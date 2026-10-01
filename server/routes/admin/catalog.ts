@@ -6,6 +6,12 @@ import { imageImportSchema, duplicateImageImportRows } from "@shared/productImag
 import { productCreateImportSchema, duplicateProductCreateRows } from "@shared/productCreateImport";
 import { requirePermission, getAdminUsername } from "../../adminAuth";
 import { generateSku } from "../../utils/sku";
+import { siteOrigin } from "@shared/discoverability";
+import {
+  buildMetaCatalogCsv,
+  MetaCatalogExportError,
+} from "@shared/metaCatalogCsv";
+import type { ProductVariantOptions } from "@shared/types";
 import {
   getCatalogByCategory,
   bulkUpdateAttributes,
@@ -40,6 +46,27 @@ function broadcastProductUpdate(product: object) {
   }
 }
 
+function metaCatalogSettingsFromSeo(value: string | undefined) {
+  let parsed: unknown;
+  try {
+    parsed = value ? JSON.parse(value) : null;
+  } catch {
+    parsed = null;
+  }
+
+  const settings = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+  const brandName = typeof settings.brandName === "string" && settings.brandName.trim()
+    ? settings.brandName.trim()
+    : "TurtleLittle";
+
+  return {
+    brandName,
+    siteUrl: siteOrigin(settings.siteUrl),
+  };
+}
+
 export async function searchAdminProducts(req: Request, res: Response) {
   const q = (req.query.q as string || "").trim();
   if (!q) return res.json([]);
@@ -68,6 +95,61 @@ export function registerAdminCatalogRoutes(app: Express) {
   app.get("/api/admin/categories", requirePermission("catalog"), async (_req, res) => {
     const cats = await storage.getCategories();
     res.json(cats);
+  });
+
+  app.get("/api/admin/catalog/meta-feed.csv", requirePermission("catalog"), async (_req, res) => {
+    try {
+      const [products, seoContent] = await Promise.all([
+        storage.getProducts(),
+        storage.getSiteContent("seo"),
+      ]);
+      const productIds = products.map(product => product.id);
+      const productVariants = await storage.getProductVariantsByProductIds(productIds);
+      const variantsByProductId = new Map<string, typeof productVariants>();
+      for (const variant of productVariants) {
+        const current = variantsByProductId.get(variant.productId) ?? [];
+        current.push(variant);
+        variantsByProductId.set(variant.productId, current);
+      }
+
+      // Variant options are shared by category and audience. Cache each context
+      // so the export does not repeat the same option lookup for every product.
+      const optionsByContext = new Map<string, Promise<ProductVariantOptions>>();
+      const catalogProducts = await Promise.all(products.map(async product => {
+        const audiences = [...(product.audience ?? [])].sort();
+        const contextKey = JSON.stringify([product.categoryId, audiences]);
+        let optionsPromise = optionsByContext.get(contextKey);
+        if (!optionsPromise) {
+          optionsPromise = storage.getProductVariantOptions(product.id);
+          optionsByContext.set(contextKey, optionsPromise);
+        }
+        const options = await optionsPromise;
+        return {
+          product,
+          sizes: options.sizes,
+          variants: variantsByProductId.get(product.id) ?? [],
+        };
+      }));
+
+      const csv = buildMetaCatalogCsv(
+        catalogProducts,
+        metaCatalogSettingsFromSeo(seoContent?.value),
+      );
+      res
+        .status(200)
+        .set({
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": 'attachment; filename="meta-catalog.csv"',
+          "Cache-Control": "no-store",
+        })
+        .send(csv);
+    } catch (error) {
+      if (error instanceof MetaCatalogExportError) {
+        return res.status(422).json({ message: error.message });
+      }
+      console.error("Meta catalog export failed:", error);
+      res.status(500).json({ message: "Failed to generate the Meta catalog CSV." });
+    }
   });
 
   app.post("/api/admin/categories", requirePermission("catalog"), async (req, res) => {

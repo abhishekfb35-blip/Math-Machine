@@ -231,6 +231,7 @@ export interface IStorage {
   getProductVariantOptions(productId: string): Promise<ProductVariantOptions>;
   upsertProductVariantOptions(productId: string, colors: ColorOption[], sizes: SizeOption[]): Promise<void>;
   getProductVariants(productId: string): Promise<ProductVariant[]>;
+  getProductVariantsByProductIds(productIds: string[]): Promise<ProductVariant[]>;
   upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void>;
   deleteProductVariantsByProduct(productId: string): Promise<void>;
 
@@ -2024,6 +2025,11 @@ export class DatabaseStorage implements IStorage {
 
   async getProductVariants(productId: string): Promise<ProductVariant[]> {
     return await db.select().from(productVariants).where(eq(productVariants.productId, productId));
+  }
+
+  async getProductVariantsByProductIds(productIds: string[]): Promise<ProductVariant[]> {
+    if (productIds.length === 0) return [];
+    return await db.select().from(productVariants).where(inArray(productVariants.productId, productIds));
   }
 
   async upsertProductVariants(productId: string, variants: { color: string; size: string; available: boolean }[]): Promise<void> {

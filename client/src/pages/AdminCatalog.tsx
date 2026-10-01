@@ -5,7 +5,7 @@ import { THUMBNAIL_SIZES } from "@/config/thumbnails";
 import {
   Plus, Pencil, Copy, Trash2, ChevronRight, ChevronLeft, ChevronUp, ChevronDown, Package, FolderOpen,
   Image as ImageIcon, Images, X, Upload, Eye, EyeOff, Star, Tag as TagIcon, ArrowRightLeft, Search,
-  Loader2, Undo2, Save, Palette, ExternalLink, Ruler, IndianRupee
+  Loader2, Undo2, Save, Palette, ExternalLink, Ruler, IndianRupee, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -1224,6 +1224,7 @@ export default function AdminCatalog() {
   const [bulkImageDialogOpen, setBulkImageDialogOpen] = useState(false);
   const [imageCsvOpen, setImageCsvOpen] = useState(false);
   const [productCreateCsvOpen, setProductCreateCsvOpen] = useState(false);
+  const [metaCatalogDownloading, setMetaCatalogDownloading] = useState(false);
   const [bulkImageSlots, setBulkImageSlots] = useState<BulkImageSlot[]>([]);
   const [bulkImageProgress, setBulkImageProgress] = useState<string | null>(null);
 
@@ -1329,6 +1330,39 @@ export default function AdminCatalog() {
   const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
 
   const getDefaultBulkTagTypeTab = (): string | null => null;
+
+  const downloadMetaCatalog = async () => {
+    setMetaCatalogDownloading(true);
+    try {
+      const response = await fetch("/api/admin/catalog/meta-feed.csv");
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { message?: string } | null;
+        throw new Error(payload?.message || "Could not generate the Meta catalog CSV.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "meta-catalog.csv";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast({
+        title: "Meta catalog CSV downloaded",
+        description: "The file includes all active products, regardless of the current catalog filters.",
+      });
+    } catch (error) {
+      toast({
+        title: "Meta catalog export failed",
+        description: error instanceof Error ? error.message : "Could not generate the Meta catalog CSV.",
+        variant: "destructive",
+      });
+    } finally {
+      setMetaCatalogDownloading(false);
+    }
+  };
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products/search", adminSearchQuery],
@@ -1938,6 +1972,19 @@ export default function AdminCatalog() {
             <p className="text-sm text-muted-foreground">Manage categories and products</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadMetaCatalog}
+              disabled={metaCatalogDownloading}
+              data-testid="button-download-meta-catalog"
+              title="Exports all active products, regardless of current catalog filters."
+            >
+              {metaCatalogDownloading
+                ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                : <Download className="w-4 h-4 mr-1" />}
+              {metaCatalogDownloading ? "Preparing CSV..." : "Download Meta Catalog CSV"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setProductCreateCsvOpen(true)} data-testid="button-open-product-create-csv">
               <Upload className="w-4 h-4 mr-1" /> Upload Products via CSV
             </Button>

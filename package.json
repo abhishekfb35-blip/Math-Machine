@@ -10,6 +10,7 @@
     "check": "tsc",
     "test:purchase-analytics": "playwright test e2e/order-confirmation-purchase-dedup.spec.ts",
     "test:meta-pixel": "node --import tsx/esm --test tests/meta-pixel.test.ts tests/meta-catalog-ids.test.ts",
+    "test:meta-catalog": "node --import tsx/esm --test tests/meta-catalog-csv.test.ts tests/meta-catalog-ids.test.ts",
     "test:catalog-sync": "NODE_ENV=test node --import tsx/esm --test tests/catalog-sync-boundary.test.ts",
     "db:push": "drizzle-kit push",
     "test": "node --import tsx/esm --test tests/notification-email.test.ts"
