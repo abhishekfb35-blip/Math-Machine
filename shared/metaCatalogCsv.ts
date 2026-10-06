@@ -116,6 +116,25 @@ function variantKey(size: string | null | undefined, color: string | null | unde
   return JSON.stringify([normalizedVariantValue(size), normalizedVariantValue(color)]);
 }
 
+function legacyQualifiedSizeBase(value: string | null | undefined): { base: string; qualifier: string | null } {
+  const normalized = normalizedVariantValue(value);
+  const match = normalized.match(/^(.*?),\s*(kids|adult)\s+size$/);
+  return match
+    ? { base: match[1].trim(), qualifier: match[2] }
+    : { base: normalized, qualifier: null };
+}
+
+function isEquivalentLegacySize(
+  configuredSize: string | null | undefined,
+  variantSize: string | null | undefined,
+): boolean {
+  const configured = legacyQualifiedSizeBase(configuredSize);
+  const variant = legacyQualifiedSizeBase(variantSize);
+  return configured.base !== variant.base
+    ? false
+    : (configured.qualifier === null) !== (variant.qualifier === null);
+}
+
 function absolutePublicUrl(value: string, origin: string, field: string, productId: string): string {
   try {
     const url = new URL(value, `${origin}/`);
@@ -147,8 +166,23 @@ function selectionsForProduct(source: MetaCatalogSourceProduct) {
 
   const availabilityFor = (size: string | null, color: string | null): boolean => {
     if (variants.length === 0) return true;
-    const states = explicitAvailability.get(variantKey(size, color));
-    return Boolean(states?.length) && states!.every(Boolean);
+    const exactStates = explicitAvailability.get(variantKey(size, color));
+    if (exactStates?.length) return exactStates.every(Boolean);
+
+    const normalizedColor = normalizedVariantValue(color);
+    const legacyMatches = variants.filter(variant =>
+      normalizedVariantValue(variant.color) === normalizedColor
+      && isEquivalentLegacySize(size, variant.size),
+    );
+    if (legacyMatches.length === 0) return false;
+
+    const matchedSizeLabels = new Set(legacyMatches.map(variant => normalizedVariantValue(variant.size)));
+    if (matchedSizeLabels.size > 1) {
+      throw new MetaCatalogExportError(
+        `Cannot export product ${source.product.id}: availability for size "${size ?? ""}" and color "${color ?? ""}" matches multiple legacy size labels.`,
+      );
+    }
+    return legacyMatches.every(variant => variant.available);
   };
 
   if (sizes.length > 0) {

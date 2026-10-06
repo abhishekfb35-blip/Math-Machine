@@ -94,6 +94,92 @@ test("keeps hidden configured variants grouped but marks them out of stock", () 
   assert.equal(rows[0].availability, "out of stock");
 });
 
+test("matches legacy audience-qualified variant sizes without changing unmatched availability", () => {
+  const kidsColors = ["Turquoise Blue", "Baby Pink", "Lemon Yellow", "White", "Purple", "Orange"];
+  const adultColors = ["Turquoise Blue", "Baby Pink", "White", "Gray", "Orange"];
+  const source = {
+    product: baseProduct,
+    sizes: [
+      {
+        name: "120*60 cm",
+        priceAdd: 0,
+        blurOnFront: false,
+        colors: kidsColors.map(name => ({ name, blurOnFront: false })),
+      },
+      {
+        name: "150*75 cm",
+        priceAdd: 0,
+        blurOnFront: false,
+        colors: adultColors.map(name => ({ name, blurOnFront: false })),
+      },
+    ],
+    variants: kidsColors.map(color => ({
+      size: "120*60 cm, Kids Size",
+      color: color === "Purple" ? "Purple " : color,
+      available: true,
+    })),
+  };
+  const rows = buildMetaCatalogRows([source], settings);
+  const csv = buildMetaCatalogCsv([source], settings);
+  const csvRows = csv.trimEnd().split("\r\n").slice(1);
+
+  assert.equal(rows.length, 11);
+  assert.equal(rows.filter(row => row.availability === "in stock").length, 6);
+  assert.equal(rows.filter(row => row.availability === "out of stock").length, 5);
+  assert.equal(new Set(rows.map(row => row.id)).size, 11);
+  assert.ok(rows.every(row => row.item_group_id === getMetaCatalogGroupId(baseProduct.id)));
+  assert.equal(csvRows.length, 11);
+  assert.equal(csvRows.filter(row => /,in stock,new,/.test(row)).length, 6);
+  assert.equal(csvRows.filter(row => /,out of stock,new,/.test(row)).length, 5);
+});
+
+test("keeps an explicitly unavailable legacy-qualified variant out of stock", () => {
+  const rows = buildMetaCatalogRows([{
+    product: baseProduct,
+    sizes: [{
+      name: "120*60 cm",
+      priceAdd: 0,
+      blurOnFront: false,
+      colors: [{ name: "Blue", blurOnFront: false }],
+    }],
+    variants: [
+      { size: "120*60 cm, Kids Size", color: "Blue", available: false },
+    ],
+  }], settings);
+
+  assert.equal(rows[0].availability, "out of stock");
+});
+
+test("rejects ambiguous legacy size matches but prefers an exact size match", () => {
+  const ambiguousSource = {
+    product: baseProduct,
+    sizes: [{
+      name: "120*60 cm",
+      priceAdd: 0,
+      blurOnFront: false,
+      colors: [{ name: "Blue", blurOnFront: false }],
+    }],
+    variants: [
+      { size: "120*60 cm, Kids Size", color: "Blue", available: true },
+      { size: "120*60 cm, Adult Size", color: "Blue", available: true },
+    ],
+  };
+
+  assert.throws(
+    () => buildMetaCatalogRows([ambiguousSource], settings),
+    /matches multiple legacy size labels/,
+  );
+
+  const exactMatchRows = buildMetaCatalogRows([{
+    ...ambiguousSource,
+    variants: [
+      { size: "120*60 cm", color: "Blue", available: false },
+      { size: "120*60 cm, Kids Size", color: "Blue", available: true },
+    ],
+  }], settings);
+  assert.equal(exactMatchRows[0].availability, "out of stock");
+});
+
 test("CSV includes Meta columns and correctly escapes quotes, commas, and newlines", () => {
   const csv = buildMetaCatalogCsv([{ product: baseProduct }], settings);
   const [header, ...lines] = csv.trimEnd().split("\r\n");
