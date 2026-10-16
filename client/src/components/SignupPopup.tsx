@@ -912,7 +912,7 @@ export default function SignupPopup() {
       />
 
       <div
-        className="tl-popup-card fixed top-1/2 left-1/2 right-auto -translate-x-1/2 -translate-y-1/2 z-[999] pointer-events-auto w-72 max-w-[calc(100vw-2rem)] bg-background border border-primary/20 border-t-4 border-t-primary rounded-2xl overflow-hidden"
+        className="tl-popup-card fixed top-1/2 left-1/2 right-auto -translate-x-1/2 -translate-y-1/2 z-[999] pointer-events-auto w-72 max-w-[calc(100vw-2rem)] bg-background border border-primary/20 border-t-4 border-t-primary rounded-2xl overflow-hidden outline-none"
         style={{ boxShadow: "0 8px 28px 0 color-mix(in srgb, hsl(var(--primary)) 18%, transparent), 0 2px 8px 0 rgba(0,0,0,0.08)" }}
         ref={dialogRef}
         role="dialog"

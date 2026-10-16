@@ -136,6 +136,7 @@ async function openPopup(page: Page, options: PopupTestOptions = {}) {
 
   const popup = page.getByTestId("signup-popup");
   await expect(popup).toBeVisible({ timeout: 10_000 });
+  await expect(popup).toHaveCSS("outline-color", "rgba(0, 0, 0, 0)");
   await expect(page.getByTestId("signup-popup-backdrop")).toBeVisible();
   await expect(page.getByRole("button", { name: "Dismiss" })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
