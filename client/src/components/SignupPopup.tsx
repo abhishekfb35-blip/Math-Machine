@@ -691,7 +691,9 @@ export default function SignupPopup() {
 
       const focusableElements = getFocusableElements(dialog);
       if (!dialog.contains(document.activeElement)) {
-        (focusableElements[0] ?? dialog).focus();
+        // Keep the nudge's close button from showing its keyboard focus ring
+        // just because the popup auto-opened. Tab still reaches it first.
+        (view === "nudge" ? dialog : focusableElements[0] ?? dialog).focus();
       }
     });
     return () => cancelAnimationFrame(frame);

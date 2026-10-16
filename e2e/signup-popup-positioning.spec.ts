@@ -249,6 +249,8 @@ test.describe("Signup popup positioning", () => {
     await expect(popup).toHaveAttribute("role", "dialog");
     await expect(popup).toHaveAttribute("aria-modal", "true");
     await expect(popup).toHaveAttribute("aria-labelledby", "signup-popup-title");
+    await expect(popup).toBeFocused();
+    await page.keyboard.press("Tab");
     await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeFocused();
@@ -284,7 +286,7 @@ test.describe("Signup popup positioning", () => {
 
     await expectCentered(popup, viewport);
     await expect(page.getByRole("dialog", { name: "Sign in to TurtleLittle" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
+    await expect(popup).toBeFocused();
     await expect(page.getByTestId("signup-popup-backdrop")).toHaveCSS("touch-action", "pan-y");
     await expectBackdropToBlockUnderlyingPage(page, true);
 
@@ -302,11 +304,16 @@ test.describe("Signup popup positioning", () => {
     await expect(popup).toBeHidden();
   });
 
-  test("keeps signup close controls visible, circular, and interactive", async ({ page }) => {
+  test("keeps signup close controls circular and shows focus rings for keyboard users", async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 720 });
-    await openPopup(page);
+    const popup = await openPopup(page);
 
     const nudgeClose = page.getByTestId("btn-dismiss-nudge");
+    await expect(popup).toBeFocused();
+    await expect(nudgeClose).not.toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(nudgeClose).toBeFocused();
+    await expect.poll(() => nudgeClose.evaluate(element => element.matches(":focus-visible"))).toBe(true);
     await expect(nudgeClose).toHaveCSS("border-radius", "9999px");
     await expect(nudgeClose).toHaveCSS("width", "44px");
     await expect(nudgeClose).toHaveCSS("height", "44px");
@@ -495,7 +502,7 @@ test.describe("Signup popup positioning", () => {
     const popup = await openPopup(page, { delaySeconds: 1, focusTrigger: true });
 
     await expect(page.getByRole("dialog", { name: "Sign in to TurtleLittle" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Dismiss" })).toBeFocused();
+    await expect(popup).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(popup).toBeHidden();
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
