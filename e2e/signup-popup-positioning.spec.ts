@@ -299,11 +299,7 @@ test.describe("Signup popup positioning", () => {
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
 
     await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
-    await expect(popup).toBeVisible();
-    await openPhoneForm(page);
-    await expect(page.getByTestId("signup-consent-checkbox")).toBeDisabled();
-    await expect(page.getByTestId("signup-consent-label")).toContainText(CONSENT_SCROLL_PROMPT);
-    await page.getByTestId("btn-dismiss-phone-form").click();
+    await expect(popup).toBeHidden();
   });
 
   test("keeps signup close controls visible, circular, and interactive", async ({ page }) => {
@@ -332,7 +328,7 @@ test.describe("Signup popup positioning", () => {
     await expect(validationClose).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   });
 
-  test("keeps the close button clickable when cart activity reopens signup", async ({ page }) => {
+  test("cart activity does not reopen a dismissed signup popup", async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 720 });
     const popup = await openPopup(page);
 
@@ -340,13 +336,6 @@ test.describe("Signup popup positioning", () => {
     await expect(popup).toBeHidden();
 
     await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
-    await expect(popup).toBeVisible();
-
-    const reopenedClose = page.getByTestId("btn-dismiss-nudge");
-    await expect(reopenedClose).toBeVisible();
-    await expect(reopenedClose).toBeEnabled();
-    await reopenedClose.tap();
-
     await expect(popup).toBeHidden();
     await expect(page.getByTestId("signup-popup-backdrop")).toBeHidden();
   });
@@ -521,13 +510,13 @@ test.describe("Signup popup positioning", () => {
     await expect(page.getByTestId("signup-popup")).toBeVisible({ timeout: 5_000 });
   });
 
-  test("keeps the cart signup timer alive across navigation", async ({ page }) => {
+  test("cart-add delay does not start a separate signup timer across navigation", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await loadSignupPage(page, { delaySeconds: 60, cartAddDelaySeconds: 1 });
     await page.waitForTimeout(50);
 
     await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
     await navigateWithinApp(page, "/shop");
-    await expect(page.getByTestId("signup-popup")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("signup-popup")).toBeHidden();
   });
 });

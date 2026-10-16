@@ -111,7 +111,7 @@ async function closeMiniCart(page: Page) {
   await expect(drawer).toHaveCount(0);
 }
 
-async function mockHardCartGateFlow(page: Page, initialItemCount = 0) {
+async function mockGuestCartFlow(page: Page, initialItemCount = 0, delaySeconds = 60) {
   let addRequestCount = 0;
   let addedItemCount = 0;
   const addedQuantities: number[] = [];
@@ -143,7 +143,7 @@ async function mockHardCartGateFlow(page: Page, initialItemCount = 0) {
         key: "signup-popup",
         value: {
           enabled: true,
-          delaySeconds: 60,
+          delaySeconds,
           cartAddDelaySeconds: 60,
           reshowIntervalSeconds: 0,
           incentiveText: "Sign in to TurtleLittle",
@@ -359,7 +359,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     couplesProductId = couplesProduct.id;
   });
 
-  test("cart-triggered signup uses the shared circular close control", async ({ page }) => {
+  test("session signup after a cart add uses the shared circular close control", async ({ page }) => {
     await page.route("**/api/site-config/signup-popup", route =>
       route.fulfill({
         contentType: "application/json",
@@ -367,7 +367,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
           key: "signup-popup",
           value: {
             enabled: true,
-            delaySeconds: 60,
+            delaySeconds: 1,
             cartAddDelaySeconds: 0,
             reshowIntervalSeconds: 0,
             incentiveText: "Sign in to TurtleLittle",
@@ -442,7 +442,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(signupPopup).toBeVisible();
   });
 
-  test("keeps the session countdown paused for five seconds after a successful add", async ({
+  test("cart-add delay pauses the remaining session countdown after an add", async ({
     page,
   }) => {
     await page.route("**/api/cart/items", route =>
@@ -464,7 +464,7 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     );
     const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
       delaySeconds: 8,
-      cartAddDelaySeconds: 60,
+      cartAddDelaySeconds: 5,
       reshowIntervalSeconds: 0,
     });
     await page.clock.runFor(3_000);
@@ -499,29 +499,16 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(signupPopup).toBeVisible();
   });
 
-  test("pauses the cart-trigger countdown while Quick Add is open", async ({ page }) => {
-    const { quickAddButton, quickAddSheet, signupPopup } =
-      await loadQuickAddTimerPage(page, singleProductId, {
-        delaySeconds: 60,
-        cartAddDelaySeconds: 8,
-        reshowIntervalSeconds: 0,
-      });
+  test("cart-add delay does not show a separate popup before the session delay", async ({ page }) => {
+    const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
+      delaySeconds: 60,
+      cartAddDelaySeconds: 1,
+      reshowIntervalSeconds: 0,
+    });
 
     await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
-    await page.clock.runFor(3_000);
-    await quickAddButton.click();
-    await expect(quickAddSheet).toBeVisible();
-    await page.clock.runFor(10_000);
-    await expect(signupPopup).toBeHidden();
-
-    await page.getByRole("button", { name: "Close" }).click();
-    await expect(quickAddSheet).toBeHidden();
-    await page.clock.runFor(4_999);
-    await expect(signupPopup).toBeHidden();
-    await page.clock.runFor(3_000);
-    await expect(signupPopup).toBeHidden();
     await page.clock.runFor(2_000);
-    await expect(signupPopup).toBeVisible();
+    await expect(signupPopup).toBeHidden();
   });
 
   test("pauses the reshow countdown while Quick Add is open", async ({ page }) => {
@@ -560,29 +547,6 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     });
 
     await page.clock.runFor(5_000);
-    await openMiniCart(page);
-    await page.clock.runFor(10_000);
-    await expect(signupPopup).toBeHidden();
-
-    await closeMiniCart(page);
-    await page.clock.runFor(5_000);
-    await expect(signupPopup).toBeHidden();
-    await page.clock.runFor(15_000);
-    await expect(signupPopup).toBeVisible();
-  });
-
-  test("pauses the cart-add countdown in the mini-cart and resumes with the remaining time", async ({
-    page,
-  }) => {
-    await mockEmptyMiniCart(page);
-    const { signupPopup } = await loadQuickAddTimerPage(page, singleProductId, {
-      delaySeconds: 60,
-      cartAddDelaySeconds: 20,
-      reshowIntervalSeconds: 0,
-    });
-
-    await page.evaluate(() => window.dispatchEvent(new Event("cart:item-added-for-popup")));
-    await page.clock.runFor(3_000);
     await openMiniCart(page);
     await page.clock.runFor(10_000);
     await expect(signupPopup).toBeHidden();
@@ -887,10 +851,10 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect(sheet).toBeHidden();
   });
 
-  test("requires signup before opening a second Quick Add and resumes the selection after sign-in", async ({
+  test("guest can open and submit a second Quick Add", async ({
     page,
   }) => {
-    const cartRequests = await mockHardCartGateFlow(page);
+    const cartRequests = await mockGuestCartFlow(page);
     await page.goto("/shop");
 
     await submitQuickAdd(page, singleProductId);
@@ -899,18 +863,6 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     const secondProductButton = page.getByTestId(`button-quickadd-${couplesProductId}`);
     await secondProductButton.scrollIntoViewIfNeeded();
     await secondProductButton.click();
-    const signupPopup = page.getByTestId("signup-popup");
-    await expect(signupPopup).toBeVisible();
-    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
-    await expect(page.getByTestId("button-quickadd-submit")).toBeHidden();
-    expect(cartRequests.getAddRequestCount()).toBe(1);
-
-    await page
-      .getByTestId("signup-popup-google-btn")
-      .getByRole("button", { name: "Continue with Google" })
-      .click();
-
-    await expect(signupPopup).toBeHidden();
     await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
     expect(cartRequests.getAddRequestCount()).toBe(1);
     await expect(page.getByTestId("section-quickadd-sizes")).toBeVisible();
@@ -921,56 +873,49 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await expect.poll(cartRequests.getAddRequestCount).toBe(2);
   });
 
-  test("dismissing the second-product gate leaves Quick Add closed", async ({
+  test("dismissing the session nudge does not gate guest cart additions", async ({
     page,
   }) => {
-    const cartRequests = await mockHardCartGateFlow(page);
+    const cartRequests = await mockGuestCartFlow(page, 0, 0);
     await page.goto("/shop");
 
-    await submitQuickAdd(page, singleProductId);
     const signupPopup = page.getByTestId("signup-popup");
-    const secondProductButton = page.getByTestId(`button-quickadd-${couplesProductId}`);
-    await secondProductButton.scrollIntoViewIfNeeded();
-    await secondProductButton.click();
     await expect(signupPopup).toBeVisible();
-    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
-    await expect(page.getByTestId("button-quickadd-submit")).toBeHidden();
-    expect(cartRequests.getAddRequestCount()).toBe(1);
-
     await page.getByTestId("btn-dismiss-nudge").click();
     await expect(signupPopup).toBeHidden();
-    expect(cartRequests.getAddRequestCount()).toBe(1);
-    await expect(page.getByTestId("button-quickadd-submit")).toBeHidden();
+
+    await submitQuickAdd(page, singleProductId);
+    const secondProductButton = page.getByTestId(`button-quickadd-${couplesProductId}`);
+    await secondProductButton.scrollIntoViewIfNeeded();
+    await secondProductButton.click();
+    await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
+    await selectRequiredQuickAddVariant(page);
+    await page.getByTestId("button-quickadd-submit").click();
+    const confirmProceed = page.getByTestId("button-name-confirm-proceed");
+    if (await confirmProceed.isVisible()) await confirmProceed.click();
+    await expect.poll(cartRequests.getAddRequestCount).toBe(2);
   });
 
-  test("a pre-filled guest cart gates Quick Add before opening it", async ({ page }) => {
-    const cartRequests = await mockHardCartGateFlow(page, 1);
+  test("a pre-filled guest cart does not gate Quick Add", async ({ page }) => {
+    const cartRequests = await mockGuestCartFlow(page, 1);
     await page.goto("/shop");
 
     const secondProductButton = page.getByTestId(`button-quickadd-${couplesProductId}`);
     await secondProductButton.scrollIntoViewIfNeeded();
     await secondProductButton.click();
 
-    const signupPopup = page.getByTestId("signup-popup");
-    await expect(signupPopup).toBeVisible();
-    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
-    await expect(page.getByTestId("button-quickadd-submit")).toBeHidden();
-    expect(cartRequests.getAddRequestCount()).toBe(0);
-
-    await page
-      .getByTestId("signup-popup-google-btn")
-      .getByRole("button", { name: "Continue with Google" })
-      .click();
-
-    await expect(signupPopup).toBeHidden();
     await expect(page.getByTestId("button-quickadd-submit")).toBeVisible();
-    expect(cartRequests.getAddRequestCount()).toBe(0);
+    await selectRequiredQuickAddVariant(page);
+    await page.getByTestId("button-quickadd-submit").click();
+    const confirmProceed = page.getByTestId("button-name-confirm-proceed");
+    if (await confirmProceed.isVisible()) await confirmProceed.click();
+    await expect.poll(cartRequests.getAddRequestCount).toBe(1);
   });
 
-  test("requires signup before a guest raises Quick Add quantity and restores the form after sign-in", async ({
+  test("guest can raise Quick Add quantity and submit the selected quantity", async ({
     page,
   }) => {
-    const cartRequests = await mockHardCartGateFlow(page);
+    const cartRequests = await mockGuestCartFlow(page);
     await page.goto("/shop");
 
     const quickAddButton = page.getByTestId(`button-quickadd-${singleProductId}`);
@@ -983,18 +928,6 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     await nameInput.fill("Alex");
 
     await page.getByTestId("button-quickadd-increase").click();
-    await expect(sheet).toBeHidden();
-    const signupPopup = page.getByTestId("signup-popup");
-    await expect(signupPopup).toBeVisible();
-    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
-    expect(cartRequests.getAddRequestCount()).toBe(0);
-
-    await page
-      .getByTestId("signup-popup-google-btn")
-      .getByRole("button", { name: "Continue with Google" })
-      .click();
-
-    await expect(signupPopup).toBeHidden();
     await expect(sheet).toBeVisible();
     await expect(page.getByTestId("text-quickadd-qty")).toHaveText("2");
     await expect(nameInput).toHaveValue("Alex");
@@ -1006,8 +939,8 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     expect(cartRequests.getAddedQuantities()).toEqual([2]);
   });
 
-  test("Product Details requires signup before submitting a second guest item", async ({ page }) => {
-    const cartRequests = await mockHardCartGateFlow(page, 1);
+  test("Product Details lets guests submit a second cart item", async ({ page }) => {
+    const cartRequests = await mockGuestCartFlow(page, 1);
     await page.goto(`/product/${singleProductSlug}`);
 
     const sizes = page.locator('[data-testid^="button-size-"]:not([disabled])');
@@ -1021,20 +954,10 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     const confirmProceed = page.getByTestId("button-name-confirm-proceed");
     if (await confirmProceed.isVisible()) await confirmProceed.click();
 
-    const signupPopup = page.getByTestId("signup-popup");
-    await expect(signupPopup).toBeVisible();
-    await expect(signupPopup).toHaveAttribute("data-trigger", "cart-gate");
-    expect(cartRequests.getAddRequestCount()).toBe(0);
-
-    await page
-      .getByTestId("signup-popup-google-btn")
-      .getByRole("button", { name: "Continue with Google" })
-      .click();
-    await expect(signupPopup).toBeHidden();
     await expect.poll(cartRequests.getAddRequestCount).toBe(1);
   });
 
-  test("server rejects a second guest item and a guest quantity increase", async ({ page }) => {
+  test("server accepts multiple guest items and quantity increases", async ({ page }) => {
     const initialCart = await page.request.get("/api/cart");
     expect(initialCart.ok()).toBeTruthy();
 
@@ -1048,15 +971,16 @@ test.describe("QuickAdd personalization — mobile (400×720)", () => {
     const secondAdd = await page.request.post("/api/cart/items", {
       data: { productId: couplesProductId, quantity: 1 },
     });
-    expect(secondAdd.status()).toBe(403);
-    expect((await secondAdd.json()).code).toBe("SIGNUP_REQUIRED");
+    expect(secondAdd.ok()).toBeTruthy();
+    const cartAfterSecondAdd = await secondAdd.json();
+    expect(cartAfterSecondAdd.itemCount).toBe(2);
 
     const quantityIncrease = await page.request.patch(
       `/api/cart/items/${cartAfterFirstAdd.items[0].id}`,
       { data: { quantity: 2 } },
     );
-    expect(quantityIncrease.status()).toBe(403);
-    expect((await quantityIncrease.json()).code).toBe("SIGNUP_REQUIRED");
+    expect(quantityIncrease.ok()).toBeTruthy();
+    expect((await quantityIncrease.json()).itemCount).toBe(3);
   });
 
   test("add without name → confirmation dialog → proceed without name adds item to cart", async ({

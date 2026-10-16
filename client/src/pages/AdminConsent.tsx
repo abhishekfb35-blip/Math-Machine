@@ -257,7 +257,7 @@ export default function AdminConsent() {
                     className="w-28"
                     data-testid="input-signup-cart-delay"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Seconds after first item added</p>
+                  <p className="text-xs text-muted-foreground mt-1">Pauses the session delay after each cart addition</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium block mb-1">Re-show interval (seconds)</label>

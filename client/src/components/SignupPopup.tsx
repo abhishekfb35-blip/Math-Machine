@@ -3,10 +3,7 @@
  *
  * Trigger logic:
  *   1. Session timer: fires after config.delaySeconds for every unauthenticated guest.
- *   2. Soft cart trigger: fires config.cartAddDelaySeconds after the first add-to-cart.
- *      The cart add goes through normally; only the popup follows.
- *   3. Hard cart gate (via CartGateContext): after the popup is dismissed with cart
- *      activity, every subsequent add-to-cart is blocked until the user signs in.
+ *   2. Cart-add delay: pauses the remaining session timer after each cart addition.
  *
  * Sign-in flow (no Google One Tap — fully custom card):
  *   1. Popup shows a visible card with incentive text + "Continue with Google" button.
@@ -38,7 +35,7 @@ const EXCLUDED_PREFIXES = ["/admin", "/signin", "/checkout", "/order"];
 export const SIGNIN_MODAL_EVENT = "show:signin-modal";
 export const SIGNIN_MODAL_DISMISSED_EVENT = "signin-modal:dismissed";
 
-type SignupPopupTrigger = "promotional" | "cart-gate" | "explicit";
+type SignupPopupTrigger = "promotional" | "explicit";
 
 interface ShowSignInModalOptions {
   requestId?: string;
@@ -58,7 +55,6 @@ export function showSignInModal(options: ShowSignInModalOptions = {}) {
 const TRIGGER_PRIORITY: Record<SignupPopupTrigger, number> = {
   promotional: 1,
   explicit: 2,
-  "cart-gate": 3,
 };
 
 function blockSignupBackdropInteraction(event: SyntheticEvent<HTMLDivElement>) {
@@ -193,10 +189,7 @@ export default function SignupPopup() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const {
-    _registerOpen,
     _setSignupPopupOpen,
-    _onDismissed,
-    _onAuthSuccess,
     isQuickAddOpen,
     isMiniCartOpen,
   } = useCartGateInternal();
@@ -220,15 +213,23 @@ export default function SignupPopup() {
 
   const pendingCredential = useRef<string | null>(null);
   const sessionTimerSet = useRef(false);
-  const cartTriggered = useRef(false);
   const sessionTimerRef = useRef<PausableTimeout | null>(null);
-  const cartTimerRef = useRef<PausableTimeout | null>(null);
+  const cartAddPauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cartAddPauseActiveRef = useRef(false);
+  const cartAddPausePendingRef = useRef(false);
+  const configRef = useRef(config);
+  configRef.current = config;
+  const sessionTimerBlockedRef = useRef(isQuickAddOpen || isMiniCartOpen || visible);
   const reshowTimerRef = useRef<PausableTimeout | null>(null);
   const quickAddCloseGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickAddWasOpenRef = useRef(false);
   const miniCartWasOpenRef = useRef(false);
   const isPromoSurfaceOpenRef = useRef(isQuickAddOpen || isMiniCartOpen || visible);
   isPromoSurfaceOpenRef.current = isQuickAddOpen || isMiniCartOpen || visible;
+  sessionTimerBlockedRef.current =
+    isPromoSurfaceOpenRef.current ||
+    cartAddPauseActiveRef.current ||
+    quickAddCloseGraceTimerRef.current !== null;
   const isAuthRef = useRef(isAuthenticated);
   const visibleRef = useRef(false);
   const triggerRef = useRef<SignupPopupTrigger>("promotional");
@@ -247,13 +248,11 @@ export default function SignupPopup() {
 
   const pausePromoTimers = useCallback(() => {
     pausePausableTimeout(sessionTimerRef);
-    pausePausableTimeout(cartTimerRef);
     pausePausableTimeout(reshowTimerRef);
   }, []);
 
   const resumePromoTimers = useCallback(() => {
-    resumePausableTimeout(sessionTimerRef, isPromoSurfaceOpenRef);
-    resumePausableTimeout(cartTimerRef, isPromoSurfaceOpenRef);
+    resumePausableTimeout(sessionTimerRef, sessionTimerBlockedRef);
     resumePausableTimeout(reshowTimerRef, isPromoSurfaceOpenRef);
   }, []);
 
@@ -263,14 +262,21 @@ export default function SignupPopup() {
     }
     quickAddCloseGraceTimerRef.current = setTimeout(() => {
       quickAddCloseGraceTimerRef.current = null;
+      sessionTimerBlockedRef.current =
+        isPromoSurfaceOpenRef.current || cartAddPauseActiveRef.current;
       resumePromoTimers();
     }, 5_000);
   }, [resumePromoTimers]);
 
   const clearPromoTimers = useCallback(() => {
     cancelPausableTimeout(sessionTimerRef);
-    cancelPausableTimeout(cartTimerRef);
     cancelPausableTimeout(reshowTimerRef);
+    if (cartAddPauseTimeoutRef.current !== null) {
+      clearTimeout(cartAddPauseTimeoutRef.current);
+      cartAddPauseTimeoutRef.current = null;
+    }
+    cartAddPauseActiveRef.current = false;
+    cartAddPausePendingRef.current = false;
   }, []);
 
   const schedulePromoTimer = useCallback((
@@ -491,9 +497,8 @@ export default function SignupPopup() {
         clearTimeout(quickAddCloseGraceTimerRef.current);
         quickAddCloseGraceTimerRef.current = null;
       }
-      _onAuthSuccess();
     }
-  }, [isAuthenticated, _onAuthSuccess, clearPromoTimers]);
+  }, [isAuthenticated, clearPromoTimers]);
 
   // ── Eligibility ───────────────────────────────────────────────────────────
   const canShowPromotional = useCallback(() => {
@@ -537,15 +542,6 @@ export default function SignupPopup() {
     openPopupRef.current = openPopup;
   }, [openPopup]);
 
-  const forceShow = useCallback(
-    () => openPopup("nudge", "cart-gate"),
-    [openPopup],
-  );
-
-  useEffect(() => {
-    _registerOpen(forceShow);
-  }, [_registerOpen, forceShow]);
-
   useEffect(() => {
     const handleExplicitSignIn = (event: Event) => {
       const requestId = (
@@ -574,29 +570,55 @@ export default function SignupPopup() {
     sessionTimerSet.current = true;
     const delay = Math.max(0, config.delaySeconds ?? 15) * 1000;
 
-    schedulePromoTimer(sessionTimerRef, delay, () => {
+    schedulePausableTimeout(sessionTimerRef, delay, () => {
       if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, isAuthenticated, config, schedulePromoTimer]);
+    }, sessionTimerBlockedRef);
+  }, [authLoading, isAuthenticated, config]);
 
-  // ── Soft cart-add trigger ─────────────────────────────────────────────────
+  // ── Cart-add pause for the session timer ───────────────────────────────────
+  const scheduleCartAddPauseEnd = useCallback((delaySeconds: number) => {
+    if (cartAddPauseTimeoutRef.current !== null) {
+      clearTimeout(cartAddPauseTimeoutRef.current);
+    }
+    cartAddPauseTimeoutRef.current = setTimeout(() => {
+      cartAddPauseTimeoutRef.current = null;
+      cartAddPauseActiveRef.current = false;
+      sessionTimerBlockedRef.current =
+        isPromoSurfaceOpenRef.current ||
+        quickAddCloseGraceTimerRef.current !== null;
+      resumePausableTimeout(sessionTimerRef, sessionTimerBlockedRef);
+    }, Math.max(0, delaySeconds) * 1000);
+  }, []);
+
   useEffect(() => {
     const handler = () => {
-      if (cartTriggered.current || isAuthRef.current || !config?.enabled) return;
-      cartTriggered.current = true;
-      const delay = Math.max(0, config.cartAddDelaySeconds ?? 2) * 1000;
-      schedulePromoTimer(cartTimerRef, delay, () => {
-        if (!isAuthRef.current) openPopupRef.current("nudge", "promotional");
-      });
-    };
+      if (isAuthRef.current) return;
+      const currentConfig = configRef.current;
+      if (currentConfig && !currentConfig.enabled) return;
 
-    window.addEventListener("cart:item-added-for-popup", handler);
-    return () => {
-      window.removeEventListener("cart:item-added-for-popup", handler);
-      cancelPausableTimeout(cartTimerRef);
+      cartAddPauseActiveRef.current = true;
+      sessionTimerBlockedRef.current = true;
+      pausePausableTimeout(sessionTimerRef);
+      if (!currentConfig) {
+        cartAddPausePendingRef.current = true;
+        return;
+      }
+      scheduleCartAddPauseEnd(currentConfig.cartAddDelaySeconds ?? 2);
     };
-  }, [config, schedulePromoTimer]);
+    window.addEventListener("cart:item-added-for-popup", handler);
+    return () => window.removeEventListener("cart:item-added-for-popup", handler);
+  }, [scheduleCartAddPauseEnd]);
+
+  useEffect(() => {
+    if (!config || !cartAddPausePendingRef.current) return;
+    cartAddPausePendingRef.current = false;
+    if (!config.enabled) {
+      cartAddPauseActiveRef.current = false;
+      sessionTimerBlockedRef.current = isPromoSurfaceOpenRef.current;
+      return;
+    }
+    scheduleCartAddPauseEnd(config.cartAddDelaySeconds ?? 2);
+  }, [config, scheduleCartAddPauseEnd]);
 
   // ── Dismiss ───────────────────────────────────────────────────────────────
   const handleDismiss = useCallback(() => {
@@ -619,9 +641,7 @@ export default function SignupPopup() {
     setGoogleUserData(null);
     gsiInitialized.current = false;
 
-    if (dismissedTrigger !== "explicit") {
-      _onDismissed();
-    } else {
+    if (dismissedTrigger === "explicit") {
       window.dispatchEvent(
         new CustomEvent(SIGNIN_MODAL_DISMISSED_EVENT, {
           detail: { requestId: dismissedRequestId },
@@ -645,7 +665,7 @@ export default function SignupPopup() {
         }
       });
     }
-  }, [_onDismissed, config, canShowPromotional, schedulePromoTimer]);
+  }, [config, canShowPromotional, schedulePromoTimer]);
 
   // Move focus into the active view and return it to the element that opened
   // the popup when it closes.

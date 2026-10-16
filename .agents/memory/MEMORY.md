@@ -20,3 +20,4 @@
 - [Quick Add scroll cue placement](quickadd-scroll-cue.md) — keep scroll hints inside the existing scroll viewport so they cannot shift or intercept the pinned cart action.
 - [Uploaded image pixel sampling](uploaded-image-sampling.md) — visual previews may be downscaled; use native dimensions when mapping coordinates for pixel extraction.
 - [Playwright directory inputs](playwright-directory-inputs.md) — for `webkitdirectory` inputs, `setInputFiles` needs a real directory path, not an array of virtual files.
+- [Signup popup cart delay](signup-popup-cart-delay.md) — cart-add delay pauses the remaining session timer; it must never trigger a separate signup popup.

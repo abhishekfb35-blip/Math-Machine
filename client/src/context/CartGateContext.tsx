@@ -1,21 +1,17 @@
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
 /**
- * CartGateContext — coordinates the hard gate that blocks add-to-cart
- * for unauthenticated users after they dismiss the signup popup while
- * having at least one item in the cart.
+ * CartGateContext coordinates cart surfaces with the promotional signup popup.
  *
  * Consumers:
- *  - SignupPopup: registers forceShow, notifies on auth/dismiss
+ *  - SignupPopup: reports its visibility
  *  - ProductPage / QuickAddSheet: call gateAddToCart() instead of mutate() directly
  */
 
 interface CartGateContextValue {
-  /** Wrap every add-to-cart call with this. Blocks and shows popup when gate is active. */
+  /** Compatibility wrapper; guests may add items without a signup gate. */
   gateAddToCart: (fn: () => void, quantity?: number) => void;
-  /** True while the hard-gate sign-in popup owns interaction over a cart surface. */
+  /** Retained for compatibility; guest cart actions are never signup-gated. */
   isGatePromptOpen: boolean;
   /** True while the shared signup popup is visible above a cart surface. */
   isSignupPopupOpen: boolean;
@@ -29,14 +25,8 @@ interface CartGateContextValue {
   setQuickAddOpen: (instanceId: string, open: boolean, closedAfterAdd?: boolean) => void;
   /** Register the header mini-cart drawer's visibility with the popup coordinator. */
   setMiniCartOpen: (open: boolean) => void;
-  /** Internal — SignupPopup registers its force-show function here. */
-  _registerOpen: (fn: () => void) => void;
   /** Internal — SignupPopup reports its visibility here. */
   _setSignupPopupOpen: (open: boolean) => void;
-  /** Internal — SignupPopup calls this when the popup is dismissed. */
-  _onDismissed: () => void;
-  /** Internal — SignupPopup calls this when auth succeeds. */
-  _onAuthSuccess: () => void;
 }
 
 const CartGateContext = createContext<CartGateContextValue>({
@@ -48,10 +38,7 @@ const CartGateContext = createContext<CartGateContextValue>({
   quickAddClosedAfterAdd: false,
   setQuickAddOpen: () => {},
   setMiniCartOpen: () => {},
-  _registerOpen: () => {},
   _setSignupPopupOpen: () => {},
-  _onDismissed: () => {},
-  _onAuthSuccess: () => {},
 });
 
 /** Used by ProductPage / QuickAddSheet */
@@ -78,21 +65,13 @@ export const useCartGate = () => {
 export const useCartGateInternal = () => useContext(CartGateContext);
 
 export function CartGateProvider({ children }: { children: ReactNode }) {
-  const [isGatePromptOpen, setIsGatePromptOpen] = useState(false);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
+  const isGatePromptOpen = false;
   const [isSignupPopupOpen, setIsSignupPopupOpen] = useState(false);
   const [isMiniCartOpen, setMiniCartOpen] = useState(false);
   const [quickAddState, setQuickAddState] = useState<{
     openIds: Set<string>;
     closedAfterAdd: boolean;
   }>({ openIds: new Set(), closedAfterAdd: false });
-  const pendingFn = useRef<(() => void) | null>(null);
-  const openPopupFn = useRef<() => void>(() => {});
-  const _registerOpen = useCallback((fn: () => void) => {
-    openPopupFn.current = fn;
-  }, []);
-
   const _setSignupPopupOpen = useCallback((open: boolean) => {
     setIsSignupPopupOpen(open);
   }, []);
@@ -118,53 +97,7 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const _onDismissed = useCallback(() => {
-    setIsGatePromptOpen(false);
-    pendingFn.current = null;
-  }, []);
-
-  const _onAuthSuccess = useCallback(() => {
-    const fn = pendingFn.current;
-    pendingFn.current = null;
-    setIsGatePromptOpen(false);
-    if (fn) fn();
-  }, []);
-
-  const gateAddToCart = useCallback(
-    (fn: () => void, quantity = 1) => {
-      if (isAuthenticated || authLoading) {
-        fn();
-        return;
-      }
-
-      const checkCart = async () => {
-        let cart = queryClient.getQueryData<{ itemCount?: number }>(["/api/cart"]);
-        if (!cart) {
-          try {
-            cart = await queryClient.fetchQuery<{ itemCount?: number }>({
-              queryKey: ["/api/cart"],
-            });
-          } catch {
-            // The server remains authoritative if the cart cannot be fetched here.
-            fn();
-            return;
-          }
-        }
-
-        if ((cart.itemCount ?? 0) + quantity > 1) {
-          pendingFn.current = fn;
-          setIsGatePromptOpen(true);
-          openPopupFn.current();
-          return;
-        }
-
-        fn();
-      };
-
-      void checkCart();
-    },
-    [authLoading, isAuthenticated, queryClient],
-  );
+  const gateAddToCart = useCallback((fn: () => void) => fn(), []);
 
   return (
     <CartGateContext.Provider
@@ -177,10 +110,7 @@ export function CartGateProvider({ children }: { children: ReactNode }) {
         quickAddClosedAfterAdd: quickAddState.closedAfterAdd,
         setQuickAddOpen,
         setMiniCartOpen,
-        _registerOpen,
         _setSignupPopupOpen,
-        _onDismissed,
-        _onAuthSuccess,
       }}
     >
       {children}
