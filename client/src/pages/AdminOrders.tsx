@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getProductImageUrl } from "@/lib/imageUtils";
+import { formatOrderCurrency, formatShippingCharge } from "@/lib/orderShippingDisplay";
 import type { Order, OrderItem } from "@shared/types";
 
 interface OrderWithItems extends Order {
@@ -40,10 +41,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 };
 
 const STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
-}
 
 function formatDate(dateStr: string | Date | null): string {
   if (!dateStr) return "Unknown";
@@ -255,11 +252,11 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
                 <span className="text-xs text-muted-foreground">x{item.quantity}</span>
                 {item.isFree ? (
                   <div className="text-right">
-                    <span className="text-xs line-through text-muted-foreground">{formatCurrency(item.productPrice)}</span>
+                    <span className="text-xs line-through text-muted-foreground">{formatOrderCurrency(item.productPrice)}</span>
                     <span className="ml-1 text-xs font-semibold text-green-600">FREE</span>
                   </div>
                 ) : (
-                  <span className="text-sm font-medium" data-testid={`text-item-price-${idx}`}>{formatCurrency(item.productPrice)}</span>
+                  <span className="text-sm font-medium" data-testid={`text-item-price-${idx}`}>{formatOrderCurrency(item.productPrice)}</span>
                 )}
               </div>
             </div>
@@ -269,21 +266,23 @@ function OrderDetailView({ orderId, onBack }: { orderId: string; onBack: () => v
         <div className="border-t pt-3 mt-2 space-y-1">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span>{formatCurrency(order.subtotal)}</span>
+            <span>{formatOrderCurrency(order.subtotal)}</span>
           </div>
           {order.discount > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>Promotion discount</span>
-              <span>-{formatCurrency(order.discount)}</span>
+              <span>-{formatOrderCurrency(order.discount)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Shipping</span>
-            <span className="text-green-600 font-medium">FREE</span>
+            <span className={order.shippingFee > 0 ? "font-medium" : "text-green-600 font-medium"} data-testid="text-order-shipping-fee">
+              {formatShippingCharge(order.shippingFee)}
+            </span>
           </div>
           <div className="flex justify-between font-bold text-base pt-2 border-t">
             <span>Total</span>
-            <span data-testid="text-order-total">{formatCurrency(order.total)}</span>
+            <span data-testid="text-order-total">{formatOrderCurrency(order.total)}</span>
           </div>
         </div>
       </Card>
@@ -593,7 +592,7 @@ export default function AdminOrders() {
                       <p className="text-xs text-muted-foreground mt-0.5">{formatRelativeDate(order.createdAt)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="font-bold text-sm" data-testid={`text-order-total-${order.id}`}>{formatCurrency(order.total)}</span>
+                      <span className="font-bold text-sm" data-testid={`text-order-total-${order.id}`}>{formatOrderCurrency(order.total)}</span>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </div>
                   </div>
