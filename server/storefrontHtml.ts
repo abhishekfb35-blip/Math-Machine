@@ -172,6 +172,12 @@ function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
   const identity = siteIdentityStructuredData(page.seo.brandName, page.seo.siteUrl);
   const freshness = freshnessStructuredData(page);
   if (page.kind === "home") return [...identity, ...freshness, storefrontFaqStructuredData()];
+  if (page.kind === "collection") {
+    return [...identity, ...freshness, breadcrumbJsonLd([
+      { name: "Home", url: absoluteUrl("/", page.seo.siteUrl) },
+      { name: "Couple Gifts", url: canonicalUrl(page) },
+    ])];
+  }
   if (page.kind === "product") {
     const images = imageList(page.product, page.images, page.seo.siteUrl);
     return [...identity, ...freshness, buildProductStructuredData({
@@ -366,6 +372,19 @@ function renderPageContent(page: StorefrontPageData): string {
         <h1>${escapeHtml(page.category.name)}</h1>
         <p>${page.products.length} products</p>
         ${productListing(page.category.name, page.products, page.seo.siteUrl)}
+      </main>`;
+    case "collection":
+      return `<main class="catalogue-prerender-content">
+        <h1>Personalised Couple Towel Sets &amp; Bathrobes</h1>
+        <p>${escapeHtml(page.description)}</p>
+        <p>Choose a matching set or bathrobe and add the names or initials you want embroidered. These personalised couple gifts are suited to weddings, anniversaries and housewarmings.</p>
+        ${productListing("Couple towel sets and bathrobes", page.products, page.seo.siteUrl)}
+        <section class="catalogue-section">
+          <h2>Questions about couple gifts</h2>
+          <article><h3>Can couple products be personalised with names?</h3><p>Many products in this collection offer name or initial embroidery. Check the options on each product page before ordering.</p></article>
+          <article><h3>What occasions are these couple sets suited to?</h3><p>Matching personalised towel sets and bathrobes can make thoughtful gifts for weddings, anniversaries and housewarmings.</p></article>
+          <article><h3>Where does TurtleLittle deliver?</h3><p>Delivery is available to addresses within India. See the <a href="/shipping">shipping policy</a> for current delivery details.</p></article>
+        </section>
       </main>`;
     case "product":
       return renderProductPage(

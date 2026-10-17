@@ -23,7 +23,7 @@ const audienceLabels: Record<string, string> = {
 };
 
 const audienceDescriptions: Record<string, string> = {
-  couples: "Matching sets perfect for weddings, anniversaries & gifting",
+  couples: "Personalised couple towel sets and matching bathrobes, embroidered with names or initials. Thoughtful gifts for weddings, anniversaries and housewarmings.",
 };
 
 interface ProductTypeConfig {
@@ -307,7 +307,11 @@ export default function CollectionPage() {
   // Base audience products before attribute filters (audience dimension only)
   const baseAudienceProducts = useMemo(() => {
     if (!products) return [];
-    if (audience === "couples" && !audienceAttribute) return [...products];
+    if (audience === "couples") {
+      return products.filter((product) =>
+        product.audienceNames?.some((name) => name.trim().toLowerCase() === "couples"),
+      );
+    }
     if (!audienceAttribute) return [];
     return products.filter((p) => (p.audience ?? []).includes(audienceId));
   }, [products, audience, audienceAttribute, audienceId]);
@@ -423,7 +427,8 @@ export default function CollectionPage() {
   return (
     <div className="pb-20 md:pb-8">
       <SEO
-        title={audienceLabel}
+        title={audience === "couples" ? "Personalised Couple Towel Sets & Bathrobes" : audienceLabel}
+        description={audience === "couples" ? audienceDesc : undefined}
         path={`/collection/${audience}`}
       />
       <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">

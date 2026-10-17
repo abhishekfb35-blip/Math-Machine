@@ -1,4 +1,4 @@
-import type { Category, Product, ProductImage, ProductVariantOptions } from "@shared/types";
+import type { Attributes, Category, Product, ProductImage, ProductVariantOptions } from "@shared/types";
 import {
   groupProductsByShopSections,
   normalizeShopSections,
@@ -49,6 +49,11 @@ export type StorefrontPageData =
   | (StorefrontPageBase & {
       kind: "category";
       category: Category;
+      products: Product[];
+    })
+  | (StorefrontPageBase & {
+      kind: "collection";
+      slug: "couples";
       products: Product[];
     })
   | (StorefrontPageBase & {
@@ -206,6 +211,36 @@ async function loadShopPage(
   };
 }
 
+async function loadCouplesCollection(
+  storage: IStorage,
+  seo: StorefrontSeoSettings,
+): Promise<StorefrontPageData> {
+  const [products, categories, attributes] = await Promise.all([
+    storage.getProducts(),
+    storage.getCategories(),
+    storage.getAttributes(),
+  ]);
+  const coupleProducts = products.filter((product) =>
+    product.audienceNames?.some((name) => name.trim().toLowerCase() === "couples"),
+  );
+  return {
+    ...pageBase(
+      seo,
+      "Personalised Couple Towel Sets & Bathrobes",
+      "Shop personalised couple towel sets and matching bathrobes, embroidered with names or initials. Thoughtful gifts for weddings, anniversaries and housewarmings.",
+      "/collection/couples",
+    ),
+    kind: "collection",
+    slug: "couples",
+    products: coupleProducts,
+    queries: [
+      { queryKey: ["/api/products"], data: products },
+      { queryKey: ["/api/categories"], data: categories },
+      { queryKey: ["/api/attributes"], data: attributes as Attributes },
+    ],
+  };
+}
+
 async function loadCategoryPage(
   slug: string,
   storage: IStorage,
@@ -297,14 +332,16 @@ export async function buildStorefrontPageData(
 
   const isHome = pathname === "/";
   const isShop = pathname === "/shop";
+  const isCouplesCollection = pathname === "/collection/couples";
   const categoryMatch = /^\/category\/([^/]+)\/?$/.exec(pathname);
   const productMatch = /^\/product\/([^/]+)\/?$/.exec(pathname);
   const isInfo = /^\/(?:about|contact|shipping|terms|privacy|refund-policy)\/?$/.test(pathname);
-  if (!isHome && !isShop && !categoryMatch && !productMatch && !isInfo) return null;
+  if (!isHome && !isShop && !isCouplesCollection && !categoryMatch && !productMatch && !isInfo) return null;
 
   const seo = await loadSeoSettings(storage);
   if (isHome) return loadHomePage(seo, loadHomeSections);
   if (isShop) return loadShopPage(storage, seo);
+  if (isCouplesCollection) return loadCouplesCollection(storage, seo);
   if (isInfo) {
     const infoPage = await loadPublicInfoPage(pathname, storage);
     if (!infoPage) return null;

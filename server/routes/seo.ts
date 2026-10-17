@@ -66,6 +66,7 @@ Product prices, availability, delivery terms and policies may change. Check the 
       const staticPages = [
         { loc: "/", priority: "1.0", changefreq: "daily" },
         { loc: "/shop", priority: "0.9", changefreq: "daily" },
+        { loc: "/collection/couples", priority: "0.8", changefreq: "weekly" },
         { loc: "/about", priority: "0.5", changefreq: "monthly" },
         { loc: "/contact", priority: "0.3", changefreq: "monthly" },
         { loc: "/terms", priority: "0.3", changefreq: "yearly" },
