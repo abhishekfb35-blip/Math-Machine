@@ -78,6 +78,12 @@ export interface HomepageCollectionCard {
   description: string;
   link: string;
   imageUrl: string;
+  categoryFilters?: string[];
+  audienceFilters?: string[];
+  genderFilters?: string[];
+  themeFilters?: string[];
+  styleFilters?: string[];
+  tagFilters?: string[];
 }
 
 export interface HomepageCollectionSection {

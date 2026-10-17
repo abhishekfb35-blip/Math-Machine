@@ -24,6 +24,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { normalizeDateOnly } from "@shared/discoverability";
 import type { Attributes, Product, Tag, TagType, Category } from "@shared/types";
+import { hasProductFilters } from "@shared/productFilters";
 import {
   defaultAnnouncement, defaultHero, defaultHeader, defaultPromise,
   defaultCollections, defaultProductTypes, defaultPromo, defaultTestimonials,
@@ -403,8 +404,43 @@ function PromiseSection({ data }: { data: PromiseConfig }) {
 
 function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }) {
   const [config, setConfig] = useState(data);
+  const [selectedTagTypes, setSelectedTagTypes] = useState<Record<string, string[]>>({});
+  const [previewResults, setPreviewResults] = useState<Record<string, { products: Product[]; total: number }>>({});
   const save = useSaveConfig("homepageCollections");
   useEffect(() => { setConfig(data); }, [data]);
+
+  const { data: attributes } = useQuery<Attributes>({ queryKey: ["/api/attributes"] });
+  const { data: categories } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+  const { data: allTags } = useQuery<Tag[]>({ queryKey: ["/api/admin/tags"] });
+  const { data: allTagTypes } = useQuery<TagType[]>({ queryKey: ["/api/admin/tag-types"] });
+  const { data: allProducts } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+  const productCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const product of allProducts ?? []) {
+      const categorySlug = categories?.find(category => category.id === product.categoryId)?.slug;
+      if (categorySlug) counts[categorySlug] = (counts[categorySlug] ?? 0) + 1;
+      for (const value of [...(product.audience ?? []), ...(product.genders ?? []), ...(product.themes ?? []), ...(product.styles ?? [])]) {
+        counts[value] = (counts[value] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [allProducts, categories]);
+
+  const previewMutation = useMutation({
+    mutationFn: async ({ key, card }: { key: string; card: HomepageCollectionsConfig["sections"][number]["cards"][number] }) => {
+      const response = await apiRequest("POST", "/api/admin/featured-products/preview", {
+        categoryFilters: card.categoryFilters ?? [],
+        audienceFilters: card.audienceFilters ?? [],
+        genderFilters: card.genderFilters ?? [],
+        themeFilters: card.themeFilters ?? [],
+        styleFilters: card.styleFilters ?? [],
+        tagFilters: card.tagFilters ?? [],
+      });
+      const result = await response.json() as { products: Product[]; total: number };
+      return { key, products: result.products ?? [], total: result.total ?? 0 };
+    },
+    onSuccess: ({ key, products, total }) => setPreviewResults(previous => ({ ...previous, [key]: { products, total } })),
+  });
 
   const generateId = () => `section_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -422,13 +458,56 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
     setConfig({ ...config, sections });
   };
 
+  const cardKey = (sectionIndex: number, cardIndex: number) => `${sectionIndex}-${cardIndex}`;
+  const clearCardFilterUiState = () => {
+    setSelectedTagTypes({});
+    setPreviewResults({});
+  };
+  type CardFilterField = Exclude<keyof FeaturedSectionConfig, "key" | "title" | "subtitle">;
+  const updateCardFilters = (sectionIndex: number, cardIndex: number, field: CardFilterField, value: string[]) => {
+    const sections = [...config.sections];
+    const cards = [...sections[sectionIndex].cards];
+    cards[cardIndex] = { ...cards[cardIndex], [field]: value };
+    sections[sectionIndex] = { ...sections[sectionIndex], cards };
+    setConfig({ ...config, sections });
+    setPreviewResults(previous => {
+      const next = { ...previous };
+      delete next[cardKey(sectionIndex, cardIndex)];
+      return next;
+    });
+  };
+
+  const toggleCardFilter = (sectionIndex: number, cardIndex: number, field: CardFilterField, value: string) => {
+    const card = config.sections[sectionIndex].cards[cardIndex];
+    const selected = (card[field] as string[] | undefined) ?? [];
+    updateCardFilters(sectionIndex, cardIndex, field, selected.includes(value) ? selected.filter(item => item !== value) : [...selected, value]);
+  };
+
+  const toggleAllCardFilters = (sectionIndex: number, cardIndex: number, field: CardFilterField, values: string[]) => {
+    const card = config.sections[sectionIndex].cards[cardIndex];
+    const selected = (card[field] as string[] | undefined) ?? [];
+    updateCardFilters(sectionIndex, cardIndex, field, values.length && values.every(value => selected.includes(value)) ? [] : values);
+  };
+
+  const toggleCardTagType = (sectionIndex: number, cardIndex: number, typeId: string) => {
+    const key = cardKey(sectionIndex, cardIndex);
+    setSelectedTagTypes(previous => {
+      const current = previous[key] ?? [];
+      return { ...previous, [key]: current.includes(typeId) ? current.filter(value => value !== typeId) : [...current, typeId] };
+    });
+  };
+
   const addCard = (sectionIndex: number) => {
     const sections = [...config.sections];
     sections[sectionIndex] = {
       ...sections[sectionIndex],
-      cards: [...sections[sectionIndex].cards, { title: "", description: "", link: "/shop", imageUrl: "" }],
+      cards: [...sections[sectionIndex].cards, {
+        title: "", description: "", link: "/shop", imageUrl: "",
+        categoryFilters: [], audienceFilters: [], genderFilters: [], themeFilters: [], styleFilters: [], tagFilters: [],
+      }],
     };
     setConfig({ ...config, sections });
+    clearCardFilterUiState();
   };
 
   const removeCard = (sectionIndex: number, cardIndex: number) => {
@@ -438,6 +517,7 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
       cards: sections[sectionIndex].cards.filter((_, i) => i !== cardIndex),
     };
     setConfig({ ...config, sections });
+    clearCardFilterUiState();
   };
 
   const addSection = () => {
@@ -448,6 +528,7 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
         { id: generateId(), label: "", heading: "New Collection", cards: [] },
       ],
     });
+    clearCardFilterUiState();
   };
 
   const removeSection = (index: number) => {
@@ -458,6 +539,7 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
       sections: config.sections.filter((_, i) => i !== index),
       deletedHistory,
     });
+    clearCardFilterUiState();
   };
 
   const restoreSection = (historyIndex: number) => {
@@ -467,6 +549,7 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
       sections: [...config.sections, { ...restored, id: generateId() }],
       deletedHistory: config.deletedHistory.filter((_, i) => i !== historyIndex),
     });
+    clearCardFilterUiState();
   };
 
   const moveSection = (index: number, direction: "up" | "down") => {
@@ -475,7 +558,16 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
     if (swapIndex < 0 || swapIndex >= sections.length) return;
     [sections[index], sections[swapIndex]] = [sections[swapIndex], sections[index]];
     setConfig({ ...config, sections });
+    clearCardFilterUiState();
   };
+
+  const categoryOptions = (categories ?? []).map(category => ({ value: category.slug, label: category.name }));
+  const audienceOptions = (attributes?.audience ?? []).map(item => ({ value: item.id, label: item.name }));
+  const genderOptions = (attributes?.genders ?? []).map(item => ({ value: item.id, label: item.name }));
+  const themeOptions = (attributes?.themes ?? []).map(item => ({ value: item.id, label: item.name }));
+  const styleOptions = (attributes?.styles ?? []).map(item => ({ value: item.id, label: item.name }));
+  const tagTypeOptions = (allTagTypes ?? []).map(type => ({ value: type.id, label: type.name }));
+  const allTagsFlat = allTags ?? [];
 
   return (
     <div className="space-y-4">
@@ -507,7 +599,16 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
           </div>
           <Separator />
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cards ({section.cards.length})</p>
-          {section.cards.map((card, ci) => (
+          {section.cards.map((card, ci) => {
+            const key = cardKey(si, ci);
+            const selectedTypes = selectedTagTypes[key] ?? [];
+            const tagOptions = selectedTypes.length === 0
+              ? allTagsFlat.map(tag => ({ value: tag.name, label: tag.name }))
+              : allTagsFlat.filter(tag => tag.tagTypeId && selectedTypes.includes(tag.tagTypeId)).map(tag => ({ value: tag.name, label: tag.name }));
+            const preview = previewResults[key];
+            const previewing = previewMutation.isPending && (previewMutation.variables as any)?.key === key;
+            const filtersSelected = hasProductFilters(card);
+            return (
             <Card key={ci} className="p-3 space-y-3 bg-muted/30 border-dashed">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-sm text-muted-foreground">Card {ci + 1}</p>
@@ -534,8 +635,50 @@ function DynamicCollectionsSection({ data }: { data: HomepageCollectionsConfig }
                 <Label>Link</Label>
                 <Input value={card.link} onChange={(e) => updateCard(si, ci, "link", e.target.value)} data-testid={`input-card-link-${si}-${ci}`} />
               </div>
+              <div className="space-y-3 rounded-md border p-3 bg-background/70">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Product filters</p>
+                <p className="text-xs text-muted-foreground">Select filters to show matching products on this homepage card.</p>
+                <FilterChips label="Categories" options={categoryOptions} selected={card.categoryFilters ?? []} counts={productCounts}
+                  onToggle={value => toggleCardFilter(si, ci, "categoryFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "categoryFilters", categoryOptions.map(option => option.value))} />
+                <FilterChips label="Audience" options={audienceOptions} selected={card.audienceFilters ?? []} counts={productCounts}
+                  onToggle={value => toggleCardFilter(si, ci, "audienceFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "audienceFilters", audienceOptions.map(option => option.value))} />
+                <FilterChips label="Genders" options={genderOptions} selected={card.genderFilters ?? []} counts={productCounts}
+                  onToggle={value => toggleCardFilter(si, ci, "genderFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "genderFilters", genderOptions.map(option => option.value))} />
+                <FilterChips label="Themes" options={themeOptions} selected={card.themeFilters ?? []} counts={productCounts}
+                  onToggle={value => toggleCardFilter(si, ci, "themeFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "themeFilters", themeOptions.map(option => option.value))} />
+                <FilterChips label="Styles" options={styleOptions} selected={card.styleFilters ?? []} counts={productCounts}
+                  onToggle={value => toggleCardFilter(si, ci, "styleFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "styleFilters", styleOptions.map(option => option.value))} />
+                <FilterChips label="Tag Types (filter)" options={tagTypeOptions} selected={selectedTypes}
+                  onToggle={value => toggleCardTagType(si, ci, value)}
+                  onToggleAll={() => setSelectedTagTypes(previous => ({
+                    ...previous,
+                    [key]: tagTypeOptions.length > 0 && tagTypeOptions.every(option => selectedTypes.includes(option.value)) ? [] : tagTypeOptions.map(option => option.value),
+                  }))} />
+                <FilterChips label="Tags" options={tagOptions} selected={card.tagFilters ?? []}
+                  onToggle={value => toggleCardFilter(si, ci, "tagFilters", value)}
+                  onToggleAll={() => toggleAllCardFilters(si, ci, "tagFilters", tagOptions.map(option => option.value))} />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {preview ? `Preview — ${preview.total} matched, showing ${preview.products.length}` : filtersSelected ? "Preview which products match this card" : "Choose at least one filter to preview products"}
+                  </p>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" disabled={previewing || !filtersSelected}
+                    onClick={() => previewMutation.mutate({ key, card })}
+                    data-testid={`button-preview-collection-card-${si}-${ci}`}>
+                    {previewing ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Previewing…</> : "Preview"}
+                  </Button>
+                </div>
+                {preview && <FeaturedProductCarousel products={preview.products} isLoading={previewing} sectionKey={`collection-${si}-${ci}`} />}
+              </div>
             </Card>
-          ))}
+            );
+          })}
           <Button variant="outline" size="sm" onClick={() => addCard(si)} data-testid={`button-add-card-${si}`}>
             <Plus className="w-4 h-4 mr-2" /> Add Card
           </Button>

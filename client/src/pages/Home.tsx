@@ -24,7 +24,8 @@ import adultsBanner from "@assets/4laurel_set_s_1770763286429.jpg";
 import towelsBanner from "@/assets/images/towels-collection.png";
 import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
 import blanketsBanner from "@/assets/images/blankets-collection.png";
-import type { Product } from "@shared/types";
+import type { Category, Product } from "@shared/types";
+import { hasProductFilters, productMatchesFilters } from "@shared/productFilters";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
@@ -175,6 +176,11 @@ export default function Home() {
     queryKey: ["/api/home/collections"],
     staleTime: 12 * 60 * 60 * 1000,
   });
+  const { data: collectionProducts = [], isLoading: collectionProductsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
 
   return (
     <div className="pb-20 md:pb-0">
@@ -264,25 +270,48 @@ export default function Home() {
             <h2 className="text-xl md:text-2xl font-bold" data-testid={`text-collection-heading-${si}`}>{section.heading}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {section.cards.map((card, ci) => (
-              <Link key={ci} href={card.link}>
-                <div className="group" data-testid={`card-collection-${si}-${ci}`}>
-                  <div className="relative rounded-md overflow-hidden">
-                    <img
-                      src={card.imageUrl || (si === 0 ? defaultCollectionImages[ci] : si === 1 ? defaultProductTypeImages[ci] : undefined) || kidsBanner}
-                      alt={card.title}
-                      className="w-full aspect-[4/3] object-contain transition-opacity duration-300 group-hover:opacity-90"
-                    />
-                  </div>
-                  <div className="mt-3 space-y-1 px-1">
-                    <h3 className="font-bold text-base" data-testid={`text-collection-title-${si}-${ci}`}>{card.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {card.description}
-                    </p>
-                  </div>
+            {section.cards.map((card, ci) => {
+              const hasFilters = hasProductFilters(card);
+              const matchingProducts = hasFilters
+                ? collectionProducts.filter(product => productMatchesFilters(product, categories, card))
+                : [];
+              return (
+                <div key={ci} data-testid={`card-collection-${si}-${ci}`}>
+                  <Link href={card.link}>
+                    <div className="group">
+                      <div className="relative rounded-md overflow-hidden">
+                        <img
+                          src={card.imageUrl || (si === 0 ? defaultCollectionImages[ci] : si === 1 ? defaultProductTypeImages[ci] : undefined) || kidsBanner}
+                          alt={card.title}
+                          className="w-full aspect-[4/3] object-contain transition-opacity duration-300 group-hover:opacity-90"
+                        />
+                      </div>
+                      <div className="mt-3 space-y-1 px-1">
+                        <h3 className="font-bold text-base" data-testid={`text-collection-title-${si}-${ci}`}>{card.title}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                  {hasFilters && (
+                    <div className="mt-4 space-y-3" data-testid={`collection-card-products-${si}-${ci}`}>
+                      {collectionProductsLoading ? (
+                        <p className="text-xs text-muted-foreground">Loading matching products…</p>
+                      ) : matchingProducts.length ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {matchingProducts.slice(0, 2).map(product => (
+                            <ProductCardNew key={product.id} product={product} onQuickAdd={setQuickAddProduct} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No products match these filters yet.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </section>
       ))}
