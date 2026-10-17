@@ -551,6 +551,7 @@ export default function ShopPage() {
   const [activeGenders, setActiveGenders] = useState<string[]>([]);
   const [activeThemes,  setActiveThemes]  = useState<string[]>([]);
   const [activeStyles,  setActiveStyles]  = useState<string[]>([]);
+  const [activeProductTags, setActiveProductTags] = useState<string[]>([]);
   const [activeTag,     setActiveTag]     = useState<string>("");
   const [searchQuery,   setSearchQuery]   = useState<string>("");
   const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
@@ -569,9 +570,10 @@ export default function ShopPage() {
     return categories ?? [];
   }, [categories]);
 
-  const activeCategoryObj = useMemo(() => {
-    if (!activeCategory) return null;
-    return categoryOptions.find(c => c.name.toLowerCase() === activeCategory) ?? null;
+  const activeCategoryObjs = useMemo(() => {
+    if (!activeCategory) return [];
+    const selected = new Set(activeCategory.split(",").filter(Boolean));
+    return categoryOptions.filter(c => selected.has(c.name.toLowerCase()) || selected.has(c.slug.toLowerCase()));
   }, [categoryOptions, activeCategory]);
 
   const audienceFilters = useMemo(() => {
@@ -613,12 +615,21 @@ export default function ShopPage() {
   // Read URL → state
   useEffect(() => {
     const p = new URLSearchParams(searchString);
-    const cat = p.get("category") || "";
-    setActiveCategory(cat);
+    const rawCategories = (p.get("category") || "").split(",").filter(Boolean);
+    const validCategories = rawCategories
+      .map(value => categoryOptions.find(category =>
+        category.name.toLowerCase() === value.toLowerCase() ||
+        category.slug.toLowerCase() === value.toLowerCase(),
+      ))
+      .filter((category): category is Category => Boolean(category))
+      .map(category => category.name.toLowerCase());
+    setActiveCategory([...new Set(validCategories)].join(","));
     const f = p.get("filter") || "all";
-    const validAudienceIds = selectedAudienceIds(f).filter(id =>
-      audienceFilters.some(option => option.value === id),
-    );
+    const validAudienceIds = selectedAudienceIds(f).map(id => {
+      if (audienceFilters.some(option => option.value === id)) return id;
+      // Older homepage links used audience slugs while the Shop page now stores attribute IDs.
+      return audienceFilters.find(option => option.label.toLowerCase() === id.toLowerCase())?.value ?? "";
+    }).filter(Boolean);
     setActiveFilter(validAudienceIds.length ? validAudienceIds.join(",") : "all");
     const g = p.get("gender");
     setActiveGenders(g ? g.split(",").filter(Boolean) : []);
@@ -626,6 +637,8 @@ export default function ShopPage() {
     setActiveThemes(t ? t.split(",").filter(Boolean) : []);
     const s = p.get("style");
     setActiveStyles(s ? s.split(",").filter(Boolean) : []);
+    const productTags = p.get("productTag");
+    setActiveProductTags(productTags ? productTags.split(",").filter(Boolean) : []);
     setActiveTag(p.get("tag") || "");
     const query = p.get("q") || "";
     setSearchQuery(query);
@@ -633,7 +646,7 @@ export default function ShopPage() {
       lastTrackedSearchRef.current = query.trim();
       searchHydratedRef.current = true;
     }
-  }, [searchString, audienceFilters]);
+  }, [searchString, audienceFilters, categoryOptions]);
 
   // Write state → URL
   const pushURL = useCallback((
@@ -644,6 +657,7 @@ export default function ShopPage() {
     styles: string[],
     tag: string,
     query: string,
+    productTags: string[] = activeProductTags,
   ) => {
     const p = new URLSearchParams();
     if (category) p.set("category", category);
@@ -652,10 +666,11 @@ export default function ShopPage() {
     if (themes.length)  p.set("theme",  themes.join(","));
     if (styles.length)  p.set("style",  styles.join(","));
     if (tag)   p.set("tag", tag);
+    if (productTags.length) p.set("productTag", productTags.join(","));
     if (query) p.set("q", query);
     const qs = p.toString();
     navigate(qs ? `/shop?${qs}` : "/shop", { replace: true });
-  }, [navigate]);
+  }, [navigate, activeProductTags]);
 
   type FilterState = {
     category: string;
@@ -800,6 +815,15 @@ export default function ShopPage() {
     });
     pushURL(activeCategory, activeFilter, activeGenders, activeThemes, next, "", searchQuery);
   };
+  const toggleProductTag = (tag: string) => {
+    const next = activeProductTags.includes(tag)
+      ? activeProductTags.filter(value => value !== tag)
+      : [...activeProductTags, tag];
+    pushURL(activeCategory, activeFilter, activeGenders, activeThemes, activeStyles, "", searchQuery, next);
+  };
+  const clearProductTags = () => {
+    pushURL(activeCategory, activeFilter, activeGenders, activeThemes, activeStyles, activeTag, searchQuery, []);
+  };
 
   const handleBackToAll = () => {
     if (activeTag) {
@@ -813,7 +837,7 @@ export default function ShopPage() {
         tag: "",
       });
     }
-    pushURL(activeCategory, "all", [], [], [], "", "");
+    pushURL(activeCategory, "all", [], [], [], "", "", []);
   };
   const handleSearchChange  = (q: string) => {
     if (q === searchQuery) return;
@@ -859,55 +883,58 @@ export default function ShopPage() {
   const attributeFilteredProducts = useMemo(() => {
     if (!products) return [];
     let result = products;
-    if (activeCategoryObj) result = result.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeCategoryObjs.length) result = result.filter(p => activeCategoryObjs.some(category => category.id === p.categoryId));
     if (activeFilter !== "all") result = result.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   result = result.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeThemes.length)    result = result.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     if (activeStyles.length)    result = result.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
+    if (activeProductTags.length) result = result.filter(p => activeProductTags.some(tag =>
+      (p.tagNames ?? []).some(productTag => productTag.toLowerCase() === tag.toLowerCase()),
+    ));
     return result;
-  }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes, activeStyles]);
+  }, [products, activeCategoryObjs, activeFilter, activeGenders, activeThemes, activeStyles, activeProductTags]);
 
   // Count bases: each dimension counts with all OTHER filters applied
   // Category is always active — apply it in every count base
   const countBaseAudience = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeCategoryObj) r = r.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeCategoryObjs.length) r = r.filter(p => activeCategoryObjs.some(category => category.id === p.categoryId));
     if (activeGenders.length) r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeThemes.length)  r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     if (activeStyles.length)  r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
-  }, [products, activeCategoryObj, activeGenders, activeThemes, activeStyles]);
+  }, [products, activeCategoryObjs, activeGenders, activeThemes, activeStyles]);
 
   const countBaseGender = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeCategoryObjs.length) r = r.filter(p => activeCategoryObjs.some(category => category.id === p.categoryId));
     if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
-  }, [products, activeCategoryObj, activeFilter, activeThemes, activeStyles]);
+  }, [products, activeCategoryObjs, activeFilter, activeThemes, activeStyles]);
 
   const countBaseTheme = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeCategoryObjs.length) r = r.filter(p => activeCategoryObjs.some(category => category.id === p.categoryId));
     if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeStyles.length)    r = r.filter(p => (p.styles  ?? []).some(s => activeStyles.includes(s)));
     return r;
-  }, [products, activeCategoryObj, activeFilter, activeGenders, activeStyles]);
+  }, [products, activeCategoryObjs, activeFilter, activeGenders, activeStyles]);
 
   const countBaseStyle = useMemo(() => {
     if (!products) return [];
     let r = products;
-    if (activeCategoryObj)      r = r.filter(p => p.categoryId === activeCategoryObj.id);
+    if (activeCategoryObjs.length) r = r.filter(p => activeCategoryObjs.some(category => category.id === p.categoryId));
     if (activeFilter !== "all") r = r.filter(p => matchesAudience(p.audience, activeFilter));
     if (activeGenders.length)   r = r.filter(p => (p.genders ?? []).some(g => activeGenders.includes(g)));
     if (activeThemes.length)    r = r.filter(p => (p.themes  ?? []).some(t => activeThemes.includes(t)));
     return r;
-  }, [products, activeCategoryObj, activeFilter, activeGenders, activeThemes]);
+  }, [products, activeCategoryObjs, activeFilter, activeGenders, activeThemes]);
 
   const categoryCounts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -951,6 +978,20 @@ export default function ShopPage() {
     return map;
   }, [countBaseStyle, styleOptions]);
 
+  const productTagOptions = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const product of products ?? []) {
+      for (const tag of product.tagNames ?? []) counts[tag] = (counts[tag] ?? 0) + 1;
+    }
+    return Object.entries(counts).sort(([a], [b]) => a.localeCompare(b))
+      .map(([label]) => ({ label, value: label }));
+  }, [products]);
+  const productTagCounts = useMemo(() => Object.fromEntries(
+    productTagOptions.map(option => [option.value, products?.filter(product =>
+      (product.tagNames ?? []).some(tag => tag.toLowerCase() === option.value.toLowerCase()),
+    ).length ?? 0]),
+  ), [productTagOptions, products]);
+
   // Products for search views
   const flatProducts = useMemo(() => {
     let result = attributeFilteredProducts;
@@ -977,9 +1018,10 @@ export default function ShopPage() {
     return groupProductsByShopSections(attributeFilteredProducts, categories ?? [], shopSections);
   }, [attributeFilteredProducts, shopSections, products, categories]);
 
-  const hasAttributeFilters = activeFilter !== "all" || activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0;
+  const hasAttributeFilters = Boolean(activeCategory) || activeFilter !== "all" ||
+    activeGenders.length > 0 || activeThemes.length > 0 || activeStyles.length > 0 || activeProductTags.length > 0;
 
-  const isAllView = !activeTag && !searchQuery.trim() && !hasAttributeFilters && !activeCategory;
+  const isAllView = !activeTag && !searchQuery.trim() && !hasAttributeFilters;
   const isTagView = !!activeTag && !searchQuery.trim();
 
   const tagLabel = shopSections.find(s => (s.tag ?? s.label).toLowerCase() === activeTag.toLowerCase())?.label ?? activeTag;
@@ -1016,7 +1058,7 @@ export default function ShopPage() {
     if (activeGenders.length) trackFilterApplied("gender", state);
     if (activeThemes.length) trackFilterApplied("theme", state);
     if (activeStyles.length) trackFilterApplied("style", state);
-    pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery);
+    pushURL(activeCategory, "all", [], [], [], activeTag, searchQuery, []);
   };
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1102,7 +1144,8 @@ export default function ShopPage() {
                 {categoryOptions.map(cat => {
                   const key = cat.name.toLowerCase();
                   const count = categoryCounts[key];
-                  const isActive = activeCategory === key || (activeCategoryObj?.id === cat.id);
+                  const isActive = activeCategory.split(",").includes(key) ||
+                    activeCategoryObjs.some(selected => selected.id === cat.id);
                   return (
                     <Button
                       key={cat.id}
@@ -1166,6 +1209,15 @@ export default function ShopPage() {
                 counts={styleCounts}
                 testIdPrefix="filter-style"
               />
+              <MultiSelectDropdown
+                label="Product tags"
+                options={productTagOptions}
+                selected={activeProductTags}
+                onToggle={toggleProductTag}
+                onClear={clearProductTags}
+                counts={productTagCounts}
+                testIdPrefix="filter-product-tag"
+              />
               {hasAttributeFilters && (
                 <button
                   onClick={handleClearFilters}
@@ -1188,6 +1240,7 @@ export default function ShopPage() {
                 counts={themeCounts}
               />
               <DesktopFilterRow label="Style"  options={styleOptions}  selected={activeStyles}  onToggle={toggleStyle}  counts={styleCounts} />
+              <DesktopFilterRow label="Tags" options={productTagOptions} selected={activeProductTags} onToggle={toggleProductTag} counts={productTagCounts} />
               {hasAttributeFilters && (
                 <button
                   onClick={handleClearFilters}
@@ -1219,11 +1272,21 @@ export default function ShopPage() {
 
           {/* Compact active-filter summary — appears when scrolled + filters active */}
           <div
-            className={isScrolled && hasAttributeFilters ? "hidden sm:block" : "hidden"}
+            className={isScrolled && hasAttributeFilters ? "block" : "hidden"}
             data-testid="shop-active-filter-summary"
           >
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0 text-primary" />
+              {activeCategoryObjs.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryChange("")}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium"
+                  data-testid={`active-filter-category-${category.slug}`}
+                >
+                  {category.name}<X className="w-3 h-3" />
+                </button>
+              ))}
               {selectedAudienceIds(activeFilter).map((audienceId, index) => (
                 <button
                   key={audienceId}
@@ -1269,6 +1332,16 @@ export default function ShopPage() {
                 >
                   {styleOptions.find(o => o.value === s)?.label ?? s}
                   <X className="w-3 h-3" />
+                </button>
+              ))}
+              {activeProductTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => toggleProductTag(tag)}
+                  className="shrink-0 flex items-center gap-1 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-medium"
+                  data-testid={`active-filter-product-tag-${tag}`}
+                >
+                  {tag}<X className="w-3 h-3" />
                 </button>
               ))}
               <button

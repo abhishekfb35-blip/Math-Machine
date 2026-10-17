@@ -26,6 +26,7 @@ import bathrobesBanner from "@/assets/images/bathrobes-collection.png";
 import blanketsBanner from "@/assets/images/blankets-collection.png";
 import type { Category, Product } from "@shared/types";
 import { hasProductFilters, productMatchesFilters } from "@shared/productFilters";
+import { buildHomepageCardHref } from "@shared/homeSectionHref";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import {
   defaultHero, defaultPromise, defaultCollections, defaultProductTypes,
@@ -277,7 +278,7 @@ export default function Home() {
                 : [];
               return (
                 <div key={ci} data-testid={`card-collection-${si}-${ci}`}>
-                  <Link href={card.link}>
+                  <Link href={buildHomepageCardHref(card)}>
                     <div className="group">
                       <div className="relative rounded-md overflow-hidden">
                         <img
