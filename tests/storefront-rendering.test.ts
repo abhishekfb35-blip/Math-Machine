@@ -190,7 +190,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
 
     const routes = [
       "/", "/shop", "/category/bath-towels", "/product/embroidered-cotton-towel",
-      "/about", "/contact", "/shipping", "/terms", "/privacy", "/return-and-refund-policy",
+      "/about", "/contact", "/shipping", "/terms", "/privacy", "/return-and-refund-policy", "/return-gifts",
     ];
     const pages = new Map<string, string>();
     for (const route of routes) {
@@ -257,6 +257,10 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     const shopProductLinks = [...shop.matchAll(/href="\/product\/([^"]+)"/g)].map(match => match[1]);
     assert.equal(shopProductLinks.length, 10, "overlapping products should appear in each matching section");
     assert.equal(new Set(shopProductLinks).size, shopProducts.length, "every unique product should remain reachable");
+
+    const returnGifts = pages.get("/return-gifts")!;
+    assert.match(returnGifts, /Browse individual personalised product ideas for children's parties/);
+    assert.match(returnGifts, /Add 5 or more products to unlock wholesale bulk-rate pricing across your cart/);
 
     const shopInitialData = readInitialData(shop);
     const shopSectionQuery = shopInitialData.queries.find((entry: { queryKey: unknown[] }) =>

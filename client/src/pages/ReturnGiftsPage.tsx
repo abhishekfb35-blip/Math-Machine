@@ -37,6 +37,9 @@ export default function ReturnGiftsPage() {
           Browse individual product ideas for children's parties. These are themed gift suggestions, not
           pre-bundled return-gift packs. Check each product page for personalisation options and details.
         </p>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Add 5 or more products to unlock wholesale bulk-rate pricing across your cart
+        </p>
       </header>
 
       {groups.length ? (

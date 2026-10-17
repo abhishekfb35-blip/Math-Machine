@@ -398,6 +398,7 @@ function renderPageContent(page: StorefrontPageData): string {
         <h1>Themed Return Gift Ideas for Kids</h1>
         <p>${escapeHtml(page.description)}</p>
         <p>Browse individual personalised product ideas for children's parties. These are themed gift suggestions, not pre-bundled return-gift packs; check each product page for its options and details.</p>
+        <p>Add 5 or more products to unlock wholesale bulk-rate pricing across your cart</p>
         ${getGiftIdeaGroups(page.products).map((group) =>
           productListing(group.title, group.products, page.seo.siteUrl, group.description),
         ).join("")}
