@@ -348,7 +348,7 @@ function renderHomeAnswers(): string {
     ${storefrontAnswers.map(({ question, answer }) =>
       `<article><h3>${escapeHtml(question)}</h3><p>${escapeHtml(answer)}</p></article>`,
     ).join("")}
-    <p><a href="/shipping">Shipping policy</a> · <a href="/refund-policy">Refund &amp; cancellation policy</a></p>
+    <p><a href="/shipping">Shipping policy</a> · <a href="/return-and-refund-policy">Return and Refund Policy</a></p>
     <nav aria-label="Gift collections">
       <a href="/collection/couples">Shop personalised couple gifts</a> ·
       <a href="/return-gifts">Browse themed return gift ideas</a>
@@ -452,6 +452,11 @@ export function registerStorefrontDocumentRoutes(
   storage: IStorage,
   options: StorefrontDocumentOptions,
 ): void {
+  app.get(/^\/refund-policy\/?$/, (req, res) => {
+    const query = new URL(req.originalUrl, "http://localhost").search;
+    res.redirect(301, `/return-and-refund-policy${query}`);
+  });
+
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== "GET" && req.method !== "HEAD") return next();
     try {

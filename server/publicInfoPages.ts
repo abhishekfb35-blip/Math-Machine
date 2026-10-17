@@ -28,14 +28,14 @@ export interface LoadedPublicInfoPage {
 const policyDefaults: Record<PolicyPath, TermsPageConfig> = {
   terms: defaultTermsPage,
   privacy: defaultPrivacyPage,
-  "refund-policy": defaultRefundPage,
+  "return-and-refund-policy": defaultRefundPage,
   shipping: defaultShippingPage,
 };
 
 const policyKeys: Record<PolicyPath, string> = {
   terms: "page-terms",
   privacy: "page-privacy",
-  "refund-policy": "page-refund",
+  "return-and-refund-policy": "page-refund",
   shipping: "page-shipping",
 };
 

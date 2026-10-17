@@ -28,7 +28,7 @@ export const publicInfoMetadata = {
     title: "Privacy Policy",
     description: "Learn how TurtleLittle handles customer information, personalisation details, cookies and data requests.",
   },
-  "refund-policy": {
+  "return-and-refund-policy": {
     title: "Return and Refund Policy",
     description: "Read TurtleLittle's return and refund policy for made-to-order products, eligible returns and how to request help.",
   },

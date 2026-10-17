@@ -47,7 +47,7 @@ Sitemap: ${baseUrl}/sitemap.xml
 - [Themed return gift ideas](${baseUrl}/return-gifts): Browse individual themed product ideas for children's parties.
 - [About TurtleLittle](${baseUrl}/about): Learn about the brand and its products.
 - [Shipping policy](${baseUrl}/shipping): Current processing, delivery and tracking information.
-- [Refund and cancellation policy](${baseUrl}/refund-policy): Return eligibility and cancellation details.
+- [Return and refund policy](${baseUrl}/return-and-refund-policy): Return eligibility and cancellation details.
 - [Contact](${baseUrl}/contact): Customer support and business details.
 
 ## Delivery
@@ -74,7 +74,7 @@ Product prices, availability, delivery terms and policies may change. Check the 
         { loc: "/contact", priority: "0.3", changefreq: "monthly" },
         { loc: "/terms", priority: "0.3", changefreq: "yearly" },
         { loc: "/privacy", priority: "0.3", changefreq: "yearly" },
-        { loc: "/refund-policy", priority: "0.3", changefreq: "yearly" },
+        { loc: "/return-and-refund-policy", priority: "0.3", changefreq: "yearly" },
         { loc: "/shipping", priority: "0.3", changefreq: "yearly" },
       ];
       if (getGiftIdeaGroups(products).length > 0) {

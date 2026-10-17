@@ -70,7 +70,7 @@ export default function RefundPolicyPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-24" data-testid="refund-policy-page">
-      <SEO {...publicInfoMetadata["refund-policy"]} path="/refund-policy" dateModified={config.lastUpdatedDate} />
+      <SEO {...publicInfoMetadata["return-and-refund-policy"]} path="/return-and-refund-policy" dateModified={config.lastUpdatedDate} />
       <Link href="/">
         <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Home

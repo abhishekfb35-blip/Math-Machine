@@ -190,7 +190,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
 
     const routes = [
       "/", "/shop", "/category/bath-towels", "/product/embroidered-cotton-towel",
-      "/about", "/contact", "/shipping", "/terms", "/privacy", "/refund-policy",
+      "/about", "/contact", "/shipping", "/terms", "/privacy", "/return-and-refund-policy",
     ];
     const pages = new Map<string, string>();
     for (const route of routes) {
@@ -203,6 +203,12 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
       assert.match(ordinary.html, /id="catalogue-initial-data"/);
       pages.set(route, ordinary.html);
     }
+    const legacyRefundResponse = await fetch(`http://127.0.0.1:${port}/refund-policy?source=legacy`, {
+      headers: { "user-agent": "Mozilla/5.0 storefront test" },
+      redirect: "manual",
+    });
+    assert.equal(legacyRefundResponse.status, 301);
+    assert.equal(legacyRefundResponse.headers.get("location"), "/return-and-refund-policy?source=legacy");
 
     const home = pages.get("/")!;
     assert.match(home, /<title data-storefront-seo>TurtleLittle - Personalised Towels<\/title>/);
@@ -308,7 +314,7 @@ test("storefront routes return crawlable catalogue HTML to every user agent", as
     assert.match(termsPage, /Last updated: <time datetime="2026-08-19">19 August 2026<\/time>/);
     assert.equal(readSchemas(termsPage).find(schema => schema["@type"] === "WebPage")?.dateModified, "2026-08-19");
 
-    for (const route of ["/terms", "/privacy", "/refund-policy", "/contact"]) {
+    for (const route of ["/terms", "/privacy", "/return-and-refund-policy", "/contact"]) {
       const info = pages.get(route)!;
       assert.match(info, /<h1>[^<]+<\/h1>/, `${route} should contain meaningful HTML`);
       assert.match(info, new RegExp(`href="https://shop\\.example${route}"`));
@@ -374,6 +380,8 @@ test("discovery files use the same configured origin as page canonicals", async 
     assert.match(llms, /https:\/\/shop\.example\/about/);
     assert.match(llms, /Delivery is available only to addresses within India/);
     assert.match(sitemap, /<loc>https:\/\/shop\.example\/contact<\/loc>/);
+    assert.match(sitemap, /<loc>https:\/\/shop\.example\/return-and-refund-policy<\/loc>/);
+    assert.doesNotMatch(sitemap, /https:\/\/shop\.example\/refund-policy/);
     assert.match(sitemap, /<loc>https:\/\/shop\.example\/product\/embroidered-cotton-towel<\/loc>/);
     assert.doesNotMatch(`${robots}${llms}${sitemap}`, /https:\/\/turtlelittle\.com/);
   } finally {

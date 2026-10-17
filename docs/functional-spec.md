@@ -89,7 +89,7 @@ Turtle Little is a direct-to-consumer e-commerce site selling personalized luxur
 - About (`/about`)
 - Terms & Conditions (`/terms`)
 - Privacy Policy (`/privacy`)
-- Refund Policy (`/refund-policy`)
+- Return and Refund Policy (`/return-and-refund-policy`)
 - Shipping Policy (`/shipping`)
 
 All managed and edited from the Admin Pages editor.

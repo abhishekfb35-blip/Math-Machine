@@ -358,7 +358,7 @@ export async function buildStorefrontPageData(
   const isReturnGifts = pathname === "/return-gifts";
   const categoryMatch = /^\/category\/([^/]+)\/?$/.exec(pathname);
   const productMatch = /^\/product\/([^/]+)\/?$/.exec(pathname);
-  const isInfo = /^\/(?:about|contact|shipping|terms|privacy|refund-policy)\/?$/.test(pathname);
+  const isInfo = /^\/(?:about|contact|shipping|terms|privacy|return-and-refund-policy)\/?$/.test(pathname);
   if (!isHome && !isShop && !isCouplesCollection && !isReturnGifts && !categoryMatch && !productMatch && !isInfo) return null;
 
   const seo = await loadSeoSettings(storage);

@@ -104,6 +104,16 @@ function LegacyKidsBathTowelsRedirect() {
   return null;
 }
 
+function LegacyRefundPolicyRedirect() {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    navigate("/return-and-refund-policy", { replace: true });
+  }, [navigate]);
+
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
@@ -153,7 +163,8 @@ function Router() {
       <Route path="/wishlist" component={WishlistPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
-      <Route path="/refund-policy" component={RefundPolicyPage} />
+      <Route path="/return-and-refund-policy" component={RefundPolicyPage} />
+      <Route path="/refund-policy" component={LegacyRefundPolicyRedirect} />
       <Route path="/about" component={AboutPage} />
       <Route path="/shipping" component={ShippingPolicyPage} />
       <Route path="/contact" component={ContactPage} />
