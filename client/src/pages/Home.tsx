@@ -412,7 +412,7 @@ export default function Home() {
         <p className="text-sm text-center mt-7 text-muted-foreground">
           <Link href="/shipping" className="underline">Shipping policy</Link>
           {" · "}
-          <Link href="/refund-policy" className="underline">Refund &amp; cancellation policy</Link>
+          <Link href="/refund-policy" className="underline">Return and Refund Policy</Link>
         </p>
       </section>
 

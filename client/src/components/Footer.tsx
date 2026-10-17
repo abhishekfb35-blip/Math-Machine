@@ -103,7 +103,7 @@ export default function Footer() {
               Privacy Policy
             </Link>
             <Link href="/refund-policy" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-refund">
-              Refund Policy
+              Return and Refund Policy
             </Link>
             <Link href="/shipping" className="text-xs opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-shipping">
               Shipping Policy

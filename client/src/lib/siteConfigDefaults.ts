@@ -383,7 +383,7 @@ export const defaultTermsPage: TermsPageConfig = {
     { heading: "3. Pricing & Payment", body: "All prices are listed in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise. We reserve the right to change prices at any time without prior notice. Payment must be completed at the time of placing an order through our accepted payment methods. We use secure, industry-standard payment processing to protect your financial information." },
     { heading: "4. Orders & Confirmation", body: "Once you place an order, you will receive an order confirmation. This confirmation does not guarantee acceptance of your order. We reserve the right to cancel or refuse any order for reasons including product availability, pricing errors, or suspected fraudulent activity. In such cases, you will be notified and any payment made will be refunded." },
     { heading: "5. Shipping & Delivery", body: "We currently deliver only to addresses within India; delivery outside India is not available. We aim to dispatch all orders within 3-5 business days after order confirmation. Delivery timelines depend on your location and the shipping partner. Please refer to our Shipping Policy for detailed information on delivery timelines and charges." },
-    { heading: "6. Returns & Refunds", body: "Due to the personalised nature of our products, returns and exchanges are accepted only in cases of manufacturing defects or incorrect items delivered. Please refer to our Refund & Cancellation Policy for complete details on the return process and eligibility." },
+    { heading: "6. Returns & Refunds", body: "Due to the personalised nature of our products, returns and exchanges are accepted only in cases of manufacturing defects or incorrect items delivered. Please refer to our Return and Refund Policy for complete details on the return process and eligibility." },
     { heading: "7. Intellectual Property", body: "All content on turtlelittle.com, including text, images, logos, designs, and graphics, is the property of TurtleLittle and is protected by applicable intellectual property laws. You may not reproduce, distribute, or use any content from our website without our prior written permission." },
     { heading: "8. Limitation of Liability", body: "TurtleLittle shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products. Our total liability shall not exceed the amount paid by you for the specific product in question." },
     { heading: "9. Governing Law", body: "These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts in New Delhi, India." },
@@ -410,7 +410,7 @@ export const defaultPrivacyPage: PrivacyPageConfig = {
 };
 
 export const defaultRefundPage: RefundPageConfig = {
-  title: "Refund & Cancellation Policy",
+  title: "Return and Refund Policy",
   lastUpdated: "February 2026",
   lastUpdatedDate: "",
   sections: [
@@ -471,8 +471,12 @@ export function normalizeAboutPage(value: unknown): AboutPageConfig {
 
 export function normalizePolicyPage(value: unknown, fallback: TermsPageConfig): TermsPageConfig {
   const saved = isPageRecord(value) ? value : {};
+  const savedTitle = savedText(saved.title, fallback.title);
+  const isLegacyRefundTitle = fallback.title === "Return and Refund Policy" &&
+    ["refund policy", "refund & cancellation policy", "return & refund policy"]
+      .includes(savedTitle.trim().toLowerCase());
   return {
-    title: savedText(saved.title, fallback.title),
+    title: isLegacyRefundTitle ? fallback.title : savedTitle,
     lastUpdated: savedText(saved.lastUpdated, fallback.lastUpdated),
     lastUpdatedDate: normalizeDateOnly(saved.lastUpdatedDate) ?? "",
     sections: Array.isArray(saved.sections) && saved.sections.every(isPageSection)

@@ -19,6 +19,7 @@ import { Link } from "wouter";
 import { normalizeDateOnly } from "@shared/discoverability";
 import {
   defaultAboutPage, defaultTermsPage, defaultPrivacyPage, defaultRefundPage, defaultShippingPage,
+  normalizePolicyPage,
   type AboutPageConfig, type TermsPageConfig, type PrivacyPageConfig, type RefundPageConfig, type ShippingPageConfig,
   type PageSection,
 } from "@/lib/siteConfigDefaults";
@@ -302,10 +303,10 @@ export default function AdminPages() {
 
         <AccordionItem value="refund" className="border rounded-md px-4">
           <AccordionTrigger data-testid="accordion-refund">
-            <SectionHeader icon={RefreshCcw} title="Refund & Cancellation Policy" />
+            <SectionHeader icon={RefreshCcw} title="Return and Refund Policy" />
           </AccordionTrigger>
           <AccordionContent>
-            <PolicySection configKey="page-refund" label="Refund Policy" data={getConfig("page-refund", defaultRefundPage)} defaultData={defaultRefundPage} />
+            <PolicySection configKey="page-refund" label="Return and Refund Policy" data={normalizePolicyPage(getConfig("page-refund", defaultRefundPage), defaultRefundPage)} defaultData={defaultRefundPage} />
           </AccordionContent>
         </AccordionItem>
 
