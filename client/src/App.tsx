@@ -26,6 +26,7 @@ import CartPage from "@/pages/CartPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import CollectionPage from "@/pages/CollectionPage";
+import ReturnGiftsPage from "@/pages/ReturnGiftsPage";
 import AdminBuilder from "@/pages/AdminBuilder";
 import AdminCatalog from "@/pages/AdminCatalog";
 import AdminAuditLog from "@/pages/AdminAuditLog";
@@ -108,6 +109,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/shop" component={ShopPage} />
+      <Route path="/return-gifts" component={ReturnGiftsPage} />
       <Route path="/collection/:audience" component={CollectionPage} />
       <Route path="/category/kids-bath-towels" component={LegacyKidsBathTowelsRedirect} />
       <Route path="/category/:slug" component={CategoryPage} />

@@ -1,4 +1,5 @@
 import type { Attributes, Category, Product, ProductImage, ProductVariantOptions } from "@shared/types";
+import { getGiftIdeaGroups } from "@shared/giftIdeas";
 import {
   groupProductsByShopSections,
   normalizeShopSections,
@@ -53,7 +54,7 @@ export type StorefrontPageData =
     })
   | (StorefrontPageBase & {
       kind: "collection";
-      slug: "couples";
+      slug: "couples" | "return-gifts";
       products: Product[];
     })
   | (StorefrontPageBase & {
@@ -241,6 +242,27 @@ async function loadCouplesCollection(
   };
 }
 
+async function loadReturnGiftsPage(
+  storage: IStorage,
+  seo: StorefrontSeoSettings,
+): Promise<StorefrontPageData> {
+  const products = await storage.getProducts();
+  const groups = getGiftIdeaGroups(products);
+  return {
+    ...pageBase(
+      seo,
+      "Themed Return Gift Ideas for Kids",
+      "Explore personalised towels and blankets with princess, superhero, animal and cartoon-character themes—thoughtful return gift ideas for children's parties.",
+      "/return-gifts",
+      { noindex: groups.length === 0 },
+    ),
+    kind: "collection",
+    slug: "return-gifts",
+    products: groups.flatMap((group) => group.products),
+    queries: [{ queryKey: ["/api/products"], data: products }],
+  };
+}
+
 async function loadCategoryPage(
   slug: string,
   storage: IStorage,
@@ -333,15 +355,17 @@ export async function buildStorefrontPageData(
   const isHome = pathname === "/";
   const isShop = pathname === "/shop";
   const isCouplesCollection = pathname === "/collection/couples";
+  const isReturnGifts = pathname === "/return-gifts";
   const categoryMatch = /^\/category\/([^/]+)\/?$/.exec(pathname);
   const productMatch = /^\/product\/([^/]+)\/?$/.exec(pathname);
   const isInfo = /^\/(?:about|contact|shipping|terms|privacy|refund-policy)\/?$/.test(pathname);
-  if (!isHome && !isShop && !isCouplesCollection && !categoryMatch && !productMatch && !isInfo) return null;
+  if (!isHome && !isShop && !isCouplesCollection && !isReturnGifts && !categoryMatch && !productMatch && !isInfo) return null;
 
   const seo = await loadSeoSettings(storage);
   if (isHome) return loadHomePage(seo, loadHomeSections);
   if (isShop) return loadShopPage(storage, seo);
   if (isCouplesCollection) return loadCouplesCollection(storage, seo);
+  if (isReturnGifts) return loadReturnGiftsPage(storage, seo);
   if (isInfo) {
     const infoPage = await loadPublicInfoPage(pathname, storage);
     if (!infoPage) return null;

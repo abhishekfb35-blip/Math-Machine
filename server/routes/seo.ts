@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { siteOrigin } from "@shared/discoverability";
+import { getGiftIdeaGroups } from "@shared/giftIdeas";
 import { storage, type IStorage } from "../storage";
 
 type SeoStorage = Pick<IStorage, "getSiteContent" | "getCategories" | "getProducts">;
@@ -42,6 +43,8 @@ Sitemap: ${baseUrl}/sitemap.xml
 
 ## Official pages
 - [Shop all products](${baseUrl}/shop): Browse available products and categories.
+- [Couple gifts](${baseUrl}/collection/couples): Browse personalised couple towel sets and matching bathrobes.
+- [Themed return gift ideas](${baseUrl}/return-gifts): Browse individual themed product ideas for children's parties.
 - [About TurtleLittle](${baseUrl}/about): Learn about the brand and its products.
 - [Shipping policy](${baseUrl}/shipping): Current processing, delivery and tracking information.
 - [Refund and cancellation policy](${baseUrl}/refund-policy): Return eligibility and cancellation details.
@@ -74,6 +77,9 @@ Product prices, availability, delivery terms and policies may change. Check the 
         { loc: "/refund-policy", priority: "0.3", changefreq: "yearly" },
         { loc: "/shipping", priority: "0.3", changefreq: "yearly" },
       ];
+      if (getGiftIdeaGroups(products).length > 0) {
+        staticPages.push({ loc: "/return-gifts", priority: "0.8", changefreq: "weekly" });
+      }
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 

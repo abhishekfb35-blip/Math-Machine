@@ -1,5 +1,6 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import type { Category, Product, ProductVariantOptions } from "@shared/types";
+import { getGiftIdeaGroups } from "@shared/giftIdeas";
 import { buildProductStructuredData } from "@shared/productStructuredData";
 import {
   businessDetails,
@@ -173,9 +174,10 @@ function structuredData(page: StorefrontPageData): Record<string, unknown>[] {
   const freshness = freshnessStructuredData(page);
   if (page.kind === "home") return [...identity, ...freshness, storefrontFaqStructuredData()];
   if (page.kind === "collection") {
+    const collectionName = page.slug === "couples" ? "Couple Gifts" : "Themed Return Gift Ideas";
     return [...identity, ...freshness, breadcrumbJsonLd([
       { name: "Home", url: absoluteUrl("/", page.seo.siteUrl) },
-      { name: "Couple Gifts", url: canonicalUrl(page) },
+      { name: collectionName, url: canonicalUrl(page) },
     ])];
   }
   if (page.kind === "product") {
@@ -374,16 +376,32 @@ function renderPageContent(page: StorefrontPageData): string {
         ${productListing(page.category.name, page.products, page.seo.siteUrl)}
       </main>`;
     case "collection":
+      if (page.slug === "couples") {
+        return `<main class="catalogue-prerender-content">
+          <h1>Personalised Couple Towel Sets &amp; Bathrobes</h1>
+          <p>${escapeHtml(page.description)}</p>
+          <p>Choose a matching set or bathrobe and add the names or initials you want embroidered. These personalised couple gifts are suited to weddings, anniversaries and housewarmings.</p>
+          ${productListing("Couple towel sets and bathrobes", page.products, page.seo.siteUrl)}
+          <section class="catalogue-section">
+            <h2>Questions about couple gifts</h2>
+            <article><h3>Can couple products be personalised with names?</h3><p>Many products in this collection offer name or initial embroidery. Check the options on each product page before ordering.</p></article>
+            <article><h3>What occasions are these couple sets suited to?</h3><p>Matching personalised towel sets and bathrobes can make thoughtful gifts for weddings, anniversaries and housewarmings.</p></article>
+            <article><h3>Where does TurtleLittle deliver?</h3><p>Delivery is available to addresses within India. See the <a href="/shipping">shipping policy</a> for current delivery details.</p></article>
+          </section>
+        </main>`;
+      }
       return `<main class="catalogue-prerender-content">
-        <h1>Personalised Couple Towel Sets &amp; Bathrobes</h1>
+        <h1>Themed Return Gift Ideas for Kids</h1>
         <p>${escapeHtml(page.description)}</p>
-        <p>Choose a matching set or bathrobe and add the names or initials you want embroidered. These personalised couple gifts are suited to weddings, anniversaries and housewarmings.</p>
-        ${productListing("Couple towel sets and bathrobes", page.products, page.seo.siteUrl)}
+        <p>Browse individual personalised product ideas for children's parties. These are themed gift suggestions, not pre-bundled return-gift packs; check each product page for its options and details.</p>
+        ${getGiftIdeaGroups(page.products).map((group) =>
+          productListing(group.title, group.products, page.seo.siteUrl, group.description),
+        ).join("")}
         <section class="catalogue-section">
-          <h2>Questions about couple gifts</h2>
-          <article><h3>Can couple products be personalised with names?</h3><p>Many products in this collection offer name or initial embroidery. Check the options on each product page before ordering.</p></article>
-          <article><h3>What occasions are these couple sets suited to?</h3><p>Matching personalised towel sets and bathrobes can make thoughtful gifts for weddings, anniversaries and housewarmings.</p></article>
-          <article><h3>Where does TurtleLittle deliver?</h3><p>Delivery is available to addresses within India. See the <a href="/shipping">shipping policy</a> for current delivery details.</p></article>
+          <h2>Questions about themed gift ideas</h2>
+          <article><h3>Can I choose a theme for a children's party?</h3><p>Browse the available princess, superhero, animal, cartoon-character and unicorn designs shown above. Availability can change with the product catalogue.</p></article>
+          <article><h3>Can these products be personalised with a name?</h3><p>Many products offer name embroidery. Check the options on each product page before ordering.</p></article>
+          <article><h3>Are these sold as return-gift packs?</h3><p>This page shows individual product ideas, not pre-bundled packs. Confirm quantities and timing with customer support before placing an event order.</p></article>
         </section>
       </main>`;
     case "product":
