@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
+import { ShoppingBag, Sun, Moon, Grid3X3, Search, X, User, Download, LogOut, Menu, Home, Tag, Gift, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import { usePWAInstall } from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -208,6 +208,16 @@ export default function Header() {
             <Link href="/shop">
               <Button variant={isShopActive ? "secondary" : "ghost"} size="sm" data-testid="link-nav-shop">
                 <Grid3X3 className="w-4 h-4 mr-1" /> Shop
+              </Button>
+            </Link>
+            <Link href="/collection/couples">
+              <Button variant={location === "/collection/couples" ? "secondary" : "ghost"} size="sm" data-testid="link-nav-couple-gifts">
+                Couple Gifts
+              </Button>
+            </Link>
+            <Link href="/return-gifts">
+              <Button variant={location === "/return-gifts" ? "secondary" : "ghost"} size="sm" data-testid="link-nav-return-gifts">
+                Return Gift Ideas
               </Button>
             </Link>
           </nav>
@@ -514,6 +524,28 @@ export default function Header() {
               >
                 <Grid3X3 className="w-4 h-4 shrink-0" />
                 All Products
+              </a>
+            </SheetClose>
+            <SheetClose asChild>
+              <a
+                href="/collection/couples"
+                onClick={(e) => { e.preventDefault(); navigate("/collection/couples"); setMenuOpen(false); }}
+                className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location === "/collection/couples" ? "text-primary bg-accent/50" : "text-foreground"}`}
+                data-testid="drawer-link-couple-gifts"
+              >
+                <Gift className="w-4 h-4 shrink-0" />
+                Couple Gifts
+              </a>
+            </SheetClose>
+            <SheetClose asChild>
+              <a
+                href="/return-gifts"
+                onClick={(e) => { e.preventDefault(); navigate("/return-gifts"); setMenuOpen(false); }}
+                className={`flex items-center gap-3 w-full px-5 py-3 text-sm font-medium transition-colors hover:bg-accent ${location === "/return-gifts" ? "text-primary bg-accent/50" : "text-foreground"}`}
+                data-testid="drawer-link-return-gifts"
+              >
+                <Gift className="w-4 h-4 shrink-0" />
+                Themed Return Gift Ideas
               </a>
             </SheetClose>
 

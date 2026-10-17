@@ -349,6 +349,10 @@ function renderHomeAnswers(): string {
       `<article><h3>${escapeHtml(question)}</h3><p>${escapeHtml(answer)}</p></article>`,
     ).join("")}
     <p><a href="/shipping">Shipping policy</a> · <a href="/refund-policy">Refund &amp; cancellation policy</a></p>
+    <nav aria-label="Gift collections">
+      <a href="/collection/couples">Shop personalised couple gifts</a> ·
+      <a href="/return-gifts">Browse themed return gift ideas</a>
+    </nav>
   </section>`;
 }
 

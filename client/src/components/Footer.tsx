@@ -52,6 +52,12 @@ export default function Footer() {
                   {link.label}
                 </Link>
               ))}
+              <Link href="/collection/couples" className="text-sm opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-couple-gifts">
+                Couple Gifts
+              </Link>
+              <Link href="/return-gifts" className="text-sm opacity-70 hover:opacity-100 transition-opacity" data-testid="link-footer-return-gifts">
+                Themed Return Gift Ideas
+              </Link>
             </nav>
           </div>
 
